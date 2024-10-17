@@ -1,0 +1,13 @@
+
+# Blender files
+*.blend*
+Blender_/
+
+# Bulk storage
+data/
+
+# Thesis files
+work/
+
+# dump files
+dump/
