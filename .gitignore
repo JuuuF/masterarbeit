@@ -1,12 +1,17 @@
 
 # Blender files
-*.blend*
+*.blend1
+*.blend2
 Blender_/
 
-# Bulk storage
-data/
+# Image files
+*.png
+*.JPG
+data/generation/hdri/*
+data/generation/textures/*
+data/paper/*
 
-# Thesis files
+Thesis files
 writing/
 
 # dump files
