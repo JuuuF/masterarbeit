@@ -1,0 +1,91 @@
+
+\section{Zeitplanung}
+\label{sec:zeitplanung}
+
+Gantt-Chart\footnote{Paketdokumenation: \url{https://ftp.rrze.uni-erlangen.de/ctan/graphics/pgf/contrib/pgfgantt/pgfgantt-doc.pdf}}
+
+\definecolor{colA}{HTML}{ff595e}
+\definecolor{colB}{HTML}{ffca3a}
+\definecolor{colC}{HTML}{8ac926}
+\definecolor{colD}{HTML}{1982c4}
+\definecolor{colE}{HTML}{6a4c93}
+
+\centerline{\small
+\begin{ganttchart}[
+    vgrid={*{1}{draw=gray, line width=0.2pt}, *{3}{dotted}},
+    y unit chart=0.6cm,
+    bar label font=\footnotesize,
+    group label font=\bfseries\footnotesize,
+]{0}{25}
+    % Kopfzeile
+    \gantttitle{}{1}
+    \gantttitle{Monat 1}{4}
+    \gantttitle{Monat 2}{4}
+    \gantttitle{Monat 3}{4}
+    \gantttitle{Monat 4}{4}
+    \gantttitle{Monat 5}{4}
+    \gantttitle{Monat 6}{4}
+    \gantttitle{}{1}\\
+
+    % ------------------------------------
+    % Datenaufnahme
+    \ganttgroup[group/.append style={fill=colA!75!black, draw=black, line width=0.75pt}]{Daten}{1}{6}\\
+
+    \ganttbar[bar/.append style={fill=colA}]{Reale Daten}{1}{2}\\
+    \ganttbar[bar/.append style={fill=colA}]{Paper-Datenaufbereitung}{2}{3}\\ 
+    \ganttbar[bar/.append style={fill=colA}]{Synthetische Daten}{2}{6}\\
+
+    % ------------------------------------
+    % System-Setup
+    \ganttgroup[group/.append style={fill=colB!75!black, draw=black, line width=0.75pt}]{System-Setup}{1}{7}\\
+    \ganttbar[bar/.append style={fill=colB}]{Deep-Darts-System}{1}{2}\\
+    \ganttbar[bar/.append style={fill=colB}]{GPU-Server}{2}{3}\\
+    \ganttbar[bar/.append style={fill=colB}]{Trainingsumgebung}{4}{7}\\
+
+    % ------------------------------------
+    % Implementierung
+    \ganttgroup[group/.append style={fill=colC!75!black, draw=black, line width=0.75pt}]{Implementierung}{4}{16}\\
+    \ganttbar[bar/.append style={fill=colC}]{CV-Logik}{4}{6}\\
+    \ganttbar[bar/.append style={fill=colC}]{KI-Konzeption}{5}{9}\\
+    \ganttbar[bar/.append style={fill=colC}]{KI-Umsetzung}{8}{12}\\
+    \ganttbar[bar/.append style={fill=colC}]{KI-Training}{10}{16}\\
+
+    % ------------------------------------
+    % Evaluation
+    \ganttgroup[group/.append style={fill=colD!75!black, draw=black, line width=0.75pt}]{Evaluation}{6}{17}\\
+    \ganttbar[bar/.append style={fill=colD}]{System-Vergleich}{6}{7}
+    \ganttbar[bar/.append style={fill=colD}]{}{14}{17}\\
+    \ganttbar[bar/.append style={fill=colD}]{Metrikfindung}{7}{8}\\
+    \ganttbar[bar/.append style={fill=colD}]{System-Schwachstellen}{12}{16}\\
+    \ganttbar[bar/.append style={fill=colD}]{Statistikerhebung}{14}{16}\\
+
+    % ------------------------------------
+    % Schreiben
+    \ganttgroup[group/.append style={fill=colE!75!black, draw=black, line width=0.75pt}]{Schreiben}{4}{22}\\
+    \ganttbar[bar/.append style={fill=colE}]{Einleitung}{19}{21}\\
+    \ganttbar[bar/.append style={fill=colE}]{Grundlagen}{4}{6}
+    \ganttbar[bar/.append style={fill=colE}]{}{21}{22}\\
+    \ganttbar[bar/.append style={fill=colE}]{Methodik}{6}{10}
+    \ganttbar[bar/.append style={fill=colE}]{}{21}{22}\\
+    \ganttbar[bar/.append style={fill=colE}]{Implementierung}{9}{13}
+    \ganttbar[bar/.append style={fill=colE}]{}{21}{22}\\
+    \ganttbar[bar/.append style={fill=colE}]{Ergebnisse}{13}{16}
+    \ganttbar[bar/.append style={fill=colE}]{}{21}{22}\\
+    \ganttbar[bar/.append style={fill=colE}]{Diskussion}{14}{17}
+    \ganttbar[bar/.append style={fill=colE}]{}{21}{22}\\
+    \ganttbar[bar/.append style={fill=colE}]{Fazit}{16}{19}
+    \ganttbar[bar/.append style={fill=colE}]{}{21}{22}\\
+    \ganttbar[bar/.append style={fill=colE}]{Präsentation}{17}{19}\\
+
+    % ------------------------------------
+    % Milestones
+    % \ganttmilestone[inline]{Daten fertig}{12}\\
+
+    % ------------------------------------
+    % Bars
+    \ganttvrule{Präsentation}{19}
+    \ganttvrule{\phantom{X}\raisebox{-3ex}{\centering Soft Deadline}}{22}
+    \ganttvrule{Deadline}{24}
+
+\end{ganttchart}
+} % centerline

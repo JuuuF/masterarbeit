@@ -1,0 +1,29 @@
+\section{Motivation}
+\label{sec:motivation}
+
+Der Anstoß zu dieser Masterarbeit ist ein Paper von McNally et al. aus dem Mai 2021 mit dem Titel "DeepDarts: Modeling Keypoints as Objects for Automatic Scorekeeping in Darts using a Single Camera" \cite{deepdarts}. Wie dem Titel des Papers zu entnehmen ist, ist dessen Problemstellung, die Punktzahl eines Dart-Spiels automatisch mit einem Single-Camera-Setup, in welche Kategorie auch Mobiltelefone fallen, zu ermitteln. Der spezifische Fokus liegt dabei auf Steeldarts, bei welchem bereits etablierte Multi-Camera-Systeme zum Scorekeeping existieren. Dazu werden mehrere Kameras aufgestellt und miteinander kalibriert, um Dartpfeile ausfindig zu machen. Dieses Setup ist effektiv in der Positionierung der Dartscheibe und der Pfeile, ist jedoch durch den erheblichen Aufwand des Systemaufbaus und der Anschaffung spezieller Hardware nicht für den Privatgebrauch und Casual-Spieler geeignet. Auf dieser Problemstellung beruht das Referenzpaper dieser Masterarbeit. Ziel war es, ein System zu entwickeln, das Scorekeeping von Steeldarts einfach und für den (gelegentlichen) Privatgebrauch mit einer einzelnen Kamera ermöglicht, die heutzutage in jedem Handy verbaut ist.
+
+McNally et al. haben in dem Paper Erfolge mit ihrer Herangehensweise verzeichnen können, jedoch gibt es einige Stolpersteine und Ungereimtheiten, bei denen ihr System ins Straucheln kommt und Vorhersagen ungenau sind. Diese Schwachstellen und Eckfälle werden als Ausgangslage für diese Masterarbeit genutzt, die das Ziel verfolgt, auf diesen Erkenntnissen aufzubauen und ein insgesamt robusteres und genaueres System zur Erkennung von Dartpfeilen anhand von Single-Camera-Systemen, insbesondere hinsichtlich Handyaufnahmen, zu entwickeln.
+
+Es existieren bereits Systeme zur Erkennung von Dartpfeilen, jedoch sind diese in ihrem Umfang und Funktionsweise meist eingeschränkt und haben viele potenzielle Fehlerquellen \cite{dartscore-repo}.
+
+\iffalse
+
+\begin{itemize}
+    \item State-of-the-Art: Multi-Kamera-Systeme
+    \begin{itemize}
+        \item eigene Hardware
+        \item Einrichtung notwendig
+        \item nicht für Privatgebrauch ausgelegt
+        \item aber dafür zuverlässig
+    \end{itemize}
+    \item Daher: Für jeden zugängliche Lösung, nicht kopfrechnen zu müssen
+    \begin{itemize}
+        \item Jeder besitzt ein Handy $\rightarrow$ App zur Identifizierung $\rightarrow$ Single-Camera-System
+        \item Nutzung von CV + KI, um Pfeile in Dartscheibe zu finden und Punktzahl auszurechnen
+    \end{itemize}
+
+    \item es gibt bereits Systeme, aber die sind nicht robust \cite{deepdarts, dartscore-repo}
+\end{itemize}
+
+\fi

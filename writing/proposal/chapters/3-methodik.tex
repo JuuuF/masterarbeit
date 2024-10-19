@@ -1,0 +1,49 @@
+\section{Methodik}
+\label{sec:methodik}
+
+\begin{itemize}
+    \item Datensammlung
+    \begin{itemize}
+        \raggedright
+        \item Durch 3D-Software mittels Ray-Tracing und fotorealistischer Texturen
+        \item Aufnahme realer Steeldarts-Runden:
+        \begin{itemize}
+            \item Live-Protokollierung
+            \item Aufnahme durch unterschiedliche Kameras
+            \item Daten sammeln in realem Einsatz
+        \end{itemize}
+        \item Identifizierung von typischen Bildaufnahme-Parametern durch Metadaten-Analyse und Online-Recherche
+    \end{itemize}
+
+    \item Dartscheiben-Identifizierung
+    \begin{itemize}
+        \raggedright
+        \item Aufbau auf Erkennungsmechanismen von Schachbrettmustern etc.
+        \item Farbraum-Transformationen, Thresholding, Filterung, Blob-/Keypoint-Detektion
+        \item Hough-Transformationen, Ellipsen-Erkennung
+        \item Ggf. CNN zur Objekterkennung
+        \begin{itemize}
+            \item Transfer-Learning durch bereits bestehende Modelle (ResNet, YOLO, FOMO, etc.)
+        \end{itemize}
+    \end{itemize}
+
+    \item KI-Training / Dartpfeil-Identifikation
+    \begin{itemize}
+        \item Transfer Learning von Obkekterkennungs-CNN
+        \item Eigene Methodiken zur Lenkung des Trainings
+        \item Nutzung von ML- und CV-Frameworks
+    \end{itemize}
+
+    \item System-Statistiken sammeln
+    \begin{itemize}
+        \item Wie gut werden bestimmte Felder erkannt?
+        \item Metriken aus Paper übernehmen (Vergleichbarkeit)
+        \item Statistiken zu:
+        \begin{itemize}
+            \item Feld-Art (Polar-Radius auf Dartscheibe)
+            \item Feldwert (Polar-Winkel auf Dartscheibe)
+            \item Pfeilabstand zueinander
+            \item Aufnahmewinkel der Kamera
+        \end{itemize}
+    \end{itemize}
+\end{itemize}

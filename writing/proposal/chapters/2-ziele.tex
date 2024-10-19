@@ -1,0 +1,74 @@
+\section{Ziele}
+\label{sec:ziele}
+
+Diese Masterarbeit ist eine Erweiterung bzw. Verbesserung eines bereits bestehenden Systems. Der Kern der Zielstellung dieser Arbeit ist damit analog zu dem Referenzpaper die Etablierung eines Single-Camera-Systems zum Scorekeeping von Steeldarts. Dieses System unterliegt der Voraussetzung, potenziell auf mobilen Endgeräten eingesetzt zu werden und ist dahingehend hinsichtlich der in Anspruch zu nehmenden Ressourcen begrenzt. Diese Voraussetzung ist kein zentraler Aspekt dieser Arbeit, sollte jedoch bei der Wahl der eingesetzten Techniken im Hinterkopf behalten werden.
+
+Zentrales Ziel dieser Arbeit ist es, die Schwachstellen des Systems von McNally et al. zu identifizieren und gezielt anzugehen.
+
+\subsection{Schwachstellen im Paper}
+\label{sub:schwachstellen}
+
+Es wurde bereits im Paper auf einige Schwachstellen des Systems hingewiesen. Neben diesen explizit erwähnten Problemen, wurden weitere Problembereiche identifiziert. Diese sollen in diesem Unterkapitel aufgelistet und erläutert werden.
+
+\subsubsection{Datengrundlage}
+\label{sec:ziele:schwachstellen:datengrundlage}
+
+Der Ansatz von McNally et al. beinhaltet Neuronale Netze, die auf Daten trainiert wurden. Die genutzte Datengrundlage weist jedoch eine verzerrte und unsichere Grundlage vor. Die Bilder, mit denen das System trainiert und evaluiert wurde, stammt aus zwei Quellen: Ein Großteil der Daten wurde mit einem fix montierten iPhone aufgenommen, der Rest mit einer DSLR-Kamera aus unterschiedlichen Perspektiven. Beide Quellen sind nicht repräsentativ für den vorgesehenen Einsatz des Systems, in dem mit Handyaufnahmen aus unterschiedlichen Perspektiven Bilder aufgenommen werden und unterschiedlichen Bedingungen vorherrschen können. Ebenfalls wurden diese Daten per Hand annotiert, was mit Ungenauigkeiten einhergeht. Diese Ungenauigkeiten wurden in dem Paper anerkannt und hingenommen.
+
+\subsubsection{Entzerrung der Bilder}
+\label{sec:ziele:schwachstellen:entzerrung}
+
+Im Gegensatz zu einer trivialen Herangehensweise wurde im Referenzpaper bereits angenommen, dass Bilder von Dartscheiben nicht perfekt sind und mit einer perspektivischen Verzerrung einhergehen. Daher muss die Dartscheibe entzerrt werden, um sichere Vorhersagen bezüglich der Dartpfeile tätigen zu können. Der vorgestellte Ansatz zur Entzerrung der Bilder besteht darin, 4 Fixpunkte der Dartscheibe zu identifizieren und anhand dieser eine Homographie ableiten zu können, die die Dartscheibe von einer Ellipse zu einem perfekt ausgerichteten Kreis transformiert. Diese Herangehensweise unterliegt jedoch der Voraussetzung, dass alle 4 Fixpunkte im Bild erkennbar sind. Ist einer der Punkte z.B. durch einen Dartpfeil verdeckt, ist eine korrekte Entzerrung auf diese Weise nicht möglich. Dieser Schwachpunkt wurde im Paper eingeräumt und als verbesserungswürdig angemerkt.
+
+\subsubsection{Generelle Verbesserung der Vorhersagen}
+\label{sec:ziele:schwachstellen:verbesserung}
+
+Laut eigener Metrik hat das vorgestellte System eine Genauigkeit von 84\%. Diese Genauigkeit ist nach subjektiver Einschätzung geeignet, um ein Proof-of-concept zu validieren, nicht jedoch für den realen Einsatz dieses Systems in einem Live-System. Zu Teilen ist diese Ungenauigkeit auf bereits aufgelistete Probleme zurückzuführen. Neue und fortgeschrittenere Technologie im Bereich der Neuronalen Netze und Computer Vision sind ebenfalls seit Veröffentlichung des Papers aufgekommen und bieten die Möglichkeit zur Verbesserung des Systems durch technischen Fortschritt.
+
+% Ebenfalls aufnehmen: Mehrere Trainings statt nur einem?
+
+\subsection{Problemlösung}
+\label{sec:ziele:problemlösung}
+
+Das Angehen dieser aufgelisteten Probleme ist der Fokus dieser Masterarbeit. Es soll ein insgesamt robusteres und genaueres System konzipiert und umgesetzt werden. Ein Kernpunkt der Umsetzung ist dabei die \textbf{Nutzung von 3D-Software}, um automatisiert große Mengen synthetischer Daten zu generieren. Auf diese Weise ist es möglich, Verzerrungen der Daten durch festgelegte Umgebungsbedingungen, Beschränkung auf wenige Kameraparameter oder fehlerhaft annotierter Daten zu mitigieren. Darüber hinaus werden \textbf{reale Daten aufgenommen}, wie sie im späteren Einsatz in einer App aufkommen könnten. Dabei wird Protokoll über getroffene Felder geführt, um die Wahrscheinlichkeit fehlerhafte Erkennungen zu minimieren.
+
+Des Weiteren wird eine \textbf{neue Methodik zur Erkennung der Dartscheibe} genutzt werden, die herkömmliche Computer Vision (CV) umfasst, um Dartscheiben analytisch zu ermitteln. Ist dies nicht robust möglich, ist es möglich, diesen Ansatz mit Hilfe von CNNs zu unterstützen. Der Einsatz von \textbf{KI zur Ermittlung der Dartpfeile} besteht weiterhin als zentraler Aspekt des Systems.
+
+Um die Systeme angemessen miteinander vergleichen zu können, ist es von Bedeutung, dass das Modell, das im Paper zur Evaluierung genutzt wurde, zum laufen gebracht wird und die Daten, auf denen das Modell trainiert und evaluiert wurde, zu erhalten. Die dafür relevanten Daten sind öffentlich zugänglich und können eingesehen und verwendet werden \cite{deepdarts-data}. Ist das System lauffähig, können ebenfalls eigene Statistiken erhoben werden, um die Performance der unterschiedlichen Ansätze miteinander zu vergleichen. Dabei ist eine Verbesserung der Resultate angedacht.
+
+\iffalse
+
+\begin{itemize}
+    \item Verbesserung des Systems, wie es im Paper genutzt wurde \cite{deepdarts}
+    \item Ziel des Papers weiterhin verfolgen: Einsatz auf mobilen Endgeräten $\rightarrow$ begrenzte Ressourcen
+
+    \item Schwachstellen aus Paper gezielt angehen
+    \begin{itemize}
+        \item Verzerrte, unsichere Datengrundlage \cite{deepdarts-data}
+        \begin{itemize}
+            \item Originaldaten aus 2 Quellen: iPhone (an Decke befestigt), DSLR (wenig Variation, idealisierte Daten)
+            \item Händisch durch Sichtung der Bilder annotiert, als fehlerbehaftet eingestuft
+        \end{itemize}
+        \item Fehleranfällige Erkennung der Dartscheibe
+        \begin{itemize}
+            \item Identifizierung von 4 Fixpunkten
+            \item Punkt nicht erkannt: Problem.
+        \end{itemize}
+        \item Insgesamt Verbesserung des Systems möglich: 84\% Test-Score
+    \end{itemize}
+
+    \item Problemlösung
+    \begin{itemize}
+        \item Nutzung von 3D-Software, um eine ausreichende Menge korrekt annotierter und variabler Daten zu erstellen
+        \item Erstellung korrekt annotierter, realer Daten
+        \item Einsetzen von CV-Methodiken, um Dartscheibe robust zu erkennen
+        \item Nutzung aktueller KI-Methodiken zur Erkennung von Dartpfeilen
+    \end{itemize}
+
+    \item Zur korrekten Erkennung der Probleme: Paper-Modell zum Laufen bringen
+    \item Erstellung von aussagekräftigen Statistiken zur Identifizierung der Performance
+    \item Vergleich der Ansätze, idealerweise Verbesserung der Resultate
+
+\end{itemize}
+
+\fi

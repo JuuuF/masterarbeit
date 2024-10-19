@@ -1,0 +1,74 @@
+
+% UTF-8 Encoding
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}     % Use T1 font encoding
+
+% Deutsche Sprache
+\usepackage[german]{babel}
+
+% Grafiken
+\usepackage{graphicx}
+
+% SVG
+\usepackage{svg}
+\svgpath{{imgs/}}
+
+% Maths
+\usepackage{amsmath}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=gray,
+    urlcolor=blue,
+    citecolor=green!50!black,
+}
+\usepackage{cleveref}
+
+% Hacky warnings silencing
+\usepackage{silence}
+\WarningFilter{latex}{Missing character: There is no , in font nullfont!}
+
+% Gantt charts
+\usepackage{pgfgantt}
+
+% Author citation using \citet
+\usepackage{natbib}
+
+% Correct quotation marks
+\usepackage{csquotes}
+\MakeOuterQuote{"}
+
+% Custom Colors
+\usepackage{xcolor}
+
+% -----------------------------------------------
+% commands
+
+\renewcommand{\quote}[1]{\glqq#1\grqq\,}
+
+% -----------------------------------------------
+
+\newcommand{\bitTitle}{MA-Titel}
+\newcommand{\bitAuthor}{Justin Fürstenwerth}
+\newcommand{\bitEmail}{stu{\bf 210298}@mail.uni-kiel.de}
+
+% -----------------------------------------------
+% light / dark mode switch
+
+\usepackage{ifthen} % For conditional logic
+
+% Define the mode variable
+\newcommand{\mode}{light}
+\renewcommand{\mode}{dark}
+
+% Set up colors based on the mode
+\ifthenelse{\equal{\mode}{dark}}{
+    % Dark mode settings
+    \definecolor{background}{RGB}{31,31,31} % Dark background
+    \definecolor{foreground}{RGB}{204,204,204} % Light text
+    % Set background and text colors
+    \pagecolor{background}
+    \color{foreground}
+}{}

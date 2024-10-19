@@ -7,12 +7,23 @@ Blender_/
 # Image files
 *.png
 *.JPG
+*.svg
 data/generation/hdri/*
 data/generation/textures/*
 data/paper/*
 
-Thesis files
-writing/
-
 # dump files
-dump/
+dump/*
+writing/notes/*
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.pdf
+*.synctex.gz
+

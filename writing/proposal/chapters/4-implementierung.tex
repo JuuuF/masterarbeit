@@ -1,0 +1,88 @@
+\section{Implementierung}
+\label{sec:implementierung}
+
+\begin{enumerate}
+    \item Datenerstellung
+    \begin{itemize}
+        \item Blender, siehe \autoref{img:blender}, \autoref{img:render}
+        \item Modell von Dartscheibe, Raum, Lichtern und mehreren Arten von Pfeilen
+
+        \item Zugriff auf Szene mittels "bpy"
+        \begin{itemize}
+            \item Python-Framework zur Interaktion mit Blender
+            \item \glqq API\grqq\, für Blender-Szenen
+            \item Zugriff auf alle Objekte und Parameter per Python-Skript
+        \end{itemize}
+
+        \item Modelle durch Parameter einstellbar
+        \begin{itemize}
+            \raggedright
+            \item Farbe und Beschaffenheit von Texturen
+            \item Lichtverhältnisse (Helligkeit, Farbe etc.) (Blitzlicht, HDRI, Deckenlampen, ...)
+            \item Abnutzung des Boards
+            \item Aussehen der Dartpfeile
+            \item Umgebung um das Board / Raumausstattung (Dartboard-Schrank, Bilder, weitere Dartscheiben im Bild, ...)
+        \end{itemize}
+
+        \item Parameter zufällig oder gewichtet setzen
+        \begin{itemize}
+            \item Kameraposition z.B. zufällig in definiertem Raum
+            \item Pfeilpositionen z.B. anhand von Heatmaps gewichtet positionieren
+        \end{itemize}
+
+        \item Korrektheit der Daten gesichert
+        \begin{itemize}
+            \item 3D-Positionen von Dartpfeilen und Scheibe bekannt $\rightarrow$ Feldwerte können analytisch bestimmt werden
+            \item Statistik nicht nur über Feldwert, sondern exakte Positionen möglich
+        \end{itemize}
+
+        \item Rendering auf GPU-Server, da bpy keine GUI benötigt
+    \end{itemize}
+
+    \item Erkennung der Dartscheibe
+    \begin{itemize}
+        \raggedright
+        \item Große Flächen, hoher Kontrast
+        \item bestehend aus Primitiven: Kreise, Linien, Dreiecke
+        \item Verzerrung: Kreise $\rightarrow$ Ellipsen
+        \item insgesamt gute Voraussetzungen, um mittels herkömmlicher CV-Methoden erkannt zu werden $\rightarrow$ OpenCV
+        \item Ggf. simples CNN zur Identifizierung von Dartscheiben: Daten ebenfalls durch 3D-Rendering erstellbar
+        \item Fisheye-Effekte könnten problematisch sein
+    \end{itemize}
+
+    \item KI-Training:
+    \begin{itemize}
+        \item Training mit TensorFlow auf GPU-Server
+        \item Datenaufteilung:
+        \begin{itemize}
+            \item Trainingsdaten: Synthetische Daten (Masse, korrekt annotiert)
+            \item Validierungsdaten: Reale Daten, eigene
+            \item Testdaten: Baseline-Daten
+            \item Argumentierung: Wir sind auf deren Daten besser als sie selbst, ohne auf den Daten trainiert zu haben
+        \end{itemize}
+
+        \item Datenaugmentierung
+        \begin{itemize}
+            \item Pixel-Augmentierung: Noise, Helligkeit, Kontrast, ...
+            \item Transformations-Augmentierung: Rotation, Skalierung, Flips, ...
+        \end{itemize}
+
+        \item Ggf. Hyperparameter-Tuning durch Random Grid / Bayesian Search
+        \item Ggf. k-Fold Cross-Validation
+    \end{itemize}
+
+\end{enumerate}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{imgs/blender.png}
+    \caption{Blender-Projekt}
+    \label{img:blender}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{imgs/render.png}
+    \caption{Render}
+    \label{img:render}
+\end{figure}
