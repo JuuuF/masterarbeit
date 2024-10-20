@@ -10,14 +10,14 @@ Die Datensammlung bildet den ersten zentralen Punkt dieser Arbeit. Die Datengrun
 
 Der erste Teil der Gesamtdatenmenge umfasst die realen Daten. Hierfür werden Steeldarts-Runden live gespielt, wobei dokumentiert wird, in welchen Feldern die Pfeile landen. Es kommen mehrere verschiedene Handykameras zum Einsatz, um eine möglichst vielfältige und realitätsnahe Datenbasis zu schaffen. Diese realen Daten stellen lediglich einen kleinen Teil der Gesamtdaten dar, sollten jedoch ausreichend groß und divers sein, um Rückschlüsse auf die tatsächliche Performance zu ermöglichen.
 
-Die Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die sysnthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet.
+Der Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die sysnthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet.
 
-Zur Erstellung der synthetischen Daten werden typische Parameter der Bildaufnahme durch Metadatenanalyse und Online-Recherchen ermittelt und nachgestellt, um eine möglichst realistische Abbildung derzu erwartenden Daten zu erzielen.
+Zur Erstellung der synthetischen Daten werden typische Parameter der Bildaufnahme durch Metadatenanalyse und Online-Recherchen ermittelt und nachgestellt, um eine möglichst realistische Abbildung der zu erwartenden Daten zu erzielen.
 
 \subsection{Dartscheiben-Identifizierung}
 \label{sec:methodik:dartscheibe}
 
-Eine Methode, die im Referenzpaper angewendet wurde und in dieser Arbeit übernommen werden soll, ist die Entzerrung der Eingabebilder in Bezug auf die Dartscheibe. Es muss davon ausgegangen werden, dass Aufnahmen nicht frontal, sondern in einem Winkel $\neq90^\circ$ zur Dartscheibe gemacht werden. Daher ist eine Entzerrung der Bilder erforderlich, um die Feldwerte korrekt anhand der Pfeilpositionen einordnen zu können.
+Eine Methode, die im Referenzpaper angewandt wurde und in dieser Arbeit übernommen werden soll, ist die Entzerrung der Eingabebilder in Bezug auf die Dartscheibe. Es muss davon ausgegangen werden, dass Aufnahmen nicht frontal, sondern in einem Winkel $\neq90^\circ$ zur Dartscheibe gemacht werden. Daher ist eine Entzerrung der Bilder erforderlich, um die Feldwerte korrekt anhand der Pfeilpositionen einordnen zu können.
 
 Die im Paper eingesetzte Methode ist fehleranfällig und nicht zuverlässig. Daher wird auf Algorithmen der Computer Vision zurückgegriffen, um eine möglichst robuste Erkennung der Dartscheibe zu gewährleisten und darauf aufbauend eine Entzerrung des Bildes durchzuführen. Hierbei stehen verschiedene Techniken wie Farbraum-Transformation, Thresholding, Filterung sowie Blob- und Keypoint-Detektion zur Verfügung. Darüber hinaus können fortgeschrittene Verarbeitungsschritte wie Hough-Transformationen und Ellipsenerkennung eingesetzt werden. Es ist ebenfalls denkbar, CNN-Architekturen zu integrieren, um die Keypoint-Detektion zu verbessern.
 
@@ -28,7 +28,7 @@ Die im Paper eingesetzte Methode ist fehleranfällig und nicht zuverlässig. Dah
     \label{img:alignment}
 \end{figure}
 
-Ein Beispiel für den Ablauf einer Entzerrung eines Bildes ist in \autoref{img:alignment} dargestellt. Diese Abbildung dient lediglich als schematischeDarstellung und kann von der tatsächlichen Methodik abweichen.
+Ein Beispiel für den Ablauf einer Entzerrung eines Bildes ist in \autoref{img:alignment} dargestellt. Diese Abbildung dient lediglich als schematische Darstellung und kann von der tatsächlichen Methodik abweichen.
 
 \subsection{KI-Training / Dartpfeil-Identifizierung}
 \label{sec:methodik:ki}
@@ -38,7 +38,7 @@ Wie im Referenzpaper wird die Identifizierung und Lokalisierung der Dartpfeile a
 \subsection{System-Statistiken}
 \label{sec:methodik:statistiken}
 
-Um einen Überblick über die Performance des Systems zu erhalten, werden im Verlauf der Arbeit Statistiken erstellt, die eine umfangreiche Auswertung des Systems ermöglichen. Diese Statistiken beziehen sich auf die Trefferquote bestimmter Felder und übernehmen Metriken aus dem Referenzpaper, um einen objektiven Vergleich der unterschiedlichen Herangehensweisen zu gewährleisten. Des Weiteren werden Statistiken über die Art des Feldes - ob einfach, Double oder Triple - sowie Feldwerte ohne Vervielfältigungen, Genauigkeit der Vorhersagen in Anhängigkeit von den Pfeilabständen auf dem Board oder das Verhalten des Systems bei Änderungen des Kamerawinkels erhoben. Der genaut Umfang der Statistiken wird im Verlauf der Arbeit in Bezug auf Aussagekraft und Umsetzbarkeit ermittelt.
+Um einen Überblick über die Performance des Systems zu erhalten, werden im Verlauf der Arbeit Statistiken erstellt, die eine umfangreiche Auswertung des Systems ermöglichen. Diese Statistiken beziehen sich auf die Trefferquote bestimmter Felder und übernehmen Metriken aus dem Referenzpaper, um einen objektiven Vergleich der unterschiedlichen Herangehensweisen zu gewährleisten. Des Weiteren werden Statistiken über die Art des Feldes - ob einfach, Double oder Triple - sowie Feldwerte ohne Vervielfältigungen, Genauigkeit der Vorhersagen in Anhängigkeit von den Pfeilabständen auf dem Board oder das Verhalten des Systems bei Änderungen des Kamerawinkels erhoben. Der genaue Umfang der Statistiken wird im Verlauf der Arbeit in Bezug auf Aussagekraft und Umsetzbarkeit ermittelt.
 
 \iffalse
 \begin{itemize}
