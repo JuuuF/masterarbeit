@@ -1,6 +1,46 @@
 \section{Methodik}
 \label{sec:methodik}
 
+In diesem Kapitel wird auf die Methodik eingegangen, mit der die gesetzten Ziele erreicht werden. Dabei wird die Arbeit in unterschiedliche Teilbereiche unterteilt und es wird auf jeden Teilbereich isoliert eingegangen.
+
+\subsection{Datensammlung}
+\label{sec:methodik:datensammlung}
+
+Die Datensammlung für diese Arbeit ist der erste zentrale Punkt, der genauer betrachtet werden soll. Die Datengrundlage der Arbeit von McNally et al. weist einige verbesserungswürdige Aspekte auf, die mit einer neuen Herangehensweise angegangen werden sollen. In dieser Arbeit wird mit zwei unterschiedlichen Arten von Daten gearbeitet werden: reale Daten und synthetische Daten.
+
+Der erste Teil der Gesamtdatenmenge dieser Arbeit sind die relen Daten. Dazu werden reale Steeldarts-Runden gespielt. Dabei wird live protokolliert, in welchen Feldern die Pfeile gelandet sind und es wird mit mehreren unterschiedlichen Handykameras gearbeitet. Der Hintergrund des Einsatzes mehrerer Kameras ist das Sammeln möglichst unterschiedlicher und realitätsnaher Daten. Diese Daten werden durch ihren manuellen Charakter lediglich einen kleinen Teil der Gesamtdaten ausmachen, die jedoch ausreichend groß und divers sein sollte, um Rückschlüsse auf reale Performance zu ziehen.
+
+Die hauptsächliche Datengrundlage dieser Arbeit nicht nicht aus manuell annotierten und dadurch fehleranfälligen Daten bestehen, sondern mittels 3D-Software generiert werden. Die sysnthetischen Daten werden dabei mittels Ray Tracing und fotorealistischer Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da dieser automatisiert erstellt und korrekt annotiert werden kann und dadurch eine solide Datengrundlage bietet.
+
+Zur Erstellung der synthetischen Daten werden typische Parameter der Bildaufnahme durch Metadaten-Analyse und Online-Recherche ermittelt und imitiert. Dadurch wird eine möglichst nahe Abbildung zu erwartender Daten erreicht.
+
+\subsection{Dartscheiben-Identifizierung}
+\label{sec:methodik:dartscheibe}
+
+Eine Methode, die im Referenzpaper angewandt wurde und in dieser Arbeit übernommen werden soll, ist die Entzerrung der Input-Bilder hinsichtlich der Dartscheibe. Es muss davon ausgegangen werden, dass Aufnahmen nicht frontal, sondern in einem Winkel $\neq90^\circ$ zur Dartscheibe aufgenommen werden. Daher müssen die Bilder zur korrekten Einordnung der Feldwerte anhand der Pfeilpositionen entzerrt werden.
+
+Die im Paper eingesetzte Methode ist dabei fehleranfällig und nicht zuverlässig. Es wird daher auf Algorithmen der Computer Vision zurückgegriffen, um eine möglichst robuste Erkennung der Dartscheibe und darauf aufbauend eine Entzerrung des Bildes zu erzielen. Zur Verfügungstehen dabei Operationen der Farmraum-Transformation, des Thresholdings, Filterung und Blob- bzw. Keypoint-Detektion. Über diese Techniken hinaus können höhere Verarbeitungsschritte wie Hough-Transformationen und Ellipsen-Erkennung angewandt werden. Es ist ebnefalls denkbar, CNN-Architekturen einzubinden, um beispielsweise Keypoint-Detektionen zu erweitern.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/aligning.png}
+    \caption{Entzerrungs-Beispiel}
+    \label{img:alignment}
+\end{figure}
+
+Ein Beispiel des Ablaufes einer Entzerrung eines Bildes ist in \autoref{img:alignment} abgebildet. Diese Abbildung ist lediglich schematisch zu betrachten und kann von der eingesetzten Methodik abweichen.
+
+\subsection{KI-Training / Dartpfeil-Identifizierung}
+\label{sec:methodik:ki}
+
+Wie auch im Referenzpaper wird die Dartpfeil-Identifizierung und -Lokalisierung auf Neuronalen Netzen aufgebaut sein. Dieser Punkt ist hinsichtlich des Arbeitsaufwandes der größte Punkt dieser Arbeit. Es wird auf Transfer Learning von Objekterkennungs-KIs zurückgegriffen, um State-of-the-Art-KIs einzubinden. Zur Lenkung des Trainings werden eigene Methoden eingebunden, die sich zu Teilen auf der Keypoint-Detektion von McNally et al. stützen. Zur Implementierung dieser KI-Methodiken werden aktuelle KI-Frameworks verwendet.
+
+\subsection{System-Statistiken}
+\label{sec:methodik:statistiken}
+
+Um einen Überblick über die Performance des Systems zu bekommen, werden im Laufe der Arbeit Statistiken etabliert, die für eine umfangreiche Auswertung des Systems sorgen. Diese Statistiken können sich beziehen auf die Trefferquote bestimmter Felder und es können Metriken aus dem Paper übernommen werden, um einen objektiven Vergleich der unterschiedlichen Herangehensweisen zu ermöglichen. Es können weiterhin Statistiken erhoben werden bezüglich der Art des Feldes - ob einfach, double oder triple -, Feldwerte ohne Vervielfältigungen, Genauigkeit der Vorhersagen in Anhängigkeit der Pfeilabstände auf dem Board oder Verhalten des Systems bei Änderung des Kamerawinkels. Der exakte Umfang der Statistiken muss im Laufe der Arbeit bezüglich Aussagekraft und Umsetzbarkeit ermittelt werden.
+
+\iffalse
 \begin{itemize}
     \item Datensammlung
     \begin{itemize}
@@ -47,3 +87,4 @@
         \end{itemize}
     \end{itemize}
 \end{itemize}
+\fi
