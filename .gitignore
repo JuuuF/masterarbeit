@@ -28,6 +28,7 @@ writing/notes/*
 *.synctex.gz
 *.bcf
 *.xml
+!main.pdf
 
 # GIMP
 *.xcf
