@@ -1,13 +1,14 @@
 \section{Motivation}
 \label{sec:motivation}
 
-Der Anstoß zu dieser Masterarbeit ist ein Paper von McNally et al. aus dem Mai 2021 mit dem Titel "DeepDarts: Modeling Keypoints as Objects for Automatic Scorekeeping in Darts using a Single Camera" \cite{deepdarts}. Wie aus dem Titel des Papers hervorgeht, addressiert es die Herausforderung, die Punktzahl eines Dartspiels mithilfe eines Single-Camera-Setups, zu dem auch Mobiltelefone zählen, zu ermitteln. Der spezifische Fokus liegt auf Steeldarts, für die bereits etablierte Multi-Camera-Systeme zum Scorekeeping existieren. Diese Systeme erfordern die Installation und Kalibrierung mehrerer Kameras, um Dartpfeile präzise zu erfassen. Obwohl dieses Setup in der Lage ist, die Position der Dartscheibe und der Pfeile effektiv zu bestimmen, ist es aufgrund des erheblichen Aufwands für die Systeminstallation und der Notwendigkeit spezieller Hardware nicht für den Privatgebrauch sowie für Gelegenheits-Spieler geeignet.
+Der Anstoß zu dieser Masterarbeit ist ein Paper von McNally et al. aus dem Mai 2021 mit dem Titel "DeepDarts: Modeling Keypoints as Objects for Automatic Scorekeeping in Darts using a Single Camera" \cite{deepdarts}. Wie aus dem Titel des Papers hervorgeht, addressiert es die Herausforderung, die Punktzahl eines Dartspiels mithilfe eines Single-Camera-Setups, zu dem auch Mobiltelefone zählen, zu ermitteln. Der spezifische Fokus liegt auf Steeldarts, für die bereits etablierte Multi-Camera-Systeme zum Scorekeeping existieren \cite{autodarts, scoliadarts}.
+Diese Systeme erfordern die Installation und Kalibrierung mehrerer Kameras, um Dartpfeile präzise zu erfassen. Obwohl dieses Setup in der Lage ist, die Position der Dartscheibe und der Pfeile effektiv zu bestimmen, ist es aufgrund des erheblichen finanziellen Aufwands für die Systeme und der Notwendigkeit spezieller Hardware nicht für den Privatgebrauch sowie für Gelegenheits-Spieler geeignet.
 
 Das vorliegende Referenzpaper bildet die Grundlage dieser Masterarbeit, deren Ziel es ist, ein System zu entwickeln, das Scorekeeping von Steeldarts vereinfacht und für den (gelegentlichen) Privatgebrauch unter Verwendung einer einzigen Kamera ermöglicht, wie sie heute in nahezu jedem Mobiltelefon verbaut ist.
 
 McNally et al. haben in ihrer Arbeit Erfolge mit ihrer Methodik erzielt, dennoch existieren einige Herausforderungen und Ungereimtheiten, bei denen ihr System ungenaue Vorhersagen trifft. Diese Schwachstellen und Grenzfälle dienen als Grundlage für diese Masterarbeit, die darauf abzielt, auf den gewonnenen Erkenntnissen aufzubauen und ein insgesamt robusteres und präziseres System zur Erkennung von Dartpfeilen in Single-Camera-Setups, insbesondere im Kontext von Handyaufnahmen, zu entwickeln.
 
-Obwohl bereits Systeme zur Erkennung von Dartpfeilen existieren, sind diese häufig in ihrem Umfang und ihrer Funktionalität eingeschränkt und weisen zahlreiche potenzielle Fehlerquellen auf \cite{dartscore-repo}.
+Obwohl bereits Systeme zur Erkennung von Dartpfeilen existieren, sind diese häufig in ihrem Umfang und ihrer Funktionalität eingeschränkt und weisen zahlreiche potenzielle Fehlerquellen auf oder erfordern besondere Maßnahmen zur Kalibrierung \cite{darts_project, opencv_steel_darts, dartscore_repo}.
 
 \iffalse
 
@@ -25,7 +26,7 @@ Obwohl bereits Systeme zur Erkennung von Dartpfeilen existieren, sind diese häu
         \item Nutzung von CV + KI, um Pfeile in Dartscheibe zu finden und Punktzahl auszurechnen
     \end{itemize}
 
-    \item es gibt bereits Systeme, aber die sind nicht robust \cite{deepdarts, dartscore-repo}
+    \item es gibt bereits Systeme, aber die sind nicht robust \cite{deepdarts, dartscore_repo}
 \end{itemize}
 
 \fi

@@ -1,29 +1,169 @@
 
+% ------------------------------------------------------------------------
+5 REFERENCE PAPER
 
 @misc{deepdarts,
-      title={DeepDarts: Modeling Keypoints as Objects for Automatic Scorekeeping in Darts using a Single Camera}, 
-      author={William McNally and Pascale Walters and Kanav Vats and Alexander Wong and John McPhee},
-      year={2021},
-      eprint={2105.09880},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2105.09880}, 
+  title         = {DeepDarts: Modeling Keypoints as Objects for Automatic Scorekeeping in Darts using a Single Camera},
+  author        = {William McNally and Pascale Walters and Kanav Vats and Alexander Wong and John McPhee},
+  year          = {2021},
+  eprint        = {2105.09880},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2105.09880}
 }
 
 @misc{deepdarts-data,
-    doi = {10.21227/05e7-xs69},
-    url = {https://dx.doi.org/10.21227/05e7-xs69},
-    author = {McNally, William},
-    publisher = {IEEE Dataport},
-    title = {DeepDarts Dataset},
-    year = {2021} 
+  doi       = {10.21227/05e7-xs69},
+  url       = {https://dx.doi.org/10.21227/05e7-xs69},
+  author    = {McNally, William},
+  publisher = {IEEE Dataport},
+  title     = {DeepDarts Dataset},
+  year      = {2021}
 }
 
-# dart scoring system
-@misc{dartscore-repo,
-    author = {kawasaki-kento},
-    title = {darts-score-detection},
-    year = {2021},
-    howpublished = {\url{https://github.com/kawasaki-kento/darts-score-detection}},
-    note = {Accessed: 2024-10-16},
+% ------------------------------------------------------------------------
+% OTHER SYSTEMS
+
+% DIY projects ------------------------
+
+@misc{dartscore_repo,
+  author       = {kawasaki-kento},
+  title        = {darts-score-detection},
+  year         = {2021},
+  url          = {https://github.com/kawasaki-kento/darts-score-detection},
+  note         = {Accessed: 2024-10-16},
+  howpublished = {GitHub repository}
+}
+
+@misc{darts_project,
+  author       = {Lars Gudjons},
+  title        = {Darts Project},
+  year         = {2023},
+  url          = {https://github.com/LarsG21/Darts_Project},
+  note         = {Accessed: 2024-10-23},
+  howpublished = {GitHub repository}
+}
+
+@misc{opencv_steel_darts,
+  author       = {Hannes Hoettinger},
+  title        = {opencv-steel-darts},
+  year         = {2017},
+  url          = {https://github.com/hanneshoettinger/opencv-steel-darts},
+  note         = {Accessed: 2024-10-23},
+  howpublished = {GitHub repository}
+}
+
+% Multi-Cam Systems -------------------
+
+@misc{autodarts,
+  author = {Auto Darts},
+  title  = {Auto Darts - Official Website},
+  year   = {2024},
+  url    = {https://autodarts.io},
+  note   = {Accessed: 2024-10-23}
+}
+
+@misc{scoliadarts,
+  author = {SCOLIA Technologies},
+  title  = {Scolia - Official Website},
+  year   = {2024},
+  url    = {https://scoliadarts.com},
+  note   = {Accessed: 2024-10-23}
+}
+
+% ------------------------------------------------------------------------
+% IMPLEMENTATION
+
+@manual{blender,
+  title        = {Blender - a 3D modelling and rendering package},
+  author       = {{Blender Online Community}},
+  organization = {Blender Foundation},
+  address      = {Amsterdam, The Netherlands},
+  year         = {2024},
+  note         = {Version 4.2.1},
+  url          = {http://www.blender.org}
+}
+
+@misc{bpy,
+  title        = {bpy: The Blender Python API},
+  author       = {{Blender Online Community}},
+  organization = {Blender Foundation},
+  year         = {2024},
+  note         = {Version 4.2.0},
+  url          = {https://docs.blender.org/api/current/}
+}
+
+@misc{tensorflow,
+  title  = { {TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
+  url    = {https://www.tensorflow.org/},
+  note   = {Software available from tensorflow.org},
+  author = {
+            Mart\'{i}n~Abadi and
+            Ashish~Agarwal and
+            Paul~Barham and
+            Eugene~Brevdo and
+            Zhifeng~Chen and
+            Craig~Citro and
+            Greg~S.~Corrado and
+            Andy~Davis and
+            Jeffrey~Dean and
+            Matthieu~Devin and
+            Sanjay~Ghemawat and
+            Ian~Goodfellow and
+            Andrew~Harp and
+            Geoffrey~Irving and
+            Michael~Isard and
+            Yangqing Jia and
+            Rafal~Jozefowicz and
+            Lukasz~Kaiser and
+            Manjunath~Kudlur and
+            Josh~Levenberg and
+            Dandelion~Man\'{e} and
+            Rajat~Monga and
+            Sherry~Moore and
+            Derek~Murray and
+            Chris~Olah and
+            Mike~Schuster and
+            Jonathon~Shlens and
+            Benoit~Steiner and
+            Ilya~Sutskever and
+            Kunal~Talwar and
+            Paul~Tucker and
+            Vincent~Vanhoucke and
+            Vijay~Vasudevan and
+            Fernanda~Vi\'{e}gas and
+            Oriol~Vinyals and
+            Pete~Warden and
+            Martin~Wattenberg and
+            Martin~Wicke and
+            Yuan~Yu and
+            Xiaoqiang~Zheng},
+  year   = {2015}
+}
+
+@misc{opencv,
+  title = {OpenCV: Open Source Computer Vision Library},
+  author = {Bradski, Gary and Kaehler, Adrian},
+  url = {https://opencv.org/},
+  year = {2024},
+  note = {Accessed: 2024-10-23}
+}
+
+% ------------------------------------------------------------------------
+% OFFICIAL DARTS RULES
+
+@misc{wdf-darts-rules,
+  author = {World Darts Federation},
+  title  = {Playing and Tournament Rules},
+  year   = {2018},
+  url    = {https://dartswdf.com/storage/uploads/fb05b306-c92c-4f08-b512-affb092a1b3d/2018-02-28_WDF_Playing_and_Tournament_Rules_rev20.pdf},
+  note   = {Accessed: 2024-10-23}
+}
+
+@misc{dra-darts-rules,
+  author = {Darts Regulation Authority},
+  title  = {Rule Book},
+  year   = {2023},
+  url    = {https://www.thedra.co.uk/_files/ugd/20bb2f_fbc16a1efdf34cf9b8d377a5657a4daa.pdf},
+  note   = {Accessed: 2024-10-23}
 }

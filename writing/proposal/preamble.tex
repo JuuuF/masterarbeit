@@ -34,7 +34,7 @@
 \usepackage{pgfgantt}
 
 % Author citation using \citet
-\usepackage{natbib}
+\usepackage[numbers]{natbib}
 
 % Correct quotation marks
 \usepackage{csquotes}
@@ -43,6 +43,10 @@
 % Custom Colors
 \usepackage{xcolor}
 
+% TODO notes
+\newcommand\todo[1]{\textbf{\textcolor{red}{[#1]}}}
+
+
 % -----------------------------------------------
 % commands
 
@@ -50,7 +54,7 @@
 
 % -----------------------------------------------
 
-\newcommand{\bitTitle}{MA-Titel}
+\newcommand{\bitTitle}{Entwicklung eines KI-basierten Single-Camera-Systems für das Scoring von Steeldarts durch die synthetische Erzeugung realistischer Daten}
 \newcommand{\bitAuthor}{Justin Fürstenwerth}
 \newcommand{\bitEmail}{stu{\bf 210298}@mail.uni-kiel.de}
 
@@ -65,13 +69,11 @@
 
 % Set up colors based on the mode
 \ifthenelse{\equal{\mode}{dark}}{
-    % Dark mode settings
-    \definecolor{background}{RGB}{31,31,31} % Dark background
-    \definecolor{foreground}{RGB}{204,204,204} % Light text
-    % Set background and text colors
+    \definecolor{background}{RGB}{31,31,31}
+    \definecolor{foreground}{RGB}{204,204,204}
     \pagecolor{background}
     \color{foreground}
 }{}
 
 % suppress specific incorrect warning
-\renewcommand{\nullfont}{\relax}
+% \renewcommand{\nullfont}{\relax}

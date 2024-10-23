@@ -8,9 +8,9 @@ In diesem Kapitel wird die Methodik dargestellt, die zur Erreichung der gesetzte
 
 Die Datensammlung bildet den ersten zentralen Punkt dieser Arbeit. Die Datengrundlage der Arbeit von McNally et al. weist mehrere verbesserungswürdige Aspekte auf, die durch eine neue Herangehensweise angegangen werden sollen. In dieser Arbeit wird mit zwei unterschiedlichen Arten von Daten gearbeitet: realen Daten und synthetischen Daten.
 
-Der erste Teil der Gesamtdatenmenge umfasst die realen Daten. Hierfür werden Steeldarts-Runden live gespielt, wobei dokumentiert wird, in welchen Feldern die Pfeile landen. Es kommen mehrere verschiedene Handykameras zum Einsatz, um eine möglichst vielfältige und realitätsnahe Datenbasis zu schaffen. Diese realen Daten stellen lediglich einen kleinen Teil der Gesamtdaten dar, sollten jedoch ausreichend groß und divers sein, um Rückschlüsse auf die tatsächliche Performance zu ermöglichen.
+Der erste Teil der Gesamtdatenmenge umfasst die realen Daten. Hierfür werden Steeldarts-Runden live gespielt, wobei dokumentiert wird, in welchen Feldern die Pfeile landen, um fehlerhafte Annotierungen zu unterbinden. Es kommen mehrere verschiedene Handykameras zum Einsatz, um eine möglichst vielfältige und realitätsnahe Datenbasis zu schaffen. Diese realen Daten stellen lediglich einen kleinen Teil der Gesamtdaten dar, sollten jedoch ausreichend groß und divers sein, um Rückschlüsse auf die tatsächliche Performance zu ermöglichen.
 
-Der Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die sysnthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet.
+Der Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit potenziell fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die sysnthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet.
 
 Zur Erstellung der synthetischen Daten werden typische Parameter der Bildaufnahme durch Metadatenanalyse und Online-Recherchen ermittelt und nachgestellt, um eine möglichst realistische Abbildung der zu erwartenden Daten zu erzielen.
 
@@ -24,7 +24,7 @@ Die im Paper eingesetzte Methode ist fehleranfällig und nicht zuverlässig. Dah
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/aligning.png}
-    \caption{Veranschaulichung möglicher Schritte eines Ablaufes zur Entzerrung eines Eingabebildes}
+    \caption{Veranschaulichung möglicher Schritte eines Ablaufes zur Entzerrung einer Dartscheibe}
     \label{img:alignment}
 \end{figure}
 
