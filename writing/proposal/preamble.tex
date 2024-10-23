@@ -6,7 +6,10 @@
 % Deutsche Sprache
 \usepackage[german]{babel}
 
-% Grafiken
+% citation
+\usepackage[numbers]{natbib}
+
+% Graphics
 \usepackage{graphicx}
 
 % SVG
@@ -26,15 +29,8 @@
 }
 \usepackage{cleveref}
 
-% Hacky warnings silencing
-\usepackage{silence}
-\WarningFilter{latex}{Missing character: There is no , in font nullfont!}
-
 % Gantt charts
 \usepackage{pgfgantt}
-
-% Author citation using \citet
-\usepackage[numbers]{natbib}
 
 % Correct quotation marks
 \usepackage{csquotes}
@@ -74,6 +70,3 @@
     \pagecolor{background}
     \color{foreground}
 }{}
-
-% suppress specific incorrect warning
-% \renewcommand{\nullfont}{\relax}
