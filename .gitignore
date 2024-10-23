@@ -32,3 +32,6 @@ writing/notes/*
 
 # GIMP
 *.xcf
+
+# VSCode workspaces
+workspaces/*
