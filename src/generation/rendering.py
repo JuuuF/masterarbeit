@@ -1,6 +1,7 @@
+import os
 import bpy
 import numpy as np
-import bmesh
+import random
 from mathutils import Vector
 
 # -----------------------------------------------
@@ -8,23 +9,26 @@ from mathutils import Vector
 
 BLEND_FILE = "data/generation/darts.blend"
 OUT_FILE = "dump/test.png"
+OUT_DIR = "data/generation/out/"
+HDRI_DIR = "data/generation/hdri/"
 
 # -----------------------------------------------
 # Load and setup
-# Read in file
 bpy.ops.wm.open_mainfile(filepath=BLEND_FILE)
+
+# Set render engine
 bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
 bpy.context.scene.render.engine = "CYCLES"
+bpy.context.scene.cycles.samples = 1
 
+# Enable GPU rendering
 bpy.context.preferences.addons["cycles"].preferences.compute_device_type = "CUDA"
 bpy.context.scene.cycles.device = "GPU"
-bpy.context.preferences.addons["cycles"].preferences.get_devices()
 for d in bpy.context.preferences.addons["cycles"].preferences.devices:
     if "4060" in d["name"]:
         d["use"] = 1
     else:
         d["use"] = 0
-bpy.context.scene.cycles.samples = 1
 
 # Set output path
 bpy.context.scene.render.filepath = OUT_FILE
@@ -240,6 +244,41 @@ def place_camera():
     cam.rotation_euler = cam_rot
 
 
+def random_env_texture():
+    world = bpy.data.worlds["World"]
+
+    bpy.context.scene.world = world
+
+    nodes = world.node_tree.nodes
+    for env_tex_node in nodes:
+        if env_tex_node.name == "Environment Texture":
+            break
+    else:
+        raise ValueError("No Environment Texture node in world node tree.")
+
+    hdri_paths = [
+        os.path.join(HDRI_DIR, f) for f in os.listdir(HDRI_DIR) if f.endswith(".exr")
+    ]
+
+    # Return if there are no textures
+    if len(hdri_paths) == 0:
+        return
+
+    hdri_path = random.choice(hdri_paths)
+    hdri = bpy.data.images.load(hdri_path)
+    env_tex_node.image = hdri
+
+    # Random image strength
+    for bg_node in nodes:
+        if bg_node.name == "Background":
+            break
+    else:
+        # No Background node
+        return
+
+    bg_node.inputs["Strength"].default_value = np.random.uniform(0.1, 0.8)
+
+
 def render_board_mask():
     def clear_tree(tree):
         for node in tree.nodes:
@@ -297,14 +336,20 @@ scores, total_score = calculate_dart_score()
 # Place Camera
 place_camera()
 
-bpy.ops.render.render(write_still=True)
+# Randomize HDRI
+random_env_texture()
 
+# Render
+bpy.ops.render.render(write_still=True)
 render_board_mask()
 
-import os
-id = max(int(f.split(".")[0]) for f in os.listdir("generated/") if not "mask" in f) + 1
-print(id)
-os.rename("dump/test.png", f"generated/{id:04d}.png")
-os.rename("dump/mask.png", f"generated/{id:04d}_mask.png")
-
 print(scores, total_score)
+
+exit()
+
+# -------------------------------
+# move to out directory
+id = max(int(f.split(".")[0]) for f in os.listdir(OUT_DIR) if not "mask" in f) + 1
+print(id)
+os.rename("dump/test.png", os.path.join(OUT_DIR, f"{id:04d}.png"))
+os.rename("dump/mask.png", os.path.join(OUT_DIR, f"{id:04d}_mask.png"))
