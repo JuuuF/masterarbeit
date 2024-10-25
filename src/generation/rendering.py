@@ -181,6 +181,60 @@ class ObjectPlacement:
             )
             return coordinates[coordinate_idx]
 
+        def displace_intersection(dx, dy, dz):
+            dart_r = np.sqrt(dx**2 + dz**2)
+            dart_theta = np.arctan2(dz, dx)
+            tip_radius = 0.00_2 / 2  # 2mm tip diameter
+            bar_radius = 0.00_1 / 2  # 0.1cm bar thickness
+
+            # Check for radial intersection
+            board_radii = SceneUtils.get_board_radii()
+            for board_r in board_radii:
+                # Check inside
+                if board_r - bar_radius > dart_r + tip_radius:
+                    continue
+
+                # Check outside
+                if board_r + bar_radius < dart_r - tip_radius:
+                    continue
+
+                if board_r > dart_r:
+                    # Move dart inside
+                    dart_r = board_r - bar_radius - tip_radius
+                else:
+                    # Move dart outside
+                    dart_r = board_r + bar_radius + tip_radius
+                break
+
+            # Check for line intersection
+            def dart_bar_distance(dart_r, dart_theta):
+                bar_theta_mod = (np.pi * 2) / 40
+                dart_theta_mod = dart_theta % (np.pi / 10)
+
+                dart_x = np.cos(dart_theta_mod) * dart_r
+                dart_y = np.sin(dart_theta_mod) * dart_r
+
+                bar_x = np.cos(bar_theta_mod) * dart_r
+                bar_y = np.sin(bar_theta_mod) * dart_r
+
+                distance = np.sqrt((dart_x - bar_x) ** 2 + (dart_y - bar_y) ** 2)
+                return distance
+
+            if board_radii[1] < dart_r < board_radii[5] + 0.01:
+                before = dart_theta
+                dist = dart_bar_distance(dart_r, dart_theta)
+                # Move it a little and remove
+                for i in range(10):
+                    if dart_bar_distance(dart_r, dart_theta) < bar_radius + tip_radius:
+                        dart_theta += (np.pi * 2) / (20 * 10)
+                    else:
+                        break
+
+            dx = dart_r * np.cos(dart_theta)
+            dz = dart_r * np.sin(dart_theta)
+
+            return dx, dy, dz
+
         for i in range(1, 4):
             dart = SceneUtils.get_object(f"Dart {i}")
 
@@ -191,6 +245,7 @@ class ObjectPlacement:
 
             # Location
             dx, dy, dz = get_weighted_dart_displacement()
+            dx, dy, dz = displace_intersection(dx, dy, dz)
             dart.location = (
                 board_center[0] + dx,
                 board_center[1] + dy,
