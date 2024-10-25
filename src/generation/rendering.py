@@ -279,47 +279,134 @@ def random_env_texture():
     bg_node.inputs["Strength"].default_value = np.random.uniform(0.1, 0.8)
 
 
-def render_board_mask():
-    def clear_tree(tree):
-        for node in tree.nodes:
-            tree.nodes.remove(node)
+def render_board_mask(mask_obj_name: str = "Darts Board Area"):
 
-    # Hide all objects
-    for obj in bpy.data.objects:
-        obj.hide_render = True
+    def prepare_objects() -> dict:
+        state = {}
+        for obj in bpy.data.objects:
+            state[obj.name] = obj.hide_render
+            obj.hide_render = True
+        return state
 
-    board_area = get_object("Darts Board Area")
-    board_area.hide_render = False
+    def restore_objects(state: dict):
+        for obj in bpy.data.objects:
+            obj.hide_render = state[obj.name]
 
-    # clear environment texture
-    node_tree = bpy.context.scene.world.node_tree
-    if node_tree:
-        for node in node_tree.nodes:
-            if node.type == "TEX_ENVIRONMENT":
-                node_tree.nodes.remove(node)
+    def set_env_texture(value: float = 0) -> float:
+        # Get node tree
+        node_tree = bpy.context.scene.world.node_tree
+        if not node_tree:
+            raise RuntimeError(
+                "No world node tree containing environment texture to clear."
+            )
+
+        # Get Background node
+        for bg_node in node_tree.nodes:
+            if bg_node.type == "BACKGROUND":
+                break
+        else:
+            raise RuntimeError(
+                "No background node in world node tree. Could not remove environment texture."
+            )
+
+        # Set state
+        env_state = bg_node.inputs["Strength"].default_value
+        bg_node.inputs["Strength"].default_value = 0
+
+        return env_state
+
+    def prepare_compositor() -> dict:
+        state = {}
+
+        # Get basic objects
+        tree = bpy.context.scene.node_tree
+        render_layers_node = tree.nodes.get("Render Layers")
+        composite_node = tree.nodes.get("Composite")
+        if not render_layers_node or not composite_node:
+            raise RuntimeError(
+                "No Render Layers node or Composite node in Compositor node tree"
+            )
+
+        # Get original compositor node input
+        image_input = composite_node.inputs.get("Image")
+        for link in tree.links:
+            if link.to_node == composite_node and link.to_socket == image_input:
+                break
+        else:
+            raise RuntimeError(
+                "No link to Composite node's 'Image' input socket in Compositor node tree."
+            )
+        state["link_from_socket"] = link.from_socket
+        tree.links.remove(link)
+
+        # Replace with new link
+        alpha_output = render_layers_node.outputs.get("Alpha")
+        tree.links.new(alpha_output, image_input)
+
+        return state
+
+    def restore_compositor(state: dict):
+        # Get basic objects
+        tree = bpy.context.scene.node_tree
+        render_layers_node = tree.nodes.get("Render Layers")
+        composite_node = tree.nodes.get("Composite")
+        if not render_layers_node or not composite_node:
+            raise RuntimeError(
+                "No Render Layers node or Composite node in Compositor node tree"
+            )
+
+        # Remove new link
+        image_input = composite_node.inputs.get("Image")
+        for link in tree.links:
+            if link.from_node == render_layers_node and link.to_node == composite_node:
+                break
+        else:
+            raise RuntimeError("New Link from Render Layers node to Composite node not found in Compositor node tree.")
+        tree.links.remove(link)
+
+        # Restore old link
+        tree.links.new(state["link_from_socket"], image_input)
+
+    def prepare_settings() -> dict:
+        state = {}
+        scene = bpy.context.scene
+
+        state["file_format"] = scene.render.image_settings.file_format
+        scene.render.image_settings.file_format = "PNG"
+
+        state["filepath"] = scene.render.filepath
+        scene.render.filepath = f"dump/mask.png"
+
+        state["engine"] = bpy.context.scene.render.engine
+        bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
+
+        return state
+
+    def restore_settings(state: dict):
+        scene = bpy.context.scene
+
+        scene.render.image_settings.file_format = state["file_format"]
+        scene.render.filepath = state["filepath"]
+        bpy.context.scene.render.engine = state["engine"]
+
+    # Prepare state
+    obj_state = prepare_objects()
+    get_object(mask_obj_name).hide_render = False
     bpy.context.scene.render.film_transparent = True
-
-    # Clear compositor tree
-    tree = bpy.context.scene.node_tree
-    clear_tree(tree)
-
-    # Create render layers
-    render_layer = tree.nodes.new("CompositorNodeRLayers")
-
-    composite_node = tree.nodes.new("CompositorNodeComposite")
-
-    # Link Nodes
-    links = tree.links
-    links.new(render_layer.outputs["Alpha"], composite_node.inputs["Image"])
-
-    # Set render settings
-    scene = bpy.context.scene
-    scene.render.image_settings.file_format = "PNG"
-    scene.render.filepath = f"dump/mask.png"
+    env_state = set_env_texture()
+    compositor_state = prepare_compositor()
+    settings_state = prepare_settings()
 
     # Render the scene
-    bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
     bpy.ops.render.render(write_still=True)
+
+    # Restore state
+    restore_settings(settings_state)
+    restore_compositor(compositor_state)
+    set_env_texture(env_state)
+    bpy.context.scene.render.film_transparent = False
+    restore_objects(obj_state)
+    exit()
 
 
 # Get Scene Infos
@@ -340,7 +427,7 @@ place_camera()
 random_env_texture()
 
 # Render
-bpy.ops.render.render(write_still=True)
+# bpy.ops.render.render(write_still=True)
 render_board_mask()
 
 print(scores, total_score)
