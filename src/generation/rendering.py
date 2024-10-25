@@ -38,7 +38,6 @@ bpy.context.scene.render.filepath = OUT_FILE
 
 
 class SceneUtils:
-
     def get_geometry_nodes(obj):
         for modifier in obj.modifiers:
             if modifier.type == "NODES":
@@ -61,10 +60,10 @@ class SceneUtils:
 
         radii = SceneUtils.get_board_radii()
         numbers = [6,13,4,18,1,20,5,12,9,14,11,8,16,7,19,3,17,2,15,10]  # fmt: skip
+        board = SceneUtils.get_object("Darts Board")
 
         def get_dart_score(i):
             dart = SceneUtils.get_object(f"Dart {i}")
-            board = SceneUtils.get_object("Darts Board")
             x = dart.location[0] - board.location[0]
             y = dart.location[2] - board.location[2]
 
