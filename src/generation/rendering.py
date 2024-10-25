@@ -279,7 +279,7 @@ def random_env_texture():
     bg_node.inputs["Strength"].default_value = np.random.uniform(0.1, 0.8)
 
 
-def render_board_mask(mask_obj_name: str = "Darts Board Area"):
+def render_masks(mask_obj_names: str | list[str]):
 
     def prepare_objects() -> dict:
         state = {}
@@ -361,7 +361,9 @@ def render_board_mask(mask_obj_name: str = "Darts Board Area"):
             if link.from_node == render_layers_node and link.to_node == composite_node:
                 break
         else:
-            raise RuntimeError("New Link from Render Layers node to Composite node not found in Compositor node tree.")
+            raise RuntimeError(
+                "New Link from Render Layers node to Composite node not found in Compositor node tree."
+            )
         tree.links.remove(link)
 
         # Restore old link
@@ -389,16 +391,29 @@ def render_board_mask(mask_obj_name: str = "Darts Board Area"):
         scene.render.filepath = state["filepath"]
         bpy.context.scene.render.engine = state["engine"]
 
+    if type(mask_obj_names) == str:
+        mask_obj_names = [mask_obj_names]
+
     # Prepare state
     obj_state = prepare_objects()
-    get_object(mask_obj_name).hide_render = False
     bpy.context.scene.render.film_transparent = True
     env_state = set_env_texture()
     compositor_state = prepare_compositor()
     settings_state = prepare_settings()
 
     # Render the scene
-    bpy.ops.render.render(write_still=True)
+    for mask_obj_name in mask_obj_names:
+        # Prepare mask object
+        mask_obj = get_object(mask_obj_name)
+        mask_obj.hide_render = False
+
+        # Render
+        out_name = f"mask_{mask_obj_name.replace(' ', '_')}.png"
+        bpy.context.scene.render.filepath = os.path.join("dump", out_name)
+        bpy.ops.render.render(write_still=True)
+
+        # Restore mask object
+        mask_obj.hide_render = True
 
     # Restore state
     restore_settings(settings_state)
@@ -406,7 +421,6 @@ def render_board_mask(mask_obj_name: str = "Darts Board Area"):
     set_env_texture(env_state)
     bpy.context.scene.render.film_transparent = False
     restore_objects(obj_state)
-    exit()
 
 
 # Get Scene Infos
@@ -427,8 +441,8 @@ place_camera()
 random_env_texture()
 
 # Render
-# bpy.ops.render.render(write_still=True)
-render_board_mask()
+bpy.ops.render.render(write_still=True)
+render_masks(["Darts Board Area", "Dart 1", "Dart 2", "Dart 3"])
 
 print(scores, total_score)
 
