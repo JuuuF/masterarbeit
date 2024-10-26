@@ -4,23 +4,26 @@ import numpy as np
 img_paths = [
     "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
     "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
+    "data/generation/out/0001.png",
+    "data/generation/out/0023.png",
 ]
 
 
-def show_imgs(*imgs: list[np.ndarray]) -> None:
-    for i, img in enumerate(imgs):
-        cv2.imshow(f"img_{i}", img)
-    key = cv2.waitKey()
-    cv2.destroyAllWindows()
-    if key == ord("q"):
-        exit()
+class Utils:
 
+    def show_imgs(*imgs: list[np.ndarray]) -> None:
+        for i, img in enumerate(imgs):
+            cv2.imshow(f"img_{i}", img)
+        key = cv2.waitKey()
+        cv2.destroyAllWindows()
+        if key == ord("q"):
+            exit()
 
-def load_img(filepath: str) -> np.ndarray:
-    img = cv2.imread(filepath)
-    while img.shape[0] > 1000 or img.shape[1] > 1000:
-        img = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2))
-    return img
+    def load_img(filepath: str) -> np.ndarray:
+        img = cv2.imread(filepath)
+        while img.shape[0] > 1000 or img.shape[1] > 1000:
+            img = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2))
+        return img
 
 
 def edge_detect(img: np.ndarray) -> np.ndarray:
@@ -188,9 +191,7 @@ def find_lines(edge_img):
 
 # -----------------------------------------------
 
-imgs = [load_img(f) for f in img_paths]
-
-imgs = [test(img) for img in imgs]
+imgs = [Utils.load_img(f) for f in img_paths]
 
 # edges = [edge_detect(img) for img in imgs]
 # lines = [find_lines(e) for e in edges]
