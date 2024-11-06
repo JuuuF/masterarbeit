@@ -3,8 +3,12 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}     % Use T1 font encoding
 
-% Deutsche Sprache
-\usepackage[german]{babel}
+% SPRICH DEUTSCH, DU *********
+\usepackage[ngerman]{babel}
+
+% Worttrennungen verringern
+\tolerance=500
+\hyphenpenalty=1000
 
 % citation
 \usepackage[numbers]{natbib}
@@ -23,7 +27,7 @@
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
-    linkcolor=gray,
+    linkcolor=gray!80!black,
     urlcolor=blue,
     citecolor=green!50!black,
 }
@@ -50,7 +54,8 @@
 
 % -----------------------------------------------
 
-\newcommand{\bitTitle}{Entwicklung eines KI-basierten Single-Camera-Systems für das Scoring von Steeldarts durch die synthetische Erzeugung realistischer Daten}
+% \newcommand{\bitTitle}{Entwicklung eines KI-basierten Single-Camera-Systems für das Scoring von Steeldarts durch die synthetische Erzeugung realistischer Daten}
+\newcommand{\bitTitle}{Nutzung von realitätsnahen, synthetisch erzeugten Daten zur Verbesserung des KI-gestützten Scorings von Steeldarts in einem Single-Camera-System}
 \newcommand{\bitAuthor}{Justin Fürstenwerth}
 \newcommand{\bitEmail}{stu{\bf 210298}@mail.uni-kiel.de}
 

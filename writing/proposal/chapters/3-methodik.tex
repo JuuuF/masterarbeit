@@ -1,7 +1,7 @@
 \section{Methodik}
 \label{sec:methodik}
 
-In diesem Kapitel wird die Methodik dargestellt, die zur Erreichung der gesetzten Ziele eingesetzt wird. Die Arbeit gliedert sich in verschiedene Teilbereiche, die im Folgenden isoliert betrachtet werden.
+In diesem Kapitel wird die Methodik dargestellt, die zur Erreichung der genannten Ziele eingesetzt wird. Die Arbeit gliedert sich in verschiedene Teilbereiche, die im Folgenden isoliert betrachtet werden.
 
 \subsection{Datensammlung}
 \label{sec:methodik:datensammlung}
@@ -10,21 +10,21 @@ Die Datensammlung bildet den ersten zentralen Punkt dieser Arbeit. Die Datengrun
 
 Der erste Teil der Gesamtdatenmenge umfasst die realen Daten. Hierfür werden Steeldarts-Runden live gespielt, wobei dokumentiert wird, in welchen Feldern die Pfeile landen, um fehlerhafte Annotierungen zu unterbinden. Es kommen mehrere verschiedene Handykameras zum Einsatz, um eine möglichst vielfältige und realitätsnahe Datenbasis zu schaffen. Diese realen Daten stellen lediglich einen kleinen Teil der Gesamtdaten dar, sollten jedoch ausreichend groß und divers sein, um Rückschlüsse auf die tatsächliche Performance zu ermöglichen.
 
-Der Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit potenziell fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die sysnthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet.
+Der Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit potenziell fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die sysnthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet. Diese Daten umfassen verschiedene Szenarien wie eine unterschiedliche Antahl an Pfeilen, unscharfe Aufnahmen oder Verdeckungen von Pfeilspitzen.
 
 Zur Erstellung der synthetischen Daten werden typische Parameter der Bildaufnahme durch Metadatenanalyse und Online-Recherchen ermittelt und nachgestellt, um eine möglichst realistische Abbildung der zu erwartenden Daten zu erzielen.
 
 \subsection{Dartscheiben-Identifizierung}
 \label{sec:methodik:dartscheibe}
 
-Eine Methode, die im Referenzpaper angewandt wurde und in dieser Arbeit übernommen werden soll, ist die Entzerrung der Eingabebilder in Bezug auf die Dartscheibe. Es muss davon ausgegangen werden, dass Aufnahmen nicht frontal, sondern in einem Winkel $\neq90^\circ$ zur Dartscheibe gemacht werden. Daher ist eine Entzerrung der Bilder erforderlich, um die Feldwerte korrekt anhand der Pfeilpositionen einordnen zu können.
+Eine Methode, die im Referenzpaper angewandt wurde und in dieser Arbeit übernommen werden soll, ist die Entzerrung der Eingabebilder in Bezug auf die Dartscheibe. Es kann nicht davon ausgegangen werden, dass Aufnahmen frontal zur Dartscheibe gemacht werden, sondern in einem Winkel $\neq90^\circ$. Daher ist eine Entzerrung der Bilder erforderlich, um die Feldwerte korrekt anhand der Pfeilpositionen einordnen zu können.
 
 Die im Paper eingesetzte Methode ist fehleranfällig und nicht zuverlässig. Daher wird auf Algorithmen der Computer Vision zurückgegriffen, um eine möglichst robuste Erkennung der Dartscheibe zu gewährleisten und darauf aufbauend eine Entzerrung des Bildes durchzuführen. Hierbei stehen verschiedene Techniken wie Farbraum-Transformation, Thresholding, Filterung sowie Blob- und Keypoint-Detektion zur Verfügung. Darüber hinaus können fortgeschrittene Verarbeitungsschritte wie Hough-Transformationen und Ellipsenerkennung eingesetzt werden. Es ist ebenfalls denkbar, CNN-Architekturen zu integrieren, um die Keypoint-Detektion zu verbessern.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/aligning.png}
-    \caption{Veranschaulichung möglicher Schritte eines Ablaufes zur Entzerrung einer Dartscheibe}
+    \caption{Veranschaulichung möglicher Schritte eines Ablaufes zur Entzerrung einer Dartscheibe: Eingabebild (links), Identifizierung relevanter Punkte und Formen (mitte), Entzerrte Dartscheibe (rechts).}
     \label{img:alignment}
 \end{figure}
 
@@ -34,6 +34,8 @@ Ein Beispiel für den Ablauf einer Entzerrung eines Bildes ist in \autoref{img:a
 \label{sec:methodik:ki}
 
 Wie im Referenzpaper wird die Identifizierung und Lokalisierung der Dartpfeile auf neuronalen Netzen basieren. Dieser Aspekt ist hinsichtlich des Arbeitsaufwands der größte Teil dieser Arbeit. Es wird auf Transfer Learning von Objekterkennungs-KIs zurückgegriffen, um auf aktuellen, leistungsstarken KIs aufzubauen. Zur Steuerung des Trainings werden eigene Methoden entwickelt, die teilweise auf der Keypoint-Detektion von McNally et al. basieren. Bei der Implementierung dieser KI-Methoden kommen aktuelle KI-Frameworks zum Einsatz.
+
+Das Training der KI erfolgt dabei in mehreren Schritten. Der erste Schritt ist das Training auf Daten, die lediglich einzelne Pfeile und keine Überdeckungen relevanter Bereiche zeigen. Im weiteren Verlauf des Training werden Daten mit mehreren Pfeilen und möglichen Überdeckungen mit eingebunden, sodass die Komplexität der präsentierten Daten fortlaufend komplexer wird. Durch diese schrittweise Einführung der Daten können Schwachstellen des Systems analytisch identifiziert und angegangen werden.
 
 \subsection{System-Statistiken}
 \label{sec:methodik:statistiken}
