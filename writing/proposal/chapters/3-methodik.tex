@@ -10,7 +10,7 @@ Die Datensammlung bildet den ersten zentralen Punkt dieser Arbeit. Die Datengrun
 
 Der erste Teil der Gesamtdatenmenge umfasst die realen Daten. Hierfür werden Steeldarts-Runden live gespielt, wobei dokumentiert wird, in welchen Feldern die Pfeile landen, um fehlerhafte Annotierungen zu unterbinden. Es kommen mehrere verschiedene Handykameras zum Einsatz, um eine möglichst vielfältige und realitätsnahe Datenbasis zu schaffen. Diese realen Daten stellen lediglich einen kleinen Teil der Gesamtdaten dar, sollten jedoch ausreichend groß und divers sein, um Rückschlüsse auf die tatsächliche Performance zu ermöglichen.
 
-Der Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit potenziell fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die sysnthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet. Diese Daten umfassen verschiedene Szenarien wie eine unterschiedliche Antahl an Pfeilen, unscharfe Aufnahmen oder Verdeckungen von Pfeilspitzen.
+Der Hauptanteil der Datengrundlage dieser Arbeit besteht nicht aus manuell annotierten und damit potenziell fehleranfälligen Daten, sondern wird mittels 3D-Software generiert. Die synthetischen Daten werden unter Verwendung von Ray Tracing und fotorealistischen Texturen erstellt. Dieser Teil der Daten wird den Großteil der Gesamtdatenmenge ausmachen, da er automatisiert erstellt und korrekt annotiert werden kann, was eine solide Datengrundlage für das System bietet. Diese Daten umfassen verschiedene Szenarien wie eine unterschiedliche Anzahl an Pfeilen, unscharfe Aufnahmen oder Verdeckungen von Pfeilspitzen.
 
 Zur Erstellung der synthetischen Daten werden typische Parameter der Bildaufnahme durch Metadatenanalyse und Online-Recherchen ermittelt und nachgestellt, um eine möglichst realistische Abbildung der zu erwartenden Daten zu erzielen.
 
@@ -24,7 +24,7 @@ Die im Paper eingesetzte Methode ist fehleranfällig und nicht zuverlässig. Dah
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/aligning.png}
-    \caption{Veranschaulichung möglicher Schritte eines Ablaufes zur Entzerrung einer Dartscheibe: Eingabebild (links), Identifizierung relevanter Punkte und Formen (mitte), Entzerrte Dartscheibe (rechts).}
+    \caption{Veranschaulichung möglicher Schritte eines Ablaufes zur Entzerrung einer Dartscheibe: Eingabebild (links), Identifizierung relevanter Punkte und Formen (Mitte), Entzerrte Dartscheibe (rechts).}
     \label{img:alignment}
 \end{figure}
 
@@ -35,12 +35,12 @@ Ein Beispiel für den Ablauf einer Entzerrung eines Bildes ist in \autoref{img:a
 
 Wie im Referenzpaper wird die Identifizierung und Lokalisierung der Dartpfeile auf neuronalen Netzen basieren. Dieser Aspekt ist hinsichtlich des Arbeitsaufwands der größte Teil dieser Arbeit. Es wird auf Transfer Learning von Objekterkennungs-KIs zurückgegriffen, um auf aktuellen, leistungsstarken KIs aufzubauen. Zur Steuerung des Trainings werden eigene Methoden entwickelt, die teilweise auf der Keypoint-Detektion von McNally et al. basieren. Bei der Implementierung dieser KI-Methoden kommen aktuelle KI-Frameworks zum Einsatz.
 
-Das Training der KI erfolgt dabei in mehreren Schritten. Der erste Schritt ist das Training auf Daten, die lediglich einzelne Pfeile und keine Überdeckungen relevanter Bereiche zeigen. Im weiteren Verlauf des Training werden Daten mit mehreren Pfeilen und möglichen Überdeckungen mit eingebunden, sodass die Komplexität der präsentierten Daten fortlaufend komplexer wird. Durch diese schrittweise Einführung der Daten können Schwachstellen des Systems analytisch identifiziert und angegangen werden.
+Das Training der KI erfolgt dabei in mehreren Schritten. Der erste Schritt ist das Training auf Daten, die lediglich einzelne Pfeile und keine Überdeckungen relevanter Bereiche zeigen. Im weiteren Verlauf des Trainings werden Daten mit mehreren Pfeilen und möglichen Überdeckungen mit eingebunden, sodass die Komplexität der präsentierten Daten fortlaufend komplexer wird. Durch diese schrittweise Einführung der Daten können Schwachstellen des Systems analytisch identifiziert und angegangen werden.
 
 \subsection{System-Statistiken}
 \label{sec:methodik:statistiken}
 
-Um einen Überblick über die Performance des Systems zu erhalten, werden im Verlauf der Arbeit Statistiken erstellt, die eine umfangreiche Auswertung des Systems ermöglichen. Diese Statistiken beziehen sich auf die Trefferquote bestimmter Felder und übernehmen Metriken aus dem Referenzpaper, um einen objektiven Vergleich der unterschiedlichen Herangehensweisen zu gewährleisten. Des Weiteren werden Statistiken über die Art des Feldes - ob einfach, Double oder Triple - sowie Feldwerte ohne Vervielfältigungen, Genauigkeit der Vorhersagen in Anhängigkeit von den Pfeilabständen auf dem Board oder das Verhalten des Systems bei Änderungen des Kamerawinkels erhoben. Der genaue Umfang der Statistiken wird im Verlauf der Arbeit in Bezug auf Aussagekraft und Umsetzbarkeit ermittelt.
+Um einen Überblick über die Performance des Systems zu erhalten, werden im Verlauf der Arbeit Statistiken erstellt, die eine umfangreiche Auswertung des Systems ermöglichen. Diese Statistiken beziehen sich auf die Trefferquote bestimmter Felder und übernehmen Metriken aus dem Referenzpaper, um einen objektiven Vergleich der unterschiedlichen Herangehensweisen zu gewährleisten. Des Weiteren werden Statistiken über die Art des Feldes -- ob einfach, Double oder Triple -- sowie Feldwerte ohne Vervielfältigungen, Genauigkeit der Vorhersagen in Anhängigkeit von den Pfeilabständen auf dem Board oder das Verhalten des Systems bei Änderungen des Kamerawinkels erhoben. Der genaue Umfang der Statistiken wird im Verlauf der Arbeit in Bezug auf Aussagekraft und Umsetzbarkeit ermittelt.
 
 \iffalse
 \begin{itemize}
