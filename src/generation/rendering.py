@@ -139,6 +139,8 @@ def random_env_texture():
 
 class ObjectPlacement:
 
+    min_dart_dist = 0.01
+
     def place_darts():
 
         def get_random_dart_rotation():
@@ -241,6 +243,7 @@ class ObjectPlacement:
             # Randomly skip dart
             if i > 1 and True and np.random.random() < 1 / 6:
                 dart.location = (0, 0, 0)
+                dart.hide_render = True
                 continue
 
             # Location
@@ -251,6 +254,17 @@ class ObjectPlacement:
                 board_center[1] + dy,
                 board_center[2] + dz,
             )
+
+            # Check against other darts
+            for j in range(1, i):
+                other_dart = SceneUtils.get_object(f"Dart {j}")
+                dist = (dart.location - other_dart.location).length
+                # If they are too close, remove this dart
+                print(dist)
+                if dist < ObjectPlacement.min_dart_dist:
+                    dart.location = (0, 0, 0)
+                    dart.hide_render = True
+                    break
 
             # Rotation
             drx, dry, drz = get_position_based_dart_rotation(dx, dz)
