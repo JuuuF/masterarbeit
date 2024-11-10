@@ -165,7 +165,7 @@ class ObjectPlacement:
             dz = r * np.sin(theta)
             return dx, dy, dz
 
-        def get_weighted_dart_displacement():
+        def get_weighted_dart_displacement() -> tuple[float, float]:
             weight_map_obj = SceneUtils.get_object("Darts Weights")
             vertex_group = weight_map_obj.vertex_groups[0]
 
@@ -181,9 +181,13 @@ class ObjectPlacement:
                 # replace=True,
                 p=normalized_weights,
             )
-            return coordinates[coordinate_idx]
+            dx, _, dz = coordinates[coordinate_idx]
+            return dx, dz
 
-        def displace_intersection(dx, dy, dz):
+        def displace_intersection(dx, dz) -> tuple[float, float]:
+            """
+            If the darts intersect the dividing bars, move them a little.
+            """
             dart_r = np.sqrt(dx**2 + dz**2)
             dart_theta = np.arctan2(dz, dx)
             tip_radius = 0.00_2 / 2  # 2mm tip diameter
@@ -235,7 +239,7 @@ class ObjectPlacement:
             dx = dart_r * np.cos(dart_theta)
             dz = dart_r * np.sin(dart_theta)
 
-            return dx, dy, dz
+            return dx, dz
 
         for i in range(1, 4):
             dart = SceneUtils.get_object(f"Dart {i}")
@@ -247,8 +251,9 @@ class ObjectPlacement:
                 continue
 
             # Location
-            dx, dy, dz = get_weighted_dart_displacement()
-            dx, dy, dz = displace_intersection(dx, dy, dz)
+            dx, dz = get_weighted_dart_displacement()
+            dx, dz = displace_intersection(dx, dz)
+            dy = 0
             dart.location = (
                 board_center[0] + dx,
                 board_center[1] + dy,
