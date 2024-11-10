@@ -36,3 +36,6 @@ private/*
 
 # VSCode workspaces
 workspaces/*
+
+# Pycache
+*__pycache__
