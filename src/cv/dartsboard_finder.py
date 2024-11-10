@@ -1,9 +1,12 @@
 import os
+import re
 import cv2
 import numpy as np
+import warnings
 import tensorflow as tf
 from rich import print
 from tensorflow.keras import layers
+import tensorflow_io as tfio
 
 IMG_SIZE = 512
 
@@ -172,43 +175,50 @@ class Data:
             return image, label
 
     def read_img(filepath):
-        img = cv2.imread(filepath)
+        image = tf.io.read_file(filepath)
+        image = tf.image.decode_image(image, channels=3)
+        image = tf.image.resize_with_pad(image, Data.img_size, Data.img_size)
+        return image
 
-        # Make img square
-        h, w = img.shape[:2]
-        if h > w:
-            padding = (h - w) // 2
-            padded_img = np.pad(
-                img, ((0, 0), (padding, padding), (0, 0)), mode="constant"
-            )
-        elif w > h:
-            padding = (w - h) // 2
-            padded_img = np.pad(
-                img, ((padding, padding), (0, 0), (0, 0)), mode="constant"
-            )
-        else:
-            padded_img = img
-
-        # Resize img
-        resized_img = cv2.resize(
-            padded_img, (Data.img_size, Data.img_size), interpolation=cv2.INTER_LINEAR
-        )
-
-        return resized_img
+    def convert_image_color(img):
+        # print(img.shape, img.dtype, np.min(img), np.max(img))
+        img_int = tf.image.convert_image_dtype(img, tf.uint8)
+        hsv = tfio.experimental.color.rgb_to_hsv(img)[:, :, 1:2]  # 1
+        lab = tfio.experimental.color.rgb_to_lab(img / 255)[:, :, 1:3]  # 1 2
+        ydd = tfio.experimental.color.rgb_to_ydbdr(img)[:, :, 1:3]  # 1 2
+        yuv = tfio.experimental.color.rgb_to_yuv(img)[:, :, 1:3]  # 1 2
+        print("hsv", np.min(hsv[:, :, 0]), np.max(hsv[:, :, 0]))
+        print("lab_0", np.min(lab[:, :, 0]), np.max(lab[:, :, 0]))
+        print("lab_1", np.min(lab[:, :, 1]), np.max(lab[:, :, 1]))
+        print("ydd_0", np.min(ydd[:, :, 0]), np.max(ydd[:, :, 0]))
+        print("ydd_1", np.min(ydd[:, :, 1]), np.max(ydd[:, :, 1]))
+        print("yuv_0", np.min(yuv[:, :, 0]), np.max(yuv[:, :, 0]))
+        print("yuv_1", np.min(yuv[:, :, 1]), np.max(yuv[:, :, 1]))
+        img = tf.concat([hsv, lab, ydd, yuv], axis=-1)
+        return img
 
     @staticmethod
-    def load_image_and_mask(filepath):
+    def load_image_and_mask(filepath: bytes | str):
+        # Convert filepath to string
         if type(filepath) == bytes:
             filepath = filepath.decode("utf-8")
-        img = Data.read_img(filepath)
-        img = img.astype(np.float32) / 255
-        mask_path = filepath.replace(".png", "_mask.png")  # Assuming mask filenames
+
+        # Read input image
+        img = Data.read_img(filepath)  # (y, x, 3) 0..255
+        img_transformed = Data.convert_image_color(img)
+
+        mask_path = filepath.replace(".png", "_mask.png")
         mask = Data.read_img(mask_path)
-        ellipse_params = Utils.find_ellipse_params(mask)
-        return tf.cast(img, tf.float32), tf.cast(ellipse_params, tf.float32)
+
+        print(np.max(img_transformed), np.max(mask))
+
+        return img_transformed, mask
+
+        # ellipse_params = Utils.find_ellipse_params(mask)
+        # return tf.cast(img, tf.float32), tf.cast(ellipse_params, tf.float32)
 
     @staticmethod
-    def get_ds(data_dir="generated/", augment: bool = True):
+    def get_ds(data_dir="data/generation/out/", augment: bool = True):
         image_paths = [
             os.path.join(data_dir, f) for f in os.listdir(data_dir) if not "mask" in f
         ]
@@ -222,24 +232,26 @@ class Data:
             ),
             num_parallel_calls=tf.data.AUTOTUNE,
         )
-        ds = ds.map(
-            lambda img, params: (
-                tf.ensure_shape(img, [IMG_SIZE, IMG_SIZE, 3]),
-                tf.ensure_shape(params, [5]),
-            )
-        )
-        if augment:
-            ds = ds.map(Data.Augmentation())
-        ds = ds.cache()
-        ds = ds.batch(8)
-        ds = ds.prefetch(8)
+        # ds = ds.map(
+        #     lambda img, params: (
+        #         tf.ensure_shape(img, [IMG_SIZE, IMG_SIZE, 3]),
+        #         tf.ensure_shape(params, [5]),
+        #     )
+        # )
+        # if augment:
+        #     ds = ds.map(Data.Augmentation())
+        # ds = ds.cache()
+        # ds = ds.batch(8)
+        # ds = ds.prefetch(8)
         return ds
 
 
 # print(tf.config.list_physical_devices("GPU"))
 # exit()
 ds = Data.get_ds()
-val_ds = Data.get_ds("generated_2", augment=False)
+print(next(iter(ds.take(1))))
+exit()
+# val_ds = Data.get_ds("generated_2", augment=False)
 
 model = Model.get_model()
 model.summary(120)
