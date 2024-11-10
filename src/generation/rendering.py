@@ -140,6 +140,8 @@ def random_env_texture():
 class ObjectPlacement:
 
     min_dart_dist = 0.01
+    min_y_displacement = 0.0075  # 7.5mm
+    max_y_displacement = 0.025  # 2.5cm
 
     def place_darts():
 
@@ -241,6 +243,18 @@ class ObjectPlacement:
 
             return dx, dz
 
+        def random_y_displacement() -> float:
+            disp_range = (
+                ObjectPlacement.max_y_displacement - ObjectPlacement.min_y_displacement
+            )
+
+            dy = np.random.normal(0, disp_range / 3)  # normal distribution
+            dy = abs(dy)  # cut off negatives
+            dy = min(dy, disp_range)  # clip values
+            dy = disp_range - dy  # invert curve -> bigger displacements more likely
+            dy += ObjectPlacement.min_y_displacement  # shift to correct range
+            return dy
+
         for i in range(1, 4):
             dart = SceneUtils.get_object(f"Dart {i}")
 
@@ -253,7 +267,7 @@ class ObjectPlacement:
             # Location
             dx, dz = get_weighted_dart_displacement()
             dx, dz = displace_intersection(dx, dz)
-            dy = 0
+            dy = random_y_displacement()
             dart.location = (
                 board_center[0] + dx,
                 board_center[1] + dy,
@@ -265,7 +279,6 @@ class ObjectPlacement:
                 other_dart = SceneUtils.get_object(f"Dart {j}")
                 dist = (dart.location - other_dart.location).length
                 # If they are too close, remove this dart
-                print(dist)
                 if dist < ObjectPlacement.min_dart_dist:
                     dart.location = (0, 0, 0)
                     dart.hide_render = True
