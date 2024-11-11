@@ -151,10 +151,24 @@ class ObjectPlacement:
             drz = np.random.normal(0, 1)
             return drx, dry, drz
 
-        def get_position_based_dart_rotation(x, y):
-            drx = 0
-            dry = 0
-            drz = 0
+        def get_better_random_dart_rotation():
+            # x rotation: up/down
+            min_x = 5
+            max_x = -10
+            if np.random.uniform(min_x, max_x) < 0:
+                drx = abs(np.random.normal(0, min_x / 3))
+            else:
+                drx = -abs(np.random.normal(0, abs(max_x) / 3))
+
+            # y rotation: spin
+            min_y = -180
+            max_y = 180
+            dry = np.random.uniform(min_y, max_y)
+
+            # z rotation: left/right
+            max_z = 15
+            drz = np.random.normal(0, max_z / 3)
+            drz = np.clip(drz, -max_z, max_z)
 
             return drx, dry, drz
 
@@ -285,9 +299,9 @@ class ObjectPlacement:
                     break
 
             # Rotation
-            drx, dry, drz = get_position_based_dart_rotation(dx, dz)
+            drx, dry, drz = get_better_random_dart_rotation()
             dart.rotation_euler = (
-                np.radians(-90 + drx),
+                np.radians(drx),
                 np.radians(dry),
                 np.radians(drz),
             )
