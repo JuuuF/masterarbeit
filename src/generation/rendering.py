@@ -144,7 +144,13 @@ class ObjectPlacement:
     max_y_displacement = 0.025  # 2.5cm
 
     def randomize_darts():
-        bpy.data.node_groups["Darts Arrow"].nodes["Group Input"].outputs["Seed"].default_value = np.random.randint(-2**31, 2**31 - 1)
+        seed = np.random.randint(2**16)
+        for i in range(1, 4):
+            dart = SceneUtils.get_object(f"Dart {i}")
+            gnodes_mod = dart.modifiers["GeometryNodes"]
+            gnodes_mod["Socket_2"] = (
+                seed  # This is ugly, but so is the documentation of bpy modifiers
+            )
 
     def place_darts():
 
