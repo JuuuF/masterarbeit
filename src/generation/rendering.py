@@ -143,6 +143,9 @@ class ObjectPlacement:
     min_y_displacement = 0.0075  # 7.5mm
     max_y_displacement = 0.025  # 2.5cm
 
+    def randomize_darts():
+        bpy.data.node_groups["Darts Arrow"].nodes["Group Input"].outputs["Seed"].default_value = np.random.randint(-2**31, 2**31 - 1)
+
     def place_darts():
 
         def get_random_dart_rotation():
@@ -559,6 +562,7 @@ board_radius = db_geonodes.interface.items_tree.get("Radius 6").default_value
 board_center = darts_board.location
 
 # Place Darts
+ObjectPlacement.randomize_darts()
 ObjectPlacement.place_darts()
 scores, total_score = SceneUtils.calculate_dart_score()
 
