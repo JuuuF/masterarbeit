@@ -315,6 +315,35 @@ class ObjectPlacement:
                 np.radians(drz),
             )
 
+    def randomize_camera_parameters():
+        cam = SceneUtils.get_object("Camera")
+        darts_board = SceneUtils.get_object("Darts Board")
+
+        def get_min_max_dist():
+            cam_space = SceneUtils.get_object("Camera Space")
+            gnode_mod = cam_space.modifiers.get("GeometryNodes")
+            min_dist = gnode_mod["Socket_2"]  # again ugly, but this works for now
+            max_dist = gnode_mod["Socket_3"]
+            return min_dist, max_dist
+
+        # Get focal lengths
+        min_focal = 18
+        max_focal = 60
+        mean_focal = (max_focal + min_focal) / 2
+
+        # Get distances
+        min_dist, max_dist = get_min_max_dist()
+        dist = (cam.location - darts_board.location).length
+        dist_fac = (dist - min_dist) / (max_dist - min_dist)
+
+        # Calculate lower and upper distance bounds
+        lower = min_focal + dist_fac * (mean_focal - min_focal)
+        upper = mean_focal + dist_fac * (mean_focal - min_focal)
+
+        # Set focal length
+        focal = np.random.uniform(lower, upper)
+        cam.data.lens = focal
+
     def place_camera():
         cam = SceneUtils.get_object("Camera")
         cam_space = SceneUtils.get_object("Camera Space")
@@ -574,21 +603,24 @@ scores, total_score = SceneUtils.calculate_dart_score()
 
 # Place Camera
 ObjectPlacement.place_camera()
+ObjectPlacement.randomize_camera_parameters()
 
 # Randomize HDRI
 random_env_texture()
 
 # Render
-# bpy.ops.render.render(write_still=True)
-MaskRendering.render_masks(["Darts Board Area", "Dart 1", "Dart 2", "Dart 3"])
+if __name__ == "__main__":
+    bpy.ops.render.render(write_still=True)
+    MaskRendering.render_masks(["Darts Board Area", "Dart 1", "Dart 2", "Dart 3"])
+    MaskRendering.render_masks(["Intersections"])
 
-print(scores, total_score)
+    print(scores, total_score)
 
-exit()
+    exit()
 
-# -------------------------------
-# move to out directory
-id = max(int(f.split(".")[0]) for f in os.listdir(OUT_DIR) if not "mask" in f) + 1
-print(id)
-os.rename("dump/test.png", os.path.join(OUT_DIR, f"{id:04d}.png"))
-os.rename("dump/mask.png", os.path.join(OUT_DIR, f"{id:04d}_mask.png"))
+    # -------------------------------
+    # move to out directory
+    id = max(int(f.split(".")[0]) for f in os.listdir(OUT_DIR) if not "mask" in f) + 1
+    print(id)
+    os.rename("dump/test.png", os.path.join(OUT_DIR, f"{id:04d}.png"))
+    os.rename("dump/mask.png", os.path.join(OUT_DIR, f"{id:04d}_mask.png"))
