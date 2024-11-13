@@ -421,6 +421,111 @@ class ObjectPlacement:
         cam.rotation_euler = cam_rot
 
 
+class Compositor:
+    tree = bpy.context.scene.node_tree
+
+    def get_node(name: str):
+        # Get by name
+        node = Compositor.tree.nodes.get(name)
+        if node:
+            return node
+
+        # Get by label
+        for node in Compositor.tree.nodes:
+            if node.label == name:
+                return node
+
+        raise RuntimeError(
+            f"No node with name {name} found in Compositor node tree."
+            " Check the node name or set a name manually if unsure."
+        )
+
+    def check_link_src(
+        link,
+        name: str,
+        socket: str,
+    ):
+        # Name check
+        if name not in [link.from_node.name, link.from_node.label]:
+            return False
+        # Socket check
+        if link.from_socket.name != socket:
+            return False
+        return True
+
+    def check_link_dst(
+        link,
+        name: str,
+        socket: str,
+    ):
+        # Name check
+        if name not in [link.to_node.name, link.to_node.label]:
+            return False
+        # Socket check
+        if link.to_socket.name != socket:
+            return False
+        return True
+
+    def get_link(
+        src_node: str,
+        src_socket: str,
+        dst_node: str,
+        dst_socket: str,
+    ):
+        for link in Compositor.tree.links:
+            if Compositor.check_link_src(
+                link,
+                src_node,
+                src_socket,
+            ) and Compositor.check_link_dst(
+                link,
+                dst_node,
+                dst_socket,
+            ):
+                return link
+        raise RuntimeError(
+            f"No link found from '{src_node}'[{src_socket}] -> '{dst_node}'[{dst_socket}] in Compositor."
+            " Check the node name or set a name manually if unsure."
+        )
+
+    def remove_link(
+        state,
+        src_node: str,
+        src_socket: str,
+        dst_node: str,
+        dst_socket: str,
+    ):
+        # Bookkeeping
+        if state is not None:
+            state["removed_links"].append((src_node, src_socket, dst_node, dst_socket))
+
+        # Remove link
+        link = Compositor.get_link(src_node, src_socket, dst_node, dst_socket)
+        Compositor.tree.links.remove(link)
+
+        return state
+
+    def add_link(
+        state,
+        src_node: str,
+        src_socket: str,
+        dst_node: str,
+        dst_socket: str,
+    ):
+        # Bookkeeping
+        if state is not None:
+            state["added_links"].append((src_node, src_socket, dst_node, dst_socket))
+
+        # Add link
+        src_node = Compositor.get_node(src_node)
+        src_socket = src_node.outputs.get(src_socket)
+        dst_node = Compositor.get_node(dst_node)
+        dst_socket = dst_node.inputs.get(dst_socket)
+        Compositor.tree.links.new(src_socket, dst_socket)
+
+        return state
+
+
 class MaskRendering:
 
     def prepare_objects() -> dict:
@@ -480,58 +585,25 @@ class MaskRendering:
         bg_node.inputs["Strength"].default_value = state["default_value"]
 
     def prepare_compositor() -> dict:
-        state = {}
+        state = dict(removed_links=[], added_links=[])
 
-        # Get basic objects
-        tree = bpy.context.scene.node_tree
-        render_layers_node = tree.nodes.get("Render Layers")
-        composite_node = tree.nodes.get("Composite")
-        if not render_layers_node or not composite_node:
-            raise RuntimeError(
-                "No Render Layers node or Composite node in Compositor node tree"
-            )
+        render_layers_node = Compositor.get_node("Render Layers")
+        composite_node = Compositor.get_node("Composite")
+        lens_distortion = Compositor.get_node("Lens Distortion")
 
-        # Get original compositor node input
-        image_input = composite_node.inputs.get("Image")
-        for link in tree.links:
-            if link.to_node == composite_node and link.to_socket == image_input:
-                break
-        else:
-            raise RuntimeError(
-                "No link to Composite node's 'Image' input socket in Compositor node tree."
-            )
-        state["link_from_socket"] = link.from_socket
-        tree.links.remove(link)
-
-        # Replace with new link
-        alpha_output = render_layers_node.outputs.get("Alpha")
-        tree.links.new(alpha_output, image_input)
+        # Get original compositor node link
+        Compositor.remove_link(state, "Film Grain Mix", "Image", "Composite", "Image")
+        Compositor.remove_link(state, "Bloom Mix", "Image", "Lens Distortion", "Image")
+        Compositor.add_link(state, "Render Layers", "Alpha", "Lens Distortion", "Image")
+        Compositor.add_link(state, "Lens Distortion", "Image", "Composite", "Image")
 
         return state
 
     def restore_compositor(state: dict):
-        # Get basic objects
-        tree = bpy.context.scene.node_tree
-        render_layers_node = tree.nodes.get("Render Layers")
-        composite_node = tree.nodes.get("Composite")
-        if not render_layers_node or not composite_node:
-            raise RuntimeError(
-                "No Render Layers node or Composite node in Compositor node tree"
-            )
-
-        # Remove new link
-        image_input = composite_node.inputs.get("Image")
-        for link in tree.links:
-            if link.from_node == render_layers_node and link.to_node == composite_node:
-                break
-        else:
-            raise RuntimeError(
-                "New Link from Render Layers node to Composite node not found in Compositor node tree."
-            )
-        tree.links.remove(link)
-
-        # Restore old link
-        tree.links.new(state["link_from_socket"], image_input)
+        for src_node, src_socket, dst_node, dst_socket in state["added_links"]:
+            Compositor.remove_link(None, src_node, src_socket, dst_node, dst_socket)
+        for src_node, src_socket, dst_node, dst_socket in state["removed_links"]:
+            Compositor.add_link(None, src_node, src_socket, dst_node, dst_socket)
 
     def prepare_settings() -> dict:
         state = {}
