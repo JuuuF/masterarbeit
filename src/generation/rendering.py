@@ -685,14 +685,20 @@ if __name__ == "__main__":
     bpy.ops.render.render(write_still=True)
     MaskRendering.render_masks(["Darts Board Area", "Dart 1", "Dart 2", "Dart 3"])
     MaskRendering.render_masks(["Intersections"])
+    MaskRendering.render_masks(["Board Orientation"])
 
     print(scores, total_score)
 
-    exit()
-
     # -------------------------------
     # move to out directory
-    id = max(int(f.split(".")[0]) for f in os.listdir(OUT_DIR) if not "mask" in f) + 1
-    print(id)
-    os.rename("dump/test.png", os.path.join(OUT_DIR, f"{id:04d}.png"))
-    os.rename("dump/mask.png", os.path.join(OUT_DIR, f"{id:04d}_mask.png"))
+    files = [int(f.split(".")[0]) for f in os.listdir(OUT_DIR) if not "mask" in f]
+    id = max(files) + 1 if len(files) > 0 else 0
+    id = f"{id:04d}"
+    os.rename("dump/test.png", os.path.join(OUT_DIR, id + ".png"))
+    for f in os.listdir("dump"):
+        if not f.startswith("mask_"):
+            continue
+        os.rename(
+            os.path.join("dump", f),
+            os.path.join(OUT_DIR, id + "_" + f),
+        )
