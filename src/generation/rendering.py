@@ -101,47 +101,84 @@ class SceneUtils:
 
         return scores, total_score
 
+    def random_motion_blur(shift_range: float=0.1) -> None:
+        def random_translation() -> np.ndarray:  # (3,)
+            d = np.random.normal(0, shift_range / 3, (3,))
+            return np.clip(d, -shift_range, shift_range)
 
-def random_env_texture():
-    world = bpy.data.worlds["World"]
+        # Only blur 10%
+        if np.random.random() > 0.1:
+            return
 
-    bpy.context.scene.world = world
+        # Get info
+        camera = bpy.context.scene.camera
+        start_frame = bpy.context.scene.frame_current
 
-    nodes = world.node_tree.nodes
-    for env_tex_node in nodes:
-        if env_tex_node.name == "Environment Texture":
-            break
-    else:
-        raise ValueError("No Environment Texture node in world node tree.")
+        # Clear existing keyframes
+        camera.animation_data_clear()
 
-    hdri_paths = [
-        os.path.join(HDRI_DIR, f) for f in os.listdir(HDRI_DIR) if f.endswith(".exr")
-    ]
+        # Keyframe start
+        camera.keyframe_insert(data_path="location", frame=start_frame)
 
-    # Return if there are no textures
-    if len(hdri_paths) == 0:
-        return
+        # Update position
+        dx, dy, dz = random_translation()
+        camera.location.x += dx
+        camera.location.y += dy
+        camera.location.z += dz
 
-    hdri_path = random.choice(hdri_paths)
-    hdri = bpy.data.images.load(hdri_path)
-    env_tex_node.image = hdri
+        # Keyframe end
+        camera.keyframe_insert(data_path="location", frame=start_frame + 2)
+        bpy.context.scene.frame_set(start_frame + 1)
 
-    # Random image strength
-    for bg_node in nodes:
-        if bg_node.name == "Background":
-            break
-    else:
-        # No Background node
-        return
+    def random_env_texture():
+        world = bpy.data.worlds["World"]
 
-    bg_node.inputs["Strength"].default_value = np.random.uniform(0.1, 0.8)
+        bpy.context.scene.world = world
+
+        nodes = world.node_tree.nodes
+        for env_tex_node in nodes:
+            if env_tex_node.name == "Environment Texture":
+                break
+        else:
+            raise ValueError("No Environment Texture node in world node tree.")
+
+        hdri_paths = [
+            os.path.join(HDRI_DIR, f)
+            for f in os.listdir(HDRI_DIR)
+            if f.endswith(".exr")
+        ]
+
+        # Return if there are no textures
+        if len(hdri_paths) == 0:
+            return
+
+        hdri_path = random.choice(hdri_paths)
+        hdri = bpy.data.images.load(hdri_path)
+        env_tex_node.image = hdri
+
+        # Random image strength
+        for bg_node in nodes:
+            if bg_node.name == "Background":
+                break
+        else:
+            # No Background node
+            return
+
+        bg_node.inputs["Strength"].default_value = np.random.uniform(0.1, 0.8)
+
+
+def random_frame():
+    max_frame = bpy.context.scene.frame_end
+    min_frame = bpy.context.scene.frame_start
+    frame = np.random.randint(min_frame, max_frame + 1)
+    bpy.context.scene.frame_set(frame)
 
 
 class ObjectPlacement:
 
     min_dart_dist = 0.01
-    min_y_displacement = 0.0075  # 7.5mm
-    max_y_displacement = 0.025  # 2.5cm
+    min_dart_y_displacement = 0.0075  # 7.5mm
+    max_dart_y_displacement = 0.025  # 2.5cm
 
     def randomize_darts():
         seed = np.random.randint(2**16)
@@ -268,14 +305,15 @@ class ObjectPlacement:
 
         def random_y_displacement() -> float:
             disp_range = (
-                ObjectPlacement.max_y_displacement - ObjectPlacement.min_y_displacement
+                ObjectPlacement.max_dart_y_displacement
+                - ObjectPlacement.min_dart_y_displacement
             )
 
             dy = np.random.normal(0, disp_range / 3)  # normal distribution
             dy = abs(dy)  # cut off negatives
             dy = min(dy, disp_range)  # clip values
             dy = disp_range - dy  # invert curve -> bigger displacements more likely
-            dy += ObjectPlacement.min_y_displacement  # shift to correct range
+            dy += ObjectPlacement.min_dart_y_displacement  # shift to correct range
             return dy
 
         for i in range(1, 4):
@@ -661,6 +699,9 @@ class MaskRendering:
         MaskRendering.restore_objects(obj_state)
 
 
+# Randomize Scene
+random_frame()
+
 # Get Scene Infos
 darts_board = SceneUtils.get_object("Darts Board")
 db_geonodes = SceneUtils.get_geometry_nodes(darts_board)
@@ -676,9 +717,10 @@ scores, total_score = SceneUtils.calculate_dart_score()
 # Place Camera
 ObjectPlacement.place_camera()
 ObjectPlacement.randomize_camera_parameters()
+SceneUtils.random_motion_blur()
 
 # Randomize HDRI
-random_env_texture()
+SceneUtils.random_env_texture()
 
 # Render
 if __name__ == "__main__":
