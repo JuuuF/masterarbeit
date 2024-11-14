@@ -3,11 +3,28 @@ import cv2
 import numpy as np
 from rich import print
 
-IMG_DIR = "dump"
+IMG_DIR = "data/generation/out"
 
-img = cv2.imread(os.path.join(IMG_DIR, "test.png"))
-img_orient = cv2.imread(os.path.join(IMG_DIR, "mask_Board_Orientation.png"))
-img_area = cv2.imread(os.path.join(IMG_DIR, "mask_Darts_Board_Area.png"))
+
+def load_imgs(
+    id: int = 0,
+) -> tuple[
+    np.ndarray,  # (y, x, 3)
+    np.ndarray,  # (y, x, 3)
+    np.ndarray,  # (y, x, 3)
+]:
+    id = f"{id:04d}"
+    img = cv2.imread(os.path.join(IMG_DIR, id + ".png"))
+    img_orient = cv2.imread(
+        os.path.join(IMG_DIR, id + "_mask_Board_Orientation.png"), cv2.IMREAD_GRAYSCALE
+    )
+    img_area = cv2.imread(
+        os.path.join(IMG_DIR, id + "_mask_Darts_Board_Area.png"), cv2.IMREAD_GRAYSCALE
+    )
+    return img, img_orient, img_area
+
+
+img, img_orient, img_area = load_imgs(id=0)
 
 
 class ImageUtils:
@@ -116,7 +133,6 @@ def get_lines_from_point_masks(
     def extract_centers(
         img: np.ndarray,  # (y, x)
     ) -> list[tuple[float, float]]:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
         contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -136,12 +152,14 @@ def get_lines_from_point_masks(
     return line_v, line_h
 
 
-def get_ellipse_from_mask(img):
+def get_ellipse_from_mask(
+    img: np.ndarray,  # (y, x)
+) -> tuple[tuple[int, int], tuple[int, int], float]:
 
     if len(img.shape) == 3:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+    _, thresh = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
 
     points = np.column_stack(np.where(thresh.transpose() > 0))
     hull = cv2.convexHull(points)[:, 0]
@@ -151,13 +169,22 @@ def get_ellipse_from_mask(img):
     return (round(cx), round(cy)), (round(w / 2), round(h / 2)), theta
 
 
-def undistort(img, ellipse, line_h, line_v):
+def undistort(
+    img: np.ndarray,  # (y, x, 3)
+    ellipse: tuple[tuple[int, int], tuple[int, int], float],
+    line_h: tuple[float, float],
+    line_v: tuple[float, float],
+) -> np.ndarray:  # (800, 800, 3)
 
     # Data as used in the paper
     dst_size = 800
     margin = 100
 
-    def get_src_pts(ellipse, line_h, line_v):
+    def get_src_pts(
+        ellipse: tuple[tuple[int, int], tuple[int, int], float],
+        line_h: tuple[float, float],
+        line_v: tuple[float, float],
+    ) -> np.ndarray:  # (5, 2): top, left, bottom, right, center
         (ellipse_cx, ellipse_cy), (ellipse_w, ellipse_h), ellipse_theta = ellipse
 
         # Get res img
@@ -171,7 +198,7 @@ def undistort(img, ellipse, line_h, line_v):
             np.zeros_like(img_ellipse), *line_h, thickness=2
         )
         h_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_h)
-        lft, rgt = ImageUtils.points_from_intersection(h_intersections)
+        left, right = ImageUtils.points_from_intersection(h_intersections)
 
         # vertical points
         img_line_v = ImageUtils.draw_polar_line(
@@ -182,12 +209,12 @@ def undistort(img, ellipse, line_h, line_v):
 
         # center point
         c_intersection = ImageUtils.intersect_imgs(img_line_h, img_line_v)
-        ctr = np.mean(np.nonzero(c_intersection), axis=1)
-        ctr = (round(ctr[0]), round(ctr[1]))
+        center = np.mean(np.nonzero(c_intersection), axis=1)
+        center = (round(center[0]), round(center[1]))
 
-        return np.array([top, lft, bot, rgt, ctr], np.float32)
+        return np.array([top, left, bot, right, center], np.float32)
 
-    def get_dst_points():
+    def get_dst_points() -> np.ndarray:  # (5, 2): top, left, bottom, right, center
         c = dst_size / 2
         dst_pts = []
 
@@ -202,7 +229,11 @@ def undistort(img, ellipse, line_h, line_v):
 
         return np.array(dst_pts, np.float32)  # t, l, b, r, c
 
-    def transform_image(img, src_pts, dst_pts):
+    def transform_image(
+        img: np.ndarray,  # (y, x, 3)
+        src_pts: np.ndarray,  # (5, 2)
+        dst_pts: np.ndarray,  # (5, 2)
+    ) -> np.ndarray:  # (800, 800, 3)
         # we need to switch the element order from y, x to x, y because cv2 is special
         src_pts = src_pts[:, ::-1]
         dst_pts = dst_pts[:, ::-1]
@@ -224,18 +255,24 @@ def undistort(img, ellipse, line_h, line_v):
 line_v, line_h = get_lines_from_point_masks(img_orient)
 ellipse = get_ellipse_from_mask(img_area)
 res = undistort(img, ellipse, line_h, line_v)
+
+# draw some lines
+ImageUtils.draw_polar_line(img, *line_h, color=(0, 255, 0))
+ImageUtils.draw_polar_line(img, *line_v, color=(0, 255, 0))
+cv2.ellipse(img, *ellipse, 0, 360, color=(255, 0, 0), thickness=1)
+
+for angle in range(4):
+    c = 400
+    margin = 100
+    angle *= 90
+    angle -= 360 / 40  # shift by half a field
+    dx = c + (c - margin) * np.sin(np.deg2rad(angle))
+    dy = c - (c - margin) * np.cos(np.deg2rad(angle))
+    px = int(c + 2 * (dx - c))
+    py = int(c + 2 * (dy - c))
+    cv2.line(res, (c, c), (px, py), (0, 255, 0), lineType=cv2.LINE_AA)
+cv2.circle(res, (400, 400), radius=300, color=(255, 0, 0), lineType=cv2.LINE_AA)
+
 cv2.imshow("original", img)
 cv2.imshow("undistorted", res)
-cv2.waitKey()
-exit()
-
-ImageUtils.draw_polar_line(img, *line_h)
-ImageUtils.draw_polar_line(img, *line_v)
-intersection = LinAlg.polar_line_intersection(line_h, line_v)
-img[intersection] = 255
-
-cv2.ellipse(img, *ellipse, 0, 360, color=(255, 0, 0), thickness=1)
-img[img_area < 127] //= 5
-
-cv2.imshow("", img)
 cv2.waitKey()
