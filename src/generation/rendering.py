@@ -1,44 +1,188 @@
 import os
 import bpy
+import cv2
+import sys
 import numpy as np
+import pandas as pd
+import pickle
 import random
-from mathutils import Vector
+from mathutils import Vector, Euler
+from contextlib import contextmanager
 
 # -----------------------------------------------
 # Variables
 
 BLEND_FILE = "data/generation/darts.blend"
-OUT_FILE = "dump/test.png"
-OUT_DIR = "data/generation/out/"
 HDRI_DIR = "data/generation/hdri/"
 
 # -----------------------------------------------
 # Load and setup
-bpy.ops.wm.open_mainfile(filepath=BLEND_FILE)
 
-# Set render engine
-bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
-bpy.context.scene.render.engine = "CYCLES"
-bpy.context.scene.cycles.samples = 1
 
-# Enable GPU rendering
-bpy.context.preferences.addons["cycles"].preferences.compute_device_type = "CUDA"
-bpy.context.scene.cycles.device = "GPU"
-for d in bpy.context.preferences.addons["cycles"].preferences.devices:
-    if "4060" in d["name"]:
-        d["use"] = 1
-    else:
-        d["use"] = 0
+def init_project():
+    bpy.ops.wm.open_mainfile(filepath=BLEND_FILE)
 
-# Set output path
-bpy.context.scene.render.filepath = OUT_FILE
+    # Set render engine
+    bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
+    bpy.context.scene.render.engine = "CYCLES"
+    bpy.context.scene.cycles.samples = 128
 
-# -----------------------------------------------
-# Do stuff
+    # Enable GPU rendering
+    bpy.context.preferences.addons["cycles"].preferences.compute_device_type = "CUDA"
+    bpy.context.scene.cycles.device = "GPU"
+    bpy.context.scene.cycles.use_cpu = False
+    bpy.context.preferences.addons["cycles"].preferences.get_devices_for_type("CUDA")
+    for d in bpy.context.preferences.addons["cycles"].preferences.devices:
+        if not "NVIDIA" in d["name"]:
+            continue
+        d.use = True
+
+    Compositor.init_vars()
+
+
+WARNINGS = []
+
+
+class SampleInfo:
+
+    def reset(id=None):
+        # Clear everything
+        for name, attr in SampleInfo.get_attributes().items():
+            delattr(SampleInfo, name)
+
+        # Set defaults
+        SampleInfo.OUT_DIR = "data/generation/out/"
+        if id is None:
+            # Get id automatically
+            samples = [int(f) for f in os.listdir(SampleInfo.OUT_DIR) if f.isnumeric()]
+            if len(samples) == 0:
+                id = "0"
+            else:
+                id = str(max(samples) + 1)
+        SampleInfo.sample_id = str(id)
+        SampleInfo.out_file_template = os.path.join(
+            SampleInfo.OUT_DIR, SampleInfo.sample_id, "{filename}"
+        )
+
+    def get_attributes():
+        attrs = dict()
+        for a in dir(SampleInfo):
+            if a.startswith("__"):
+                continue
+            if callable(getattr(SampleInfo, a)):
+                continue
+            attrs[a] = getattr(SampleInfo, a)
+        return attrs
+
+    def to_series():
+        return pd.Series(SampleInfo.get_attributes())
+
+    def __repr__(self):
+        max_len = max([len(k) for k in SampleInfo.get_attributes().keys()])
+        res = [
+            f"{k.ljust(max_len)} = {v}" for k, v in SampleInfo.get_attributes().items()
+        ]
+        return "\n".join(res)
+
+
+class Utils:
+
+    @contextmanager
+    def suppress_output():
+        fd = sys.stdout.fileno()
+
+        def _redirect_stdout(file):
+            sys.stdout.close()
+            os.dup2(file.fileno(), fd)
+            sys.stdout = os.fdopen(fd, "w")
+
+        with os.fdopen(os.dup(fd), "w") as old_stdout:
+            with open(os.devnull, "w") as null:
+                _redirect_stdout(null)
+            try:
+                yield
+            finally:
+                _redirect_stdout(old_stdout)
+
+    def get_out_file_template() -> str:
+
+        if SampleInfo.sample_id is not None:
+            # Read given sample ID
+            sample_id = SampleInfo.sample_id
+        else:
+            # Get next sample ID
+            sample_ids = [
+                int(f) for f in os.listdir(SampleInfo.OUT_DIR) if f.isnumeric()
+            ]
+            if sample_ids:
+                sample_id = str(max(sample_ids) + 1)
+            else:
+                sample_id = "0"
+
+        os.makedirs(os.path.join(SampleInfo.OUT_DIR, sample_id), exist_ok=True)
+        out_file_template = os.path.join(
+            SampleInfo.OUT_DIR, sample_id, "{filename}.png"
+        )
+        SampleInfo.OUT_DIR = os.path.dirname(out_file_template)
+        SampleInfo.sample_id = int(sample_id)
+        return out_file_template
+
+    def randomize_looks():
+        max_frame = bpy.context.scene.frame_end
+        min_frame = bpy.context.scene.frame_start
+        frame = np.random.randint(min_frame, max_frame + 1)
+        bpy.context.scene.frame_set(frame)
+
+    def render_to_file(filename: str):
+        if not filename.endswith(".png"):
+            filename += ".png"
+
+        filepath = SampleInfo.out_file_template.format(
+            filename=filename,
+        )
+        bpy.context.scene.render.filepath = filepath
+        print(f"Rendering file '{filepath}'... ", end=" ")
+        with Utils.suppress_output():
+            bpy.ops.render.render(write_still=True)
+        print("Done!")
+
+    def render_sample_with_masks():
+        # Render original
+        Utils.render_to_file("render")
+        # Render masks
+        MaskRendering.render_masks(
+            [
+                "Darts Board Area",
+                "Dart 1",
+                "Dart 2",
+                "Dart 3",
+                "Intersections",
+                "Board Orientation",
+            ]
+        )
+
+        # Check if masks are valid and if darts board is fully visible
+        board_mask = cv2.imread(
+            SampleInfo.out_file_template.format(filename="mask_Darts_Board_Area.png"),
+            cv2.IMREAD_GRAYSCALE,
+        )
+        _, board_mask = cv2.threshold(board_mask, 127, 255, cv2.THRESH_BINARY)
+        edge_sum = (
+            np.sum(board_mask[0])
+            + np.sum(board_mask[-1])
+            + np.sum(board_mask[:, 0])
+            + np.sum(board_mask[:, -1])
+        )
+        if edge_sum != 0:
+            raise AssertionError("Invalid render. Board is not fully visible.")
 
 
 class SceneUtils:
     def get_geometry_nodes(obj):
+
+        if type(obj) == str:
+            obj = SceneUtils.get_object(obj)
+
         for modifier in obj.modifiers:
             if modifier.type == "NODES":
                 return modifier.node_group
@@ -56,19 +200,24 @@ class SceneUtils:
             radii.append(r)
         return radii
 
-    def calculate_dart_score():
+    def record_dart_score():
 
         radii = SceneUtils.get_board_radii()
         numbers = [6,13,4,18,1,20,5,12,9,14,11,8,16,7,19,3,17,2,15,10]  # fmt: skip
         board = SceneUtils.get_object("Darts Board")
 
+        center_dists = []
+
         def get_dart_score(i):
             dart = SceneUtils.get_object(f"Dart {i}")
+            if dart.hide_render:
+                return 0, "HIDDEN"
             x = dart.location[0] - board.location[0]
             y = dart.location[2] - board.location[2]
 
             r = np.sqrt(x**2 + y**2)
             theta = np.degrees(np.arctan2(y, x))
+            center_dists.append(round(r, 4))
 
             number_idx = round(theta / (360 / 20))
             number = numbers[number_idx]
@@ -99,16 +248,17 @@ class SceneUtils:
         scores = [get_dart_score(i) for i in range(1, 4)]
         total_score = sum(s[0] for s in scores)
 
+        SampleInfo.scores = scores
+        SampleInfo.total_score = total_score
+        SampleInfo.dart_radii = center_dists
+
         return scores, total_score
 
-    def random_motion_blur(shift_range: float=0.1) -> None:
+    def random_motion_blur(shift_range: float = 0.02) -> None:
+
         def random_translation() -> np.ndarray:  # (3,)
             d = np.random.normal(0, shift_range / 3, (3,))
             return np.clip(d, -shift_range, shift_range)
-
-        # Only blur 10%
-        if np.random.random() > 0.1:
-            return
 
         # Get info
         camera = bpy.context.scene.camera
@@ -116,6 +266,11 @@ class SceneUtils:
 
         # Clear existing keyframes
         camera.animation_data_clear()
+
+        # Only blur 10%
+        if np.random.random() > 0.1:
+            SampleInfo.camera_motion_blur = 0
+            return
 
         # Keyframe start
         camera.keyframe_insert(data_path="location", frame=start_frame)
@@ -130,48 +285,90 @@ class SceneUtils:
         camera.keyframe_insert(data_path="location", frame=start_frame + 2)
         bpy.context.scene.frame_set(start_frame + 1)
 
+        # Save info
+        SampleInfo.camera_motion_blur = round(Vector([dx, dy, dz]).length, 3)
+
     def random_env_texture():
+
+        def random_texture() -> bool:
+            hdri_paths = [
+                os.path.join(HDRI_DIR, f)
+                for f in os.listdir(HDRI_DIR)
+                if f.endswith(".exr")
+            ]
+
+            # Return if there are no textures
+            if len(hdri_paths) == 0:
+                return False
+
+            hdri_path = random.choice(hdri_paths)
+            hdri = bpy.data.images.load(hdri_path)
+            env_tex_node.image = hdri
+            return True
+
+        def random_strength(min: float = 0.1, max: float = 0.8):
+            for bg_node in nodes:
+                if bg_node.name == "Background":
+                    break
+            else:
+                # No Background node
+                WARNINGS.append(
+                    "Could not find Background node in Compositor to set random environment texture."
+                )
+                return
+            bg_node.inputs["Strength"].default_value = np.random.uniform(min, max)
+
+        def random_z_rotation():
+            for node in nodes:
+                if node.label == "Z rotation":
+                    break
+            else:
+                WARNINGS.append(
+                    "Could not find Z rotation node for environment texture in Compositor."
+                )
+                return
+            node.outputs["Value"].default_value = np.random.uniform(0, 360)
+
+        # Collect data
         world = bpy.data.worlds["World"]
-
         bpy.context.scene.world = world
-
         nodes = world.node_tree.nodes
+
+        # Get environment texture node
         for env_tex_node in nodes:
             if env_tex_node.name == "Environment Texture":
                 break
         else:
-            raise ValueError("No Environment Texture node in world node tree.")
-
-        hdri_paths = [
-            os.path.join(HDRI_DIR, f)
-            for f in os.listdir(HDRI_DIR)
-            if f.endswith(".exr")
-        ]
-
-        # Return if there are no textures
-        if len(hdri_paths) == 0:
+            WARNINGS.append(
+                "Could not set random environment texture as there is no Environment Texture node."
+            )
             return
 
-        hdri_path = random.choice(hdri_paths)
-        hdri = bpy.data.images.load(hdri_path)
-        env_tex_node.image = hdri
-
-        # Random image strength
-        for bg_node in nodes:
-            if bg_node.name == "Background":
-                break
-        else:
-            # No Background node
+        if not random_texture():
             return
+        random_strength()
+        random_z_rotation()
 
-        bg_node.inputs["Strength"].default_value = np.random.uniform(0.1, 0.8)
+        SampleInfo.env_texture = env_tex_node.image.filepath
 
+    def rotation_to_board(obj_rotation: Vector | Euler, obj_normal=(0, 0, 1)):
 
-def random_frame():
-    max_frame = bpy.context.scene.frame_end
-    min_frame = bpy.context.scene.frame_start
-    frame = np.random.randint(min_frame, max_frame + 1)
-    bpy.context.scene.frame_set(frame)
+        if type(obj_rotation) != Euler:
+            obj_rotation = Euler(obj_rotation)
+
+        # Get normals
+        board_normal = Vector([0, -1, 0])
+        obj_normal = Vector(obj_normal)
+        obj_normal.rotate(obj_rotation)
+
+        # Calculate angle
+        dot = board_normal.dot(obj_normal)
+        angle = np.rad2deg(np.arccos(dot))
+
+        # Correct angles >90°
+        if angle > 90:
+            angle = 180 - angle
+        return angle
 
 
 class ObjectPlacement:
@@ -180,16 +377,9 @@ class ObjectPlacement:
     min_dart_y_displacement = 0.0075  # 7.5mm
     max_dart_y_displacement = 0.025  # 2.5cm
 
-    def randomize_darts():
-        seed = np.random.randint(2**16)
-        for i in range(1, 4):
-            dart = SceneUtils.get_object(f"Dart {i}")
-            gnodes_mod = dart.modifiers["GeometryNodes"]
-            gnodes_mod["Socket_2"] = (
-                seed  # This is ugly, but so is the documentation of bpy modifiers
-            )
-
     def place_darts():
+
+        board_center = SceneUtils.get_object("Darts Board").location
 
         def get_random_dart_rotation():
             drx = np.random.normal(0, 3)
@@ -316,6 +506,8 @@ class ObjectPlacement:
             dy += ObjectPlacement.min_dart_y_displacement  # shift to correct range
             return dy
 
+        dart_count = 0
+        SampleInfo.dart_rotations = []
         for i in range(1, 4):
             dart = SceneUtils.get_object(f"Dart {i}")
 
@@ -324,6 +516,7 @@ class ObjectPlacement:
                 dart.location = (0, 0, 0)
                 dart.hide_render = True
                 continue
+            dart_count += 1
 
             # Location
             dx, dz = get_weighted_dart_displacement()
@@ -352,6 +545,27 @@ class ObjectPlacement:
                 np.radians(dry),
                 np.radians(drz),
             )
+            dart_rot = SceneUtils.rotation_to_board(
+                obj_rotation=dart.rotation_euler,
+                obj_normal=(0, 1, 0),
+            )
+            SampleInfo.dart_rotations.append(round(dart_rot))
+
+        # Save dart stats
+        dists = []
+        for i in range(1, 4):
+            dart_1 = SceneUtils.get_object(f"Dart {i}")
+            if dart_1.hide_render:
+                continue
+            for j in range(i + 1, 4):
+                dart_2 = SceneUtils.get_object(f"Dart {j}")
+                if dart_2.hide_render:
+                    continue
+                dist = dart_1.location - dart_2.location
+                dists.append(round(dist.length, 3))
+
+        SampleInfo.dart_distances = dists
+        SampleInfo.dart_count = dart_count
 
     def randomize_camera_parameters():
         cam = SceneUtils.get_object("Camera")
@@ -360,7 +574,7 @@ class ObjectPlacement:
         def get_min_max_dist():
             cam_space = SceneUtils.get_object("Camera Space")
             gnode_mod = cam_space.modifiers.get("GeometryNodes")
-            min_dist = gnode_mod["Socket_2"]  # again ugly, but this works for now
+            min_dist = gnode_mod["Socket_2"]  # this is ugly, but this works for now
             max_dist = gnode_mod["Socket_3"]
             return min_dist, max_dist
 
@@ -382,12 +596,22 @@ class ObjectPlacement:
         focal = np.random.uniform(lower, upper)
         cam.data.lens = focal
 
-    def place_camera():
-        cam = SceneUtils.get_object("Camera")
-        cam_space = SceneUtils.get_object("Camera Space")
+        # Set resolution
+        format = np.random.choice([4 / 3, 16 / 9, 1 / 1, 3 / 2, 2 / 1, 21 / 9, 5 / 4])
+        dim_a = int(np.random.uniform(1000, 4000))
+        dim_b = int(dim_a / format)
+        vertical = np.random.random() > 0.3
+        bpy.context.scene.render.resolution_x = dim_b if vertical else dim_a
+        bpy.context.scene.render.resolution_y = dim_a if vertical else dim_b
 
-        # -------------------------------------------
-        # Position
+        # Save cam info
+        SampleInfo.camera_distance = round(dist, 2)
+        SampleInfo.camera_focal_mm = round(focal, 2)
+        SampleInfo.img_width = bpy.context.scene.render.resolution_x
+        SampleInfo.img_height = bpy.context.scene.render.resolution_y
+
+    def place_camera():
+
         def get_random_cam_position():
             bbox_min = cam_space.matrix_world @ Vector(
                 cam_space.bound_box[0]
@@ -422,16 +646,28 @@ class ObjectPlacement:
                     break
             return p
 
-        cam_pos = get_random_cam_position()
-        cam.location = cam_pos
+        def get_cam_rotation(cam_pos):
+            darts_board = SceneUtils.get_object("Darts Board")
+            view_center = darts_board.location.copy()
+            board_r = darts_board.dimensions.x / 2.2
 
-        # -------------------------------------------
-        # Focus
-        def get_focus_point():
+            view_center.x += np.clip(
+                np.random.normal(0, board_r / 3), -board_r, board_r
+            )
+            view_center.z += np.clip(
+                np.random.normal(0, board_r / 3), -board_r, board_r
+            )
+
+            view_dir = view_center - cam_pos
+            rot_quat = view_dir.to_track_quat("-Z", "Y")
+
+            return rot_quat.to_euler()
+
+        def set_focus_point():
             board = SceneUtils.get_object("Darts Board")
             board_pos = board.location
             board_r = (
-                SceneUtils.get_geometry_nodes(darts_board)
+                SceneUtils.get_geometry_nodes(board)
                 .interface.items_tree.get("Board Diameter")
                 .default_value
                 / 2
@@ -444,23 +680,37 @@ class ObjectPlacement:
 
             SceneUtils.get_object("Camera Focus").location = focus_pos
 
-            return focus_pos
+            # Save focus distance
+            focus_dist = (
+                SceneUtils.get_object("Darts Board").location.y
+                - SceneUtils.get_object("Camera Focus").location.y
+            )
+            SampleInfo.camera_focus_distance = round(focus_dist, 2)
 
-        focus_point = get_focus_point()
+        # Get info
+        cam = SceneUtils.get_object("Camera")
+        cam_space = SceneUtils.get_object("Camera Space")
 
-        # -------------------------------------------
-        # Rotation
-        def get_cam_rotation(cam_pos, focus_point):
-            view_dir = focus_point - cam_pos
-            rot_quat = view_dir.to_track_quat("-Z", "Y")
-            return rot_quat.to_euler()
+        # Set position
+        cam_pos = get_random_cam_position()
+        cam.location = cam_pos
 
-        cam_rot = get_cam_rotation(cam_pos, focus_point)
+        # Set rotation
+        cam_rot = get_cam_rotation(cam_pos)
         cam.rotation_euler = cam_rot
+        SampleInfo.camera_angle = round(
+            SceneUtils.rotation_to_board(cam.rotation_euler)
+        )
+
+        # Set focus
+        set_focus_point()
 
 
 class Compositor:
-    tree = bpy.context.scene.node_tree
+    tree = None
+
+    def init_vars():
+        Compositor.tree = bpy.context.scene.node_tree
 
     def get_node(name: str):
         # Get by name
@@ -684,9 +934,7 @@ class MaskRendering:
             mask_obj.hide_render = False
 
             # Render
-            out_name = f"mask_{mask_obj_name.replace(' ', '_')}.png"
-            bpy.context.scene.render.filepath = os.path.join("dump", out_name)
-            bpy.ops.render.render(write_still=True)
+            Utils.render_to_file(f"mask_{mask_obj_name.replace(' ', '_')}")
 
             # Restore mask object
             mask_obj.hide_render = True
@@ -699,48 +947,50 @@ class MaskRendering:
         MaskRendering.restore_objects(obj_state)
 
 
-# Randomize Scene
-random_frame()
+# -------------------------------------------------------------------------------------------------
 
-# Get Scene Infos
-darts_board = SceneUtils.get_object("Darts Board")
-db_geonodes = SceneUtils.get_geometry_nodes(darts_board)
 
-board_radius = db_geonodes.interface.items_tree.get("Radius 6").default_value
-board_center = darts_board.location
+def render_image(id=None):
+    init_project()
 
-# Place Darts
-ObjectPlacement.randomize_darts()
-ObjectPlacement.place_darts()
-scores, total_score = SceneUtils.calculate_dart_score()
+    # Reset sample info
+    SampleInfo.reset(id=id)
 
-# Place Camera
-ObjectPlacement.place_camera()
-ObjectPlacement.randomize_camera_parameters()
-SceneUtils.random_motion_blur()
+    # Randomize Scene
+    Utils.randomize_looks()
 
-# Randomize HDRI
-SceneUtils.random_env_texture()
+    # Place Darts
+    ObjectPlacement.place_darts()
+    scores, total_score = SceneUtils.record_dart_score()
 
-# Render
-if __name__ == "__main__":
-    bpy.ops.render.render(write_still=True)
-    MaskRendering.render_masks(["Darts Board Area", "Dart 1", "Dart 2", "Dart 3"])
-    MaskRendering.render_masks(["Intersections"])
-    MaskRendering.render_masks(["Board Orientation"])
+    # Place Camera
+    ObjectPlacement.place_camera()
+    ObjectPlacement.randomize_camera_parameters()
+    SceneUtils.random_motion_blur()
 
-    print(scores, total_score)
+    # Randomize HDRI
+    SceneUtils.random_env_texture()
+
+    # Rendering
+    Utils.render_sample_with_masks()
+
+    # Save info
+    sample_info = SampleInfo.to_series()
+    with open(SampleInfo.out_file_template.format(filename="info.pkl"), "wb") as f:
+        pickle.dump(sample_info, f)
+
+    # Print warnings
+    if len(WARNINGS) > 0:
+        print("=" * 120)
+        print(f"Encontered {len(WARNINGS)} warnings:")
+        for i, warning in enumerate(WARNINGS, 1):
+            print(f"\t{i}. {warning}")
+        print("=" * 120)
+
+    return sample_info
 
     # -------------------------------
-    # move to out directory
-    files = [int(f.split(".")[0]) for f in os.listdir(OUT_DIR) if not "mask" in f]
-    id = max(files) + 1 if len(files) > 0 else 0
-    id = f"{id:04d}"
-    os.rename("dump/test.png", os.path.join(OUT_DIR, id + ".png"))
-    for f in os.listdir("dump"):
-        if not f.startswith("mask_"):
-            continue
-        os.rename(
-            os.path.join("dump", f),
-            os.path.join(OUT_DIR, id + "_" + f),
-        )
+
+
+if __name__ == "__main__":
+    render_image()
