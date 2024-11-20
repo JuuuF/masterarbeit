@@ -16,6 +16,7 @@ data/paper/*
 dump/*
 writing/notes/*
 private/*
+notes/*
 
 # LaTeX
 *.aux
