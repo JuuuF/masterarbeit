@@ -12,6 +12,9 @@ data/generation/hdri/*
 data/generation/textures/*
 data/paper/*
 
+# Generation data
+data/generation/out/*
+
 # dump files
 dump/*
 writing/notes/*
