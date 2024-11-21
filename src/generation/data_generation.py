@@ -124,7 +124,7 @@ def create_sample(
     # --------------------------------------------------------------------
     # Extract information
 
-    if os.path.exists(os.path.join(sample_path, "undistort.png")):
+    if os.path.exists(os.path.join(sample_path, "undistort.png")) and "dart_positions" in sample_info:
         print(f"Sample {sample_info.sample_id} already exists.".center(120))
         print("-" * 120)
         return sample_info
@@ -152,7 +152,7 @@ def create_sample(
 
 
 if __name__ == "__main__":
-    for i in range(1774, 2048):
+    for i in range(1):
         sample_info = None
         while sample_info is None:
             sample_info = create_sample(i)
