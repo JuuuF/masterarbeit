@@ -7,3 +7,4 @@ tqdm==4.66.5
 black==24.8.0
 pandas==2.2.2
 pyarrow==16.1.0
+scikit-image==0.24.0
