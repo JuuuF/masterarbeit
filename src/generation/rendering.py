@@ -36,6 +36,7 @@ def init_project():
         if not "NVIDIA" in d["name"]:
             continue
         d.use = True
+        print("Using", d["name"])
 
     Compositor.init_vars()
 
