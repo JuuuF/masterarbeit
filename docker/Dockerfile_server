@@ -1,0 +1,25 @@
+FROM python:3.11.5
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    x11-apps \
+    libxxf86vm1 \
+    libxkbcommon0 \
+    libgl1 \
+    libegl1 \
+    htop \
+    nano && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Setup working directory (will be mounted later on)
+RUN mkdir /masterarbeit
+WORKDIR /masterarbeit
+
+# Permissions
+RUN addgroup -gid 5002 container
+RUN adduser --disabled-password --gecos '' --uid 5036 --gid 5002 container
+USER container
+
+# But we do need the requirements before
+COPY setup/requirements_gpu.txt /requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r /requirements.txt
+
+CMD ["bash"]
