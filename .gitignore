@@ -13,7 +13,7 @@ data/generation/textures/*
 data/paper/*
 
 # Generation data
-data/generation/out/*
+data/generation/out*/
 
 # dump files
 dump/*
