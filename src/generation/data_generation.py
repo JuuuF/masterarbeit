@@ -20,33 +20,51 @@ def check_sample(sample_info: pd.Series):
         sample_info.out_file_template.format(filename="undistort.png")
     )
 
+    def draw_ellipse():
+        cy = sample_info.ellipse_cy
+        cx = sample_info.ellipse_cx
+        w = sample_info.ellipse_w
+        h = sample_info.ellipse_h
+        theta = sample_info.ellipse_theta
+        y0 = cy - h // 2
+        y1 = y0 + h
+        x0 = cx - w // 2
+        x1 = x0 + w
+        cv2.rectangle(img_render, (x0, y0), (x1, y1), (255, 0, 0))
+        mask = cv2.imread(sample_info.out_file_template.format(filename="mask_Darts_Board_Area.png"))
+        img_render[mask < 127] //= 4
+
     img_parts.append(img_render)
     img_parts.append(img_undist)
 
     # Highlight arrow tips
     cv2.circle(img_undist, (400, 400), 300, (255, 0, 0), 1, cv2.LINE_AA)
 
-    def get_region(pos: int, max: int, win_size: int = 100) -> tuple[int, int]:
+    def get_image_region(pos: int, max_pos: int, win_size: int = 100) -> tuple[int, int]:
         p0 = pos - win_size
         p1 = pos + win_size
         if p0 < 0:
             p1 += abs(p0)
             p0 = 0
-        elif p1 > max:
-            p0 -= p1 - max
-            p1 = max
+        elif p1 > max_pos:
+            p0 -= p1 - max_pos
+            p1 = max_pos
         return p0, p1
 
-    arrow_tiles = []
+    # draw circles
     for y_rel, x_rel in sample_info.dart_positions:
         y = round(y_rel * img_render.shape[0])
         x = round(x_rel * img_render.shape[1])
         cv2.circle(img_render, (x, y), radius=5, color=(255, 255, 255))
         img_render[y, x] = 255
 
-        # Extract dart tips
-        y0, y1 = get_region(y, img_render.shape[0])
-        x0, x1 = get_region(x, img_render.shape[1])
+    # Extract dart tips
+    arrow_tiles = []
+    for y_rel, x_rel in sample_info.dart_positions:
+        y = round(y_rel * img_render.shape[0])
+        x = round(x_rel * img_render.shape[1])
+        y0, y1 = get_image_region(y, img_render.shape[0])
+        x0, x1 = get_image_region(x, img_render.shape[1])
         arrow_tile = img_render[y0:y1, x0:x1]
         arrow_tile = np.pad(arrow_tile, ((5, 5), (5, 5), (0, 0)))
         arrow_tile = cv2.pyrUp(arrow_tile)
@@ -77,7 +95,7 @@ def check_sample(sample_info: pd.Series):
         img = cv2.pyrDown(img)
 
     cv2.imshow("", img)
-    cv2.waitKey(1)
+    cv2.waitKey(0)
     # while (k := cv2.waitKey()) not in [
     #     ord("q"),
     #     13,  # Enter
@@ -152,7 +170,7 @@ def create_sample(
 
 
 if __name__ == "__main__":
-    for i in range(1):
+    for i in range(10):
         sample_info = None
         while sample_info is None:
             sample_info = create_sample(i)
