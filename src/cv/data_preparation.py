@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pickle
 from rich import print
+from scipy.ndimage import label, center_of_mass
 
 
 class ImageUtils:
@@ -58,55 +59,22 @@ class ImageUtils:
         )
         return img
 
-    def intersect_imgs(
-        img_a: np.ndarray,  # (y, x)
-        img_b: np.ndarray,  # (y, x)
-    ) -> np.ndarray:  # (y, x)
-        intersections = np.float32(img_a) * img_b
-        intersections /= intersections.max()
-        thresh = cv2.threshold(intersections, 0.5, 1, cv2.THRESH_BINARY)[1]
-        return np.uint8(thresh * 255)
-
     def points_from_intersection(
         intersection_img: np.ndarray,  # (y, x)
     ) -> tuple[tuple[int, int], tuple[int, int]]:
-        ys, xs = np.nonzero(intersection_img)  # [3*y1 + 3*y2], [3*x1 + 3*x2]
-
         # Resolve clusterings
-        cluster_point = [ys[0], xs[0]]
-        clusters = [[cluster_point]]
-        cluster_acc = [[ys[0], xs[0]]]
-        for y, x in zip(ys[1:], xs[1:]):
-            dist = np.sqrt((y - cluster_point[0]) ** 2 + (x - cluster_point[1]) ** 2)
-            if dist < 20:
-                # TODO: check all other clusters if it belongs in that.
-                # Same cluster
-                clusters[-1].append((y, x))
-                cluster_acc[-1][0] += y
-                cluster_acc[-1][1] += x
-            else:
-                cluster_point = [y, x]
-                clusters.append([cluster_point])
-                cluster_acc.append([y, x])
-        points = []
-        for i, acc in enumerate(cluster_acc):
-            points.append(
-                (round(acc[0] / len(clusters[i])), round(acc[1] / len(clusters[i])))
-            )
+        intersection_img //= 255  # 0/1
 
-        # Sort values
-        dy = abs(points[-1][0] - points[0][0])
-        dx = abs(points[-1][1] - points[0][1])
+        # Label connected components
+        labeled_array, n_clusters = label(intersection_img)
+        assert n_clusters == 2, "Found too many clusters."
 
-        if dx < dy:
-            # vertical line
-            points = sorted(points, key=lambda x: x[0])
-        else:
-            # horizontal line
-            points = sorted(points, key=lambda x: x[1])
-
-        assert len(points) == 2, "Found too many clusters."
-        return points
+        # Find centers
+        centroids = center_of_mass(
+            intersection_img, labeled_array, range(1, n_clusters + 1)
+        )
+        centroids = [(round(y), round(x)) for y, x in centroids]
+        return centroids
 
     def undistort(
         sample_info: pd.Series,
@@ -128,40 +96,36 @@ class ImageUtils:
             (ellipse_cx, ellipse_cy), (ellipse_w, ellipse_h), ellipse_theta = ellipse
 
             # Get res img
-            img_w = ellipse_cx + int(max(ellipse_w, ellipse_h) * 1.5)
-            img_h = ellipse_cy + int(max(ellipse_w, ellipse_h) * 1.5)
+            img_w = ellipse_cx + int(ellipse_w) + 10
+            img_h = ellipse_cy + int(ellipse_h) + 10
             img_ellipse = np.zeros(img.shape[:2], np.uint8)
-            cv2.ellipse(img_ellipse, *ellipse, 0, 360, color=255, thickness=2)
+            cv2.ellipse(
+                img_ellipse,
+                (ellipse_cx, ellipse_cy),
+                (ellipse_w // 2, ellipse_h // 2),
+                ellipse_theta,
+                0,
+                360,
+                color=255,
+                thickness=2,
+            )
 
-            # horizontal points
+            # Horizontal points
             img_line_h = ImageUtils.draw_polar_line(
                 np.zeros_like(img_ellipse), *line_h, thickness=2
             )
-            h_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_h)
+            h_intersections = np.bitwise_and(img_ellipse, img_line_h)
             left, right = ImageUtils.points_from_intersection(h_intersections)
 
-            # vertical points
+            # Vertical points
             img_line_v = ImageUtils.draw_polar_line(
                 np.zeros_like(img_ellipse), *line_v, thickness=2
             )
-            v_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_v)
+            v_intersections = np.bitwise_and(img_ellipse, img_line_v)
             top, bot = ImageUtils.points_from_intersection(v_intersections)
 
-            # res = img.copy()
-            # res[img_ellipse != 0] = (255, 0, 0)
-            # res[img_line_v != 0] = (0, 255, 0)
-            # res[img_line_h != 0] = (0, 255, 0)
-            # res[v_intersections != 0] = 0
-            # res[h_intersections != 0] = 0
-            # for p in [top, left, bot, right]:
-            #     cv2.circle(res, (p[1], p[0]), 5, (255, 255, 255), 1)
-            #     res[p] = 255
-            # cv2.imshow("", res)
-            # cv2.waitKey()
-            # exit()
-
             # center point
-            c_intersection = ImageUtils.intersect_imgs(img_line_h, img_line_v)
+            c_intersection = np.bitwise_and(img_line_h, img_line_v)
             center = np.mean(np.nonzero(c_intersection), axis=1)
             center = (round(center[0]), round(center[1]))
 
@@ -201,15 +165,6 @@ class ImageUtils:
         # Get points
         src_pts = get_src_pts(ellipse, line_h, line_v)
         dst_pts = get_dst_points()
-
-        # res = img.copy()
-        # for s, d in zip(src_pts, dst_pts):
-        #     s = (round(s[1]), round(s[0]))
-        #     d = (round(d[1]), round(d[0]))
-        #     cv2.line(res, s, d, (255, 0, 0))
-        # cv2.imshow("", res)
-        # cv2.waitKey()
-        # exit()
 
         img_undistorted = transform_image(img, src_pts, dst_pts)
 
@@ -305,7 +260,18 @@ class MaskActions:
 
         (cx, cy), (w, h), theta = cv2.fitEllipse(hull)
 
-        return (round(cx), round(cy)), (round(w / 2), round(h / 2)), theta
+        # Get correct height and width since cv2 does weird things
+        rows = np.any(thresh, axis=1)
+        y0 = np.argmax(rows)
+        y1 = thresh.shape[0] - np.argmax(rows[::-1])
+        h = y1 - y0
+
+        cols = np.any(thresh, axis=0)
+        x0 = np.argmax(cols)
+        x1 = thresh.shape[1] - np.argmax(cols[::-1])
+        w = x1 - x0
+
+        return (round(cx), round(cy)), (round(w), round(h)), theta
 
     def get_dart_positions(
         sample_info: pd.Series,
@@ -352,8 +318,8 @@ def prepare_sample(sample_info: pd.Series):
     ellipse = MaskActions.get_ellipse_from_mask(img_area)
     sample_info["ellipse_cx"] = ellipse[0][0]
     sample_info["ellipse_cy"] = ellipse[0][1]
-    sample_info["ellipse_a"] = ellipse[1][0]
-    sample_info["ellipse_b"] = ellipse[1][1]
+    sample_info["ellipse_w"] = ellipse[1][0]
+    sample_info["ellipse_h"] = ellipse[1][1]
     sample_info["ellipse_theta"] = ellipse[2]
 
     # Extract dart positions
@@ -398,10 +364,10 @@ def prepare_sample(sample_info: pd.Series):
 
 if __name__ == "__main__":
     for id in range(1, 10):
-        id = 10
-        with open(f"data/generation/out/{id}/info.pkl", "rb") as f:
+        # id = 3
+        info_path = f"data/generation/out/{id}/info.pkl"
+        if not os.path.exists(info_path):
+            continue
+        with open(info_path, "rb") as f:
             sample_info = pickle.load(f)
-        # sample_info = pd.read_csv(, index_col=0)[
-        #     str(id)
-        # ]
         prepare_sample(sample_info)
