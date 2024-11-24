@@ -7,13 +7,14 @@ import pandas as pd
 import pickle
 import random
 from mathutils import Vector, Euler
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 
 # -----------------------------------------------
 # Variables
 
 BLEND_FILE = "data/generation/darts.blend"
 HDRI_DIR = "data/generation/hdri/"
+SUPPRESS_RENDER_OUTPUT = True
 
 # -----------------------------------------------
 # Load and setup
@@ -142,10 +143,10 @@ class Utils:
             filename=filename,
         )
         bpy.context.scene.render.filepath = filepath
-        print(f"Rendering file '{filepath}'... ", end=" ")
-        with Utils.suppress_output():
+        print(f"Rendering file '{filepath}'... ", end=" ", flush=True)
+        with Utils.suppress_output() if SUPPRESS_RENDER_OUTPUT else nullcontext():
             bpy.ops.render.render(write_still=True)
-        print("Done!")
+        print("Done!", flush=True)
 
     def render_sample_with_masks():
         # Render original
@@ -317,7 +318,9 @@ class SceneUtils:
                     "Could not find Background node in Compositor to set random environment texture."
                 )
                 return
-            bg_node.inputs["Strength"].default_value = np.random.uniform(min, max)
+            strength = np.random.uniform(min, max)
+            bg_node.inputs["Strength"].default_value = strength
+            SampleInfo.env_texture_strength = round(strength, 2)
 
         def random_z_rotation():
             for node in nodes:
@@ -594,20 +597,43 @@ class ObjectPlacement:
         upper = mean_focal + dist_fac * (mean_focal - min_focal)
 
         # Set focal length
-        focal = np.random.uniform(lower, upper)
+        focal_fac = np.random.random()
+        focal = lower + focal_fac * (upper - lower)
         cam.data.lens = focal
 
+        # Aperture
+        min_aperture = 1.8
+        max_aperture = 5
+        aperture = min_aperture + focal_fac * (max_aperture - min_aperture)
+        aperture += np.random.normal(0, 1)
+        aperture = np.clip(aperture, min_aperture, max_aperture)
+        f_stop = focal / (2 * aperture)
+        cam.data.dof.aperture_fstop = f_stop
+
         # Set resolution
-        format = np.random.choice([4 / 3, 16 / 9, 1 / 1, 3 / 2, 2 / 1, 21 / 9, 5 / 4])
+        img_format = np.random.choice(
+            [4 / 3, 16 / 9, 1 / 1, 3 / 2, 2 / 1, 21 / 9, 5 / 4]
+        )
         dim_a = int(np.random.uniform(1000, 4000))
-        dim_b = int(dim_a / format)
+        dim_b = int(dim_a / img_format)
         vertical = np.random.random() > 0.3
         bpy.context.scene.render.resolution_x = dim_b if vertical else dim_a
         bpy.context.scene.render.resolution_y = dim_a if vertical else dim_b
 
+        # Flash light
+        use_flash = np.random.random() > SampleInfo.env_texture_strength
+        SceneUtils.get_object("Flash").hide_render = not use_flash
+
+        # Exposure
+        exposure = np.random.uniform(0.2, 1.0)
+        bpy.context.scene.view_settings.exposure = exposure
+
         # Save cam info
         SampleInfo.camera_distance = round(dist, 2)
         SampleInfo.camera_focal_mm = round(focal, 2)
+        SampleInfo.camera_aperture = round(aperture, 2)
+        SampleInfo.camera_flash = int(use_flash)
+        SampleInfo.camera_exposure = round(exposure, 2)
         SampleInfo.img_width = bpy.context.scene.render.resolution_x
         SampleInfo.img_height = bpy.context.scene.render.resolution_y
 
@@ -881,7 +907,9 @@ class MaskRendering:
         lens_distortion = Compositor.get_node("Lens Distortion")
 
         # Get original compositor node link
-        Compositor.remove_link(state, "Film Grain Mix", "Image", "Composite", "Image")
+        Compositor.remove_link(
+            state, "Film Grain Output", "Image", "Composite", "Image"
+        )
         Compositor.remove_link(state, "Bloom Mix", "Image", "Lens Distortion", "Image")
         Compositor.add_link(state, "Render Layers", "Alpha", "Lens Distortion", "Image")
         Compositor.add_link(state, "Lens Distortion", "Image", "Composite", "Image")
@@ -960,6 +988,9 @@ def render_image(id=None):
     # Randomize Scene
     Utils.randomize_looks()
 
+    # Randomize HDRI
+    SceneUtils.random_env_texture()
+
     # Place Darts
     ObjectPlacement.place_darts()
     scores, total_score = SceneUtils.record_dart_score()
@@ -968,9 +999,6 @@ def render_image(id=None):
     ObjectPlacement.place_camera()
     ObjectPlacement.randomize_camera_parameters()
     SceneUtils.random_motion_blur()
-
-    # Randomize HDRI
-    SceneUtils.random_env_texture()
 
     # Rendering
     Utils.render_sample_with_masks()
@@ -988,6 +1016,7 @@ def render_image(id=None):
             print(f"\t{i}. {warning}")
         print("=" * 120)
 
+    print(SampleInfo(), flush=True)
     return sample_info
 
     # -------------------------------
