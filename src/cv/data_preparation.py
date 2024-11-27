@@ -3,7 +3,9 @@ import cv2
 import numpy as np
 import pandas as pd
 import pickle
-from rich import print
+from tqdm import tqdm
+
+# from rich import print
 from scipy.ndimage import label, center_of_mass
 
 
@@ -63,18 +65,31 @@ class ImageUtils:
         intersection_img: np.ndarray,  # (y, x)
     ) -> tuple[tuple[int, int], tuple[int, int]]:
         # Resolve clusterings
-        intersection_img //= 255  # 0/1
+        intersection_img //= 255  # 0/1 values
 
         # Label connected components
-        labeled_array, n_clusters = label(intersection_img)
-        assert n_clusters == 2, "Found too many clusters."
+        labeled_array, n_clusters = label(
+            intersection_img,
+            structure=np.ones((3, 3)),
+        )
+        assert n_clusters == 2, "Found too many clusters. Or none."
 
         # Find centers
         centroids = center_of_mass(
             intersection_img, labeled_array, range(1, n_clusters + 1)
         )
-        centroids = [(round(y), round(x)) for y, x in centroids]
         return centroids
+
+    def intersect_imgs(img_a: np.ndarray, img_b: np.ndarray) -> np.ndarray:
+        intersected = np.bitwise_and(img_a, img_b)
+        # clean up images
+        intersected = cv2.morphologyEx(
+            intersected,
+            cv2.MORPH_OPEN,
+            kernel=(2, 2),
+            iterations=1,
+        )
+        return intersected
 
     def undistort(
         sample_info: pd.Series,
@@ -95,14 +110,12 @@ class ImageUtils:
         ) -> np.ndarray:  # (5, 2): top, left, bottom, right, center
             (ellipse_cx, ellipse_cy), (ellipse_w, ellipse_h), ellipse_theta = ellipse
 
-            # Get res img
-            img_w = ellipse_cx + int(ellipse_w) + 10
-            img_h = ellipse_cy + int(ellipse_h) + 10
+            # Draw outer board ellipse
             img_ellipse = np.zeros(img.shape[:2], np.uint8)
             cv2.ellipse(
                 img_ellipse,
-                (ellipse_cx, ellipse_cy),
-                (ellipse_w // 2, ellipse_h // 2),
+                (round(ellipse_cx), round(ellipse_cy)),
+                (round(ellipse_w / 2), round(ellipse_h / 2)),
                 ellipse_theta,
                 0,
                 360,
@@ -110,24 +123,23 @@ class ImageUtils:
                 thickness=2,
             )
 
-            # Horizontal points
+            # Horizontal points intersection
             img_line_h = ImageUtils.draw_polar_line(
                 np.zeros_like(img_ellipse), *line_h, thickness=2
             )
-            h_intersections = np.bitwise_and(img_ellipse, img_line_h)
-            left, right = ImageUtils.points_from_intersection(h_intersections)
+            h_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_h)
+            right, left = ImageUtils.points_from_intersection(h_intersections)
 
-            # Vertical points
+            # Vertical points intersection
             img_line_v = ImageUtils.draw_polar_line(
                 np.zeros_like(img_ellipse), *line_v, thickness=2
             )
-            v_intersections = np.bitwise_and(img_ellipse, img_line_v)
+            v_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_v)
             top, bot = ImageUtils.points_from_intersection(v_intersections)
 
-            # center point
-            c_intersection = np.bitwise_and(img_line_h, img_line_v)
+            # Center point
+            c_intersection = ImageUtils.intersect_imgs(img_line_h, img_line_v)
             center = np.mean(np.nonzero(c_intersection), axis=1)
-            center = (round(center[0]), round(center[1]))
 
             return np.array([top, left, bot, right, center], np.float32)
 
@@ -221,7 +233,7 @@ class MaskActions:
             assert M["m00"] != 0, "Could not find line center. Whoops."
             cy = M["m01"] / M["m00"]
             cx = M["m10"] / M["m00"]
-            return round(cy), round(cx)
+            return cy, cx
 
         def extract_centers(
             img: np.ndarray,  # (y, x)
@@ -258,20 +270,11 @@ class MaskActions:
         points = np.column_stack(np.where(thresh.transpose() > 0))
         hull = cv2.convexHull(points)[:, 0]
 
-        (cx, cy), (w, h), theta = cv2.fitEllipse(hull)
+        (cx, cy), (w, h), theta = cv2.fitEllipseDirect(
+            hull
+        )  # this function will output w <= h
 
-        # Get correct height and width since cv2 does weird things
-        rows = np.any(thresh, axis=1)
-        y0 = np.argmax(rows)
-        y1 = thresh.shape[0] - np.argmax(rows[::-1])
-        h = y1 - y0
-
-        cols = np.any(thresh, axis=0)
-        x0 = np.argmax(cols)
-        x1 = thresh.shape[1] - np.argmax(cols[::-1])
-        w = x1 - x0
-
-        return (round(cx), round(cy)), (round(w), round(h)), theta
+        return (cx, cy), (w, h), theta
 
     def get_dart_positions(
         sample_info: pd.Series,
@@ -299,15 +302,42 @@ class MaskActions:
 
         return centers
 
+    def calculate_darts_iou(sample_info: pd.Series):
+        def load_mask(filepath: str) -> np.ndarray:
+            img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+            _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+            return img
+
+        def unite(*imgs: list[np.ndarray]) -> np.ndarray:
+            union = imgs[0]
+            for img in imgs[1:]:
+                union = np.logical_or(union, img)
+            return union
+
+        darts_masks = [
+            load_mask(
+                sample_info["out_file_template"].format(filename=f"mask_Dart_{i}.png")
+            )
+            for i in range(1, 4)
+        ]
+        union = unite(darts_masks)
+        intersections = []
+        for i, dart_a in enumerate(darts_masks):
+            for dart_b in darts_masks[i + 1 :]:
+                intersection = np.logical_and(dart_a, dart_b)
+                intersections.append(intersection)
+        intersections = unite(intersections)
+        iou = np.count_nonzero(intersections) / np.count_nonzero(union)
+        return iou
+
 
 def prepare_sample(sample_info: pd.Series):
 
+    # Load sample images
     img_dir = os.path.join(sample_info["OUT_DIR"], str(sample_info.sample_id))
-
-    # Load images
     img, img_orient, img_area, img_intersections = ImageUtils.load_sample_imgs(img_dir)
 
-    # Extract lines
+    # Extract orientation lines
     line_v, line_h = MaskActions.get_lines_from_point_masks(img_orient)
     sample_info["h_line_r"] = line_h[0] / img.shape[1]
     sample_info["h_line_theta"] = line_h[1]
@@ -316,30 +346,43 @@ def prepare_sample(sample_info: pd.Series):
 
     # Extract ellipse
     ellipse = MaskActions.get_ellipse_from_mask(img_area)
-    sample_info["ellipse_cx"] = ellipse[0][0]
-    sample_info["ellipse_cy"] = ellipse[0][1]
-    sample_info["ellipse_w"] = ellipse[1][0]
-    sample_info["ellipse_h"] = ellipse[1][1]
+    sample_info["ellipse_cx"] = round(ellipse[0][0])
+    sample_info["ellipse_cy"] = round(ellipse[0][1])
+    sample_info["ellipse_w"] = round(ellipse[1][0])
+    sample_info["ellipse_h"] = round(ellipse[1][1])
     sample_info["ellipse_theta"] = ellipse[2]
-
-    # Extract dart positions
-    dart_positions = MaskActions.get_dart_positions(sample_info, img_intersections)
-    sample_info["dart_positions"] = dart_positions
 
     # Undistort image
     sample_info, img_undist = ImageUtils.undistort(
         sample_info, img, ellipse, line_h, line_v
     )
-    cv2.imwrite(os.path.join(img_dir, "undistort.png"), img_undist)
 
+    # Extract dart positions
+    dart_positions = MaskActions.get_dart_positions(sample_info, img_intersections)
+    sample_info["dart_positions"] = dart_positions
+
+    # Calculate Darts IoU
+    dart_iou = MaskActions.calculate_darts_iou(sample_info)
+    sample_info["dart_iou"] = dart_iou
+
+    # Save results
+    sample_info.sort_index(inplace=True)
+    cv2.imwrite(os.path.join(img_dir, "undistort.png"), img_undist)
     with open(os.path.join(img_dir, "info.pkl"), "wb") as f:
         pickle.dump(sample_info, f)
     return sample_info
 
+    # -------------------------------------------
+    # DEBUG CODE
     # draw some lines
     ImageUtils.draw_polar_line(img, *line_h, color=(0, 255, 0))
     ImageUtils.draw_polar_line(img, *line_v, color=(0, 255, 0))
-    cv2.ellipse(img, *ellipse, 0, 360, color=(255, 0, 0), thickness=1)
+    ellipse_draw = (
+        (round(ellipse[0][0]), round(ellipse[0][1])),
+        (round(ellipse[1][0] / 2), round(ellipse[1][1] / 2)),
+        ellipse[2],
+    )
+    cv2.ellipse(img, *ellipse_draw, 0, 360, color=(255, 0, 0), thickness=1)
 
     for angle in range(4):
         c = 400
@@ -359,12 +402,14 @@ def prepare_sample(sample_info: pd.Series):
 
     cv2.imshow("original", img)
     cv2.imshow("undistorted", img_undist)
-    cv2.waitKey()
+    if cv2.waitKey() == ord("q"):
+        exit()
 
 
 if __name__ == "__main__":
-    for id in range(1, 10):
-        # id = 3
+    samples = [d for d in os.listdir("data/generation/out") if d.isnumeric()]
+    samples = sorted(samples, key=int)
+    for id in tqdm(samples):
         info_path = f"data/generation/out/{id}/info.pkl"
         if not os.path.exists(info_path):
             continue
