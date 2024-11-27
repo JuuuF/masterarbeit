@@ -31,7 +31,9 @@ def check_sample(sample_info: pd.Series):
         x0 = cx - w // 2
         x1 = x0 + w
         cv2.rectangle(img_render, (x0, y0), (x1, y1), (255, 0, 0))
-        mask = cv2.imread(sample_info.out_file_template.format(filename="mask_Darts_Board_Area.png"))
+        mask = cv2.imread(
+            sample_info.out_file_template.format(filename="mask_Darts_Board_Area.png")
+        )
         img_render[mask < 127] //= 4
 
     img_parts.append(img_render)
@@ -40,7 +42,9 @@ def check_sample(sample_info: pd.Series):
     # Highlight arrow tips
     cv2.circle(img_undist, (400, 400), 300, (255, 0, 0), 1, cv2.LINE_AA)
 
-    def get_image_region(pos: int, max_pos: int, win_size: int = 100) -> tuple[int, int]:
+    def get_image_region(
+        pos: int, max_pos: int, win_size: int = 100
+    ) -> tuple[int, int]:
         p0 = pos - win_size
         p1 = pos + win_size
         if p0 < 0:
@@ -95,7 +99,7 @@ def check_sample(sample_info: pd.Series):
         img = cv2.pyrDown(img)
 
     cv2.imshow("", img)
-    cv2.waitKey(0)
+    cv2.waitKey(1)
     # while (k := cv2.waitKey()) not in [
     #     ord("q"),
     #     13,  # Enter
@@ -116,7 +120,8 @@ def create_sample(
     sample_path=os.path.join("data/generation/out/{id}/"),
 ) -> pd.Series | None:
     print("-" * 120)
-    # print(f"Sample {id}".center(120))
+    print(f"Sample {id}".center(120))
+
     # --------------------------------------------------------------------
     # Render / Load Data
     sample_info_path = os.path.join(sample_path, "info.pkl")
@@ -142,7 +147,10 @@ def create_sample(
     # --------------------------------------------------------------------
     # Extract information
 
-    if os.path.exists(os.path.join(sample_path, "undistort.png")) and "dart_positions" in sample_info:
+    if (
+        os.path.exists(os.path.join(sample_path, "undistort.png"))
+        and "dart_positions" in sample_info
+    ):
         print(f"Sample {sample_info.sample_id} already exists.".center(120))
         print("-" * 120)
         return sample_info
@@ -152,7 +160,7 @@ def create_sample(
     except AssertionError as e:
         print("Error while creating sample information:")
         print("\t", e)
-        # if unsuccessful, remove info
+        # if unsuccessful, remove info and return None
         if os.path.exists(sample_info_path):
             os.remove(sample_info_path)
         return

@@ -77,7 +77,9 @@ class SampleInfo:
         return attrs
 
     def to_series():
-        return pd.Series(SampleInfo.get_attributes())
+        series = pd.Series(SampleInfo.get_attributes())
+        series.sort_index(inplace=True)
+        return series
 
     def __repr__(self):
         max_len = max([len(k) for k in SampleInfo.get_attributes().keys()])
@@ -1016,7 +1018,7 @@ def render_image(id=None):
             print(f"\t{i}. {warning}")
         print("=" * 120)
 
-    print(SampleInfo(), flush=True)
+    # print(SampleInfo(), flush=True)
     return sample_info
 
     # -------------------------------
