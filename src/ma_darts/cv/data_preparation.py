@@ -8,6 +8,8 @@ from tqdm import tqdm
 # from rich import print
 from scipy.ndimage import label, center_of_mass
 
+from ma_darts.cv.cv import extract_center
+
 
 class ImageUtils:
 
@@ -364,6 +366,11 @@ def prepare_sample(sample_info: pd.Series):
     # Calculate Darts IoU
     dart_iou = MaskActions.calculate_darts_iou(sample_info)
     sample_info["dart_iou"] = dart_iou
+
+    # Add Training Data utils
+    cy, cx = extract_center(img)
+    sample_info["cv_ellipse_cy"] = cy
+    sample_info["cv_ellipse_cx"] = cx
 
     # Save results
     sample_info.sort_index(inplace=True)

@@ -1247,7 +1247,7 @@ def extract_center(img: np.ndarray):
     skeleton = CV.skeleton(edges)
     lines = CV.extract_lines(skeleton)  # (p1, p2, length, rho, theta)
     lines_binned = CV.bin_lines_by_angle(lines)
-    cy, cx, center_img = CV.get_center_point(img, lines_binned)
+    cy, cx = CV.get_center_point(img.shape, lines_binned)
     return cy, cx
 
 

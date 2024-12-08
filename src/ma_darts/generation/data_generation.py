@@ -6,9 +6,8 @@ import pandas as pd
 import pickle
 from rich import print as pprint
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from generation.rendering import render_image
-from cv.data_preparation import prepare_sample
+from ma_darts.generation.rendering import render_image
+from ma_darts.cv.data_preparation import prepare_sample
 
 
 def check_sample(sample_info: pd.Series):
@@ -167,6 +166,7 @@ def create_sample(
 
     # --------------------------------------------------------------------
     # Report
+
     pd.set_option("display.width", 120)
     pprint(sample_info.to_dict())
     print(
