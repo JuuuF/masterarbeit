@@ -4,7 +4,7 @@ SSH_ALIAS="ma_kiel"
 
 EXCLUDE_DIRS=(
     "data/paper"
-    "data/generation/out"
+    "data/generation/out*"
     "dump"
     "notes"
     "private"
