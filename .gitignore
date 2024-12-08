@@ -45,3 +45,6 @@ workspaces/*
 
 # Python project files
 *.egg-info
+
+# TensorFlow Models
+*.keras
