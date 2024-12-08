@@ -1,4 +1,3 @@
-
 # Blender files
 *.blend1
 *.blend2
@@ -43,3 +42,6 @@ workspaces/*
 
 # Pycache
 *__pycache__
+
+# Python project files
+*.egg-info
