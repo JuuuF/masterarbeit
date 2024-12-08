@@ -1,12 +1,6 @@
 import os
 import cv2
-import random
 import numpy as np
-
-# from scipy.optimize import curve_fit
-# from skimage.transform import hough_ellipse
-# from skimage.measure import EllipseModel, ransac
-from scipy.ndimage import maximum_filter
 
 img_paths = [
     "dump/test/double.png",
@@ -55,21 +49,12 @@ class Utils:
         return img
 
     def non_maximum_suppression(img):
+
+        from scipy.ndimage import maximum_filter
+
         max_filtered = maximum_filter(img, size=7, mode="constant")
         suppressed = (img == max_filtered) * img
         return suppressed
-
-    def non_maximum_suppression_old(img: np.ndarray):
-        res = np.zeros_like(img)
-        for y in range(img.shape[0]):
-            y0 = max(0, y - 1)
-            y1 = min(y + 1, img.shape[0] - 1)
-            for x in range(img.shape[1]):
-                x0 = max(0, x - 1)
-                x1 = min(x + 1, img.shape[1] - 1)
-                if img[y, x] == np.max(img[y0:y1, x0:x1]):
-                    res[y, x] = img[y, x]
-        return res
 
     def draw_polar_line(
         img,
@@ -266,6 +251,9 @@ class Unused:
         Utils.show_imgs(out)
 
     def fit_sine_curve(img: np.ndarray, hough_space: np.ndarray):
+
+        from scipy.optimize import curve_fit
+
         def sine_curve(x, A, B, C, D):
             return A * np.cos(B * x + C) + D
 
@@ -1108,8 +1096,6 @@ class CV:
 
     def edge_detect(img: np.ndarray) -> np.ndarray:
         def _detect(img):
-            if len(img.shape) == 3:
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             # Blur + filter in x and y
             img = cv2.GaussianBlur(img, (3, 3), 0)
             grad_x = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
@@ -1123,6 +1109,10 @@ class CV:
 
             grad = cv2.convertScaleAbs(grad)
             return grad
+
+        # Ensure grayscale
+        if len(img.shape) == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Increase contrast
         img = cv2.convertScaleAbs(img, alpha=2.0, beta=0)
@@ -1396,6 +1386,9 @@ if __name__ == "__main__":
             if b > img.shape[1] / 2:
                 return False
             return True
+
+        from skimage.measure import EllipseModel
+        import random
 
         for i in range(n_iterations):
             print(f"{i+1}/{n_iterations}", end="\r")
