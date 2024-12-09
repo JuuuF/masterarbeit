@@ -17,3 +17,6 @@ DOCKER_ARGS+=("--gpus=device=3")
 DOCKER_ARGS+=("-v" "$HOME/masterarbeit:/masterarbeit")
 
 docker run "${DOCKER_ARGS[@]}" jf/masterarbeit
+
+# Install repo package
+docker exec jf_masterarbeit pip install -e /masterarbeit
