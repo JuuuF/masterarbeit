@@ -20,6 +20,9 @@ writing/notes/*
 private/*
 notes/*
 
+# Cache files
+data/cache/
+
 # LaTeX
 *.aux
 *.bbl
