@@ -61,10 +61,19 @@ def train_loop(
     *,
     epochs=1,
     val_data=None,
-    callbacks=[],
+    callbacks: list = [],
+    verbose: int = 1,
 ):
     if not isinstance(callbacks, CallbackList):
-        callbacks = CallbackList(callbacks)
+        callbacks = CallbackList(
+            callbacks,
+            add_history=True,
+            add_progbar=verbose != 0,
+            verbose=verbose,
+            model=model,
+            epochs=epochs,
+            steps=None,
+        )
 
     try:
         callbacks.on_train_begin()
