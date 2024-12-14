@@ -59,14 +59,14 @@ def predict(model, img_paths: list = None):
         data = get_splits(
             path="data/paper/labels.pkl",
             dataset="d1",
-            split="test",  # train / val / test
+            split="train",  # train / val / test
         )  # columns: img_folder, img_name, bbox, xy
         img_paths = [
             os.path.join(DATA_PATH, folder, name)
             for folder, name in zip(data.img_folder, data.img_name)
         ]
 
-        img_paths = img_paths[:10]
+        img_paths = img_paths[10:100]
 
         # Extract relevant data
         """
@@ -101,6 +101,7 @@ def predict(model, img_paths: list = None):
 
     fps = (len(img_paths) - 1) / (time() - ti)
     print(f"FPS: {fps:.2f}")
+    print("\n" * 10)
 
     scores = []
     for i, (pred, gt, path) in enumerate(zip(preds, xys, img_paths)):
@@ -110,7 +111,7 @@ def predict(model, img_paths: list = None):
         score = abs(sum(pred_scores) - sum(target_scores))
         scores.append(score)
         print(
-            f"Target score: {target_scores} | Prediction Score: {pred_scores}",
+            f"Target score: {target_scores} | Prediction Score: {pred_scores} | {path}",
             " " * 10,
             end="\r",
         )
@@ -128,7 +129,7 @@ def predict(model, img_paths: list = None):
         if cv2.waitKey() == ord("q"):
             break
 
-    print(" " * 100, end="\r")
+    print(" " * (len(str(target_scores) + str(pred_scores) + path) + 40), end="\r")
     ASE = np.array(scores)  # absolute score errors
     PCS = len(ASE[ASE == 0]) / len(ASE) * 100
     MASE = np.mean(ASE)
