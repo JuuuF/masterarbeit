@@ -1,125 +1,325 @@
-# execute from project root using
-# python -m src.cv.dartsboard_finder
-# to ensure relative imports work as expected
-
 import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import re
 import cv2
 import numpy as np
 import pandas as pd
 import pickle
-import warnings
-import tensorflow as tf
+import shutil
 from rich import print
-from tensorflow.keras import layers
+from datetime import datetime
+
+import tensorflow as tf
 import tensorflow_io as tfio
-from scipy.ndimage import affine_transform
+from tensorflow.keras import layers
+from tensorflow.keras import callbacks as tf_callbacks
 
 from ma_darts.cv.cv import extract_center
+from ma_darts.ai import callbacks as ma_callbacks
+from ma_darts.ai.training import train_loop
 
 IMG_SIZE = 800
+BATCH_SIZE = 32
+model_input = None
+# model_input = "dump/ellipse_model.keras"
 
 
 class Model:
-    def get_model():
-        inputs = layers.Input(shape=(IMG_SIZE, IMG_SIZE, 3))
+    def get_model(
+        filepath: str | None = None,
+        n_input_channels: int = 1,
+        n_outputs: int = 5,
+    ):
+        if filepath is not None and os.path.exists(filepath):
+            model = tf.keras.models.load_model(filepath, compile=False)
+        else:
+            inputs = layers.Input(shape=(IMG_SIZE, IMG_SIZE, n_input_channels))
 
-        def conv_block(x, n_filters):
-            x = layers.Conv2D(
-                n_filters,
-                kernel_size=(3, 3),
-                padding="same",
-            )(x)
-            x = layers.BatchNormalization()(x)
-            x = layers.Activation("relu")(x)
-            x = layers.MaxPooling2D((2, 2))(x)
-            return x
+            def conv_block(x: tf.Tensor, n_filters: int):
+                x = layers.Conv2D(
+                    n_filters,
+                    kernel_size=(3, 3),
+                    padding="same",
+                )(x)
+                x = layers.BatchNormalization()(x)
+                x = layers.Activation("relu")(x)
+                x = layers.MaxPooling2D((2, 2))(x)
+                x = layers.Dropout(0.1)(x)
+                return x
 
-        filters = [16, 32, 64, 64, 64, 64, 64, 64]
+            filters = [16, 32, 64, 128, 256]
+            dense_units = [128, 64, 32]
 
-        x = inputs
-        for f in filters:
-            x = conv_block(x, f)
+            # Convolutional
+            x = inputs
+            for f in filters:
+                x = conv_block(x, f)
 
-        x = layers.Flatten()(x)
+            # Flatten
+            # x = layers.Flatten()(x)
+            x = layers.GlobalAveragePooling2D()(x)
 
-        dense_units = [64, 64, 16]
-        for d in dense_units:
-            x = layers.Dense(d, activation="relu")(x)
+            # Dense
+            for d in dense_units:
+                x = layers.Dense(d, activation="relu")(x)
 
-        output = layers.Dense(5, activation="linear")(x)
+            output = layers.Dense(n_outputs, activation="linear")(x)
 
-        model = tf.keras.Model(inputs=inputs, outputs=output)
+            model = tf.keras.Model(inputs=inputs, outputs=output)
         model.compile(
             optimizer="adam",
-            loss="mse",
-            metrics=[EllipseLoss(), tf.keras.metrics.MeanAbsoluteError()],
+            # loss="mse",
+            loss=EllipseParamLoss(),
+            metrics=[
+                # EllipseIoULoss(),
+                tf.keras.metrics.MeanSquaredError(),
+                tf.keras.metrics.RootMeanSquaredError(),
+                # tf.keras.metrics.MeanAbsoluteError(),
+            ],
         )
         return model
 
+    def fit_model(model, ds, val_ds, callbacks, epochs=1000):
+        # train_loop(
+        #     model,
+        #     train_data=ds,
+        #     epochs=1000,
+        #     val_data=val_ds,
+        #     callbacks=callbacks,
+        # )
+        try:
+            model.fit(
+                ds,
+                epochs=epochs,
+                verbose=1,
+                validation_data=val_ds,
+                callbacks=callbacks,
+            )
+        except KeyboardInterrupt:
+            print("\nTraining interrupted.")
 
-class EllipseLoss(tf.keras.losses.Loss):
+        # Load best model checkpoint weights
+        cp = Utils.get_best_model_checkpoint()
+        if cp:
+            cp_model = tf.keras.models.load_model(cp, compile=False)
+            cp_model.save_weights("temp.weights.h5")
+            model.load_weights("temp.weights.h5")
+            os.remove("temp.weights.h5")
+            del cp_model
+        return model
+
+    def test_model(model, val_ds):
+        def draw_ellipse(img, cy, cx, w, h, theta, color=(255, 255, 255)):
+            cy = int(cy * X.shape[0])
+            cx = int(cx * X.shape[1])
+            d = np.sqrt(X.shape[0] ** 2 + X.shape[1] ** 2)
+            w = int(w * d)
+            h = int(h * d)
+            theta = float(theta * 360)
+
+            img = cv2.ellipse(
+                img,
+                (cx, cy),
+                (max(w // 2, 1), max(h // 2, 1)),
+                theta,
+                0,
+                360,
+                color,
+            )
+            return img
+
+        X_batch, y_batch = next(iter(val_ds.take(1)))
+        y_batch_ = model.predict(X_batch)
+
+        for X, y, y_ in zip(X_batch, y_batch, y_batch_):
+            # Data Conversion
+            X = X.numpy()
+            y = y.numpy()
+            X = np.uint8(X[:, :, 0] * 255)
+            X = cv2.cvtColor(X, cv2.COLOR_GRAY2BGR)
+
+            # Draw Ellipses
+            X = draw_ellipse(X, *y, color=(255, 0, 0))
+            X = draw_ellipse(X, *y_, color=(0, 255, 0))
+
+            # Get Line
+            cy = int(y[0] * Data.img_size)
+            cx = int(y[1] * Data.img_size)
+            cy_ = int(y_[0] * Data.img_size)
+            cx_ = int(y_[1] * Data.img_size)
+            cv2.line(X, (cx, cy), (cx_, cy_), (200, 200, 200), lineType=cv2.LINE_AA)
+
+            # Show Image
+            cv2.imshow("", X)
+            if cv2.waitKey() == ord("q"):
+                break
+
+
+class EllipseParamLoss(tf.keras.losses.Loss):
     def __init__(self, input_size: int = IMG_SIZE):
-        super(EllipseLoss, self).__init__()
+        super(EllipseParamLoss, self).__init__()
         self.input_size = input_size
+        self.d = np.sqrt(2 * (self.input_size**2))
 
     def call(self, y_true, y_pred):
-        ellipse_true = self.generate_ellipse(y_true)
-        ellipse_pred = self.generate_ellipse(y_pred)
+        # Unpack the true and predicted values
+        cy, cx, w, h, theta = tf.unstack(y_true, axis=-1)
+        cy_, cx_, w_, h_, theta_ = tf.unstack(y_pred, axis=-1)
 
-        intersection = tf.reduce_sum(ellipse_true * ellipse_pred, axis=[1, 2])
-        union = (
-            tf.reduce_sum(ellipse_true, axis=[1, 2])
-            + tf.reduce_sum(ellipse_pred, axis=[1, 2])
-            - intersection
+        # Compute the differences for the ellipse parameters
+        delta_cy = (cy - cy_) * self.input_size
+        delta_cx = (cx - cx_) * self.input_size
+        delta_w = (w - w_) * self.d
+        delta_h = (h - h_) * self.d
+        # the angle is special since it is a continuumm
+        delta_theta = (
+            tf.minimum(tf.abs(theta - theta_), tf.abs(theta + 0.5 - theta_)) * 360
         )
-        iou = tf.divide(intersection, union)
-        print(f"{intersection=} {union=} {iou=}")
 
-        return iou
+        # Square individual errors
+        # delta_cy = delta_cy ** 2
+        # delta_cx = delta_cx ** 2
+        # delta_w = delta_w ** 2
+        # delta_h = delta_h ** 2
+        # delta_theta = delta_theta ** 2
+
+        # Compute the loss
+        loss = tf.reduce_mean(
+            abs(delta_cy)
+            + abs(delta_cx)
+            + abs(delta_w)
+            + abs(delta_h)
+            + delta_theta / 2  # half thetas
+        )
+        return loss
+
+
+class EllipseIoULoss(tf.keras.losses.Loss):
+    def __init__(self, input_size: int = IMG_SIZE):
+        """
+        Initializes the loss function.
+        :param grid_size: Size of the grid used for approximating the IoU.
+        """
+        super(EllipseIoULoss, self).__init__()
+        self.input_size = tf.cast(input_size, tf.int32)
+        self.d = tf.sqrt(2.0 * (tf.cast(self.input_size, tf.float32) ** 2))
+
+    def unnormalize(self, cy, cx, w, h, theta):
+        cy *= tf.cast(self.input_size, tf.float32)
+        cx *= tf.cast(self.input_size, tf.float32)
+        w *= self.d
+        h *= self.d
+        theta *= 2 * 3.14159
+        return cy, cx, w, h, theta
+
+    def ellipse_mask(self, cy, cx, w, h, theta):
+        """
+        This whole function is really scuffed. But it works. Don't touch it!
+        """
+        y = tf.linspace(0, self.input_size, self.input_size)
+        x = tf.linspace(0, self.input_size, self.input_size)
+        yy, xx = tf.meshgrid(y, x)
+        yy = tf.cast(yy, tf.float32)
+        xx = tf.cast(xx, tf.float32)
+
+        # Translate to midpoint
+        y_shifted = yy - cx
+        x_shifted = xx - cy
+
+        # Rotate
+        cos_t = tf.cos(theta)
+        sin_t = tf.sin(theta)
+        x_rot = -x_shifted * cos_t + y_shifted * sin_t
+        y_rot = x_shifted * sin_t + y_shifted * cos_t
+
+        # Inside ellipse condition
+        mask = ((x_rot / (h / 2)) ** 2 + (y_rot / (w / 2)) ** 2) <= 1.0
+        return tf.cast(mask, tf.float32)
+
+    def call(self, y_true, y_pred):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+
+        # Unpack ground truth and predicted ellipses
+        ellipse_true = tf.unstack(y_true, axis=-1)
+        ellipse_pred = tf.unstack(y_pred, axis=-1)
+
+        ellipse_true = self.unnormalize(*ellipse_true)
+        ellipse_pred = self.unnormalize(*ellipse_pred)
+
+        # Create binary masks for the ellipses
+        mask_true = self.ellipse_mask(*ellipse_true)
+        mask_pred = self.ellipse_mask(*ellipse_pred)
+
+        # Compute intersection and union
+        intersection = tf.reduce_sum(mask_true * mask_pred)
+        union = tf.reduce_sum(mask_true) + tf.reduce_sum(mask_pred) - intersection
+
+        # Compute IoU
+        iou = intersection / (union + 1e-6)
+
+        # Loss is 1 - IoU
         return 1 - iou
 
-    def generate_ellipse(self, params):
-        input_size = self.input_size
 
-        # Create a grid for x and y coordinates
-        y_grid, x_grid = tf.meshgrid(
-            tf.range(input_size), tf.range(input_size), indexing="ij"
-        )
-        x_grid = tf.cast(x_grid, tf.float32)
-        y_grid = tf.cast(y_grid, tf.float32)
+class EllipseBBIoULoss(tf.keras.losses.Loss):
+    def __init__(self, input_size: int = IMG_SIZE):
+        super(EllipseBBIoULoss, self).__init__()
+        self.input_size = tf.cast(input_size, tf.int32)
+        self.d = tf.sqrt(2.0 * (tf.cast(self.input_size, tf.float32) ** 2))
 
-        # Unpack the ellipse parameters
-        cx, cy, a, b, angle = tf.split(params, 5, axis=-1)
-        cx *= self.input_size
-        cy *= self.input_size
+    def unnormalize(self, cy, cx, w, h, theta):
+        cy *= tf.cast(self.input_size, tf.float32)
+        cx *= tf.cast(self.input_size, tf.float32)
+        w *= self.d
+        h *= self.d
+        theta *= 2 * 3.14159
+        return cy, cx, w, h, theta
 
-        # Shift the grid to the ellipse's center
-        x_shifted = x_grid[None, :, :] - cx[:, None, None]
-        y_shifted = y_grid[None, :, :] - cy[:, None, None]
+    def extract_corners(self, cy, cx, w, h, theta):
+        # TODO
+        pass
 
-        # Convert angle from degrees to radians
-        cos_angle = tf.cos(angle)
-        sin_angle = tf.sin(angle)
+    def call(self, y_true, y_pred):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
 
-        # Rotate the grid points
-        x_rot = (
-            x_shifted * cos_angle[:, None, None] + y_shifted * sin_angle[:, None, None]
-        )
-        y_rot = (
-            -x_shifted * sin_angle[:, None, None] + y_shifted * cos_angle[:, None, None]
-        )
+        # Unpack ground truth and predicted ellipses
+        ellipse_true = tf.unstack(y_true, axis=-1)
+        ellipse_pred = tf.unstack(y_pred, axis=-1)
 
-        # Equation of ellipse (x_rot^2 / a^2) + (y_rot^2 / b^2) <= 1
-        ellipse_equation = (x_rot / a[:, None, None]) ** 2 + (
-            y_rot / b[:, None, None]
-        ) ** 2
-        mask = tf.cast(ellipse_equation <= 1, tf.float32)
+        # Un-Normalize parameters
+        ellipse_true = self.unnormalize(*ellipse_true)
+        ellipse_pred = self.unnormalize(*ellipse_pred)
 
-        return mask
+        # Create binary masks for the ellipses
+        corners_true = self.extract_corners(*ellipse_true)
+        corners_pred = self.extract_corners(*ellipse_pred)
+
+        # Compute intersection and union
+        intersection = tf.reduce_sum(mask_true * mask_pred)
+        union = tf.reduce_sum(mask_true) + tf.reduce_sum(mask_pred) - intersection
+
+        # Compute IoU
+        iou = intersection / (union + 1e-6)
+
+        # Loss is 1 - IoU
+        return 1 - iou
+
+
+# l = EllipseBBIoULoss()
+
+# ellipse_true = np.array((0.5, 0.5, 0.1, 0.1, 0.125), np.float32)
+# ellipse_params = l.unnormalize(*ellipse_true)
+# c = l.extract_corners(*ellipse_params)
+# print(c)
+# exit()
 
 
 class Utils:
+    model_checkpoint_filepath = "data/ai/checkpoints/ellipse/ellipse_epoch={epoch:05d}_val_loss={val_loss:04f}.keras"
+
     @staticmethod
     def find_ellipse_params(img):
         if type(img) == str:
@@ -144,7 +344,7 @@ class Utils:
         return cx, cy, a, b, theta
 
     def test_model(model, test_ds):
-        l = EllipseLoss(input_size=IMG_SIZE)
+        l = EllipseParamLoss(input_size=IMG_SIZE)
         ress = []
         for i, (X, y_true) in enumerate(test_ds.unbatch()):
             print(i, end="\r")
@@ -160,6 +360,92 @@ class Utils:
         cv2.imwrite("dump/out.png", out)
         print("saved at dump/out.png")
 
+    def get_callbacks() -> list[tf.keras.callbacks.Callback]:
+        callbacks = []
+
+        # Model Checkpoint
+        run_id = datetime.now().strftime("%y-%m-%d_%H-%M-%S")
+        Utils.model_checkpoint_filepath = os.path.join(
+            os.path.dirname(Utils.model_checkpoint_filepath),
+            f"{run_id}_" + Utils.model_checkpoint_filepath.split("/")[-1],
+        )
+
+        os.makedirs(os.path.dirname(Utils.model_checkpoint_filepath), exist_ok=True)
+        model_checkpoint = ma_callbacks.ModelCheckpoint(
+            filepath=Utils.model_checkpoint_filepath,
+            monitor="val_loss",
+            verbose=1,
+            save_best_only=True,
+            save_weights_only=False,
+            mode="min",
+            initial_value_threshold=300,
+            max_saves=10,
+        )
+        callbacks.append(model_checkpoint)
+
+        # History Plotter
+        history_plotter_filepath = "data/ai/history.png"
+        os.makedirs(os.path.dirname(history_plotter_filepath), exist_ok=True)
+        history_plotter = ma_callbacks.HistoryPlotter(
+            filepath=history_plotter_filepath,
+            update_on_batches=False,
+        )
+        callbacks.append(history_plotter)
+
+        return callbacks
+
+    def get_best_model_checkpoint():
+        checkpoint_dir = os.path.dirname(Utils.model_checkpoint_filepath)
+        filenames = ""
+        basename = Utils.model_checkpoint_filepath.split("/")[-1]
+        while basename:
+            char = basename[0]
+            if char == "{":
+                filenames += "([0-9]|\.)+"
+                while basename[0] != "}":
+                    basename = basename[1:]
+                basename = basename[1:]
+                continue
+
+            if char == ".":
+                filenames += "\."
+                basename = basename[1:]
+                continue
+
+            filenames += basename[0]
+            basename = basename[1:]
+
+        files = [
+            os.path.join(checkpoint_dir, f)
+            for f in os.listdir(checkpoint_dir)
+            if re.match(filenames, f)
+        ]
+        if not files:
+            return None
+
+        def extract_number(f):
+            f = f.split("val_loss=")[-1]
+            i = 0
+            found_dot = False
+            while True:
+                char = f[i]
+                if char.isnumeric():
+                    i += 1
+                    continue
+                if char == ".":
+                    if found_dot:
+                        break
+                    found_dot = True
+                    i += 1
+                    continue
+                break
+            f = float(f[:i])
+            return f
+
+        files = sorted(files, key=extract_number)
+        best_file = files[0]
+        return best_file
+
 
 class Data:
     img_size = IMG_SIZE
@@ -168,7 +454,7 @@ class Data:
         def __init__(self):
             pass
 
-        def __call__(self, image, label):
+        def __call__(self, image, outputs):
 
             # Random brightness adjustment
             image = tf.image.random_brightness(image, max_delta=0.1)
@@ -176,17 +462,20 @@ class Data:
             # Random contrast adjustment
             image = tf.image.random_contrast(image, lower=0.8, upper=1.2)
 
+            # Add noise
+            noise_amount = tf.random.uniform(shape=(1,), minval=0.001, maxval=0.1)
             noise = tf.random.normal(
-                shape=tf.shape(image), mean=0.0, stddev=0.1, dtype=tf.float32
+                shape=tf.shape(image), mean=0.0, stddev=noise_amount, dtype=tf.float32
             )
             image = tf.add(image, noise)
             image = tf.clip_by_value(image, 0.0, 1.0)
-            return image, label
+            return image, outputs
 
     def read_img(filepath):
         img = tf.io.read_file(filepath)
         img = tf.image.decode_image(img, channels=3)
         img = tf.image.resize_with_pad(img, Data.img_size, Data.img_size)
+        img /= 255
         return img
 
     def preprocess_image(img):
@@ -217,11 +506,44 @@ class Data:
         """
         img_w = sample_info["img_width"]
         img_h = sample_info["img_height"]
-        cx = np.float32(sample_info["ellipse_cx"]) / img_w
-        cy = np.float32(sample_info["ellipse_cy"]) / img_h
-        w = np.float32(sample_info["ellipse_w"]) / img_w
-        h = np.float32(sample_info["ellipse_h"]) / img_h
-        theta = np.float32(sample_info["ellipse_theta"]) / 360
+        out_w = Data.img_size
+        out_h = Data.img_size
+
+        # Get ellipse values
+        cx = np.float32(sample_info["ellipse_cx"])  # px orig
+        cy = np.float32(sample_info["ellipse_cy"])  # px orig
+        w = np.float32(sample_info["ellipse_w"])  # px orig
+        h = np.float32(sample_info["ellipse_h"])  # px orig
+        theta = np.float32(sample_info["ellipse_theta"])  # deg
+
+        # Adjust axes
+        downscale = min(out_h / img_h, out_w / img_w)
+        h *= downscale  # px out
+        w *= downscale  # px out
+
+        # Adjust centers
+        cy *= downscale  # px out
+        cx *= downscale  # px out
+        if img_w < img_h:
+            # x padding
+            scaled_w = downscale * img_w
+            pad_w = (out_w - scaled_w) / 2
+            cx += pad_w
+        elif img_w > img_h:
+            # y padding
+            scaled_h = downscale * img_h
+            pad_h = (out_h - scaled_h) / 2
+            cy += pad_h
+
+        # Normalize
+        cy /= out_h  # rel pos out
+        cx /= out_w  # rel pos out
+        w /= np.sqrt(
+            Data.img_size**2 + Data.img_size**2
+        )  # normalized by image disgonal
+        h /= np.sqrt(Data.img_size**2 + Data.img_size**2)
+        theta /= 360  # 0..1
+
         return cy, cx, w, h, theta
 
     @staticmethod
@@ -237,9 +559,12 @@ class Data:
             sample_info = pickle.load(f)
 
         # Extract information
-        line_params = Data.extract_line_params(sample_info)
-        ellipse_params = Data.extract_ellipse_params(sample_info)
-        outputs = line_params + ellipse_params
+        # line_params = Data.extract_line_params(sample_info)
+        ellipse_params = Data.extract_ellipse_params(
+            sample_info,
+        )  # (cy, cx, w, h, theta)
+        # outputs = line_params + ellipse_params
+        outputs = ellipse_params
 
         return input_img, tf.convert_to_tensor(outputs, tf.float32)
 
@@ -248,16 +573,19 @@ class Data:
         data_dir: str = "data/generation/out/",
         augment: bool = True,
         shuffle: bool = True,
+        batch_size: int = BATCH_SIZE,
     ):
+        # Collect Files
         sample_ids = [f for f in os.listdir(data_dir) if f.isnumeric()]
+        # sample_ids = sample_ids[:1024]  # XXX
         if shuffle:
             np.random.shuffle(sample_ids)
         else:
             sample_ids = sorted(sample_ids, key=lambda x: int(x))
-
         image_paths = [os.path.join(data_dir, f) for f in sample_ids]
         ds = tf.data.Dataset.from_tensor_slices(image_paths)  # sample directory strings
 
+        # Load Samples
         ds = ds.map(
             lambda filepath: tf.numpy_function(
                 func=Data.load_sample,
@@ -265,43 +593,150 @@ class Data:
                 Tout=[tf.float32, tf.float32],
             ),
             num_parallel_calls=1,  # tf.data.AUTOTUNE,
-        )  # (800, 800, 3), (9,)
+        )  # (800, 800, 3), (5,)
+
+        # Set Shapes
         ds = ds.map(
             lambda img, params: (
                 tf.ensure_shape(img, [IMG_SIZE, IMG_SIZE, 3]),
-                tf.ensure_shape(params, [9]),
+                tf.ensure_shape(params, [5]),
             )
         )
-        ds = ds.map(lambda X, y: (Data.preprocess_image(X), y))
-        # if augment:
-        #     ds = ds.map(Data.Augmentation())
-        # ds = ds.cache()
-        # ds = ds.batch(8)
-        # ds = ds.prefetch(8)
+
+        # Preprocess Input Image
+        ds = ds.map(lambda X, y: (Data.preprocess_image(X), y))  # (800, 800, 1), (5,)
+
+        # Cache Data
+        cache_dir = "data/cache/datasets/" + data_dir.replace("/", "-")
+        if cache_dir[-1] == "-":
+            cache_dir = cache_dir[:-1]
+
+        if os.path.exists(cache_dir):
+            shutil.rmtree(cache_dir)
+        os.makedirs(cache_dir)
+        ds = ds.cache(cache_dir)
+
+        # Shuffle Dataset
+        if shuffle:
+            ds = ds.shuffle(batch_size * 3)
+
+        # Add Augmentation
+        if augment:
+            ds = ds.map(Data.Augmentation())
+
+        # Batch + Prefetch
+        ds = ds.batch(batch_size)
+        ds = ds.prefetch(8)
         return ds
 
 
-ds = Data.get_dataset(shuffle=False)
+# Data y order: (cy, cx, w, h, theta)
+ds = Data.get_dataset(
+    data_dir="data/generation/out",
+    shuffle=True,
+    augment=True,
+)
+val_ds = Data.get_dataset(
+    data_dir="data/generation/out_val/",
+    shuffle=False,
+    augment=False,
+)
 
-model = Model.get_model()
-model.summary(120)
-exit()
 
-X, y = next(iter(ds))
-epochs = 1000
-try:
-    for epoch in range(epochs):
-        model.fit(
-            ds,
-            epochs=epoch + 1,
-            initial_epoch=epoch,
-            verbose=1,
-            validation_data=val_ds,
+def extract_sample():
+    sample_path = "data/generation/out/53/"
+
+    def draw_ellipse(img, cy, cx, w, h, theta):
+        ellipse = cv2.ellipse(
+            img * 0,
+            (int(cx), int(cy)),
+            (int(w / 2), int(h / 2)),
+            theta,
+            0,
+            360,
+            (255, 255, 255),
+            thickness=10,
+            lineType=cv2.LINE_AA,
         )
-except KeyboardInterrupt:
-    print("\nTraining interrupted.")
+        img = cv2.addWeighted(img, 0.7, ellipse, 0.5, 0)
+        cv2.circle(img, (int(cx), int(cy)), 9, (255, 0, 0), -1)
+        cv2.circle(img, (int(cx), int(cy)), 5, (255, 255, 255), -1)
+        cv2.circle(img, (int(cx), int(cy)), 1, (255, 0, 0), -1)
+        return img
 
-Utils.test_model(model, val_ds.concatenate(ds.take(1)))
+    # Load DS data
+    img = Data.read_img(sample_path + "render.png").numpy()
+    sample_info = pickle.load(open(sample_path + "info.pkl", "rb"))
+    cy, cx, w, h, theta = Data.extract_ellipse_params(sample_info)
+
+    # Un-normalize DS data
+    cy *= Data.img_size
+    cx *= Data.img_size
+    theta *= 360
+
+    print(img.shape)
+    print(cy, cx, w, h, theta)
+
+    img_ds = draw_ellipse(img, cy, cx, w, h, theta)
+    cv2.imshow("extracted", img_ds)
+
+    # Load stored data
+    cy, cx, w, h, theta = sample_info[
+        ["ellipse_cy", "ellipse_cx", "ellipse_w", "ellipse_h", "ellipse_theta"]
+    ]
+
+    img = cv2.imread(sample_info["out_file_template"].format(filename="render.png"))
+    img = draw_ellipse(img, cy, cx, w, h, theta)
+    img = cv2.resize(img, (img.shape[1] // 3, img.shape[0] // 3))
+    # cv2.waitKey()
+
+    # exit()
+
+
+def test_ds(ds):
+    for i, (X, y) in enumerate(ds.unbatch()):
+        # if i != 53:
+        #     continue
+        X = np.uint8(X.numpy()[:, :, 0] * 255)
+        cy, cx, w, h, theta = y.numpy()
+        cy = int(cy * Data.img_size)
+        cx = int(cx * Data.img_size)
+        w = int(w)
+        h = int(h)
+        theta *= 360
+        print(X.shape)
+        print(cy, cx, w, h, theta)
+        X //= 3
+
+        cv2.ellipse(
+            X,
+            (cx, cy),
+            (w // 2, h // 2),
+            theta,
+            0,
+            360,
+            (255, 255, 255),
+            thickness=1,
+        )
+        cv2.imshow("constructed", X)
+        if cv2.waitKey() == ord("q"):
+            return
+
+
+model = Model.get_model(model_input)
+model.summary(120)
+
+callbacks = Utils.get_callbacks()
+
+Model.fit_model(model, ds, val_ds, callbacks, epochs=1000)
+
+# Save model
+model_out_file = "data/ai/ellipse/model.keras"
+os.makedirs(os.path.dirname(model_out_file), exist_ok=True)
+model.save(model_out_file)
+
+Model.test_model(model, val_ds)
+exit()
 
 # ------------------------------------------------------------------------
 
@@ -398,6 +833,7 @@ class DidNotWorkButIDontWantToDeleteItYet:
             return img
 
         def transform_img(img, s):
+            from scipy.ndimage import affine_transform
 
             # Scale along x
             M_scale = np.array(
@@ -435,6 +871,8 @@ class DidNotWorkButIDontWantToDeleteItYet:
             return out
 
         def find_ellipse_squish():
+            from scipy.ndimage import affine_transform
+
             circle = get_circle()
             lower = 0
             upper = 1

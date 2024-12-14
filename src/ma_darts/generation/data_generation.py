@@ -132,6 +132,9 @@ def create_sample(
             print("Error while rendering sample:")
             print("\t", e)
             return
+        except Exception as e:
+            print("Something went wrong:", e)
+            return
     else:
         # ID given and existing -> load sample
         with open(sample_info_path.format(id=id), "rb") as f:
@@ -163,6 +166,11 @@ def create_sample(
         if os.path.exists(sample_info_path):
             os.remove(sample_info_path)
         return
+    except Exception as e:
+        print("Something went wrong:", e)
+        if os.path.exists(sample_info_path):
+            os.remove(sample_info_path)
+        return
 
     # --------------------------------------------------------------------
     # Report
@@ -178,8 +186,8 @@ def create_sample(
 
 
 if __name__ == "__main__":
-    for i in range(10):
+    for i in range(2048):
         sample_info = None
         while sample_info is None:
             sample_info = create_sample(i)
-        check_sample(sample_info)
+        # check_sample(sample_info)

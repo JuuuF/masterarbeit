@@ -9,7 +9,7 @@ from tqdm import tqdm
 from scipy.ndimage import label, center_of_mass
 
 from ma_darts.cv.cv import extract_center
-
+from ma_darts.cv.utils import draw_polar_line
 
 class ImageUtils:
 
@@ -35,33 +35,6 @@ class ImageUtils:
         if any(i is None for i in [img, img_orient, img_area, img_intersections]):
             raise AssertionError("Images at {img_dir} could not be read.")
         return img, img_orient, img_area, img_intersections
-
-    def draw_polar_line(
-        img: np.ndarray,  # (y, x)
-        rho: float,
-        theta: float,
-        color: tuple[int, int, int] = (255, 255, 255),
-        thickness: int = 1,
-    ) -> np.ndarray:  # (y, x)
-        # Calculate the starting and ending points of the line
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-
-        # Define two points on the line based on the line equation in Cartesian form
-        pt1 = (int(x0 + 5000 * -b), int(y0 + 5000 * a))
-        pt2 = (int(x0 - 5000 * -b), int(y0 - 5000 * a))
-
-        # Draw the line on the image
-        cv2.line(
-            img,
-            pt1=pt1,
-            pt2=pt2,
-            color=color,
-            thickness=thickness,
-        )
-        return img
 
     def points_from_intersection(
         intersection_img: np.ndarray,  # (y, x)
@@ -126,14 +99,14 @@ class ImageUtils:
             )
 
             # Horizontal points intersection
-            img_line_h = ImageUtils.draw_polar_line(
+            img_line_h = draw_polar_line(
                 np.zeros_like(img_ellipse), *line_h, thickness=2
             )
             h_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_h)
             right, left = ImageUtils.points_from_intersection(h_intersections)
 
             # Vertical points intersection
-            img_line_v = ImageUtils.draw_polar_line(
+            img_line_v = draw_polar_line(
                 np.zeros_like(img_ellipse), *line_v, thickness=2
             )
             v_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_v)
@@ -382,8 +355,8 @@ def prepare_sample(sample_info: pd.Series):
     # -------------------------------------------
     # DEBUG CODE
     # draw some lines
-    ImageUtils.draw_polar_line(img, *line_h, color=(0, 255, 0))
-    ImageUtils.draw_polar_line(img, *line_v, color=(0, 255, 0))
+    draw_polar_line(img, *line_h, color=(0, 255, 0))
+    draw_polar_line(img, *line_v, color=(0, 255, 0))
     ellipse_draw = (
         (round(ellipse[0][0]), round(ellipse[0][1])),
         (round(ellipse[1][0] / 2), round(ellipse[1][1] / 2)),

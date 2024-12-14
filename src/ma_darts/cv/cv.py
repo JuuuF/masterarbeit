@@ -3,16 +3,11 @@ import cv2
 import numpy as np
 
 img_paths = [
-    "dump/test/double.png",
-    "data/generation/out/0/render.png",
-    # "data/generation/out/1/render.png",
-    # "data/generation/out/2/render.png",
-    # "data/generation/out/3/render.png",
-    # "data/generation/out/4/render.png",
-    # "data/generation/out/5/render.png",
+    # "dump/test/double.png",
+    # "data/generation/out/0/render.png",
     "data/generation/out/6/render.png",
-    "data/generation/out/7/render.png",
-    "data/generation/out/8/render.png",
+    # "data/generation/out/7/render.png",
+    # "data/generation/out/8/render.png",
     # "dump/test/x_90.png",
     # "dump/test/x_67_5.png",
     # "dump/test/x_45.png",
@@ -24,7 +19,6 @@ img_paths = [
     "dump/test/0001.jpg",
     "dump/test/0002.jpg",
     "dump/test/0003.jpg",
-    # "dump/test/lotsofboards.png",
     "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
     "dump/test/test_img.png",
     "dump/test/test.png",
@@ -33,14 +27,6 @@ img_paths = [
 
 
 class Utils:
-
-    def show_imgs(*imgs: list[np.ndarray]) -> None:
-        for i, img in enumerate(imgs):
-            cv2.imshow(f"img_{i}", img)
-        key = cv2.waitKey()
-        cv2.destroyAllWindows()
-        if key == ord("q"):
-            exit()
 
     def load_img(filepath: str) -> np.ndarray:
         img = cv2.imread(filepath)
@@ -56,43 +42,6 @@ class Utils:
         suppressed = (img == max_filtered) * img
         return suppressed
 
-    def draw_polar_line(
-        img,
-        rho,
-        theta,
-        intensity=1,
-        color=(255, 255, 255),
-        thickness=1,
-        line_type=cv2.LINE_8,
-    ):
-        a = np.cos(theta)
-        b = np.sin(theta)
-
-        x0 = a * rho
-        y0 = b * rho
-
-        scale = max(*img.shape[:2])
-        pt1 = (int(x0 + scale * -b), int(y0 + scale * a))
-        pt2 = (int(x0 - scale * -b), int(y0 - scale * a))
-
-        color = tuple(int(c * intensity) for c in color)
-        cv2.line(img, pt1, pt2, color, thickness)
-        return img
-
-    def add_polar_line(img, rho, theta, intensity=1):
-        a = np.cos(theta)
-        b = np.sin(theta)
-
-        x0 = a * rho
-        y0 = b * rho
-
-        scale = max(*img.shape[:2])
-        pt1 = (int(x0 + scale * -b), int(y0 + scale * a))
-        pt2 = (int(x0 - scale * -b), int(y0 - scale * a))
-
-        line_img = cv2.line(np.float32(img), pt1, pt2, (int(intensity * 255), 0, 0))
-        img += line_img
-        return img
 
     def points_to_polar_line(p1, p2):
         y2, x2 = p2
@@ -110,6 +59,9 @@ class Utils:
         theta %= np.pi
 
         return rho, theta
+
+    def point_point_dist(p1, p2):
+        return np.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
 
 
 class Unused:
@@ -974,122 +926,141 @@ class Unused:
         Utils.show_imgs(img, skeleton, res)
         # exit()
 
-    def ray_extensions(img, lines_binned_filtered):
-        def within_img(y, x):
-            if x < 0 or y < 0:
-                return False
-            if y >= img.shape[0]:
-                return False
-            if x >= img.shape[1]:
-                return False
-            return True
 
-        # Prepare image
-        if len(img.shape) == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img = cv2.convertScaleAbs(img, alpha=1, beta=0)
+def ray_extensions(img, lines_binned_filtered):
+    def within_img(y, x):
+        if x < 0 or y < 0:
+            return False
+        if y >= img.shape[0]:
+            return False
+        if x >= img.shape[1]:
+            return False
+        return True
 
-        # Get line orientations
-        bin_thetas = []
-        for bin_lines in lines_binned_filtered:
-            bin_thetas.append([])
-            for line in bin_lines:
-                bin_thetas[-1].append(line[-1])
-        mean_thetas = [np.median(t) if t else -1000 for t in bin_thetas]  # (n_bins,)
+    # Prepare image
+    if len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.convertScaleAbs(img, alpha=1, beta=0)
 
-        # Get inbetween rays
-        ray_directions = []
-        for t1, t2 in zip(mean_thetas, mean_thetas[1:] + [mean_thetas[0] + np.pi]):
-            if t1 < -100 or t2 < -100:
-                ray_directions.append(0)
+    # Get line orientations
+    bin_thetas = []
+    for bin_lines in lines_binned_filtered:
+        bin_thetas.append([])
+        for line in bin_lines:
+            bin_thetas[-1].append(line[-1])
+    mean_thetas = [np.median(t) if t else -1000 for t in bin_thetas]  # (n_bins,)
 
-            ray_directions.append((t1 + t2) / 2)
+    # Get inbetween rays
+    ray_directions = []
+    for t1, t2 in zip(mean_thetas, mean_thetas[1:] + [mean_thetas[0] + np.pi]):
+        if t1 < -100 or t2 < -100:
+            ray_directions.append(0)
 
-        # March along rays
-        rays = [
-            [] for _ in ray_directions * 2
-        ]  # twice the amount of rays since we go both forward and backward
+        ray_directions.append((t1 + t2) / 2)
 
-        ray_length = img.shape[0]
-        for step in range(ray_length):
-            for i, theta in enumerate(ray_directions):
-                px = cx + int(-np.sin(theta) * step)
-                py = cy + int(np.cos(theta) * step)
-                if within_img(py, px):
-                    intensity = img[py, px]
-                    rays[i].append(intensity)
+    # March along rays
+    rays = [
+        [] for _ in ray_directions * 2
+    ]  # twice the amount of rays since we go both forward and backward
 
-                px = cx - int(-np.sin(theta) * step)
-                py = cy - int(np.cos(theta) * step)
-                if within_img(py, px):
-                    intensity = img[py, px]
-                    rays[i + 10].append(intensity)
+    ray_length = img.shape[0]
+    for step in range(ray_length):
+        for i, theta in enumerate(ray_directions):
+            px = cx + int(-np.sin(theta) * step)
+            py = cy + int(np.cos(theta) * step)
+            if within_img(py, px):
+                intensity = img[py, px]
+                rays[i].append(intensity)
 
-        res = np.zeros((500, ray_length), np.uint8)
-        for y, ray in enumerate(rays):
-            if len(ray) == 0:
-                continue
-            res[y * 50 : (y + 1) * 50, : len(ray)] = ray[: res.shape[1]]
+            px = cx - int(-np.sin(theta) * step)
+            py = cy - int(np.cos(theta) * step)
+            if within_img(py, px):
+                intensity = img[py, px]
+                rays[i + 10].append(intensity)
 
-        # Utils.show_imgs(res)
-        return res
+    res = np.zeros((500, ray_length), np.uint8)
+    for y, ray in enumerate(rays):
+        if len(ray) == 0:
+            continue
+        res[y * 50 : (y + 1) * 50, : len(ray)] = ray[: res.shape[1]]
 
-        # Draw lines
-        for theta in ray_directions:
-            if theta is None:
-                continue
-            x0 = cx + int(-np.sin(theta) * 1000)
-            y0 = cy + int(np.cos(theta) * 1000)
-            x1 = cx - int(-np.sin(theta) * 1000)
-            y1 = cy - int(np.cos(theta) * 1000)
-            img_ = img * 0
-            cv2.line(img_, (x0, y0), (x1, y1), (0, 0, 0), 3)
-            cv2.line(img_, (x0, y0), (x1, y1), (255, 255, 255), 1)
+    # Utils.show_imgs(res)
+    return res
 
-        Utils.show_imgs(cv2.addWeighted(img, 1, img_, 0.5, 0))
+    # Draw lines
+    for theta in ray_directions:
+        if theta is None:
+            continue
+        x0 = cx + int(-np.sin(theta) * 1000)
+        y0 = cy + int(np.cos(theta) * 1000)
+        x1 = cx - int(-np.sin(theta) * 1000)
+        y1 = cy - int(np.cos(theta) * 1000)
+        img_ = img * 0
+        cv2.line(img_, (x0, y0), (x1, y1), (0, 0, 0), 3)
+        cv2.line(img_, (x0, y0), (x1, y1), (255, 255, 255), 1)
 
-    def filter_lines_by_center_dist(
-        lines_binned: list[list[tuple[float, float, float, float, float]]],
-        cy: int,
-        cx: int,
-        max_center_dist: float = 10,
-    ) -> list[list[tuple[float, float, float, float, float]]]:
+    Utils.show_imgs(cv2.addWeighted(img, 1, img_, 0.5, 0))
 
-        def line_point_distance(rho: float, theta: float, x: int, y: int) -> float:
-            """
-            rho = x * cos(theta) + y * sin(theta)
-            => x * cos(theta) + y * sin(theta) - rho = 0
-            => a = cos(theta), b = sin(theta), c = -rho
-            => ax + by + c = 0
-            -> https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-            # sqrt(a^2 + b^2) = sqrt(sin^2 + cos^2) = 1
-            => dist = | cos(theta) * x0 + sin(theta) * y0 - rho |
-            """
-            dist = abs(np.cos(theta) * x + np.sin(theta) * y - rho)
-            return dist
 
-        lines_binned_filtered = []
-        for bin_idx, bin_lines in enumerate(lines_binned):
-            new_bin = []
-            for line_idx, line in enumerate(bin_lines):
-                rho = line[-2]
-                theta = line[-1]
-                dist = line_point_distance(rho, theta, cx, cy)
-                if dist > max_center_dist:
-                    continue
-                new_bin.append(
-                    (
-                        line[0],  # p1
-                        line[1],  # p2
-                        line[2],  # length
-                        dist,  # distance
-                        line[3],  # rho
-                        line[4],  # theta
-                    )
-                )
-            lines_binned_filtered.append(sorted(new_bin, key=lambda x: x[3]))
+def filter_lines_by_center_dist(
+    lines: list[tuple[float, float, float, float, float]],
+    cy: int,
+    cx: int,
+    max_center_dist: float = 10,
+) -> list[tuple[float, float, float, float, float]]:
 
-        return lines_binned_filtered
+    def line_point_distance(rho: float, theta: float, x: int, y: int) -> float:
+        """
+        rho = x * cos(theta) + y * sin(theta)
+        => x * cos(theta) + y * sin(theta) - rho = 0
+        => a = cos(theta), b = sin(theta), c = -rho
+        => ax + by + c = 0
+        -> https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+        # sqrt(a^2 + b^2) = sqrt(sin^2 + cos^2) = 1
+        => dist = | cos(theta) * x0 + sin(theta) * y0 - rho |
+        """
+        dist = abs(np.cos(theta) * x + np.sin(theta) * y - rho)
+        return dist
+
+    lines_filtered = []
+    for line_idx, line in enumerate(lines):
+        rho, theta = line[-2:]
+        dist = line_point_distance(rho, theta, cx, cy)
+
+        if dist > max_center_dist:
+            continue
+        lines_filtered.append(
+            (
+                line[0],  # p1
+                line[1],  # p2
+                line[2],  # length
+                dist,  # distance
+                line[3],  # rho
+                line[4],  # theta
+            )
+        )
+
+    dists = []
+    for i, line in enumerate(lines_filtered):
+        p1, p2 = line[:2]
+        d1 = Utils.point_point_dist((cy, cx), p1)
+        d2 = Utils.point_point_dist((cy, cx), p2)
+        dists.append((i, min(d1, d2), max(d1, d2)))
+
+    dists = sorted(dists, key=lambda x: x[1])
+    # print(*dists, sep="\n")
+    res = np.zeros((len(dists), max(*img.shape[:2])), np.uint8)
+    for i, (_, min_d, max_d) in enumerate(dists):
+        print(min_d, max_d)
+        res[i, int(min_d) : int(max_d)] = 255
+    res_sum = np.sum(res, axis=0).shape
+    res_ = np.zeros((res.shape[0], np.max(res)), np.uint8)
+    for i, val in enumerate(res_sum):
+        res_[i, :val] = 255
+    Utils.show_imgs(res, res_)
+    # exit()
+
+    return lines_filtered
 
 
 class CV:
@@ -1147,8 +1118,8 @@ class CV:
         threshold: int = 75,
     ) -> list[tuple[float, float, float, float, float]]:
         # Dilate to make lines thicker
-        # img = cv2.dilate(img, (5, 5), iterations=2)
-        # Utils.show_imgs(img)
+        # img = cv2.dilate(img, (5, 5))
+        # img = cv2.dilate(img, (5, 5))
 
         # Find lines as points
         lines = cv2.HoughLinesP(
@@ -1260,47 +1231,60 @@ if __name__ == "__main__":
     for f in img_paths:
         from time import time
 
-        s0 = time()
+        # Load Image
         img = Utils.load_img(f)
-        s1 = time()
-        edges = edge_detect(img)
-        s2 = time()
-        skeleton = get_skeleton(edges)
-        s3 = time()
-        lines = extract_lines(skeleton)
-        # lines = extract_lines(edges)
-        s4 = time()
-        lines_binned = bin_lines_by_angle(lines)
-        s5 = time()
-        cy, cx, center_img = get_center_point(img, lines_binned)
-        s6 = time()
-        lines_binned_filtered = filter_lines_by_center_dist(
-            lines_binned, cy, cx
-        )  # p1, p2, length (normalized), center distance [px], rho, theta
-        s7 = time()
+        # Detect Edges
+        edges = CV.edge_detect(img)
+        # Skeletonize edges
+        skeleton = CV.skeleton(edges)
+        # Extract lines
+        lines = CV.extract_lines(
+            skeleton,
+            rho=0.5,
+            theta=np.pi / 180 / 10,
+            threshold=25,
+        )
 
-        out = img // 3
-        for bin_lines in lines_binned:
-            for line in bin_lines:
-                cv2.line(
-                    out,
-                    line[0][::-1],
-                    line[1][::-1],
-                    (255, 255, 255),
-                    lineType=cv2.LINE_AA,
-                )
-        for bin_lines in lines_binned_filtered:
-            for line in bin_lines:
-                cv2.line(
-                    out, line[0][::-1], line[1][::-1], (0, 255, 0), lineType=cv2.LINE_AA
-                )
+        # Show found lines
+        # out = cv2.addWeighted(
+        #     img, 0.25, cv2.cvtColor(skeleton, cv2.COLOR_GRAY2BGR), 0.5, 1.0
+        # )
+        # line_img = np.zeros_like(out)
+        # for p1, p2, length, rho, theta in lines:
+        #     p1 = (int(p1[1]), int(p1[0]))
+        #     p2 = (int(p2[1]), int(p2[0]))
+        #     cv2.line(line_img, p1, p2, (0, 255, 0), 1, lineType=cv2.LINE_AA)
+        # out = cv2.addWeighted(out, 0.8, line_img, 0.75, 1.0)
+        # Utils.show_imgs(out)
+
+        # Bin lines by angle
+        lines_binned = CV.bin_lines_by_angle(lines)
+        # Find Board Center
+        cy, cx = CV.get_center_point(img.shape, lines_binned)
+        # Filter Lines by Center Distance
+        lines_filtered = filter_lines_by_center_dist(
+            lines, cy, cx
+        )  # p1, p2, length (normalized), center distance [px], rho, theta
+
+        # Show binned lines
+        out = img // 2
+        for line in lines_filtered:
+            print(line)
+            cv2.line(
+                out,
+                line[0][::-1],
+                line[1][::-1],
+                (255, 255, 255),
+                lineType=cv2.LINE_AA,
+            )
         cv2.circle(out, (cx, cy), 5, (255, 0, 0))
         cv2.circle(out, (cx, cy), 1, (255, 127, 127), -1)
+        Utils.show_imgs(out)
+        continue
 
-        # CURRENT
         hist = ray_extensions(img, lines_binned_filtered)
 
-        Utils.show_imgs(img, edges, skeleton, center_img, out, hist)
+        Utils.show_imgs(img, edges, skeleton, out, hist)
         continue
 
         # board_lines = find_board_lines(cy, cx, lines_binned, lines_binned_filtered)
