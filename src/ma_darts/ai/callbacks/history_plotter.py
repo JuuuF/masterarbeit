@@ -13,6 +13,8 @@ class HistoryPlotter(Callback):
         filepath,
         update_on_batches: bool = True,
         batch_update_frequency: int = 10,
+        ease_curves: bool = False,
+        smooth_curves: bool = True,
     ):
         super().__init__()
         self.train_logs = {}
@@ -21,6 +23,9 @@ class HistoryPlotter(Callback):
 
         self.update_on_batches = update_on_batches
         self.batch_update_frequency = batch_update_frequency
+
+        self.ease_curves = ease_curves
+        self.smooth_curves = smooth_curves
 
         self.dividers = []
         self.epoch = 0
@@ -59,19 +64,23 @@ class HistoryPlotter(Callback):
         y_smooth = y_smooth[pad_width:-pad_width]
 
         # fade start and end
-        for i in range(window_size):
-            fac = (window_size - i) / window_size
-            y_smooth[i] = fac * y[i] + (1 - fac) * y_smooth[i]
-            y_smooth[-i - 1] = fac * y[-i - 1] + (1 - fac) * y_smooth[-i - 1]
+        if self.ease_curves:
+            for i in range(window_size):
+                fac = (window_size - i) / window_size
+                y_smooth[i] = fac * y[i] + (1 - fac) * y_smooth[i]
+                y_smooth[-i - 1] = fac * y[-i - 1] + (1 - fac) * y_smooth[-i - 1]
 
         return y_smooth
 
     def plot_losses(self, extra_logs=None):
         def draw_single_loss(ax, log, label, color):
             x = np.arange(len(log)) + 1
-            log_smoothed = self.smooth(log, window_size=round(len(x) / 5))
-            ax.plot(x, log_smoothed, label=label, color=color)
-            ax.scatter(x, log, label="_nolegend_", color=color, alpha=0.4, s=6)
+            if self.smooth_curves:
+                log_smoothed = self.smooth(log, window_size=round(len(x) / 5))
+                ax.plot(x, log_smoothed, label=label, color=color)
+                ax.scatter(x, log, label="_nolegend_", color=color, alpha=0.4, s=6)
+            else:
+                ax.plot(x, log, label=label, color=color)
 
         # Prepare logs
         logs = {k: v.copy() for k, v in self.train_logs.items()}
