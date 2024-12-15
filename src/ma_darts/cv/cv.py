@@ -2,6 +2,8 @@ import os
 import cv2
 import numpy as np
 
+from ma_darts.cv.utils import draw_polar_line, show_imgs, draw_polar_line_through_point
+
 img_paths = [
     # "dump/test/double.png",
     # "data/generation/out/0/render.png",
@@ -41,7 +43,6 @@ class Utils:
         max_filtered = maximum_filter(img, size=7, mode="constant")
         suppressed = (img == max_filtered) * img
         return suppressed
-
 
     def points_to_polar_line(p1, p2):
         y2, x2 = p2
@@ -200,7 +201,7 @@ class Unused:
         out = img.copy()
         for kp in kps:
             out[int(kp.pt[1]), int(kp.pt[0])] = (255, 0, 0)
-        Utils.show_imgs(out)
+        show_imgs(out)
 
     def fit_sine_curve(img: np.ndarray, hough_space: np.ndarray):
 
@@ -293,7 +294,7 @@ class Unused:
             # Rectangle in img
             img_ = img.copy()
             cv2.rectangle(img_, (0, 0, 45, 45), (127, 127, 127))
-            Utils.show_imgs(img_, *res, out)
+            show_imgs(img_, *res, out)
             img = cv2.pyrDown(img)
         # exit()
 
@@ -328,7 +329,7 @@ class Unused:
             )
         # res = cv2.blur(res, (7, 7))
         res /= res.max()
-        Utils.show_imgs(img, res)
+        show_imgs(img, res)
         return res
 
     def feature_matching(img: np.ndarray):
@@ -374,7 +375,7 @@ class Unused:
             flags=2,
         )
         res = cv2.drawMatches(img, kp1, res, kp2, good, None, **draw_params)
-        Utils.show_imgs(img, res)
+        show_imgs(img, res)
 
     def hough_ellipse(
         edges,
@@ -466,7 +467,7 @@ class Unused:
         res = np.zeros_like(edge_img)
         for x1, y1, x2, y2 in lines:
             cv2.line(res, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0))
-        Utils.show_imgs(edge_img, res)
+        show_imgs(edge_img, res)
         return lines
 
     def extend_line(x1, y1, x2, y2):
@@ -531,7 +532,7 @@ class Unused:
             color=(255, 0, 0),
         )
 
-        Utils.show_imgs(edges, res)
+        show_imgs(edges, res)
         exit()
 
     def transfer_hough_space(img, edge_img: np.ndarray) -> np.ndarray:
@@ -683,7 +684,7 @@ class Unused:
         res = np.float32(sum_img) + np.float32(mult_img)
         res_out = np.uint8(res / 2)
 
-        # Utils.show_imgs(img, combined, sum_img, mult_img, res)
+        # show_imgs(img, combined, sum_img, mult_img, res)
         # return res_out
 
         # ===========================================
@@ -720,7 +721,7 @@ class Unused:
                 res = add_img(res, cs_img[:, :, y], x, y)
         while res.shape[1] > 2000 or res.shape[0] > 1000:
             res = cv2.resize(res, (res.shape[1] // 2, res.shape[0] // 2))
-        Utils.show_imgs(res)
+        show_imgs(res)
         return res_out
 
         sat = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)[:, :, 1]
@@ -730,7 +731,7 @@ class Unused:
         # comb /= comb.max()
         # comb = np.uint8(comb * 255)
 
-        Utils.show_imgs(img, sat, lab_a)
+        show_imgs(img, sat, lab_a)
         return
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
@@ -739,10 +740,10 @@ class Unused:
         print(hsv.shape)
         lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
         print(lab.shape)
-        Utils.show_imgs(img, gray)
-        Utils.show_imgs(img, hls[:, :, 0], hls[:, :, 1], hls[:, :, 2])
-        Utils.show_imgs(img, hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2])
-        Utils.show_imgs(img, lab[:, :, 0], lab[:, :, 1], lab[:, :, 2])
+        show_imgs(img, gray)
+        show_imgs(img, hls[:, :, 0], hls[:, :, 1], hls[:, :, 2])
+        show_imgs(img, hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2])
+        show_imgs(img, lab[:, :, 0], lab[:, :, 1], lab[:, :, 2])
 
     def fit_ellipse_2(skeleton, cy, cx):
         def ellipse_residuals(params, points, center):
@@ -784,7 +785,7 @@ class Unused:
         cv2.ellipse(
             img, (cx, cy), (int(a), int(b)), theta, 0, 360, color=(255, 255, 255)
         )
-        Utils.show_imgs(img)
+        show_imgs(img)
 
     def get_hough_space(image, edges: np.ndarray) -> np.ndarray:
         import matplotlib.pyplot as plt
@@ -881,11 +882,11 @@ class Unused:
             intersection = np.logical_and(circle_img, gray)
             n_points = np.count_nonzero(intersection)
             points.append(n_points)
-            # Utils.show_imgs(gray, np.uint8(intersection) * 255)
+            # show_imgs(gray, np.uint8(intersection) * 255)
         res = np.zeros((max(points) + 1, max_r))
         for x, y in enumerate(points):
             res[y, x] = 255
-        Utils.show_imgs(gray, res)
+        show_imgs(gray, res)
         return
 
         # Growing radii on skeleton image
@@ -900,7 +901,7 @@ class Unused:
         for x, y in enumerate(points):
             res[y, x] = 255
         res[20] = 127
-        Utils.show_imgs(res, skeleton)
+        show_imgs(res, skeleton)
         return
 
         # Look for similarities in line start and end point distances from center
@@ -923,7 +924,7 @@ class Unused:
         for bin_idx, radii in enumerate(bin_radii):
             for r in radii:
                 res[bin_idx * 50 : (bin_idx + 1) * 50, int(r)] = 255
-        Utils.show_imgs(img, skeleton, res)
+        show_imgs(img, skeleton, res)
         # exit()
 
 
@@ -984,7 +985,7 @@ def ray_extensions(img, lines_binned_filtered):
             continue
         res[y * 50 : (y + 1) * 50, : len(ray)] = ray[: res.shape[1]]
 
-    # Utils.show_imgs(res)
+    # show_imgs(res)
     return res
 
     # Draw lines
@@ -1085,11 +1086,12 @@ class CV:
         if len(img.shape) == 3:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+        # Blur
+        img = cv2.blur(img, (7, 7))
+        img = cv2.blur(img, (7, 7))
+
         # Increase contrast
         img = cv2.convertScaleAbs(img, alpha=2.0, beta=0)
-
-        # Blur
-        img = cv2.blur(img, (3, 3))
 
         # Detect edges
         edges = cv2.Canny(img, 0, 255)
@@ -1118,7 +1120,8 @@ class CV:
         threshold: int = 75,
     ) -> list[tuple[float, float, float, float, float]]:
         # Dilate to make lines thicker
-        # img = cv2.dilate(img, (5, 5))
+        img = cv2.dilate(img, (5, 5))
+        # show_imgs(lines_dilated=img, block=False)
         # img = cv2.dilate(img, (5, 5))
 
         # Find lines as points
@@ -1190,7 +1193,7 @@ class CV:
             bin_img = np.zeros((img_shape[0], img_shape[1]), np.uint8)
             # Add all lines onto the bin image
             for line in bin_lines:
-                Utils.draw_polar_line(bin_img, *line[-2:], color=(1, 1, 1))
+                draw_polar_line(bin_img, *line[-2:], color=(1, 1, 1))
             bin_imgs.append(bin_img)
 
         # Accumulate bin lines
@@ -1255,7 +1258,7 @@ if __name__ == "__main__":
         #     p2 = (int(p2[1]), int(p2[0]))
         #     cv2.line(line_img, p1, p2, (0, 255, 0), 1, lineType=cv2.LINE_AA)
         # out = cv2.addWeighted(out, 0.8, line_img, 0.75, 1.0)
-        # Utils.show_imgs(out)
+        # show_imgs(out)
 
         # Bin lines by angle
         lines_binned = CV.bin_lines_by_angle(lines)
@@ -1279,12 +1282,12 @@ if __name__ == "__main__":
             )
         cv2.circle(out, (cx, cy), 5, (255, 0, 0))
         cv2.circle(out, (cx, cy), 1, (255, 127, 127), -1)
-        Utils.show_imgs(out)
+        show_imgs(out)
         continue
 
         hist = ray_extensions(img, lines_binned_filtered)
 
-        Utils.show_imgs(img, edges, skeleton, out, hist)
+        show_imgs(img, edges, skeleton, out, hist)
         continue
 
         # board_lines = find_board_lines(cy, cx, lines_binned, lines_binned_filtered)
@@ -1311,7 +1314,7 @@ if __name__ == "__main__":
             f"{board_lines_time=:04f}",
             sep="\n\t",
         )
-        Utils.show_imgs(
+        show_imgs(
             img,
             edges,
             skeleton,
@@ -1319,7 +1322,7 @@ if __name__ == "__main__":
         continue
         hough_space = detect_hough_lines(img, edges)
         # hough_space = transfer_hough_space(img, edges)
-        Utils.show_imgs(img, edges, hough_space)
+        show_imgs(img, edges, hough_space)
 
         continue
         exit()
@@ -1416,8 +1419,8 @@ if __name__ == "__main__":
         print(params)
         print(img.shape)
 
-        Utils.show_imgs(img, masked, edges, cont_img, res)
-        # Utils.show_imgs(img, masked, edges)
+        show_imgs(img, masked, edges, cont_img, res)
+        # show_imgs(img, masked, edges)
         # circs = circles(edges)
         # hough_space = detect_hough_lines(img, edges)
-        # Utils.show_imgs(img, masked, edges, circs)
+        # show_imgs(img, masked, edges, circs)
