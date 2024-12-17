@@ -7,18 +7,20 @@ Blender_/
 *.png
 *.JPG
 *.svg
-data/generation/hdri/*
-data/generation/textures/*
-data/paper/*
+data/generation/hdri/
+data/generation/textures/
+data/paper/
+data/generation/references/
+data/darts_references/
 
 # Generation data
 data/generation/out*/
 
 # dump files
 dump/*
-writing/notes/*
-private/*
-notes/*
+writing/notes/
+private/
+notes/
 
 # Cache files
 data/cache/
@@ -35,6 +37,7 @@ data/cache/
 *.synctex.gz
 *.bcf
 *.xml
+*.toc
 !main.pdf
 
 # GIMP
