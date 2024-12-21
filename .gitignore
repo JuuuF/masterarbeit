@@ -43,8 +43,10 @@ data/cache/
 # GIMP
 *.xcf
 
-# VSCode workspaces
+# VSCode data
 workspaces/*
+.vscode
+.vscode
 
 # Pycache
 *__pycache__
