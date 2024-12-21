@@ -1,13 +1,21 @@
 import os
 import cv2
 import numpy as np
+from sklearn.cluster import KMeans
 
 from ma_darts.cv.utils import draw_polar_line, show_imgs, draw_polar_line_through_point
 
 img_paths = [
-    # "dump/test/double.png",
+    # "/home/justin/Documents/uni/Masterarbeit/data/darts_references/ricks/ph_cam1/images/train/2024-09-14-14-10-26_S10_7_14.jpg",
+    "data/darts_references/jess/001_0-0-1.jpg",
+    "data/darts_references/jess/018_1-DB-DB.jpg",
+    "data/darts_references/jess/022_2-2-18.jpg",
+    "data/darts_references/jess/061_6-7-T4.jpg",
+    "data/darts_references/jess/084_10-6-4.jpg",
+    "data/darts_references/jess/129_19-2-6.jpg",
+    "dump/test/double.png",
     # "data/generation/out/0/render.png",
-    "data/generation/out/6/render.png",
+    # "data/generation/out/6/render.png",
     # "data/generation/out/7/render.png",
     # "data/generation/out/8/render.png",
     # "dump/test/x_90.png",
@@ -32,7 +40,10 @@ class Utils:
 
     def load_img(filepath: str) -> np.ndarray:
         img = cv2.imread(filepath)
-        while max(*img.shape[:2]) > 1500:
+        return img
+
+    def downsample_img(img: np.ndarray) -> np.ndarray:
+        while max(*img.shape[:2]) > 1600:
             img = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2))
         return img
 
@@ -63,6 +74,71 @@ class Utils:
 
     def point_point_dist(p1, p2):
         return np.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
+
+    def get_sobel(k: int, theta: float = np.pi / 2):
+        # Create coordinate grid
+        x, y = np.meshgrid(np.arange(-k, k + 1), np.arange(-k, k + 1))
+
+        # Rotate coordinates
+        x_rot = x * np.cos(theta) + y * np.sin(theta)
+        y_rot = -x * np.sin(theta) + y * np.cos(theta)
+
+        # Sobel filter formula: x * exp(-x^2 - y^2)
+        sobel = x_rot / ((x_rot**2 + y_rot**2) + 1e-5)
+
+        # Normalize
+        sobel -= sobel.mean()
+        sobel /= np.sum(np.abs(sobel))
+
+        return sobel
+
+    def get_edge_filter(k: int, theta: float = np.pi / 2) -> np.ndarray:
+        x, y = np.meshgrid(np.arange(-k, k + 1), np.arange(-k, k + 1))
+        x_rot = x * np.cos(theta) + y * np.sin(theta)
+        filter = np.sign(x_rot)
+
+        # Normalize
+        filter -= filter.mean()
+        filter /= np.sum(np.abs(filter))
+
+        return filter
+
+    def point_line_distance(y: int, x: int, rho: float, theta: float) -> float:
+        """
+        rho = x * cos(theta) + y * sin(theta)
+        => x * cos(theta) + y * sin(theta) - rho = 0
+        => a = cos(theta), b = sin(theta), c = -rho
+        => ax + by + c = 0
+        -> https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+        # sqrt(a^2 + b^2) = sqrt(sin^2 + cos^2) = 1
+        => dist = | cos(theta) * x0 + sin(theta) * y0 - rho |
+        """
+        dist = abs(np.cos(theta) * x + np.sin(theta) * y - rho)
+        return dist
+
+    def point_theta_to_polar_line(
+        pt: tuple[int, int], theta: float
+    ) -> tuple[float, float]:
+        y, x = pt
+        rho = x * np.cos(theta) + y * np.sin(theta)
+        return rho, theta
+
+    def polar_line_intersection(rho_a, theta_a, rho_b, theta_b):
+        sin_ta = np.sin(theta_a)
+        sin_tb = np.sin(theta_b)
+        cos_ta = np.cos(theta_a)
+        cos_tb = np.cos(theta_b)
+
+        det = cos_ta * sin_tb - sin_ta * cos_tb
+
+        # No intersection
+        if abs(det) < 1e-10:
+            return (0, 0)
+
+        y = (rho_b * cos_ta - rho_a * cos_tb) / det
+        x = (rho_a * sin_tb - rho_b * sin_ta) / det
+
+        return y, x
 
 
 class Unused:
@@ -927,146 +1003,196 @@ class Unused:
         show_imgs(img, skeleton, res)
         # exit()
 
+    def ray_extensions(img, lines_binned_filtered):
+        def within_img(y, x):
+            if x < 0 or y < 0:
+                return False
+            if y >= img.shape[0]:
+                return False
+            if x >= img.shape[1]:
+                return False
+            return True
 
-def ray_extensions(img, lines_binned_filtered):
-    def within_img(y, x):
-        if x < 0 or y < 0:
-            return False
-        if y >= img.shape[0]:
-            return False
-        if x >= img.shape[1]:
-            return False
-        return True
+        # Prepare image
+        if len(img.shape) == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.convertScaleAbs(img, alpha=1, beta=0)
 
-    # Prepare image
-    if len(img.shape) == 3:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = cv2.convertScaleAbs(img, alpha=1, beta=0)
+        # Get line orientations
+        bin_thetas = []
+        for bin_lines in lines_binned_filtered:
+            bin_thetas.append([])
+            for line in bin_lines:
+                bin_thetas[-1].append(line[-1])
+        mean_thetas = [np.median(t) if t else -1000 for t in bin_thetas]  # (n_bins,)
 
-    # Get line orientations
-    bin_thetas = []
-    for bin_lines in lines_binned_filtered:
-        bin_thetas.append([])
-        for line in bin_lines:
-            bin_thetas[-1].append(line[-1])
-    mean_thetas = [np.median(t) if t else -1000 for t in bin_thetas]  # (n_bins,)
+        # Get inbetween rays
+        ray_directions = []
+        for t1, t2 in zip(mean_thetas, mean_thetas[1:] + [mean_thetas[0] + np.pi]):
+            if t1 < -100 or t2 < -100:
+                ray_directions.append(0)
 
-    # Get inbetween rays
-    ray_directions = []
-    for t1, t2 in zip(mean_thetas, mean_thetas[1:] + [mean_thetas[0] + np.pi]):
-        if t1 < -100 or t2 < -100:
-            ray_directions.append(0)
+            ray_directions.append((t1 + t2) / 2)
 
-        ray_directions.append((t1 + t2) / 2)
+        # March along rays
+        rays = [
+            [] for _ in ray_directions * 2
+        ]  # twice the amount of rays since we go both forward and backward
 
-    # March along rays
-    rays = [
-        [] for _ in ray_directions * 2
-    ]  # twice the amount of rays since we go both forward and backward
+        ray_length = img.shape[0]
+        for step in range(ray_length):
+            for i, theta in enumerate(ray_directions):
+                px = cx + int(-np.sin(theta) * step)
+                py = cy + int(np.cos(theta) * step)
+                if within_img(py, px):
+                    intensity = img[py, px]
+                    rays[i].append(intensity)
 
-    ray_length = img.shape[0]
-    for step in range(ray_length):
-        for i, theta in enumerate(ray_directions):
-            px = cx + int(-np.sin(theta) * step)
-            py = cy + int(np.cos(theta) * step)
-            if within_img(py, px):
-                intensity = img[py, px]
-                rays[i].append(intensity)
+                px = cx - int(-np.sin(theta) * step)
+                py = cy - int(np.cos(theta) * step)
+                if within_img(py, px):
+                    intensity = img[py, px]
+                    rays[i + 10].append(intensity)
 
-            px = cx - int(-np.sin(theta) * step)
-            py = cy - int(np.cos(theta) * step)
-            if within_img(py, px):
-                intensity = img[py, px]
-                rays[i + 10].append(intensity)
+        res = np.zeros((500, ray_length), np.uint8)
+        for y, ray in enumerate(rays):
+            if len(ray) == 0:
+                continue
+            res[y * 50 : (y + 1) * 50, : len(ray)] = ray[: res.shape[1]]
 
-    res = np.zeros((500, ray_length), np.uint8)
-    for y, ray in enumerate(rays):
-        if len(ray) == 0:
-            continue
-        res[y * 50 : (y + 1) * 50, : len(ray)] = ray[: res.shape[1]]
+        # show_imgs(res)
+        return res
 
-    # show_imgs(res)
-    return res
+        # Draw lines
+        for theta in ray_directions:
+            if theta is None:
+                continue
+            x0 = cx + int(-np.sin(theta) * 1000)
+            y0 = cy + int(np.cos(theta) * 1000)
+            x1 = cx - int(-np.sin(theta) * 1000)
+            y1 = cy - int(np.cos(theta) * 1000)
+            img_ = img * 0
+            cv2.line(img_, (x0, y0), (x1, y1), (0, 0, 0), 3)
+            cv2.line(img_, (x0, y0), (x1, y1), (255, 255, 255), 1)
 
-    # Draw lines
-    for theta in ray_directions:
-        if theta is None:
-            continue
-        x0 = cx + int(-np.sin(theta) * 1000)
-        y0 = cy + int(np.cos(theta) * 1000)
-        x1 = cx - int(-np.sin(theta) * 1000)
-        y1 = cy - int(np.cos(theta) * 1000)
-        img_ = img * 0
-        cv2.line(img_, (x0, y0), (x1, y1), (0, 0, 0), 3)
-        cv2.line(img_, (x0, y0), (x1, y1), (255, 255, 255), 1)
+        show_imgs(cv2.addWeighted(img, 1, img_, 0.5, 0))
 
-    Utils.show_imgs(cv2.addWeighted(img, 1, img_, 0.5, 0))
+    def check_shearing_angles_calculation():
+        def theta_change_x(theta, shear_x):
+            """
+            slope = dy/dx
+            mapping: dy/dx -> (dx + s) / dx
+            mapping straightforward since we change the numerator
+            """
+            slope = np.tan(theta)
+            slope_ = slope + shear_x
+            theta_ = np.arctan(slope_)
+            return theta_
 
+        def theta_change_y(theta, shear_y):
+            """
+            slope = dy / dx
+            mapping: dy/dx -> dy / (dy * s + dx)
+                            = (dy / dx) / (1 + s * (dy / dx))
+                            = slope / (1 + s * slope)
+            mapping not as straightforward as we change the denominator
+            """
+            slope = np.tan(theta)
 
-def filter_lines_by_center_dist(
-    lines: list[tuple[float, float, float, float, float]],
-    cy: int,
-    cx: int,
-    max_center_dist: float = 10,
-) -> list[tuple[float, float, float, float, float]]:
+            slope_ = slope / (1 + shear_y * slope)
 
-    def line_point_distance(rho: float, theta: float, x: int, y: int) -> float:
-        """
-        rho = x * cos(theta) + y * sin(theta)
-        => x * cos(theta) + y * sin(theta) - rho = 0
-        => a = cos(theta), b = sin(theta), c = -rho
-        => ax + by + c = 0
-        -> https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-        # sqrt(a^2 + b^2) = sqrt(sin^2 + cos^2) = 1
-        => dist = | cos(theta) * x0 + sin(theta) * y0 - rho |
-        """
-        dist = abs(np.cos(theta) * x + np.sin(theta) * y - rho)
-        return dist
-
-    lines_filtered = []
-    for line_idx, line in enumerate(lines):
-        rho, theta = line[-2:]
-        dist = line_point_distance(rho, theta, cx, cy)
-
-        if dist > max_center_dist:
-            continue
-        lines_filtered.append(
-            (
-                line[0],  # p1
-                line[1],  # p2
-                line[2],  # length
-                dist,  # distance
-                line[3],  # rho
-                line[4],  # theta
+            theta_ = np.arctan(slope_)
+            print(
+                "\n",
+                f"theta={theta}",
+                f"theta={round(np.rad2deg(theta))}",
+                f"slope={slope:.04f}",
+                f"shearing={shearing}",
+                f"slope_={slope_:04f}",
+                f"theta_={round(np.rad2deg(theta_))}",
+                f"theta_={theta_}",
+                sep="\n",
             )
+            return theta_
+
+        img = cv2.imread(img_paths[0])
+        img = cv2.pyrDown(img)
+        cy = img.shape[0] // 2
+        cx = img.shape[1] // 2
+
+        shearing = 1
+
+        M_t_a = np.array(
+            [
+                [1, 0, -cx],
+                [0, 1, -cy],
+                [0, 0, 1],
+            ]
+        )
+        M_t_b = np.array(
+            [
+                [1, 0, cx],
+                [0, 1, cy],
+                [0, 0, 1],
+            ]
         )
 
-    dists = []
-    for i, line in enumerate(lines_filtered):
-        p1, p2 = line[:2]
-        d1 = Utils.point_point_dist((cy, cx), p1)
-        d2 = Utils.point_point_dist((cy, cx), p2)
-        dists.append((i, min(d1, d2), max(d1, d2)))
+        M_shear = np.array(
+            [
+                [1, 0, 0],
+                [-shearing, 1, 0],
+                [0, 0, 1],
+            ]
+        )
+        M = np.eye(3)
+        M = M_t_a @ M
+        M = M_shear @ M
+        M = M_t_b @ M
 
-    dists = sorted(dists, key=lambda x: x[1])
-    # print(*dists, sep="\n")
-    res = np.zeros((len(dists), max(*img.shape[:2])), np.uint8)
-    for i, (_, min_d, max_d) in enumerate(dists):
-        print(min_d, max_d)
-        res[i, int(min_d) : int(max_d)] = 255
-    res_sum = np.sum(res, axis=0).shape
-    res_ = np.zeros((res.shape[0], np.max(res)), np.uint8)
-    for i, val in enumerate(res_sum):
-        res_[i, :val] = 255
-    Utils.show_imgs(res, res_)
-    # exit()
+        # Draw lines
+        thetas = np.arange(0, np.pi, np.pi / 8)
+        colors = [
+            (127, 127, 127),
+            (0, 0, 255),
+            (0, 255, 0),
+            (0, 255, 255),
+            (255, 0, 0),
+            (255, 255, 0),
+            (255, 0, 255),
+            (255, 255, 255),
+        ]
 
-    return lines_filtered
+        # thetas = thetas[1:2]
+        for i, theta in enumerate(thetas):
+            draw_polar_line_through_point(
+                img, (cy, cx), theta, color=colors[i], thickness=6
+            )
+
+        # Warp image
+        img_ = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))
+
+        # Calculate resulting lines
+        for i, theta in enumerate(thetas):
+            # theta_ = theta_change_x(theta, shearing)
+            theta_ = theta_change_y(theta, shearing)
+            draw_polar_line_through_point(
+                img_,
+                (cy, cx),
+                theta_,
+                thickness=2,
+                color=colors[i],
+                intensity=1,
+            )
+        show_imgs(img, img_)
+        exit()
+
+
+# Unused.check_shearing_angles_calculation()
 
 
 class CV:
 
-    def edge_detect(img: np.ndarray) -> np.ndarray:
+    def edge_detect_(img: np.ndarray) -> np.ndarray:
         def _detect(img):
             # Blur + filter in x and y
             img = cv2.GaussianBlur(img, (3, 3), 0)
@@ -1098,7 +1224,38 @@ class CV:
 
         return edges
 
-    def skeleton(img: np.ndarray) -> np.ndarray:
+    def edge_detect(
+        img: np.ndarray, kernel_size: int = 5, show: bool = False
+    ) -> np.ndarray:
+
+        # Convert img to grayscale
+        if len(img.shape) == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Increase contrast
+        img = cv2.convertScaleAbs(img, alpha=1.5)
+
+        # Blur image
+        img = cv2.blur(img, (2 * kernel_size + 1, 2 * kernel_size + 1))
+        img = np.float32(img) / 255
+
+        # Find edges
+        filter_x = Utils.get_sobel(7)
+        sobel_x = cv2.filter2D(img, -1, filter_x)
+        sobel_y = cv2.filter2D(img, -1, filter_x.T)
+
+        # combine gradients
+        sobel_img = cv2.magnitude(sobel_x, sobel_y)
+        sobel_edges = np.uint8(sobel_img / sobel_img.max() * 255)
+
+        _, edges = cv2.threshold(sobel_edges, 127, 255, cv2.THRESH_BINARY)
+
+        # show_imgs(img=img, sobel_x=sobel_x, sobel_y=sobel_y, sobel_edges=sobel_edges, edges=edges, block=False)
+        if show:
+            show_imgs(edges=edges, block=False)
+        return edges
+
+    def skeleton(img: np.ndarray, show: bool = False) -> np.ndarray:
         skeleton = np.zeros_like(img)
         element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
 
@@ -1111,18 +1268,25 @@ class CV:
             img = eroded.copy()
 
             done = cv2.countNonZero(img) == 0
+
+        if show:
+            show_imgs(skeleton=skeleton, block=False)
         return skeleton
 
     def extract_lines(
         img: np.ndarray,
         rho: int = 1,
-        theta: float = np.pi / 180 / 5,
-        threshold: int = 75,
+        theta: float = np.pi / 180 / 10,
+        threshold: int = 25,
+        show: bool = False,
     ) -> list[tuple[float, float, float, float, float]]:
+
         # Dilate to make lines thicker
-        img = cv2.dilate(img, (5, 5))
-        # show_imgs(lines_dilated=img, block=False)
-        # img = cv2.dilate(img, (5, 5))
+        dilation_size = 2
+        img = cv2.dilate(
+            img,
+            kernel=np.ones((dilation_size, dilation_size), np.uint8),
+        )
 
         # Find lines as points
         lines = cv2.HoughLinesP(
@@ -1161,6 +1325,20 @@ class CV:
         )
         lines = list(lines)
 
+        if show:
+            if len(img.shape) == 2:
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            line_img = np.zeros_like(img)
+            for p1, p2, length, rho, theta in lines:
+                p1 = (int(p1[1]), int(p1[0]))
+                p2 = (int(p2[1]), int(p2[0]))
+                cv2.line(line_img, p1, p2, (0, 255, 0), 1, lineType=cv2.LINE_AA)
+                color = np.random.randint(256)
+                cv2.circle(img, p1, 4, (color, 0, 0), lineType=cv2.LINE_AA)
+                cv2.circle(img, p2, 4, (color, 0, 0), lineType=cv2.LINE_AA)
+            out = cv2.addWeighted(img, 0.25, line_img, 1, 1.0)
+            show_imgs(lines=out, block=False)
+
         return lines  # (p1, p2, length, rho, theta)
 
     def bin_lines_by_angle(
@@ -1184,6 +1362,7 @@ class CV:
     def get_center_point(
         img_shape: tuple[int, int],
         lines_binned: list[list[tuple[float, float, float, float, float]]],
+        show: bool = False,
     ) -> tuple[int, int]:
 
         # Create one image for each bin
@@ -1210,10 +1389,510 @@ class CV:
         cy = round(np.mean(cy))
         cx = round(np.mean(cx))
 
+        if show:
+            acc = np.uint8(np.float32(acc) / acc.max() * 255)
+            show_imgs(center_point=acc, block=False)
         return cy, cx
 
-        acc = np.uint8(np.float32(acc) / acc.max() * 255)
-        return cy, cx, acc
+    def filter_lines_by_center_dist(
+        lines: list[tuple[float, float, float, float, float]],
+        cy: int,
+        cx: int,
+        max_center_dist: float = 10,
+    ) -> list[tuple[float, float, float, float, float]]:
+
+        lines_filtered = []
+        for line_idx, line in enumerate(lines):
+            rho, theta = line[-2:]
+            dist = Utils.point_line_distance(cy, cx, rho, theta)
+
+            if dist > max_center_dist:
+                continue
+            lines_filtered.append(
+                (
+                    line[0],  # p1
+                    line[1],  # p2
+                    line[2],  # length
+                    dist,  # distance
+                    line[3],  # rho
+                    line[4],  # theta
+                )
+            )
+
+        return lines_filtered
+
+        dists = []
+        for i, line in enumerate(lines_filtered):
+            p1, p2 = line[:2]
+            d1 = Utils.point_point_dist((cy, cx), p1)
+            d2 = Utils.point_point_dist((cy, cx), p2)
+            dists.append((i, min(d1, d2), max(d1, d2)))
+
+        dists = sorted(dists, key=lambda x: x[1])
+        # print(*dists, sep="\n")
+        res = np.zeros((len(dists), max(*img.shape[:2])), np.uint8)
+        for i, (_, min_d, max_d) in enumerate(dists):
+            print(min_d, max_d)
+            res[i, int(min_d) : int(max_d)] = 255
+        res_sum = np.sum(res, axis=0).shape
+        res_ = np.zeros((res.shape[0], np.max(res)), np.uint8)
+        for i, val in enumerate(res_sum):
+            res_[i, :val] = 255
+        show_imgs(res, res_)
+        # exit()
+
+        return lines_filtered
+
+    def get_rough_line_angles(
+        img_shape: tuple[int, int],
+        lines: list[
+            tuple[float, float, float, float, float]
+        ],  # p1, p2, length (normalized), center distance [px], rho, theta
+        cy: int,
+        cx: int,
+        show: bool = False,
+    ):
+        thetas = np.array([line[-1] for line in lines])
+
+        # Calculate sample weights
+        sample_weight = []
+        diag = np.sqrt(img_shape[0] ** 2 + img_shape[1] ** 2)
+        for i, line in enumerate(lines):
+            length = line[2]
+            d1 = Utils.point_point_dist(line[0], (cy, cx))
+            d2 = Utils.point_point_dist(line[1], (cy, cx))
+            center_dist = min(d1, d2)
+            center_dist = 1 - center_dist / diag
+            sample_weight.append(length * center_dist)
+
+        ideal_angles = (np.arange(0, np.pi, np.pi / 10) + np.pi / 20).reshape(-1, 1)
+        kmeans = KMeans(
+            n_clusters=10,
+            # init="k-means++",
+            init=ideal_angles,
+            # algorithm="lloyd",
+            algorithm="elkan",
+        )
+        kmeans.fit(thetas.reshape(-1, 1), sample_weight=sample_weight)
+        target_angles = sorted(kmeans.cluster_centers_.flatten())
+
+        if show:
+            res = np.zeros((img_shape[0], img_shape[1], 3), np.uint8)
+            for line in lines:
+                cv2.line(
+                    res,
+                    line[0][::-1],
+                    line[1][::-1],
+                    (0, 255, 0),
+                    1,
+                    lineType=cv2.LINE_AA,
+                )
+
+            for angle in ideal_angles[:, 0]:
+                draw_polar_line_through_point(res, (cy, cx), angle, color=(0, 0, 200))
+            for angle in target_angles:
+                draw_polar_line_through_point(res, (cy, cx), angle, color=(255, 0, 0))
+
+            res = cv2.addWeighted(img, 0.2, res, 0.9, 1)
+            show_imgs(angles_target=res, block=False)
+
+        return target_angles
+
+        angle_step = np.deg2rad(2)
+
+        from matplotlib import pyplot as plt
+        from scipy.signal import savgol_filter
+
+        fig, ax = plt.subplots(1, 1)
+        ax.scatter(list(range(len(thetas))), sorted(thetas))
+
+        plt.show(block=False)
+        plt.pause(1)
+        show_imgs(line_img=res)
+        plt.close()
+
+    def get_line_angles_old(lines: list[tuple[float, float, float, float, float]]):
+        line_lengths = [l[2] for l in lines]
+        line_angles = [l[-1] for l in lines]
+
+        # Smooth line angles
+        from scipy.signal import savgol_filter
+
+        line_angles_smoothed = savgol_filter(line_angles, window_length=5, polyorder=2)
+
+        # Fort lines by bins
+        angle_step = np.deg2rad(4.5)
+        bins = np.arange(0, np.pi + angle_step, angle_step)
+        bin_indices = np.digitize(line_angles_smoothed, bins, right=False)
+
+        angle_bins = [0 for _ in range(len(bins))]
+        for line, bin_idx in zip(lines, bin_indices):
+            line_length = line[2]
+            line_rho = line[-2]
+            line_theta = line[-1]
+
+            p1_dist = Utils.point_point_dist(line[0], (cy, cx))
+            p2_dist = Utils.point_point_dist(line[1], (cy, cx))
+            min_dist = min(p1_dist, p2_dist)
+
+            draw_polar_line(img, line_rho, line_theta, intensity=line_length)
+
+            # TODO: soft binning
+            # angle_bins[bin_idx - 2] += line_length * min_dist * abs((target_angle - angle) / angle_step)  # deadzone, falloff
+            angle_bins[bin_idx - 1] += line_length * min_dist
+
+        max_bin = max(angle_bins)
+        for val in angle_bins:
+            val /= max_bin
+            val *= 30
+            val = int(val)
+            print("#" * val)
+        return
+
+    def align_angles(
+        lines_filtered: list[tuple[float, float, float, float, float]],
+        thetas: list[float],
+        img_shape: tuple[int, int],
+        show: bool = False,
+    ) -> list[tuple[float, float]]:
+        rho_guess = np.sqrt(img_shape[0] ** 2 + img_shape[1] ** 2) / 2
+
+        def fit_polar_line_to_points(
+            points, weights, initial_theta
+        ) -> tuple[float, float]:
+            def objective(params):
+                rho, theta = params
+                res = (
+                    sum(
+                        w * Utils.point_line_distance(*pt, rho, theta) ** 2
+                        for pt, w in zip(points, weights)
+                    )
+                    + 1e-5
+                )
+                return res
+
+            initial_guess = Utils.point_theta_to_polar_line((cy, cx), theta)
+
+            # for p in points:
+            #     print(Utils.point_line_distance(*p, *initial_guess))
+            #     img[p[0], p[1]] = 255
+
+            # draw_polar_line(img, *initial_guess)
+            # show_imgs(img)
+            # return initial_guess
+
+            bounds = [(-rho_guess * 2, rho_guess * 2), (0, np.pi)]
+
+            from scipy.optimize import minimize
+
+            result = minimize(
+                objective,
+                initial_guess,
+                bounds=bounds,
+                method="L-BFGS-B",
+                options={"gtol": 1e-5, "ftol": 1e-6},
+            )
+
+            if result.success:
+                return result.x  # rho, theta
+
+            print("WARNING: Could not terminate line fitting:", result.message)
+            return result.x
+
+        # Filter lines
+        line_bins = [[] for _ in range(len(thetas))]
+        for line in lines_filtered:
+            min_dist = np.Inf
+            for i, theta in enumerate(thetas):
+                dist_1 = abs(theta - line[-1])
+                dist_2 = abs(theta - (line[-1] - np.pi))
+                dist = min(dist_1, dist_2)
+                if dist < min_dist:
+                    min_dist = dist
+                    min_idx = i
+            line_bins[min_idx].append(line)
+
+        out_lines = []
+        for theta, lines in zip(thetas, line_bins):
+            if len(lines) == 0:
+                out_lines.append(Utils.point_theta_to_polar_line((cy, cx), theta))
+                continue
+
+            points = [(cy, cx)]
+            for line in lines:
+                points.append(line[0])
+                points.append(line[1])
+
+            lengths = [line[2] for line in lines]
+            mean_points = [
+                (
+                    (line[0][0] + line[1][0]) // 2,
+                    (line[0][1] + line[1][1]) // 2,
+                )
+                for line in lines
+            ]
+            weights = [
+                l / (Utils.point_point_dist((cy, cx), mp) + 1e-2)
+                for l, mp in zip(lengths, mean_points)
+            ]
+            # weight for each point of a line
+            weights = [w for w in weights for _ in (0, 1)]
+            weights.insert(0, max(weights) * 2)  # weight for center point
+            # normalize
+            weights = [w - min(weights) for w in weights]
+            weights = [w / max(weights) for w in weights]
+
+            # print(points, weights, theta)
+            rho_, theta_ = fit_polar_line_to_points(points, weights, theta)
+            # print("--")
+            # print(theta, theta_)
+            out_lines.append((rho_, theta_))
+
+        if show:
+            out = img.copy()
+            for rho, theta in out_lines:
+                draw_polar_line(out, rho, theta)
+            show_imgs(lines_aligned=out, block=False)
+        return out_lines
+
+    def center_point_from_lines(
+        lines: list[tuple[float, float]],
+    ) -> tuple[float, float]:
+        ys = []
+        xs = []
+        for i, line_a in enumerate(lines):
+            for line_b in lines[i + 1 :]:
+                y, x = Utils.polar_line_intersection(*line_a, *line_b)
+                ys.append(y)
+                xs.append(x)
+        cy = np.mean(ys)
+        cx = np.mean(xs)
+        return cy, cx
+
+    def undistort_by_lines(
+        cy: int,
+        cx: int,
+        lines: list[tuple[float, float]],
+    ):
+
+        def theta_change_shear_y(theta, shear_y):
+            """
+            slope = dy / dx
+            mapping:
+                dy/dx -> dy / (dy * s + dx)
+                        = (dy / dx) / (1 + s * (dy / dx))
+                        = slope / (1 + s * slope)
+            in out left-handed coordinate system, the shearing is inverted, so we use:
+                dy/dx -> slope / (1 - s * slope)
+            mapping not as straightforward as we change the denominator
+            """
+            slope = np.tan(theta)  # get the slope
+
+            slope_ = slope / (1 - shear_y * slope)  # this is the funny mapping
+
+            theta_ = np.arctan(slope_)  # convert slope to angle
+            return theta_
+
+        def rotation_matrix(rot):
+            M_rot = np.array(
+                [
+                    [np.cos(rot), np.sin(rot), 0],
+                    [-np.sin(rot), np.cos(rot), 0],
+                    [0, 0, 1],
+                ]
+            )
+            return M_rot
+
+        def shear_matrix(shear):
+            M_shear = np.array(
+                [
+                    [1, -shear, 0],
+                    [0, 1, 0],
+                    [0, 0, 1],
+                ]
+            )
+            return M_shear
+
+        def visualize_matrix(M):
+            global cy, cx, img
+            res = img.copy()
+            for t in src_start:
+                draw_polar_line_through_point(
+                    res, (int(cy), int(cx)), t, thickness=2, color=(255, 255, 255)
+                )
+
+            res = cv2.warpPerspective(res, M, (img.shape[1], img.shape[0]))
+
+            for t in dst:
+                draw_polar_line_through_point(
+                    res, (int(cy), int(cx)), t, color=(255, 0, 0)
+                )
+            return res
+
+        # Translate center to (0, 0)
+        M_trans_a = np.array(
+            [
+                [1, 0, -cx],
+                [0, 1, -cy],
+                [0, 0, 1],
+            ]
+        )
+        M_trans_b = np.array(
+            [
+                [1, 0, cx],
+                [0, 1, cy],
+                [0, 0, 1],
+            ]
+        )
+
+        angle_step = np.pi / 10
+        dst = np.arange(0, np.pi, angle_step) + angle_step / 2
+        src = np.array([l[1] for l in lines])
+        # copy for drawing
+        src_start = src.copy()
+
+        # Initialize Matrix
+        M = np.eye(3)
+
+        # -----------------------------
+        # 1. Translate center to origin
+
+        # update transformation matrix
+        M = M_trans_a @ M
+
+        # -----------------------------
+        # 2. Align src vertival line with destination vertical line
+        t_src = src[0]
+        t_dst = dst[0]
+        rot_angle = t_src - t_dst
+        M_rot = rotation_matrix(rot_angle)
+
+        # update transformation matrix
+        M = M_rot @ M
+
+        # update src points
+        src = src - rot_angle
+
+        # draw
+        res = visualize_matrix(M_trans_b @ M)
+        for t in src:
+            draw_polar_line_through_point(
+                res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
+            )
+        show_imgs(align_lines=res, block=False)
+
+        # -----------------------------
+        # 3. Vertical alignment
+        M_rot_v = rotation_matrix(angle_step / 2)
+
+        # update transformation matrix
+        M = M_rot_v @ M
+
+        # update src and dst points
+        src -= angle_step / 2
+        dst -= angle_step / 2
+
+        # draw
+        res = visualize_matrix(M_trans_b @ M)
+        for t in src:
+            draw_polar_line_through_point(
+                res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
+            )
+        show_imgs(vertical_alignment=res, block=False)
+
+        # -----------------------------
+        # 4. Vertical shearing
+        t_src = src[5]
+        t_dst = dst[5]
+        shear_amount = t_dst - t_src
+
+        M_shear = np.array(
+            [
+                [1, 0, 0],
+                [shear_amount, 1, 0],
+                [0, 0, 1],
+            ]
+        )
+
+        # update transformation matrix
+        M = M_shear @ M
+
+        # update src points
+        src = theta_change_shear_y(src, shear_amount)
+        src[src < 0] += np.pi
+
+        # draw
+        res = visualize_matrix(M_trans_b @ M)
+        for t in src:
+            draw_polar_line_through_point(
+                res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
+            )
+        show_imgs(vertical_shearing=res, block=False)
+
+        # -----------------------------
+        # 5. Vertical scaling
+
+        # convert angles to slopes
+        slopes_src = np.tan(src)
+        slopes_dst = np.tan(dst)
+        # remove already aligned angles
+        slopes_src = np.delete(slopes_src, [0, 5])
+        slopes_dst = np.delete(slopes_dst, [0, 5])
+        # calculate scaling
+        scales = slopes_src / slopes_dst
+        scale = np.mean(scales)
+
+        M_scale = np.array(
+            [
+                [1, 0, 0],
+                [0, scale, 0],
+                [0, 0, 1],
+            ]
+        )
+
+        # update transformation matrix
+        M = M_scale @ M
+
+        # upate src points
+        src = np.arctan(np.tan(src) / scale)
+
+        # draw
+        res = visualize_matrix(M_trans_b @ M)
+        for j, t in enumerate(src):
+            draw_polar_line_through_point(
+                res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
+            )
+        show_imgs(vertical_scaling=res, block=False)
+
+        # -----------------------------
+        # 6. Undo vertical alignment
+        M_rot_v_inv = rotation_matrix(-angle_step / 2)
+
+        # update transformation matrix
+        M = M_rot_v_inv @ M
+
+        # update src and dst points
+        src += angle_step / 2
+        dst += angle_step / 2
+
+        # draw
+        res = visualize_matrix(M_trans_b @ M)
+        for j, t in enumerate(src):
+            draw_polar_line_through_point(
+                res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
+            )
+        show_imgs(vertical_scaling=res, block=False)
+
+        # -----------------------------
+        # 6. Re-Translate into center
+
+        M = M_trans_b @ M
+
+        # - # - # - # - # - # - # - # - # - #
+
+        global img
+        img = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))
+        show_imgs(img, block=False)
 
 
 def extract_center(img: np.ndarray):
@@ -1235,97 +1914,47 @@ if __name__ == "__main__":
         from time import time
 
         # Load Image
-        img = Utils.load_img(f)
+        img_full = Utils.load_img(f)
+
+        img = Utils.downsample_img(img_full)
+
+        start = time()
+        show_imgs(input=img, block=False)
         # Detect Edges
-        edges = CV.edge_detect(img)
+        edges = CV.edge_detect(img, show=True)
         # Skeletonize edges
-        skeleton = CV.skeleton(edges)
+        skeleton = CV.skeleton(edges, show=True)
         # Extract lines
         lines = CV.extract_lines(
             skeleton,
-            rho=0.5,
-            theta=np.pi / 180 / 10,
-            threshold=25,
+            # rho=0.5,
+            # theta=np.pi / 180 / 10,
+            threshold=75,
+            show=True,
         )
-
-        # Show found lines
-        # out = cv2.addWeighted(
-        #     img, 0.25, cv2.cvtColor(skeleton, cv2.COLOR_GRAY2BGR), 0.5, 1.0
-        # )
-        # line_img = np.zeros_like(out)
-        # for p1, p2, length, rho, theta in lines:
-        #     p1 = (int(p1[1]), int(p1[0]))
-        #     p2 = (int(p2[1]), int(p2[0]))
-        #     cv2.line(line_img, p1, p2, (0, 255, 0), 1, lineType=cv2.LINE_AA)
-        # out = cv2.addWeighted(out, 0.8, line_img, 0.75, 1.0)
-        # show_imgs(out)
 
         # Bin lines by angle
         lines_binned = CV.bin_lines_by_angle(lines)
         # Find Board Center
-        cy, cx = CV.get_center_point(img.shape, lines_binned)
+        cy, cx = CV.get_center_point(img.shape, lines_binned, show=True)
         # Filter Lines by Center Distance
-        lines_filtered = filter_lines_by_center_dist(
+        lines_filtered = CV.filter_lines_by_center_dist(
             lines, cy, cx
         )  # p1, p2, length (normalized), center distance [px], rho, theta
 
-        # Show binned lines
-        out = img // 2
-        for line in lines_filtered:
-            print(line)
-            cv2.line(
-                out,
-                line[0][::-1],
-                line[1][::-1],
-                (255, 255, 255),
-                lineType=cv2.LINE_AA,
-            )
-        cv2.circle(out, (cx, cy), 5, (255, 0, 0))
-        cv2.circle(out, (cx, cy), 1, (255, 127, 127), -1)
-        show_imgs(out)
-        continue
-
-        hist = ray_extensions(img, lines_binned_filtered)
-
-        show_imgs(img, edges, skeleton, out, hist)
-        continue
-
-        # board_lines = find_board_lines(cy, cx, lines_binned, lines_binned_filtered)
-        # s8 = time()
-        continue
-
-        loading_time = s1 - s0
-        edges_time = s2 - s1
-        skeleton_time = s3 - s2
-        lines_time = s4 - s3
-        bin_time = s5 - s4
-        center_time = s6 - s5
-        filter_time = s7 - s6
-        board_lines_time = s8 - s7
-        print(
-            "Times:",
-            f"{loading_time=:04f}",
-            f"{edges_time=:04f}",
-            f"{skeleton_time=:04f}",
-            f"{lines_time=:04f}",
-            f"{bin_time=:04f}",
-            f"{center_time=:04f}",
-            f"{filter_time=:04f}",
-            f"{board_lines_time=:04f}",
-            sep="\n\t",
+        thetas = CV.get_rough_line_angles(
+            img.shape[:2], lines_filtered, cy, cx, show=True
         )
-        show_imgs(
-            img,
-            edges,
-            skeleton,
-        )
-        continue
-        hough_space = detect_hough_lines(img, edges)
-        # hough_space = transfer_hough_space(img, edges)
-        show_imgs(img, edges, hough_space)
 
+        # Align lines by filtered edges
+        lines = CV.align_angles(lines_filtered, thetas, img.shape[:2], show=True)
+
+        cy, cx = CV.center_point_from_lines(lines)
+
+        CV.undistort_by_lines(cy, cx, lines)
+
+        show_imgs()
         continue
-        exit()
 
         # --------------------------------------------------------------------
         # LEGACY CORNER
