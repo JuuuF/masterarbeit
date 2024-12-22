@@ -9,6 +9,7 @@ from .matrices import rotation_matrix
 from .matrices import translation_matrix
 from .matrices import shearing_matrix
 from .matrices import scaling_matrix
+from .matrices import apply_matrix
 
 __all__.append("show_imgs")
 
@@ -19,3 +20,4 @@ __all__.append("rotation_matrix")
 __all__.append("translation_matrix")
 __all__.append("shearing_matrix")
 __all__.append("scaling_matrix")
+__all__.append("apply_matrix")
