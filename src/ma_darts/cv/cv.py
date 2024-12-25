@@ -4,6 +4,13 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 from ma_darts.cv.utils import draw_polar_line, show_imgs, draw_polar_line_through_point
+from ma_darts.cv.utils import (
+    rotation_matrix,
+    translation_matrix,
+    shearing_matrix,
+    scaling_matrix,
+    apply_matrix,
+)
 
 img_paths = [
     # "/home/justin/Documents/uni/Masterarbeit/data/darts_references/ricks/ph_cam1/images/train/2024-09-14-14-10-26_S10_7_14.jpg",
@@ -31,8 +38,8 @@ img_paths = [
     "dump/test/0003.jpg",
     "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
     "dump/test/test_img.png",
-    "dump/test/test.png",
-    "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
+    # "dump/test/test.png",
+    # "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
 ]
 
 
@@ -1122,28 +1129,9 @@ class Unused:
 
         shearing = 1
 
-        M_t_a = np.array(
-            [
-                [1, 0, -cx],
-                [0, 1, -cy],
-                [0, 0, 1],
-            ]
-        )
-        M_t_b = np.array(
-            [
-                [1, 0, cx],
-                [0, 1, cy],
-                [0, 0, 1],
-            ]
-        )
-
-        M_shear = np.array(
-            [
-                [1, 0, 0],
-                [-shearing, 1, 0],
-                [0, 0, 1],
-            ]
-        )
+        M_t_a = translation_matrix(-cx, -cy)
+        M_t_b = translation_matrix(cx, cy)
+        M_shear = shearing_matrix(-shearing)
         M = np.eye(3)
         M = M_t_a @ M
         M = M_shear @ M
@@ -1169,7 +1157,7 @@ class Unused:
             )
 
         # Warp image
-        img_ = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))
+        img_ = apply_matrix(img, M)
 
         # Calculate resulting lines
         for i, theta in enumerate(thetas):
@@ -1185,9 +1173,6 @@ class Unused:
             )
         show_imgs(img, img_)
         exit()
-
-
-# Unused.check_shearing_angles_calculation()
 
 
 class CV:
@@ -1673,7 +1658,7 @@ class CV:
         cy: int,
         cx: int,
         lines: list[tuple[float, float]],
-        show: bool = False
+        show: bool = False,
     ):
 
         def theta_change_shear_y(theta, shear_y):
@@ -1694,26 +1679,6 @@ class CV:
             theta_ = np.arctan(slope_)  # convert slope to angle
             return theta_
 
-        def rotation_matrix(rot):
-            M_rot = np.array(
-                [
-                    [np.cos(rot), np.sin(rot), 0],
-                    [-np.sin(rot), np.cos(rot), 0],
-                    [0, 0, 1],
-                ]
-            )
-            return M_rot
-
-        def shear_matrix(shear):
-            M_shear = np.array(
-                [
-                    [1, -shear, 0],
-                    [0, 1, 0],
-                    [0, 0, 1],
-                ]
-            )
-            return M_shear
-
         def visualize_matrix(M):
             nonlocal src_start
             global cy, cx, img
@@ -1723,7 +1688,7 @@ class CV:
                     res, (int(cy), int(cx)), t, thickness=2, color=(255, 255, 255)
                 )
 
-            res = cv2.warpPerspective(res, M, (img.shape[1], img.shape[0]))
+            res = apply_matrix(res, M, True)
 
             for t in dst:
                 draw_polar_line_through_point(
@@ -1746,20 +1711,8 @@ class CV:
 
             # -----------------------------
             # 1. Translate center to origin
-            M_trans_a = np.array(
-                [
-                    [1, 0, -cx],
-                    [0, 1, -cy],
-                    [0, 0, 1],
-                ]
-            )
-            M_trans_b = np.array(
-                [
-                    [1, 0, cx],
-                    [0, 1, cy],
-                    [0, 0, 1],
-                ]
-            )
+            M_trans_a = translation_matrix(-cx, -cy)
+            M_trans_b = translation_matrix(cx, cy)
 
             # update transformation matrix
             M = M_trans_a @ M
@@ -1768,14 +1721,15 @@ class CV:
             # 2. Align src vertival line with destination vertical line
             t_src = src[start_line]
             t_dst = dst[start_line]
-            rot_angle = t_src - t_dst
-            M_rot = rotation_matrix(rot_angle)
+            # rot_angle = t_src - t_dst
+            rot_angle = t_dst - t_src
+            M_rot = rotation_matrix(-rot_angle)
 
             # update transformation matrix
             M = M_rot @ M
 
             # update src points
-            src = src - rot_angle
+            src = src + rot_angle
 
             # draw
             if show:
@@ -1789,7 +1743,7 @@ class CV:
             # -----------------------------
             # 3. Vertical alignment
             rotation_alignment_angle = start_line * angle_step + angle_step / 2
-            M_rot_v = rotation_matrix(rotation_alignment_angle)
+            M_rot_v = rotation_matrix(-rotation_alignment_angle)
 
             # update transformation matrix
             M = M_rot_v @ M
@@ -1814,13 +1768,7 @@ class CV:
             t_dst = dst[horizontal_line_idx]
             shear_amount = t_dst - t_src
 
-            M_shear = np.array(
-                [
-                    [1, 0, 0],
-                    [shear_amount, 1, 0],
-                    [0, 0, 1],
-                ]
-            )
+            M_shear = shearing_matrix(shear_amount)
 
             # update transformation matrix
             M = M_shear @ M
@@ -1851,13 +1799,7 @@ class CV:
             scales = slopes_src / slopes_dst
             scale = np.mean(scales)
 
-            M_scale = np.array(
-                [
-                    [1, 0, 0],
-                    [0, scale, 0],
-                    [0, 0, 1],
-                ]
-            )
+            M_scale = scaling_matrix(y=scale)
 
             # update transformation matrix
             M = M_scale @ M
@@ -1876,7 +1818,7 @@ class CV:
 
             # -----------------------------
             # 6. Undo vertical alignment
-            M_rot_v_inv = rotation_matrix(-rotation_alignment_angle)
+            M_rot_v_inv = rotation_matrix(rotation_alignment_angle)
 
             # update transformation matrix
             M = M_rot_v_inv @ M
@@ -1907,10 +1849,347 @@ class CV:
 
         if show:
             global img
-            res = cv2.warpPerspective(img.copy(), M, (img.shape[1], img.shape[0]))
+            res = apply_matrix(img, M, True)
             show_imgs(img_undistort=res, block=False)
 
         return M
+
+    def get_radial_line_points(img: np.ndarray, cy: int, cx: int) -> list[float]:
+        thetas = np.arange(0, np.pi, np.pi / 10)
+        thetas += np.deg2rad(1)  # this ugly, but necessary, trust me.
+
+        # cv2.destroyAllWindows()
+
+        rays = []
+        for theta in thetas:
+            line_img = draw_polar_line_through_point(
+                np.zeros((img.shape[:2]), np.uint8), (cy, cx), theta, thickness=1
+            )
+            ys, xs = np.nonzero(line_img)
+
+            # find center point idx in line
+            breaking = False
+            # in case the line does not go directly through the center point,
+            # we look around the point to try and find it
+            sequence = [
+                (i // 2) * (1 if i % 2 == 0 else -1) for i in range(1, 10)
+            ]  # 0, 1, -1, 2, -2
+            for dy in sequence:
+                for dx in sequence:
+                    center_idx = np.where((ys == cy + dy) & (xs == cx + dx))
+                    if len(center_idx) == 0 or len(center_idx[0]) == 0:
+                        continue
+                    center_idx = center_idx[0][0]
+                    breaking = True
+                    break
+                if breaking:
+                    break
+
+            # first portion
+            ys_start = ys[:center_idx][::-1]
+            xs_start = xs[:center_idx][::-1]
+            ys_end = ys[center_idx:]
+            xs_end = xs[center_idx:]
+
+            if theta > np.pi / 2:
+                ys_start, ys_end = ys_end, ys_start
+                xs_start, xs_end = xs_end, xs_start
+
+            rays.append(img[ys_start, xs_start])
+            rays.append(img[ys_end, xs_end])
+        rays = rays[::2] + rays[1::2]
+        res = np.zeros((500, max(len(r) for r in rays), 3), np.uint8)
+        for i, ray in enumerate(rays):
+            for j, c in enumerate(ray):
+                res[i * 50 : (i + 1) * 50, j] = c
+        show_imgs(res, block=False)
+        # exit()
+
+    def view_along_lines(img: np.ndarray, cy: int, cx: int) -> list[np.ndarray]:
+        lines = []
+        angle_step = np.pi / 10
+        thetas = np.arange(0, np.pi, angle_step) + angle_step / 2
+        diag = int(np.ceil(np.sqrt(img.shape[0] ** 2 + img.shape[1] ** 2)))
+
+        search_distance = angle_step / 3
+
+        def get_position(cy, cx, dy, dx, step) -> tuple[int, int]:
+            y = cy + step * dy
+            x = cx + step * dx
+            return x, y
+
+        def get_edge_intersection(
+            cy: int,
+            cx: int,
+            theta: float,
+            height: int,
+            width: int,
+        ):
+            dy = -np.cos(theta)
+            dx = np.sin(theta)
+
+            t_values = []
+
+            if dy < 0:  # top edge
+                t_top = -cy / dy
+                t_values.append(t_top)
+            elif dy > 0:  # bottom edge
+                t_bottom = (height - 1 - cy) / dy
+                t_values.append(t_bottom)
+
+            if dx < 0:  # left edge
+                t_left = -cx / dx
+                t_values.append(t_left)
+            elif dx > 0:  # right edge
+                t_right = (width - 1 - cx) / dx
+                t_values.append(t_right)
+
+            # Find the smallest positive t
+            t_exit = min(t for t in t_values if t > 0)
+
+            # Compute the intersection point
+            x_exit = cx + t_exit * dx
+            y_exit = cy + t_exit * dy
+
+            return (int(y_exit), int(x_exit))
+
+        def get_slice(
+            img: np.ndarray,
+            cy: int,
+            cx: int,
+            theta_l: float,
+            theta_r: float,
+            diag: int,
+        ):
+            # Mask out slice
+            mask = cv2.ellipse(
+                img=np.zeros_like(img),
+                center=(cx, cy),
+                axes=(diag, diag),
+                angle=0,
+                startAngle=np.rad2deg(theta_l) - 90,
+                endAngle=np.rad2deg(theta_r) - 90,
+                color=(1, 1, 1),
+                thickness=-1,
+            )
+            slice = img * mask
+            # Align slice to be vertical
+            rot_angle = theta_l + (theta_r - theta_l) / 2
+            rot_angle *= -1
+            # This was intended to get the correct output size,
+            # but just shifting everything to the bottom also does the trick
+            # edge_l = get_edge_intersection(cy, cx, theta_l, *img.shape[:2])
+            # edge_r = get_edge_intersection(cy, cx, theta_r, *img.shape[:2])
+
+            M = np.eye(3)
+            M_trans_a = translation_matrix(-cx, -cy)
+            M = M_trans_a @ M
+            M_rot = rotation_matrix(rot_angle)
+            M = M_rot @ M
+
+            M_trans_b = translation_matrix(cx, img.shape[0])
+            M = M_trans_b @ M
+            slice = apply_matrix(slice, M)
+            return slice
+
+        def get_slice_values(slice):
+            nonzero_mask = slice != 0
+            sums = np.sum(slice * nonzero_mask, axis=1)
+            counts = np.sum(nonzero_mask, axis=1)
+            counts[counts == 0] = -1
+            mean_values = sums / counts
+            mean_values[counts == -1] = 0
+            return np.uint8(mean_values)
+
+        def find_edges(slices):
+            slices = [cv2.cvtColor(s, cv2.COLOR_BGR2HSV)[:, :, 1:] for s in slices]
+            kernel = np.array([-1, -1, -1, 0, 1, 1, 1], np.float32)
+            kernel /= np.abs(kernel).sum()
+            edges = [cv2.filter2D(s, cv2.CV_32F, kernel) for s in slices]
+            for i, e in enumerate(edges):
+                sat = e[:, :, 0]
+                sat = np.abs(sat)
+                sat /= sat.max()
+
+                val = e[:, :, 1]
+                val = np.abs(val)
+                val /= val.max()
+
+                edge = np.maximum(sat, val)
+                edges[i] = np.maximum(sat, val)
+
+            edges = [
+                np.transpose(
+                    np.kron(e * 255, np.ones((1, 50))).astype(np.uint8), (1, 0)
+                )
+                for e in edges
+            ]
+            return edges
+
+        slices_top = []
+        slices_bottom = []
+        for theta in thetas:
+            start_theta = theta - np.pi / 10
+            # Top slices
+            slice = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=start_theta,
+                theta_r=theta,
+                diag=diag,
+            )
+            slice_values = get_slice_values(slice)  # y, 3
+            slice_values = np.expand_dims(slice_values, 1)  # y, 1, 3
+            slices_top.append(slice_values)
+            # Bottom slice
+            slice = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=start_theta + np.pi,
+                theta_r=theta + np.pi,
+                diag=diag,
+            )
+            slice_values = get_slice_values(slice)
+            slice_values = np.expand_dims(slice_values, 1)
+            slices_bottom.append(slice_values)
+            continue
+        slices = np.concatenate(slices_top + slices_bottom, axis=1)
+
+        # Convert slice colors
+        slices_lab = cv2.cvtColor(slices, cv2.COLOR_BGR2LAB)
+        slice_a = slices_lab[:, :, 1]
+        slice_a = np.int16(slice_a)
+        slice_a -= 128
+        slice_a = np.abs(slice_a)
+        slice_a = np.uint8(slice_a)
+        slice_a *= 2
+
+
+        # Find edges
+        kernel = np.array([-1, -1, 1, 1], np.float32)
+        kernel /= np.abs(kernel).sum()
+        edges = cv2.filter2D(slice_a, cv2.CV_32F, kernel)
+        edges /= np.abs(edges).max()
+        edges += 1
+        edges /= 2
+        edges *= 255
+        print(edges.min(), edges.max())
+        edges = np.uint8(edges)
+        edges = np.expand_dims(edges, -1)
+
+        transform = lambda img: np.transpose(
+            np.kron(
+                img if len(img.shape) == 3 else np.expand_dims(img, -1),
+                np.ones((1, 20, 1), np.uint8),
+            ),
+            (1, 0, 2),
+        )
+
+        print(transform(slices).shape)
+        print(transform(slice_a).shape)
+        print(transform(edges).shape)
+
+        show_imgs(transform(slices), transform(slice_a), transform(edges))
+        # exit()
+        """
+        for i, theta in enumerate(thetas):
+            slice_upper = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=theta - search_distance,
+                theta_r=theta + search_distance,
+                diag=diag,
+            )
+            slice_lower = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=theta - search_distance + np.pi,
+                theta_r=theta + search_distance + np.pi,
+                diag=diag,
+            )
+            slice_upper_left, slice_upper_right = slice_values(
+                slice_upper, cx
+            )  # y, 1, 3
+            slice_lower_left, slice_lower_right = slice_values(
+                slice_lower, cx
+            )  # y, 1, 3
+
+            diff = len(slice_upper_left) - len(slice_upper_right)
+            append = np.zeros((abs(diff), 1, 3), np.uint8)
+            if diff < 0:
+                slice_lower_left = np.concatenate([append, slice_lower_left], axis=0)
+                slice_upper_left = np.concatenate([append, slice_upper_left], axis=0)
+            elif diff > 0:
+                slice_lower_right = np.concatenate([append, slice_lower_right], axis=0)
+                slice_upper_right = np.concatenate([append, slice_upper_right], axis=0)
+
+            slices = np.concatenate(
+                [
+                    slice_upper_left,
+                    slice_upper_right,
+                    slice_lower_left,
+                    slice_lower_right,
+                ],
+                axis=1,
+            )
+
+            edges = find_edges(
+                [
+                    slice_upper_left,
+                    slice_upper_right,
+                    slice_lower_left,
+                    slice_lower_right,
+                ]
+            )
+
+            show_imgs(*edges)
+            continue
+            colors = np.concatenate(
+                [
+                    s[:, :, c]
+                    for s in [
+                        slice_upper_left,
+                        slice_upper_right,
+                        slice_lower_left,
+                        slice_lower_right,
+                    ]
+                    for c in range(3)
+                ],
+                axis=1,
+            )
+            colors = np.kron(colors, np.ones((1, 25))).astype(np.uint8)
+            show_imgs(colors=np.transpose(colors, (1, 0)), block=False)
+
+            slices = np.uint8(slices)
+
+            slices = cv2.blur(slices, (3, 1))
+
+            show = np.kron(slices, np.ones((1, 50, 1))).astype(np.uint8)
+            show_imgs(slices=np.transpose(show, (1, 0, 2)), block=False)
+
+            edge_kernel = np.expand_dims(
+                np.array([-1, -1, -1, 0, 0, 1, 1, 1], np.float32), -1
+            )
+            edge_kernel /= np.abs(edge_kernel).sum()
+            edges = cv2.filter2D(
+                cv2.cvtColor(slices, cv2.COLOR_BGR2GRAY), cv2.CV_32F, edge_kernel
+            )
+            edges -= edges.min()
+            edges /= edges.max()
+            edges = np.uint8(edges * 255)
+
+            edges = np.kron(edges, np.ones((1, 50)))
+            edges = np.uint8(edges)
+
+            show_imgs(np.transpose(edges, (1, 0)))
+        """
+
+        # show_imgs(img)
+
 
 def extract_center(img: np.ndarray):
     edges = CV.edge_detect(img)
@@ -1933,34 +2212,35 @@ if __name__ == "__main__":
         # Load Image
         img_full = Utils.load_img(f)
 
+        img = img_full
         img = Utils.downsample_img(img_full)
 
         start = time()
         show_imgs(input=img, block=False)
         # Detect Edges
-        edges = CV.edge_detect(img, show=True)
+        edges = CV.edge_detect(img, show=False)
         # Skeletonize edges
-        skeleton = CV.skeleton(edges, show=True)
+        skeleton = CV.skeleton(edges, show=False)
         # Extract lines
         lines = CV.extract_lines(
             skeleton,
             # rho=0.5,
             # theta=np.pi / 180 / 10,
-            threshold=75,
-            show=True,
+            threshold=25,
+            show=False,
         )
 
         # Bin lines by angle
         lines_binned = CV.bin_lines_by_angle(lines)
         # Find Board Center
-        cy, cx = CV.get_center_point(img.shape, lines_binned, show=True)
+        cy, cx = CV.get_center_point(img.shape, lines_binned, show=False)
         # Filter Lines by Center Distance
         lines_filtered = CV.filter_lines_by_center_dist(
             lines, cy, cx
         )  # p1, p2, length (normalized), center distance [px], rho, theta
 
         thetas = CV.get_rough_line_angles(
-            img.shape[:2], lines_filtered, cy, cx, show=True
+            img.shape[:2], lines_filtered, cy, cx, show=False
         )
 
         # Align lines by filtered edges
@@ -1970,9 +2250,12 @@ if __name__ == "__main__":
 
         M_undistort = CV.undistort_by_lines(cy, cx, lines, show=False)
 
-        # TODO: correct output size
-        img_undistort = cv2.warpPerspective(img.copy(), M_undistort, (img.shape[1], img.shape[0]))
-        show_imgs(img, img_undistort)
+        img_undistort = apply_matrix(img, M_undistort, keep_in_frame=False)
+        cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
+        show_imgs(img_undistort=img_undistort, block=False)
+
+        # CV.get_radial_line_points(img_undistort, int(cy), int(cx))
+        CV.view_along_lines(img_undistort, int(cy_undistort), int(cx_undistort))
 
         show_imgs()
         continue
