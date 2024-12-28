@@ -2848,12 +2848,15 @@ class CV:
 
         # TODO: correct radii
         print("TODO: CV.structure_orientation_candidates: Get board radii")
-        r_triple_inner = 40
-        r_triple_outer = 80
-        r_double_inner = 120
+        r_triple_inner = 170
+        r_triple_outer = 190
+        r_double_inner = 480
 
         src = []
         dst = []
+        if show:
+            img = img_undistort.copy()
+
         for i, angle_positions in enumerate(orientation_point_candidates):
             theta = np.pi / 20 + i * np.pi / 10
             for r, pos in angle_positions:
@@ -2883,26 +2886,43 @@ class CV:
                         c = (0, 255, 0)
                     else:
                         c = (250, 250, 250)
+                    cv2.circle(img, (int(src_x), int(src_y)), 5, c, thickness=2)
                     cv2.circle(
-                        img_undistort, (int(src_x), int(src_y)), 5, c, thickness=2
-                    )
-                    cv2.circle(
-                        img_undistort,
+                        img,
                         (int(dst_x), int(dst_y)),
                         5,
                         [int(i * 0.75) for i in c],
                         thickness=2,
                     )
                     cv2.line(
-                        img_undistort,
+                        img,
                         (int(src_x), int(src_y)),
                         (int(dst_x), int(dst_y)),
                         (255, 0, 0),
                     )
         if show:
-            cv2.circle(img_undistort, (cx, cy), int(double_threshold), (127, 127, 127))
-            show_imgs(projection_mapping=img_undistort, block=False)
-        return src, dst
+            cv2.circle(img, (cx, cy), int(double_threshold), (127, 127, 127))
+            show_imgs(projection_mapping=img, block=False)
+        return src, dst  # (x, y), (x, y)
+
+    def get_alignment_matrix(
+        src_pts: list[tuple[float, float]], dst_pts: list[tuple[float, float]]
+    ) -> np.ndarray:
+        # In case we still have some outliers, we randomly sample 75% of the src and dst points
+        # and find a homography between these point sets. In the end, we take the mean of all homographies
+        n_tries = 16
+        ransac_percent = 0.75
+        Ms = []
+        src_pts = np.float32(src_pts)
+        dst_pts = np.float32(dst_pts)
+        for i in range(n_tries):
+            try_indices = np.random.permutation(len(src_pts))[: int(0.7 * len(src_pts))]
+            try_src = src_pts[try_indices]
+            try_dst = dst_pts[try_indices]
+            M, _ = cv2.findHomography(try_src, try_dst, method=cv2.RANSAC)
+            Ms.append(M)
+        M = np.median(Ms, axis=0)
+        return M
 
 
 def extract_center(img: np.ndarray):
@@ -2981,8 +3001,24 @@ if __name__ == "__main__":
         )
 
         src_pts, dst_pts = CV.structure_orientation_candidates(
-            orientation_point_candidates, int(cy_undistort), int(cx_undistort), show=True
+            orientation_point_candidates,
+            int(cy_undistort),
+            int(cx_undistort),
+            show=True,
         )
+
+        M_align = CV.get_alignment_matrix(src_pts, dst_pts)
+
+        # Combine all matrices
+        scale = img.shape[0] / img_full.shape[0]
+
+        M_full = np.eye(3)
+        M_full = scaling_matrix(scale) @ M_full  # downscale to calculation size
+        M_full = M_undistort @ M_full  # undistort
+        M_full = M_align @ M_full  # align to correct scale and orientation
+
+        res = apply_matrix(img_full, M_full, adapt_frame=True)
+        show_imgs(aligned=res, block=False)
 
         show_imgs()
         continue
