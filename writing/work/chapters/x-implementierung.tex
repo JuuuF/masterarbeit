@@ -1,0 +1,70 @@
+\section{Implementierung}
+
+% -------------------------------------------------------------------------------------------------
+% DATENGENERIERUNG
+\subsection{Datengenerierung}
+
+Paper-Daten
+Echte Daten
+Blender
+Degrees-of-Freedom-Metrik
+
+% -------------------------------------------------------------------------------------------------
+% DARTSCHEIBE
+
+\subsection{Dartscheiben-Alignment}
+
+- Paper: CNN für Orientierungspunkte + Dartpfeile
+- Problem: Wenig Orientierungspunkte -> Verdeckung = unbrauchbar
+- Lösungsvorschlag laut Paper: Mehr Orientierungspunkte fitten
+- Lösungsvorschlag laut Justin: Computer Vision
+- Dartscheiben sehr markantes Aussehen -> gut für CV
+- Nicht alle Probleme müssen mit KI gelöst werden; Blackbox, deren Grenzen nicht klar definierbar sind
+- Umsetzung komplexer als antizipiert, aber robuste Lösung gefunden
+
+\subsubsection{Vorverarbeitung}
+Bild laden + skalieren
+
+\subsubsection{Kantenerkennung}
+Kanten erkennen + Skeletonization
+
+\subsubsection{Linienerkennung}
+HoughLines
+
+\subsubsection{Mittelpunkt-Extraktion}
+Linien binnen + Überlagern + Mittelpunkt extrahieren
+
+\subsubsection{Linienfilterung}
+Linien nach Distanz zu Mittelpunkt filtern
+
+\subsubsection{Feldlinien-Berechnung}
+Linien finden + Linien an Punkten ausrichten
+
+\subsubsection{Mittelpunkt-Verfeinerung}
+Neue Linien -> besserer Mittelpunkt
+
+\subsubsection{Feldlinien-Winkelentzerrung}
+Bekannte Winkel -> Ausrichten (viel Mathe)
+
+\subsubsection{Orientierungspunkte identifizieren}
+Logpolar + Corner Detection + Surroundings + SSIM
+
+\subsubsection{Einordnen der Orientierungspunkte}
+Distanzen etc.
+
+\subsubsection{Homographiefindung durch Orientierungspunkte}
+OpenCV, aber mit eigemen RANSAC-Ansatz
+
+\subsubsection{Undistortion + Alignment}
+Originalbild mit Matrizen entzerren + Croppen
+
+% -------------------------------------------------------------------------------------------------
+% DARTPFEILE
+
+\subsection{Dartpfeil-Erkennung}
+
+TODO
+
+Vortrainiertes CNN-Backbone
+Erkennung der Dartpfeil-Spitzen
+Klassifizierung der Dartpfeile in Felder?
