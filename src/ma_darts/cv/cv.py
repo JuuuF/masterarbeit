@@ -13,7 +13,7 @@ from ma_darts.cv.utils import (
 )
 
 img_paths = [
-    # "/home/justin/Documents/uni/Masterarbeit/data/darts_references/ricks/ph_cam1/images/train/2024-09-14-14-10-26_S10_7_14.jpg",
+    "dump/thomas.png",
     "data/darts_references/jess/001_0-0-1.jpg",
     "data/darts_references/jess/018_1-DB-DB.jpg",
     "data/darts_references/jess/022_2-2-18.jpg",
@@ -34,19 +34,21 @@ img_paths = [
     # "dump/test/y_45.png",
     # "dump/test/y_22_5.png",
     "dump/test/0001.jpg",
-    "dump/test/0002.jpg",
-    "dump/test/0003.jpg",
-    "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
+    # "dump/test/0002.jpg",
+    # "dump/test/0003.jpg",
+    # "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
     "dump/test/test_img.png",
-    # "dump/test/test.png",
+    "dump/test/test.png",
     # "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
 ]
 
 
 class Utils:
 
-    def load_img(filepath: str) -> np.ndarray:
+    def load_img(filepath: str, show: bool = False) -> np.ndarray:
         img = cv2.imread(filepath)
+        if show:
+            show_imgs(input=img, block=False)
         return img
 
     def downsample_img(img: np.ndarray) -> np.ndarray:
@@ -1174,6 +1176,515 @@ class Unused:
         show_imgs(img, img_)
         exit()
 
+    def view_along_lines(img: np.ndarray, cy: int, cx: int) -> list[np.ndarray]:
+        lines = []
+        angle_step = np.pi / 10
+        thetas = np.arange(0, np.pi, angle_step) + angle_step / 2
+        diag = int(np.ceil(np.sqrt(img.shape[0] ** 2 + img.shape[1] ** 2)))
+
+        search_distance = angle_step / 3
+
+        def get_position(cy, cx, dy, dx, step) -> tuple[int, int]:
+            y = cy + step * dy
+            x = cx + step * dx
+            return x, y
+
+        def get_edge_intersection(
+            cy: int,
+            cx: int,
+            theta: float,
+            height: int,
+            width: int,
+        ):
+            dy = -np.cos(theta)
+            dx = np.sin(theta)
+
+            t_values = []
+
+            if dy < 0:  # top edge
+                t_top = -cy / dy
+                t_values.append(t_top)
+            elif dy > 0:  # bottom edge
+                t_bottom = (height - 1 - cy) / dy
+                t_values.append(t_bottom)
+
+            if dx < 0:  # left edge
+                t_left = -cx / dx
+                t_values.append(t_left)
+            elif dx > 0:  # right edge
+                t_right = (width - 1 - cx) / dx
+                t_values.append(t_right)
+
+            # Find the smallest positive t
+            t_exit = min(t for t in t_values if t > 0)
+
+            # Compute the intersection point
+            x_exit = cx + t_exit * dx
+            y_exit = cy + t_exit * dy
+
+            return (int(y_exit), int(x_exit))
+
+        def get_slice(
+            img: np.ndarray,
+            cy: int,
+            cx: int,
+            theta_l: float,
+            theta_r: float,
+            diag: int,
+        ):
+            # Mask out slice
+            mask = cv2.ellipse(
+                img=np.zeros_like(img),
+                center=(cx, cy),
+                axes=(diag, diag),
+                angle=0,
+                startAngle=np.rad2deg(theta_l) - 90,
+                endAngle=np.rad2deg(theta_r) - 90,
+                color=(1, 1, 1),
+                thickness=-1,
+            )
+            slice = img * mask
+            # Align slice to be vertical
+            rot_angle = theta_l + (theta_r - theta_l) / 2
+            rot_angle *= -1
+            # This was intended to get the correct output size,
+            # but just shifting everything to the bottom also does the trick
+            # edge_l = get_edge_intersection(cy, cx, theta_l, *img.shape[:2])
+            # edge_r = get_edge_intersection(cy, cx, theta_r, *img.shape[:2])
+
+            M = np.eye(3)
+            M_trans_a = translation_matrix(-cx, -cy)
+            M = M_trans_a @ M
+            M_rot = rotation_matrix(rot_angle)
+            M = M_rot @ M
+
+            M_trans_b = translation_matrix(cx, img.shape[0])
+            M = M_trans_b @ M
+            slice = apply_matrix(slice, M)
+            return slice
+
+        def get_slice_values(slice):
+            nonzero_mask = slice != 0
+            sums = np.sum(slice * nonzero_mask, axis=1)
+            counts = np.sum(nonzero_mask, axis=1)
+            counts[counts == 0] = -1
+            mean_values = sums / counts
+            mean_values[counts == -1] = 0
+            return np.uint8(mean_values)
+
+        def find_edges(slices):
+            slices = [cv2.cvtColor(s, cv2.COLOR_BGR2HSV)[:, :, 1:] for s in slices]
+            kernel = np.array([-1, -1, -1, 0, 1, 1, 1], np.float32)
+            kernel /= np.abs(kernel).sum()
+            edges = [cv2.filter2D(s, cv2.CV_32F, kernel) for s in slices]
+            for i, e in enumerate(edges):
+                sat = e[:, :, 0]
+                sat = np.abs(sat)
+                sat /= sat.max()
+
+                val = e[:, :, 1]
+                val = np.abs(val)
+                val /= val.max()
+
+                edge = np.maximum(sat, val)
+                edges[i] = np.maximum(sat, val)
+
+            edges = [
+                np.transpose(
+                    np.kron(e * 255, np.ones((1, 50))).astype(np.uint8), (1, 0)
+                )
+                for e in edges
+            ]
+            return edges
+
+        transform = lambda img: np.transpose(
+            np.kron(
+                img if len(img.shape) == 3 else np.expand_dims(img, -1),
+                np.ones((1, 1, 1), np.uint8),
+            ),
+            (1, 0, 2),
+        )
+
+        max_r = min(img.shape[:2]) // 2
+        M = max_r / np.log(img.shape[1])
+        logpolar = cv2.warpPolar(
+            img,
+            dsize=(int(diag), 1000),
+            center=(int(cx), int(cy)),
+            maxRadius=int(diag),
+            flags=cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS,
+        )
+
+        start_y = 1000 / 20
+        start_y /= 2
+        for i in range(20):
+            y = int(start_y + i * 1000 / 20)
+            cv2.line(logpolar, (0, y), (logpolar.shape[1], y), color=(255, 255, 255))
+
+        lab = cv2.cvtColor(logpolar, cv2.COLOR_BGR2LAB)
+        start_y = 1000 / 20
+        start_y /= 2
+        for i in range(20):
+            y = int(start_y + i * 1000 / 20)
+            cv2.line(lab, (0, y), (lab.shape[1], y), color=(255, 255, 255))
+        l = lab[:, :, 0]
+        a = np.abs(np.int32(lab[:, :, 1]) - 128).astype(np.uint8)
+        b = lab[:, :, 2]
+
+        hsv = cv2.cvtColor(
+            cv2.convertScaleAbs(logpolar, alpha=1.5, beta=2.0), cv2.COLOR_BGR2HSV
+        )
+        # hsv = cv2.threshold(hsv, 220, 255, cv2.THRESH_BINARY)[1]
+        s = hsv[:, :, 2]
+
+        show_imgs(logpolar, a, s, block=False)
+        return
+
+        dt = np.pi / 10
+        n_slices = 20 * 10
+        start_theta = -np.pi / 20
+
+        slices = []
+        dt = 2 * np.pi / n_slices
+        for s in range(n_slices):
+            theta_start = start_theta + s * dt
+            theta_end = start_theta + (s + 1) * dt
+            slice = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=theta_start,
+                theta_r=theta_end,
+                diag=diag,
+            )
+            slice_values = get_slice_values(slice)  # y, 3
+            slice_values = np.expand_dims(slice_values, 1)  # y, 1, 3
+            slices.append(slice_values)
+            # show_imgs(slice)
+        slices = np.concatenate(slices, axis=1)
+        show_imgs(transform(slices), block=False)
+        return
+
+        slices_top = []
+        slices_bottom = []
+        for theta in thetas:
+            start_theta = theta - dt
+
+            theta -= dt / 3
+            start_theta += dt / 3
+            # print(start_theta, theta)
+            # Top slices
+            slice = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=start_theta,
+                theta_r=theta,
+                diag=diag,
+            )
+            slice_values = get_slice_values(slice)  # y, 3
+            slice_values = np.expand_dims(slice_values, 1)  # y, 1, 3
+            slices_top.append(slice_values)
+            # Bottom slice
+            slice = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=start_theta + np.pi,
+                theta_r=theta + np.pi,
+                diag=diag,
+            )
+            slice_values = get_slice_values(slice)
+            slice_values = np.expand_dims(slice_values, 1)
+            slices_bottom.append(slice_values)
+            continue
+        slices = np.concatenate(slices_top + slices_bottom, axis=1)
+
+        # Convert slice colors
+        slices_lab = cv2.cvtColor(slices, cv2.COLOR_BGR2LAB)
+        slice_a = slices_lab[:, :, 1]
+        slice_a = np.int16(slice_a)
+        slice_a -= 128
+        slice_a = np.abs(slice_a)
+        slice_a = np.uint8(slice_a)
+        slice_a *= 2
+
+        # Find edges
+        kernel = np.array([-1, -1, 1, 1], np.float32)
+        kernel /= np.abs(kernel).sum()
+        edges = cv2.filter2D(slice_a, cv2.CV_32F, kernel)
+        edges /= np.abs(edges).max()
+        edges += 1
+        edges /= 2
+        edges *= 255
+        print(edges.min(), edges.max())
+        edges = np.uint8(edges)
+        edges = np.expand_dims(edges, -1)
+
+        cv2.destroyAllWindows()
+        show_imgs(transform(slices))
+        return
+        scale = 0.01
+        p = 0
+        while True:
+            p += 1
+            p %= 360
+            print(p)
+            phase = np.deg2rad(p)
+
+            x = np.arange(0, 2 * np.pi, np.pi / 10)
+            stretches = (scale / 2) * (np.sin(x + phase) + 1) + 1
+
+            stretched_image = []
+            for c, s in enumerate(stretches):
+                col = edges[:, c]
+                stretched_col = cv2.resize(
+                    col,
+                    (1, int(len(col) * s)),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                stretched_image.append(stretched_col)
+            largest_strip = max(len(s) for s in stretched_image)
+            stretched_image = cv2.hconcat(
+                [
+                    np.pad(strip, [[largest_strip - strip.shape[0], 0], [0, 0]])
+                    for strip in stretched_image
+                ]
+            )
+
+            show_imgs(
+                edges=transform(edges),
+                stretched_edges=transform(stretched_image),
+                block=True,
+            )
+        # show_imgs(transform(slices), transform(slice_a), transform(edges), transform(stretched_image))
+        # exit()
+        """
+        for i, theta in enumerate(thetas):
+            slice_upper = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=theta - search_distance,
+                theta_r=theta + search_distance,
+                diag=diag,
+            )
+            slice_lower = get_slice(
+                img,
+                cy,
+                cx,
+                theta_l=theta - search_distance + np.pi,
+                theta_r=theta + search_distance + np.pi,
+                diag=diag,
+            )
+            slice_upper_left, slice_upper_right = slice_values(
+                slice_upper, cx
+            )  # y, 1, 3
+            slice_lower_left, slice_lower_right = slice_values(
+                slice_lower, cx
+            )  # y, 1, 3
+
+            diff = len(slice_upper_left) - len(slice_upper_right)
+            append = np.zeros((abs(diff), 1, 3), np.uint8)
+            if diff < 0:
+                slice_lower_left = np.concatenate([append, slice_lower_left], axis=0)
+                slice_upper_left = np.concatenate([append, slice_upper_left], axis=0)
+            elif diff > 0:
+                slice_lower_right = np.concatenate([append, slice_lower_right], axis=0)
+                slice_upper_right = np.concatenate([append, slice_upper_right], axis=0)
+
+            slices = np.concatenate(
+                [
+                    slice_upper_left,
+                    slice_upper_right,
+                    slice_lower_left,
+                    slice_lower_right,
+                ],
+                axis=1,
+            )
+
+            edges = find_edges(
+                [
+                    slice_upper_left,
+                    slice_upper_right,
+                    slice_lower_left,
+                    slice_lower_right,
+                ]
+            )
+
+            show_imgs(*edges)
+            continue
+            colors = np.concatenate(
+                [
+                    s[:, :, c]
+                    for s in [
+                        slice_upper_left,
+                        slice_upper_right,
+                        slice_lower_left,
+                        slice_lower_right,
+                    ]
+                    for c in range(3)
+                ],
+                axis=1,
+            )
+            colors = np.kron(colors, np.ones((1, 25))).astype(np.uint8)
+            show_imgs(colors=np.transpose(colors, (1, 0)), block=False)
+
+            slices = np.uint8(slices)
+
+            slices = cv2.blur(slices, (3, 1))
+
+            show = np.kron(slices, np.ones((1, 50, 1))).astype(np.uint8)
+            show_imgs(slices=np.transpose(show, (1, 0, 2)), block=False)
+
+            edge_kernel = np.expand_dims(
+                np.array([-1, -1, -1, 0, 0, 1, 1, 1], np.float32), -1
+            )
+            edge_kernel /= np.abs(edge_kernel).sum()
+            edges = cv2.filter2D(
+                cv2.cvtColor(slices, cv2.COLOR_BGR2GRAY), cv2.CV_32F, edge_kernel
+            )
+            edges -= edges.min()
+            edges /= edges.max()
+            edges = np.uint8(edges * 255)
+
+            edges = np.kron(edges, np.ones((1, 50)))
+            edges = np.uint8(edges)
+
+            show_imgs(np.transpose(edges, (1, 0)))
+        """
+
+        # show_imgs(img)
+
+        # ------------------------
+        # Color Filter
+
+        def apply_channel_filter(img, kernel):
+            filtered = np.zeros(img.shape[:2], np.float32)
+            for c in range(img.shape[-1]):
+                img_c = img[:, :, c]
+                res = cv2.filter2D(img_c, cv2.CV_32F, kernel[c])
+                # res = np.expand_dims(res, -1)
+                filtered += res
+            # filtered = np.abs(filtered)
+            filtered[filtered < 0] = 0
+
+            filtered /= filtered.max()
+            # filtered = Utils.non_maximum_suppression(filtered)
+            # filtered = np.concatenate(filtered, axis=-1)
+            # show_imgs(img=img, filtered=filtered)
+            filtered = np.uint8(255 * filtered)
+            return filtered
+
+        def get_split_kernel(top_left, top_right, bottom_left, bottom_right, size=1):
+            if type(size) == int:
+                size = (size, size)
+
+            kernel = []
+            for i in range(3):
+                kernel_c = np.array(
+                    [
+                        [(top_left[i] - 128) / 255, (top_right[i] - 128) / 255],
+                        [(bottom_left[i] - 128) / 255, (bottom_right[i] - 128) / 255],
+                    ],
+                    np.float32,
+                )
+                kernel_c = np.kron(kernel_c, np.ones((size[0], size[1]), np.float32))
+                kernel_c /= np.abs(kernel_c).sum()
+                kernel.append(kernel_c)
+            return kernel
+
+        colors = {
+            "black": np.array([25, 25, 25]),
+            "white": np.array([180, 220, 245]),
+            "red": np.array([30, 45, 250]),
+            "green": np.array([50, 145, 55]),
+        }
+        ksize = (7, 2)
+        kernel_a = get_split_kernel(
+            top_left=colors["white"],
+            top_right=colors["white"],  # green
+            bottom_left=colors["black"],
+            bottom_right=colors["black"],  # red
+            size=ksize,
+        )
+        kernel_b = get_split_kernel(
+            top_left=colors["black"],
+            top_right=colors["black"],  # red
+            bottom_left=colors["white"],
+            bottom_right=colors["white"],  # green
+            size=ksize,
+        )
+        kernel_c = get_split_kernel(
+            top_left=colors["red"],
+            top_right=colors["black"],
+            bottom_left=colors["green"],
+            bottom_right=colors["white"],
+            size=ksize,
+        )
+        kernel_d = get_split_kernel(
+            top_left=colors["green"],
+            top_right=colors["white"],
+            bottom_left=colors["red"],
+            bottom_right=colors["black"],
+            size=ksize,
+        )
+        res_a = apply_channel_filter(logpolar, kernel_a)
+        res_b = apply_channel_filter(logpolar, kernel_b)
+        # res_c = apply_channel_filter(logpolar, kernel_c)
+        # res_d = apply_channel_filter(logpolar, kernel_d)
+        res = np.int32(res_a) + np.int32(res_b)  # + np.int32(res_c) + np.int32(res_d)
+        res = np.float32(res) / res.max()
+        res = np.uint8(res * 255)
+        show_imgs(
+            logpolar=logpolar,
+            res_a=res_a,
+            res_b=res_b,
+            # res_c=res_c,
+            # res_d=res_d,
+            res=res,
+            block=False,
+        )
+
+        # lines_img = np.zeros()
+        return
+
+        col_median = np.median(logpolar, axis=0).astype(np.uint8)
+
+        col_mean = np.mean(logpolar, axis=0).astype(np.uint8)
+
+        show_imgs(
+            logpolar,
+            np.kron(np.expand_dims(col_mean, 0), np.ones((50, 1, 1), np.uint8)),
+        )
+        exit()
+
+        running_mean = np.float32(col_mean[0])
+        mean_len = 2
+        res = []
+        for x in range(1, col_mean.shape[0] // 20):
+            col = col_mean[x]
+            print("col =", col)
+            print("running_mean =", np.uint8(running_mean))
+            diff = np.abs(running_mean - col)
+            if diff.max() > 60:
+                print("\t----\t----", np.uint8(running_mean), "\n")
+                res.append(running_mean)
+                running_mean = col
+                mean_len = 2
+            print("diff =", np.uint8(diff))
+            running_mean = (mean_len - 1) / mean_len * running_mean + 1 / mean_len * col
+            print("factors:", (mean_len - 1), "/", mean_len, " ;", 1, "/", mean_len)
+            print("\t->", np.uint8(running_mean))
+            print()
+            mean_len += 1
+        res = np.vstack(res)
+        res = np.expand_dims(res, 0).astype(np.uint8)
+        show_imgs(
+            mean=col_mean, median=col_median, logpolar=logpolar, res=res, block=False
+        )
+        return
+
 
 class CV:
 
@@ -1680,20 +2191,33 @@ class CV:
             return theta_
 
         def visualize_matrix(M):
-            nonlocal src_start
+            nonlocal src_start, src
             global cy, cx, img
             res = img.copy()
             for t in src_start:
                 draw_polar_line_through_point(
-                    res, (int(cy), int(cx)), t, thickness=2, color=(255, 255, 255)
+                    res, (int(cy), int(cx)), t, thickness=3, color=(255, 255, 255)
                 )
 
-            res = apply_matrix(res, M, True)
+            res = apply_matrix(res, M)
 
             for t in dst:
                 draw_polar_line_through_point(
-                    res, (int(cy), int(cx)), t, color=(255, 0, 0)
+                    res, (int(cy), int(cx)), t, color=(255, 0, 0), thickness=2
                 )
+            for t in src:
+                draw_polar_line_through_point(
+                    res, (int(cy), int(cx)), t, color=(0, 0, 0), thickness=1
+                )
+            cv2.putText(
+                res,
+                "white=transformed initial thetas, blue='dst' thetas, black='src' thetas",
+                org=(0, 20),
+                fontFace=cv2.FONT_HERSHEY_PLAIN,
+                fontScale=1,
+                color=(255, 255, 255),
+                thickness=1,
+            )
             return res
 
         angle_step = np.pi / 10
@@ -1719,30 +2243,27 @@ class CV:
 
             # -----------------------------
             # 2. Align src vertival line with destination vertical line
+            # output: src[i] -> dst[i]
             t_src = src[start_line]
             t_dst = dst[start_line]
-            # rot_angle = t_src - t_dst
             rot_angle = t_dst - t_src
-            M_rot = rotation_matrix(-rot_angle)
+            M_rot = rotation_matrix(rot_angle)
 
             # update transformation matrix
             M = M_rot @ M
 
             # update src points
-            src = src + rot_angle
+            src += rot_angle
 
             # draw
             if show:
                 res = visualize_matrix(M_trans_b @ M)
-                for t in src:
-                    draw_polar_line_through_point(
-                        res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
-                    )
-                show_imgs(align_lines=res, block=False)
+                show_imgs(first_rotate_to_align_single_line=res, block=False)
 
             # -----------------------------
             # 3. Vertical alignment
-            rotation_alignment_angle = start_line * angle_step + angle_step / 2
+            # Goal: src[i] = dst[0] = 0
+            rotation_alignment_angle = angle_step / 2 + start_line * angle_step
             M_rot_v = rotation_matrix(-rotation_alignment_angle)
 
             # update transformation matrix
@@ -1755,14 +2276,13 @@ class CV:
             # draw
             if show:
                 res = visualize_matrix(M_trans_b @ M)
-                for t in src:
-                    draw_polar_line_through_point(
-                        res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
-                    )
-                show_imgs(vertical_alignment=res, block=False)
+                show_imgs(second_rotate_aligned_to_vertical=res, block=False)
 
             # -----------------------------
             # 4. Vertical shearing
+            # Goal:
+            #   - src[i] = 0
+            #   - src[i+5] = 90° = np.pi / 2
             horizontal_line_idx = (start_line + 5) % len(lines)
             t_src = src[horizontal_line_idx]
             t_dst = dst[horizontal_line_idx]
@@ -1780,14 +2300,11 @@ class CV:
             # draw
             if show:
                 res = visualize_matrix(M_trans_b @ M)
-                for t in src:
-                    draw_polar_line_through_point(
-                        res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
-                    )
-                show_imgs(vertical_shearing=res, block=False)
+                show_imgs(third_shear_to_fit_horizontal=res, block=False)
 
             # -----------------------------
             # 5. Vertical scaling
+            # Goal: align rest of lines as good as possible
 
             # convert angles to slopes
             slopes_src = np.tan(src)
@@ -1810,11 +2327,7 @@ class CV:
             # draw
             if show:
                 res = visualize_matrix(M_trans_b @ M)
-                for j, t in enumerate(src):
-                    draw_polar_line_through_point(
-                        res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
-                    )
-                show_imgs(vertical_scaling=res, block=False)
+                show_imgs(fourth_scale_to_fit_rest_of_lines=res, block=False)
 
             # -----------------------------
             # 6. Undo vertical alignment
@@ -1830,10 +2343,6 @@ class CV:
             # draw
             if show:
                 res = visualize_matrix(M_trans_b @ M)
-                for j, t in enumerate(src):
-                    draw_polar_line_through_point(
-                        res, (int(cy), int(cx)), t, thickness=2, color=(0, 0, 0)
-                    )
                 show_imgs(vertical_scaling=res, block=False)
 
             # -----------------------------
@@ -1905,290 +2414,495 @@ class CV:
         show_imgs(res, block=False)
         # exit()
 
-    def view_along_lines(img: np.ndarray, cy: int, cx: int) -> list[np.ndarray]:
-        lines = []
-        angle_step = np.pi / 10
-        thetas = np.arange(0, np.pi, angle_step) + angle_step / 2
-        diag = int(np.ceil(np.sqrt(img.shape[0] ** 2 + img.shape[1] ** 2)))
+    def find_orientation_points(
+        img: np.ndarray,
+        cy: int,
+        cx: int,
+        show: bool = False,
+    ) -> list[list[tuple[int, str]]]:
 
-        search_distance = angle_step / 3
-
-        def get_position(cy, cx, dy, dx, step) -> tuple[int, int]:
-            y = cy + step * dy
-            x = cx + step * dx
-            return x, y
-
-        def get_edge_intersection(
-            cy: int,
-            cx: int,
-            theta: float,
-            height: int,
-            width: int,
-        ):
-            dy = -np.cos(theta)
-            dx = np.sin(theta)
-
-            t_values = []
-
-            if dy < 0:  # top edge
-                t_top = -cy / dy
-                t_values.append(t_top)
-            elif dy > 0:  # bottom edge
-                t_bottom = (height - 1 - cy) / dy
-                t_values.append(t_bottom)
-
-            if dx < 0:  # left edge
-                t_left = -cx / dx
-                t_values.append(t_left)
-            elif dx > 0:  # right edge
-                t_right = (width - 1 - cx) / dx
-                t_values.append(t_right)
-
-            # Find the smallest positive t
-            t_exit = min(t for t in t_values if t > 0)
-
-            # Compute the intersection point
-            x_exit = cx + t_exit * dx
-            y_exit = cy + t_exit * dy
-
-            return (int(y_exit), int(x_exit))
-
-        def get_slice(
-            img: np.ndarray,
-            cy: int,
-            cx: int,
-            theta_l: float,
-            theta_r: float,
-            diag: int,
-        ):
-            # Mask out slice
-            mask = cv2.ellipse(
-                img=np.zeros_like(img),
-                center=(cx, cy),
-                axes=(diag, diag),
-                angle=0,
-                startAngle=np.rad2deg(theta_l) - 90,
-                endAngle=np.rad2deg(theta_r) - 90,
-                color=(1, 1, 1),
-                thickness=-1,
-            )
-            slice = img * mask
-            # Align slice to be vertical
-            rot_angle = theta_l + (theta_r - theta_l) / 2
-            rot_angle *= -1
-            # This was intended to get the correct output size,
-            # but just shifting everything to the bottom also does the trick
-            # edge_l = get_edge_intersection(cy, cx, theta_l, *img.shape[:2])
-            # edge_r = get_edge_intersection(cy, cx, theta_r, *img.shape[:2])
-
-            M = np.eye(3)
-            M_trans_a = translation_matrix(-cx, -cy)
-            M = M_trans_a @ M
-            M_rot = rotation_matrix(rot_angle)
-            M = M_rot @ M
-
-            M_trans_b = translation_matrix(cx, img.shape[0])
-            M = M_trans_b @ M
-            slice = apply_matrix(slice, M)
-            return slice
-
-        def get_slice_values(slice):
-            nonzero_mask = slice != 0
-            sums = np.sum(slice * nonzero_mask, axis=1)
-            counts = np.sum(nonzero_mask, axis=1)
-            counts[counts == 0] = -1
-            mean_values = sums / counts
-            mean_values[counts == -1] = 0
-            return np.uint8(mean_values)
-
-        def find_edges(slices):
-            slices = [cv2.cvtColor(s, cv2.COLOR_BGR2HSV)[:, :, 1:] for s in slices]
-            kernel = np.array([-1, -1, -1, 0, 1, 1, 1], np.float32)
-            kernel /= np.abs(kernel).sum()
-            edges = [cv2.filter2D(s, cv2.CV_32F, kernel) for s in slices]
-            for i, e in enumerate(edges):
-                sat = e[:, :, 0]
-                sat = np.abs(sat)
-                sat /= sat.max()
-
-                val = e[:, :, 1]
-                val = np.abs(val)
-                val /= val.max()
-
-                edge = np.maximum(sat, val)
-                edges[i] = np.maximum(sat, val)
-
-            edges = [
-                np.transpose(
-                    np.kron(e * 255, np.ones((1, 50))).astype(np.uint8), (1, 0)
-                )
-                for e in edges
-            ]
-            return edges
-
-        slices_top = []
-        slices_bottom = []
-        for theta in thetas:
-            start_theta = theta - np.pi / 10
-            # Top slices
-            slice = get_slice(
-                img,
-                cy,
-                cx,
-                theta_l=start_theta,
-                theta_r=theta,
-                diag=diag,
-            )
-            slice_values = get_slice_values(slice)  # y, 3
-            slice_values = np.expand_dims(slice_values, 1)  # y, 1, 3
-            slices_top.append(slice_values)
-            # Bottom slice
-            slice = get_slice(
-                img,
-                cy,
-                cx,
-                theta_l=start_theta + np.pi,
-                theta_r=theta + np.pi,
-                diag=diag,
-            )
-            slice_values = get_slice_values(slice)
-            slice_values = np.expand_dims(slice_values, 1)
-            slices_bottom.append(slice_values)
-            continue
-        slices = np.concatenate(slices_top + slices_bottom, axis=1)
-
-        # Convert slice colors
-        slices_lab = cv2.cvtColor(slices, cv2.COLOR_BGR2LAB)
-        slice_a = slices_lab[:, :, 1]
-        slice_a = np.int16(slice_a)
-        slice_a -= 128
-        slice_a = np.abs(slice_a)
-        slice_a = np.uint8(slice_a)
-        slice_a *= 2
-
-
-        # Find edges
-        kernel = np.array([-1, -1, 1, 1], np.float32)
-        kernel /= np.abs(kernel).sum()
-        edges = cv2.filter2D(slice_a, cv2.CV_32F, kernel)
-        edges /= np.abs(edges).max()
-        edges += 1
-        edges /= 2
-        edges *= 255
-        print(edges.min(), edges.max())
-        edges = np.uint8(edges)
-        edges = np.expand_dims(edges, -1)
-
-        transform = lambda img: np.transpose(
-            np.kron(
-                img if len(img.shape) == 3 else np.expand_dims(img, -1),
-                np.ones((1, 20, 1), np.uint8),
-            ),
-            (1, 0, 2),
+        # Convert image to logpolar representation
+        max_r = max(
+            Utils.point_point_dist((cy, cx), (0, 0)),
+            Utils.point_point_dist((cy, cx), (0, img.shape[1])),
+            Utils.point_point_dist((cy, cx), (img.shape[0], 0)),
+            Utils.point_point_dist((cy, cx), (img.shape[0], img.shape[1])),
         )
+        logpolar = cv2.warpPolar(
+            img,
+            dsize=(
+                int(max_r),
+                1000,
+            ),  # I use 1000 because this is enough resolution and is easy to calculate with
+            center=(int(cx), int(cy)),
+            maxRadius=int(max_r),
+            flags=cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS,
+        )
+        if show:
+            show_imgs(logpolar=logpolar, block=False)
 
-        print(transform(slices).shape)
-        print(transform(slice_a).shape)
-        print(transform(edges).shape)
-
-        show_imgs(transform(slices), transform(slice_a), transform(edges))
-        # exit()
-        """
-        for i, theta in enumerate(thetas):
-            slice_upper = get_slice(
+        # -----------------------------
+        # Find corners
+        def find_corners(img):
+            img = cv2.blur(img, ksize=(7, 7))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            corners = cv2.Sobel(
                 img,
-                cy,
-                cx,
-                theta_l=theta - search_distance,
-                theta_r=theta + search_distance,
-                diag=diag,
+                cv2.CV_32F,
+                dx=1,
+                dy=1,
+                ksize=7,
             )
-            slice_lower = get_slice(
-                img,
-                cy,
-                cx,
-                theta_l=theta - search_distance + np.pi,
-                theta_r=theta + search_distance + np.pi,
-                diag=diag,
-            )
-            slice_upper_left, slice_upper_right = slice_values(
-                slice_upper, cx
-            )  # y, 1, 3
-            slice_lower_left, slice_lower_right = slice_values(
-                slice_lower, cx
-            )  # y, 1, 3
+            corners = np.abs(corners)
+            corners /= corners.max()
+            corners = np.uint8(corners * 255)
+            # Threshold
+            corners = cv2.threshold(corners, 100, 255, cv2.THRESH_BINARY)[1]
 
-            diff = len(slice_upper_left) - len(slice_upper_right)
-            append = np.zeros((abs(diff), 1, 3), np.uint8)
-            if diff < 0:
-                slice_lower_left = np.concatenate([append, slice_lower_left], axis=0)
-                slice_upper_left = np.concatenate([append, slice_upper_left], axis=0)
-            elif diff > 0:
-                slice_lower_right = np.concatenate([append, slice_lower_right], axis=0)
-                slice_upper_right = np.concatenate([append, slice_upper_right], axis=0)
+            return corners
 
-            slices = np.concatenate(
-                [
-                    slice_upper_left,
-                    slice_upper_right,
-                    slice_lower_left,
-                    slice_lower_right,
-                ],
-                axis=1,
-            )
+        corners = find_corners(logpolar)  # (1000, x)
 
-            edges = find_edges(
-                [
-                    slice_upper_left,
-                    slice_upper_right,
-                    slice_lower_left,
-                    slice_lower_right,
+        # -----------------------------
+        # Find corners on intersection lines
+        corner_band_width = 6
+
+        line_ys = (
+            np.arange(0, corners.shape[0], corners.shape[0] // 20)
+            + corners.shape[0] // 40
+        )
+        corner_strips = [
+            corners[i - corner_band_width : i + corner_band_width] for i in line_ys
+        ]
+        corner_strip_values = [np.max(s, axis=0) for s in corner_strips]
+
+        # Find positions of corners on strips
+        corner_positions = []
+        for strip in corner_strip_values:
+            nonzeros = np.nonzero(strip)[0]
+            if len(nonzeros) == 0:
+                corner_positions.append([])
+                continue
+            diffs = np.diff(nonzeros)
+            breaks = np.where(diffs > 1)[0] + 1
+            groups = np.split(nonzeros, breaks)
+            centers = [round(np.mean(g)) for g in groups]
+            corner_positions.append(centers)
+
+        # Visualize corner strips
+        if show:
+            corners_ = corners.copy()
+            for i in line_ys:
+                corners_[i - corner_band_width : i + corner_band_width][
+                    corners_[i - corner_band_width : i + corner_band_width] == 0
+                ] = 60
+            show_imgs(corner_strips=corners_, block=False)
+
+        search_distance = 2
+        search_width = 8
+
+        # -----------------------------
+        # Get Colors
+        def sort_logpolar_into_strips(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+
+            # Slice logpolar aling fields
+            splits = np.arange(0, img.shape[0], img.shape[0] // 20) + img.shape[0] // 40
+            slices = np.split(img, splits)
+            white = slices[::2]
+            black = slices[1::2]
+
+            # Combine cut-off strip
+            white[0] = np.concatenate([white[-1], white[0]], axis=0)
+            white.pop(-1)
+
+            # Combine white and black strips to single images
+            white = np.vstack(white)
+            black = np.vstack(black)
+
+            return white, black
+
+        def get_colors(logpolar: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+            strip_w, strip_b = sort_logpolar_into_strips(logpolar)
+            white_colors = np.median(strip_w, axis=0).astype(np.uint8)
+            black_colors = np.median(strip_b, axis=0).astype(np.uint8)
+
+            # Skip bullseye
+            diff = np.abs(np.int16(white_colors) - black_colors).astype(np.uint8)
+            diff = cv2.convertScaleAbs(diff, alpha=2)
+            diff = cv2.threshold(diff, 127, 255, cv2.THRESH_BINARY)[1]
+            field_start = np.nonzero(diff)[0][0] if len(np.nonzero(diff)[0]) > 0 else 0
+
+            # Get white color
+            def extract_field_color(
+                colors: np.ndarray, field_start: int
+            ) -> tuple[np.ndarray, int]:
+                rough_jump = 10
+                color_different_threshold = 60
+                # Start off with a general color guess, based on a somewhat arbitrary area
+                general_color = (
+                    colors[field_start : field_start + rough_jump].mean(axis=0)
+                ).astype(np.int16)
+
+                # Look along the image
+                # until we see a color that differs enough from the general color
+                field_end = field_start + rough_jump
+                while (
+                    field_end < len(colors) - 1
+                    and np.abs(general_color - colors[field_end]).sum()
+                    < color_different_threshold
+                ):
+                    field_end += 1
+
+                # Calculate field color based on found area
+                field_color = np.median(colors[field_start:field_end], axis=0).astype(
+                    np.uint8
+                )
+                return field_color, field_end
+
+            white, field_end_w = extract_field_color(white_colors, field_start)
+            black, field_end_b = extract_field_color(black_colors, field_start)
+
+            return white, black
+
+        white, black = get_colors(logpolar)
+
+        # -----------------------------
+        # Check points for surrounding color
+        surrounding_width = 14
+        middle_deadspace = 2
+        color_threshold = 30
+        intrude = (surrounding_width - middle_deadspace) // 2
+        inner_ring_a = []
+        inner_ring_b = []
+        outer_ring_a = []
+        outer_ring_b = []
+        for i, points in enumerate(corner_positions):
+            y = 25 + 50 * i
+            for x in points:
+                surrounding = logpolar[
+                    y - surrounding_width : y + surrounding_width,
+                    x - surrounding_width : x + surrounding_width,
                 ]
+                # Find partial fields in surrounding area
+                top_left = surrounding[:intrude, :intrude]
+                top_right = surrounding[:intrude, -intrude:]
+                bottom_left = surrounding[-intrude:, :intrude]
+                bottom_right = surrounding[-intrude:, -intrude:]
+                # Extract mean colors from fields
+                color_top_left = top_left.mean(axis=0).mean(axis=0)
+                color_top_right = top_right.mean(axis=0).mean(axis=0)
+                color_bottom_left = bottom_left.mean(axis=0).mean(axis=0)
+                color_bottom_right = bottom_right.mean(axis=0).mean(axis=0)
+                # Determine if fields are black or white
+                top_left_white = abs((color_top_left - white).mean()) < color_threshold  # fmt: skip
+                top_left_black = abs((color_top_left - black).mean()) < color_threshold  # fmt: skip
+                top_right_white = abs((color_top_right - white).mean()) < color_threshold  # fmt: skip
+                top_right_black = abs((color_top_right - black).mean()) < color_threshold  # fmt: skip
+                bottom_left_white = abs((color_bottom_left - white).mean()) < color_threshold  # fmt: skip
+                bottom_left_black = abs((color_bottom_left - black).mean()) < color_threshold  # fmt: skip
+                bottom_right_white = abs((color_bottom_right - white).mean()) < color_threshold  # fmt: skip
+                bottom_right_black = abs((color_bottom_right - black).mean()) < color_threshold  # fmt: skip
+                # Sort color cases
+                if top_left_black and bottom_left_white:
+                    surrounding_normalized = surrounding
+                    inner_ring_a.append((y, x, surrounding_normalized))
+
+                if top_left_white and bottom_left_black:
+                    surrounding_normalized = surrounding[::-1]  # flip vertical
+                    inner_ring_b.append((y, x, surrounding_normalized))
+
+                if top_right_black and bottom_right_white:
+                    surrounding_normalized = surrounding[:, ::-1]  # flip horizontal
+                    outer_ring_a.append((y, x, surrounding_normalized))
+
+                if top_right_white and bottom_right_black:
+                    surrounding_normalized = surrounding[::-1, ::-1]  # flip both
+                    outer_ring_b.append((y, x, surrounding_normalized))
+
+        # -----------------------------
+        # Get common surrounding
+        surroundings = (
+            [x[2] for x in inner_ring_a]
+            + [x[2] for x in inner_ring_b]
+            + [x[2] for x in outer_ring_a]
+            + [x[2] for x in outer_ring_b]
+        )
+        mean_surrounding = np.median(surroundings, axis=0).astype(np.uint8)
+        if show:
+            show_imgs(mean_surrounding=mean_surrounding, block=False)
+
+        # -----------------------------
+        # Classify surroundings
+        def is_correct_surrounding(
+            mean_surrounding: np.ndarray, surrounding: np.ndarray, show: bool = False
+        ) -> tuple[bool, np.ndarray]:
+            similarity_threshold = 0.5
+
+            # -------------------------
+            # SSIM
+            def ssim_score(patch_1, patch_2):
+                from skimage.metrics import structural_similarity as ssim
+
+                patch_1 = cv2.cvtColor(patch_1, cv2.COLOR_BGR2HSV)
+                patch_2 = cv2.cvtColor(patch_2, cv2.COLOR_BGR2HSV)
+
+                similarity = ssim(patch_1, patch_2, multichannel=True, channel_axis=2)
+
+                return np.clip(similarity, 0, 1)
+
+            # -------------------------
+            def lab_areas(patch_1, patch_2):
+                # Use LAB color space to emphasize typical red and green colors
+                lab_1 = cv2.cvtColor(patch_1, cv2.COLOR_BGR2LAB)
+                lab_2 = cv2.cvtColor(patch_2, cv2.COLOR_BGR2LAB)
+
+                mid = lab_1.shape[0] // 2
+                # Only look at red and green parts
+                red_1 = lab_1[:mid, mid:]
+                green_1 = lab_1[mid:, mid:]
+
+                red_2 = lab_2[:mid, mid:]
+                green_2 = lab_2[mid:, mid:]
+
+                # Calculate patch differences
+                diff_red = np.abs(np.int16(red_2) - red_1)
+                sum_red = diff_red.sum(axis=-1)
+                mean_red = sum_red.mean()
+
+                diff_green = np.abs(np.int16(green_2) - green_1)
+                sum_green = diff_green.sum(axis=-1)
+                mean_green = sum_green.mean()
+
+                mean_total = (mean_red + mean_green) / 2
+
+                # Calculate similarity using exponential falloff
+                #   - high input = low similarity
+                #   - higher falloff value = stricter similarity
+                #   - falloff = -0.008: 50% similarity at 86
+                falloff = 0.01
+                similarity = np.exp(-falloff * mean_total)
+                return similarity
+
+            # Compare colors in LAB color space
+            similarity_lab = lab_areas(mean_surrounding, surrounding)
+            # User SSIM for structural similarity
+            similarity_ssim = ssim_score(mean_surrounding, surrounding)
+
+            similarity = (similarity_lab + similarity_ssim) / 2
+            is_orientation_point = similarity > similarity_threshold
+
+            # Draw results
+            if show:
+                surrounding = surrounding.copy()
+                c = (0, 255, 0) if is_orientation_point else (0, 0, 255)
+                surrounding[:2] = c
+                surrounding[:, :2] = c
+                surrounding[:, -2:] = c
+                surrounding[0] = (0, 0, 0)
+                surrounding[:, 0] = (0, 0, 0)
+                surrounding[:, -1] = (0, 0, 0)
+
+                # similarity indication
+                end = int(surrounding.shape[1] * similarity)
+                end = np.clip(end, 0, surrounding.shape[1])
+                surrounding[-2:, :end] = (255, 255, 255)
+                surrounding[-2:, end:] = (0, 0, 0)
+                surrounding[-1, int(similarity_threshold * surrounding.shape[1])] = (
+                    255,
+                    0,
+                    0,
+                )
+            return is_orientation_point, surrounding
+
+        if show:
+            logpolar_ = logpolar.copy()
+
+        keeps: list[tuple[int, int, str]] = []
+        for y, x, surrounding in inner_ring_a:
+            # Check if valid surrounding
+            is_orientation_point, surrounding_ = is_correct_surrounding(
+                mean_surrounding, surrounding, show=show
             )
+            if is_orientation_point:
+                keeps.append((y, x, "inner"))
 
-            show_imgs(*edges)
-            continue
-            colors = np.concatenate(
-                [
-                    s[:, :, c]
-                    for s in [
-                        slice_upper_left,
-                        slice_upper_right,
-                        slice_lower_left,
-                        slice_lower_right,
-                    ]
-                    for c in range(3)
-                ],
-                axis=1,
+            if show:
+                # Draw point visualization
+                cv2.circle(logpolar_, (x, y), 5, (255, 255, 255))
+                cv2.circle(logpolar_, (x, y), 2, (0, 0, 255), -1)
+                # Place surrounding on image: top left
+                if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
+                    logpolar_[
+                        y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
+                    ] = surrounding_
+
+        for y, x, surrounding in inner_ring_b:
+            # Check if valid surrounding
+            is_orientation_point, surrounding_ = is_correct_surrounding(
+                mean_surrounding, surrounding, show=show
             )
-            colors = np.kron(colors, np.ones((1, 25))).astype(np.uint8)
-            show_imgs(colors=np.transpose(colors, (1, 0)), block=False)
+            if is_orientation_point:
+                keeps.append((y, x, "inner"))
 
-            slices = np.uint8(slices)
+            if show:
+                # Draw point visualization
+                cv2.circle(logpolar_, (x, y), 5, (255, 255, 255))
+                cv2.circle(logpolar_, (x, y), 2, (0, 255, 0), -1)
+                # Place surrounding on image: top left
+                if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
+                    logpolar_[
+                        y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
+                    ] = surrounding_
 
-            slices = cv2.blur(slices, (3, 1))
-
-            show = np.kron(slices, np.ones((1, 50, 1))).astype(np.uint8)
-            show_imgs(slices=np.transpose(show, (1, 0, 2)), block=False)
-
-            edge_kernel = np.expand_dims(
-                np.array([-1, -1, -1, 0, 0, 1, 1, 1], np.float32), -1
+        for y, x, surrounding in outer_ring_a:
+            # Check if valid surrounding
+            is_orientation_point, surrounding_ = is_correct_surrounding(
+                mean_surrounding, surrounding, show=show
             )
-            edge_kernel /= np.abs(edge_kernel).sum()
-            edges = cv2.filter2D(
-                cv2.cvtColor(slices, cv2.COLOR_BGR2GRAY), cv2.CV_32F, edge_kernel
+            if is_orientation_point:
+                keeps.append((y, x, "outer"))
+
+            if show:
+                # Draw point visualization
+                cv2.circle(logpolar_, (x, y), 5, (0, 0, 0))
+                cv2.circle(logpolar_, (x, y), 2, (0, 0, 255), -1)
+                # Place surrounding on image: top right
+                if (
+                    y - surrounding.shape[0] >= 0
+                    and x + surrounding.shape[1] < logpolar_.shape[1]
+                ):
+                    logpolar_[
+                        y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
+                    ] = surrounding_
+
+        for y, x, surrounding in outer_ring_b:
+            # Check if valid surrounding
+            is_orientation_point, surrounding_ = is_correct_surrounding(
+                mean_surrounding, surrounding, show=show
             )
-            edges -= edges.min()
-            edges /= edges.max()
-            edges = np.uint8(edges * 255)
+            if is_orientation_point:
+                keeps.append((y, x, "outer"))
 
-            edges = np.kron(edges, np.ones((1, 50)))
-            edges = np.uint8(edges)
+            if show:
+                # Draw point visualization
+                cv2.circle(logpolar_, (x, y), 5, (0, 0, 0))
+                cv2.circle(logpolar_, (x, y), 2, (0, 255, 0), -1)
+                # Place surrounding on image: top right
+                if (
+                    y - surrounding.shape[0] >= 0
+                    and x + surrounding.shape[1] < logpolar_.shape[1]
+                ):
+                    logpolar_[
+                        y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
+                    ] = surrounding_
 
-            show_imgs(np.transpose(edges, (1, 0)))
-        """
+        if show:
+            show_imgs(positions=logpolar_, block=False)
 
-        # show_imgs(img)
+        # -----------------------------
+        # Sort keeps into bins
+        def y_to_angle_bin(
+            keeps: list[tuple[int, int, str]]
+        ) -> list[list[tuple[int, str]]]:
+            out = [[] for _ in range(10)]
+            for y, x, position in keeps:
+                i = (y - 25) // 50
+
+                # If we are in the left half, we invert x,
+                # indicating that we move backwards from the center
+                if i >= 10:
+                    x *= -1
+                    i %= 10
+                out[i].append((x, position))
+            return out
+
+        positions: list[list[tuple[int, str]]] = y_to_angle_bin(keeps)
+        # Resolve logpolar bins to real bins
+        # Logpolar distortion starts at 3 o'clock while we start rotation at 12
+        positions = positions[5:] + positions[:5]
+        for i in range(5):
+            positions[i] = [(-p[0], p[1]) for p in positions[i]]
+
+        return positions  # (x, inner/outer)
+
+    def structure_orientation_candidates(
+        orientation_point_candidates: list[list[tuple[int, str]]],
+        cy: int,
+        cx: int,
+        show: bool = False,
+    ):
+        # Find outer distances
+        outer_dists = []
+        for angle_positions in orientation_point_candidates:
+            outer_dists += [abs(p[0]) for p in angle_positions if p[1] == "outer"]
+
+        mean_triple_inner_r = np.median(outer_dists)
+        mean_triple_inner_std = np.std(outer_dists)
+
+        # FIXME: It's not a good idea to use the standard deviation
+        #        since that's really high for skewed images and zero for perfect images.
+        #        In the first case, outside points may be falsely classified
+        #        and in the second case, all outer triples are falsely classified
+        #           -> no std = threshold at inner radius
+        double_threshold = mean_triple_inner_r + 4 * mean_triple_inner_std
+
+        # TODO: correct radii
+        print("TODO: CV.structure_orientation_candidates: Get board radii")
+        r_triple_inner = 40
+        r_triple_outer = 80
+        r_double_inner = 120
+
+        src = []
+        dst = []
+        for i, angle_positions in enumerate(orientation_point_candidates):
+            theta = np.pi / 20 + i * np.pi / 10
+            for r, pos in angle_positions:
+                src_y = cy - np.cos(theta) * r
+                src_x = cx + np.sin(theta) * r
+                if pos == "outer":
+                    # triple ring - outside
+                    dst_r = r_triple_outer * (1 if r > 0 else -1)
+                elif abs(r) > double_threshold:
+                    # TODO: make the radius threshold be dependent on this angle's "outer" radius
+                    #       if that does not exist, use the neighboring, iteratively
+                    #       if there are no neighbors (= no "outers"), use double_threshold
+                    # double ring
+                    dst_r = r_double_inner * (1 if r > 0 else -1)
+                else:
+                    # triple ring - inside
+                    dst_r = r_triple_inner * (1 if r > 0 else -1)
+                dst_y = 400 - np.cos(theta) * dst_r
+                dst_x = 400 + np.sin(theta) * dst_r
+                src.append((src_x, src_y))
+                dst.append((dst_x, dst_y))
+
+                if show:
+                    if abs(abs(dst_r) - r_triple_outer) < 1e-3:
+                        c = (255, 0, 0)
+                    elif abs(abs(dst_r) - r_double_inner) < 1e-3:
+                        c = (0, 255, 0)
+                    else:
+                        c = (250, 250, 250)
+                    cv2.circle(
+                        img_undistort, (int(src_x), int(src_y)), 5, c, thickness=2
+                    )
+                    cv2.circle(
+                        img_undistort,
+                        (int(dst_x), int(dst_y)),
+                        5,
+                        [int(i * 0.75) for i in c],
+                        thickness=2,
+                    )
+                    cv2.line(
+                        img_undistort,
+                        (int(src_x), int(src_y)),
+                        (int(dst_x), int(dst_y)),
+                        (255, 0, 0),
+                    )
+        if show:
+            cv2.circle(img_undistort, (cx, cy), int(double_threshold), (127, 127, 127))
+            show_imgs(projection_mapping=img_undistort, block=False)
+        return src, dst
 
 
 def extract_center(img: np.ndarray):
@@ -2209,31 +2923,33 @@ if __name__ == "__main__":
     for f in img_paths:
         from time import time
 
-        # Load Image
-        img_full = Utils.load_img(f)
+        start = time()
 
-        img = img_full
+        # -----------------------------
+        # Load Image
+        img_full = Utils.load_img(f, show=True)
         img = Utils.downsample_img(img_full)
 
-        start = time()
-        show_imgs(input=img, block=False)
+        # -----------------------------
+        # EDGES
+
         # Detect Edges
         edges = CV.edge_detect(img, show=False)
         # Skeletonize edges
         skeleton = CV.skeleton(edges, show=False)
+
+        # -----------------------------
+        # LINES
+
         # Extract lines
-        lines = CV.extract_lines(
-            skeleton,
-            # rho=0.5,
-            # theta=np.pi / 180 / 10,
-            threshold=25,
-            show=False,
-        )
+        lines = CV.extract_lines(skeleton, show=False)
 
         # Bin lines by angle
         lines_binned = CV.bin_lines_by_angle(lines)
+
         # Find Board Center
         cy, cx = CV.get_center_point(img.shape, lines_binned, show=False)
+
         # Filter Lines by Center Distance
         lines_filtered = CV.filter_lines_by_center_dist(
             lines, cy, cx
@@ -2243,19 +2959,30 @@ if __name__ == "__main__":
             img.shape[:2], lines_filtered, cy, cx, show=False
         )
 
-        # Align lines by filtered edges
-        lines = CV.align_angles(lines_filtered, thetas, img.shape[:2], show=True)
+        # -----------------------------
+        # ORIENTATION
 
+        # Align lines by filtered edges
+        lines = CV.align_angles(lines_filtered, thetas, img.shape[:2], show=False)
+
+        # Calculate better center coordinates
         cy, cx = CV.center_point_from_lines(lines)
 
+        # Get undistortion matrix
         M_undistort = CV.undistort_by_lines(cy, cx, lines, show=False)
 
-        img_undistort = apply_matrix(img, M_undistort, keep_in_frame=False)
-        cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
-        show_imgs(img_undistort=img_undistort, block=False)
+        # Undistort image
+        img_undistort = apply_matrix(img, M_undistort)
 
-        # CV.get_radial_line_points(img_undistort, int(cy), int(cx))
-        CV.view_along_lines(img_undistort, int(cy_undistort), int(cx_undistort))
+        cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
+
+        orientation_point_candidates = CV.find_orientation_points(
+            img_undistort, int(cy_undistort), int(cx_undistort), show=True
+        )
+
+        src_pts, dst_pts = CV.structure_orientation_candidates(
+            orientation_point_candidates, int(cy_undistort), int(cx_undistort), show=True
+        )
 
         show_imgs()
         continue
