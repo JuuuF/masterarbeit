@@ -55,9 +55,9 @@ def scaling_matrix(x: float = 1, y: float | None = None) -> np.ndarray:
 def apply_matrix(
     img: np.ndarray,
     M: np.ndarray,
-    keep_in_frame: bool = False,
+    adapt_frame: bool = False,
 ) -> np.ndarray:
-    if keep_in_frame:
+    if adapt_frame:
         p0 = np.array([0, 0, 1])
         p1 = np.array([0, img.shape[0], 1])
         p2 = np.array([img.shape[1], 0, 1])
