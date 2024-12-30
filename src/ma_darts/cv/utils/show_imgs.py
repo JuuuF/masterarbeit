@@ -30,7 +30,24 @@ def show_imgs(
     if not block:
         return
 
-    key = cv2.waitKey()
-    if key == ord("q"):
+    ignore_keys = [
+        3,  # AltGr
+        9,  # Tab
+        225,  # LShift
+        226,  # RShift
+        227,  # Alt + Strg
+        228,  # LShift + RShift
+        229,  # Caps-Lock
+        231,  # RShift + Alt
+        233,  # Alt
+    ]
+    quit_keys = [
+        ord("q"),
+        27,  # Esc
+    ]
+    while (key := cv2.waitKey()) in ignore_keys:
+        continue
+
+    if key in quit_keys:
         cv2.destroyAllWindows()
         exit()
