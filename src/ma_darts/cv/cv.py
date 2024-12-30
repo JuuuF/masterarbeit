@@ -366,15 +366,22 @@ class Lines:
             for p1, p2, length, rho, theta in lines:
                 p1 = (int(p1[1]), int(p1[0]))
                 p2 = (int(p2[1]), int(p2[0]))
-                cv2.line(line_img, p1, p2, (0, 255, 0), 1, lineType=cv2.LINE_AA)
+                cv2.line(
+                    line_img,
+                    p1,
+                    p2,
+                    tuple(np.random.randint(256) for _ in range(3)),
+                    1,
+                    lineType=cv2.LINE_AA,
+                )
                 color = np.random.randint(128) + 128
-                cv2.circle(img, p1, 4, (color, 0, 0), lineType=cv2.LINE_AA)
-                cv2.circle(img, p2, 4, (color, 0, 0), lineType=cv2.LINE_AA)
+                # cv2.circle(img, p1, 4, (color, 0, 0), lineType=cv2.LINE_AA)
+                # cv2.circle(img, p2, 4, (color, 0, 0), lineType=cv2.LINE_AA)
             out = cv2.addWeighted(img, 0.25, line_img, 1, 1.0)
             if show:
                 show_imgs(lines=out, block=False)
             if combined_img:
-                combined_img.append(("Found lines", out))
+                combined_img.append(("Found Lines", out))
 
         return lines  # (p1, p2, length, rho, theta)
 
@@ -558,7 +565,7 @@ class Lines:
 
         global combined_img
         if show or combined_img:
-            res = img // 2
+            res = img // 8
             for line in lines:
                 cv2.line(
                     res,
@@ -1602,7 +1609,7 @@ if __name__ == "__main__":
         )
         if orientation_point_candidates is None:
             if combined_img:
-                combined_img = Utils.create_combined_img(combined_img)
+                combined_img = Utils.create_combined_img(combined_img, failed=True)
                 show_imgs(combined_img)
             continue
 
