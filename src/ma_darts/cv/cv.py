@@ -46,6 +46,8 @@ img_paths = [
 class Utils:
 
     def load_img(filepath: str, show: bool = False) -> np.ndarray:
+        if not os.path.exists(filepath):
+            return None
         img = cv2.imread(filepath)
         if show:
             show_imgs(input=img, block=False)
@@ -148,6 +150,98 @@ class Utils:
         x = (rho_a * sin_tb - rho_b * sin_ta) / det
 
         return y, x
+
+    def create_combined_img(
+        imgs,
+        target_w: int = 1440,
+        target_h: int = 2560 - 125,
+    ):
+        if imgs is None:
+            return
+
+        failed = any(["fail" in l.lower() for l, _ in imgs])
+
+        bg_color = 50 if not failed else 10
+
+        # Convert to color
+        imgs = [
+            (label, cv2.cvtColor(i, cv2.COLOR_GRAY2BGR) if len(i.shape) == 2 else i)
+            for label, i in imgs
+        ]
+
+        # Set image sizes
+        n_imgs = len(imgs)
+        grid_cols = int(np.ceil(np.sqrt(n_imgs)))
+        grid_rows = int(np.ceil(n_imgs / grid_cols))
+
+        cell_w = target_w // grid_cols
+        cell_h = target_h // grid_rows
+
+        resized_imgs = []
+        for label, img in imgs:
+            h, w = img.shape[:2]
+            scale = min(cell_w / w, cell_h / h)
+            new_w, new_h = int(w * scale), int(h * scale)
+            resized_img = cv2.resize(
+                img, (new_w - 2, new_h - 2), interpolation=cv2.INTER_AREA
+            )
+
+            # Calculate padding to center the image
+            pad_top = (cell_h - new_h) // 2
+            pad_bottom = cell_h - new_h - pad_top
+            pad_left = (cell_w - new_w) // 2
+            pad_right = cell_w - new_w - pad_left
+
+            # Apply padding
+            padded_img = np.pad(
+                resized_img,
+                ((pad_top, pad_bottom), (pad_left, pad_right), (0, 0)),
+                mode="constant",
+                constant_values=bg_color,
+            )
+
+            # Add title
+            txt_params = dict(
+                org=(5, 20),
+                fontFace=cv2.FONT_HERSHEY_PLAIN,
+                fontScale=1,
+                lineType=cv2.LINE_AA,
+            )
+            cv2.putText(
+                padded_img,
+                label,
+                color=(0, 0, 0),
+                thickness=2,
+                **txt_params,
+            )
+            cv2.putText(
+                padded_img,
+                label,
+                color=(255, 255, 255),
+                thickness=1,
+                **txt_params,
+            )
+
+            # Add border
+            padded_img = np.pad(
+                padded_img,
+                ((1, 1), (1, 1), (0, 0)),
+                mode="constant",
+                constant_values=bg_color,
+            )
+            resized_imgs.append(padded_img)
+
+        # Combine into image
+        res = np.full((grid_rows * cell_h, grid_cols * cell_w, 3), bg_color, np.uint8)
+
+        for i, img in enumerate(resized_imgs):
+            row, col = divmod(i, grid_cols)
+            x0 = col * cell_w
+            x1 = x0 + cell_w
+            y0 = row * cell_h
+            y1 = y0 + cell_h
+            res[y0:y1, x0:x1] = img
+        return res
 
 
 class Unused:
@@ -1685,8 +1779,56 @@ class Unused:
         )
         return
 
+    def get_radial_line_points(img: np.ndarray, cy: int, cx: int) -> list[float]:
+        thetas = np.arange(0, np.pi, np.pi / 10)
+        thetas += np.deg2rad(1)  # this ugly, but necessary, trust me.
 
-class CV:
+        # cv2.destroyAllWindows()
+
+        rays = []
+        for theta in thetas:
+            line_img = draw_polar_line_through_point(
+                np.zeros((img.shape[:2]), np.uint8), (cy, cx), theta, thickness=1
+            )
+            ys, xs = np.nonzero(line_img)
+
+            # find center point idx in line
+            breaking = False
+            # in case the line does not go directly through the center point,
+            # we look around the point to try and find it
+            sequence = [
+                (i // 2) * (1 if i % 2 == 0 else -1) for i in range(1, 10)
+            ]  # 0, 1, -1, 2, -2
+            for dy in sequence:
+                for dx in sequence:
+                    center_idx = np.where((ys == cy + dy) & (xs == cx + dx))
+                    if len(center_idx) == 0 or len(center_idx[0]) == 0:
+                        continue
+                    center_idx = center_idx[0][0]
+                    breaking = True
+                    break
+                if breaking:
+                    break
+
+            # first portion
+            ys_start = ys[:center_idx][::-1]
+            xs_start = xs[:center_idx][::-1]
+            ys_end = ys[center_idx:]
+            xs_end = xs[center_idx:]
+
+            if theta > np.pi / 2:
+                ys_start, ys_end = ys_end, ys_start
+                xs_start, xs_end = xs_end, xs_start
+
+            rays.append(img[ys_start, xs_start])
+            rays.append(img[ys_end, xs_end])
+        rays = rays[::2] + rays[1::2]
+        res = np.zeros((500, max(len(r) for r in rays), 3), np.uint8)
+        for i, ray in enumerate(rays):
+            for j, c in enumerate(ray):
+                res[i * 50 : (i + 1) * 50, j] = c
+        show_imgs(res, block=False)
+        # exit()
 
     def edge_detect_(img: np.ndarray) -> np.ndarray:
         def _detect(img):
@@ -1720,6 +1862,47 @@ class CV:
 
         return edges
 
+    def get_line_angles_old(lines: list[tuple[float, float, float, float, float]]):
+        line_lengths = [l[2] for l in lines]
+        line_angles = [l[-1] for l in lines]
+
+        # Smooth line angles
+        from scipy.signal import savgol_filter
+
+        line_angles_smoothed = savgol_filter(line_angles, window_length=5, polyorder=2)
+
+        # Fort lines by bins
+        angle_step = np.deg2rad(4.5)
+        bins = np.arange(0, np.pi + angle_step, angle_step)
+        bin_indices = np.digitize(line_angles_smoothed, bins, right=False)
+
+        angle_bins = [0 for _ in range(len(bins))]
+        for line, bin_idx in zip(lines, bin_indices):
+            line_length = line[2]
+            line_rho = line[-2]
+            line_theta = line[-1]
+
+            p1_dist = Utils.point_point_dist(line[0], (cy, cx))
+            p2_dist = Utils.point_point_dist(line[1], (cy, cx))
+            min_dist = min(p1_dist, p2_dist)
+
+            draw_polar_line(img, line_rho, line_theta, intensity=line_length)
+
+            # TODO: soft binning
+            # angle_bins[bin_idx - 2] += line_length * min_dist * abs((target_angle - angle) / angle_step)  # deadzone, falloff
+            angle_bins[bin_idx - 1] += line_length * min_dist
+
+        max_bin = max(angle_bins)
+        for val in angle_bins:
+            val /= max_bin
+            val *= 30
+            val = int(val)
+            print("#" * val)
+        return
+
+
+class CV:
+
     def edge_detect(
         img: np.ndarray, kernel_size: int = 5, show: bool = False
     ) -> np.ndarray:
@@ -1744,11 +1927,15 @@ class CV:
         sobel_img = cv2.magnitude(sobel_x, sobel_y)
         sobel_edges = np.uint8(sobel_img / sobel_img.max() * 255)
 
-        _, edges = cv2.threshold(sobel_edges, 127, 255, cv2.THRESH_BINARY)
+        _, edges = cv2.threshold(sobel_edges, 100, 255, cv2.THRESH_BINARY)
 
         # show_imgs(img=img, sobel_x=sobel_x, sobel_y=sobel_y, sobel_edges=sobel_edges, edges=edges, block=False)
         if show:
             show_imgs(edges=edges, block=False)
+
+        global combined_img
+        if combined_img:
+            combined_img.append(("Edge Detection", edges))
         return edges
 
     def skeleton(img: np.ndarray, show: bool = False) -> np.ndarray:
@@ -1767,6 +1954,9 @@ class CV:
 
         if show:
             show_imgs(skeleton=skeleton, block=False)
+        global combined_img
+        if combined_img:
+            combined_img.append(("Skeletonized Edges", skeleton))
         return skeleton
 
     def extract_lines(
@@ -1821,7 +2011,8 @@ class CV:
         )
         lines = list(lines)
 
-        if show:
+        global combined_img
+        if show or combined_img:
             if len(img.shape) == 2:
                 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
             line_img = np.zeros_like(img)
@@ -1829,11 +2020,14 @@ class CV:
                 p1 = (int(p1[1]), int(p1[0]))
                 p2 = (int(p2[1]), int(p2[0]))
                 cv2.line(line_img, p1, p2, (0, 255, 0), 1, lineType=cv2.LINE_AA)
-                color = np.random.randint(256)
+                color = np.random.randint(128) + 128
                 cv2.circle(img, p1, 4, (color, 0, 0), lineType=cv2.LINE_AA)
                 cv2.circle(img, p2, 4, (color, 0, 0), lineType=cv2.LINE_AA)
             out = cv2.addWeighted(img, 0.25, line_img, 1, 1.0)
-            show_imgs(lines=out, block=False)
+            if show:
+                show_imgs(lines=out, block=False)
+            if combined_img:
+                combined_img.append(("Found lines", out))
 
         return lines  # (p1, p2, length, rho, theta)
 
@@ -1885,9 +2079,15 @@ class CV:
         cy = round(np.mean(cy))
         cx = round(np.mean(cx))
 
-        if show:
+        global combined_img
+        if show or combined_img:
             acc = np.uint8(np.float32(acc) / acc.max() * 255)
-            show_imgs(center_point=acc, block=False)
+            acc = cv2.cvtColor(acc, cv2.COLOR_GRAY2BGR)
+            cv2.circle(acc, (cx, cy), 10, (255, 0, 0), lineType=cv2.LINE_AA)
+            if show:
+                show_imgs(center_point=acc, block=False)
+            if combined_img:
+                combined_img.append(("Center Point", acc))
         return cy, cx
 
     def filter_lines_by_center_dist(
@@ -1914,28 +2114,6 @@ class CV:
                     line[4],  # theta
                 )
             )
-
-        return lines_filtered
-
-        dists = []
-        for i, line in enumerate(lines_filtered):
-            p1, p2 = line[:2]
-            d1 = Utils.point_point_dist((cy, cx), p1)
-            d2 = Utils.point_point_dist((cy, cx), p2)
-            dists.append((i, min(d1, d2), max(d1, d2)))
-
-        dists = sorted(dists, key=lambda x: x[1])
-        # print(*dists, sep="\n")
-        res = np.zeros((len(dists), max(*img.shape[:2])), np.uint8)
-        for i, (_, min_d, max_d) in enumerate(dists):
-            print(min_d, max_d)
-            res[i, int(min_d) : int(max_d)] = 255
-        res_sum = np.sum(res, axis=0).shape
-        res_ = np.zeros((res.shape[0], np.max(res)), np.uint8)
-        for i, val in enumerate(res_sum):
-            res_[i, :val] = 255
-        show_imgs(res, res_)
-        # exit()
 
         return lines_filtered
 
@@ -1972,7 +2150,8 @@ class CV:
         kmeans.fit(thetas.reshape(-1, 1), sample_weight=sample_weight)
         target_angles = sorted(kmeans.cluster_centers_.flatten())
 
-        if show:
+        global combined_img
+        if show or combined_img:
             res = np.zeros((img_shape[0], img_shape[1], 3), np.uint8)
             for line in lines:
                 cv2.line(
@@ -1990,60 +2169,12 @@ class CV:
                 draw_polar_line_through_point(res, (cy, cx), angle, color=(255, 0, 0))
 
             res = cv2.addWeighted(img, 0.2, res, 0.9, 1)
-            show_imgs(angles_target=res, block=False)
+            if show:
+                show_imgs(angles_target=res, block=False)
+            if combined_img:
+                combined_img.append(("Field Lines", res))
 
         return target_angles
-
-        angle_step = np.deg2rad(2)
-
-        from matplotlib import pyplot as plt
-        from scipy.signal import savgol_filter
-
-        fig, ax = plt.subplots(1, 1)
-        ax.scatter(list(range(len(thetas))), sorted(thetas))
-
-        plt.show(block=False)
-        plt.pause(1)
-        show_imgs(line_img=res)
-        plt.close()
-
-    def get_line_angles_old(lines: list[tuple[float, float, float, float, float]]):
-        line_lengths = [l[2] for l in lines]
-        line_angles = [l[-1] for l in lines]
-
-        # Smooth line angles
-        from scipy.signal import savgol_filter
-
-        line_angles_smoothed = savgol_filter(line_angles, window_length=5, polyorder=2)
-
-        # Fort lines by bins
-        angle_step = np.deg2rad(4.5)
-        bins = np.arange(0, np.pi + angle_step, angle_step)
-        bin_indices = np.digitize(line_angles_smoothed, bins, right=False)
-
-        angle_bins = [0 for _ in range(len(bins))]
-        for line, bin_idx in zip(lines, bin_indices):
-            line_length = line[2]
-            line_rho = line[-2]
-            line_theta = line[-1]
-
-            p1_dist = Utils.point_point_dist(line[0], (cy, cx))
-            p2_dist = Utils.point_point_dist(line[1], (cy, cx))
-            min_dist = min(p1_dist, p2_dist)
-
-            draw_polar_line(img, line_rho, line_theta, intensity=line_length)
-
-            # TODO: soft binning
-            # angle_bins[bin_idx - 2] += line_length * min_dist * abs((target_angle - angle) / angle_step)  # deadzone, falloff
-            angle_bins[bin_idx - 1] += line_length * min_dist
-
-        max_bin = max(angle_bins)
-        for val in angle_bins:
-            val /= max_bin
-            val *= 30
-            val = int(val)
-            print("#" * val)
-        return
 
     def align_angles(
         lines_filtered: list[tuple[float, float, float, float, float]],
@@ -2144,11 +2275,15 @@ class CV:
             # print(theta, theta_)
             out_lines.append((rho_, theta_))
 
-        if show:
+        global combined_img
+        if show or combined_img:
             out = img.copy()
             for rho, theta in out_lines:
                 draw_polar_line(out, rho, theta)
-            show_imgs(lines_aligned=out, block=False)
+            if show:
+                show_imgs(lines_aligned=out, block=False)
+            if combined_img:
+                combined_img.append(("Aligned Angles", out))
         return out_lines
 
     def center_point_from_lines(
@@ -2356,63 +2491,16 @@ class CV:
 
         M = np.mean(transformation_matrices, axis=0)
 
-        if show:
+        global combined_img
+        if show or combined_img:
             global img
             res = apply_matrix(img, M, True)
-            show_imgs(img_undistort=res, block=False)
+            if show:
+                show_imgs(img_undistort=res, block=False)
+            if combined_img:
+                combined_img.append(("Undistorted Angles", res))
 
         return M
-
-    def get_radial_line_points(img: np.ndarray, cy: int, cx: int) -> list[float]:
-        thetas = np.arange(0, np.pi, np.pi / 10)
-        thetas += np.deg2rad(1)  # this ugly, but necessary, trust me.
-
-        # cv2.destroyAllWindows()
-
-        rays = []
-        for theta in thetas:
-            line_img = draw_polar_line_through_point(
-                np.zeros((img.shape[:2]), np.uint8), (cy, cx), theta, thickness=1
-            )
-            ys, xs = np.nonzero(line_img)
-
-            # find center point idx in line
-            breaking = False
-            # in case the line does not go directly through the center point,
-            # we look around the point to try and find it
-            sequence = [
-                (i // 2) * (1 if i % 2 == 0 else -1) for i in range(1, 10)
-            ]  # 0, 1, -1, 2, -2
-            for dy in sequence:
-                for dx in sequence:
-                    center_idx = np.where((ys == cy + dy) & (xs == cx + dx))
-                    if len(center_idx) == 0 or len(center_idx[0]) == 0:
-                        continue
-                    center_idx = center_idx[0][0]
-                    breaking = True
-                    break
-                if breaking:
-                    break
-
-            # first portion
-            ys_start = ys[:center_idx][::-1]
-            xs_start = xs[:center_idx][::-1]
-            ys_end = ys[center_idx:]
-            xs_end = xs[center_idx:]
-
-            if theta > np.pi / 2:
-                ys_start, ys_end = ys_end, ys_start
-                xs_start, xs_end = xs_end, xs_start
-
-            rays.append(img[ys_start, xs_start])
-            rays.append(img[ys_end, xs_end])
-        rays = rays[::2] + rays[1::2]
-        res = np.zeros((500, max(len(r) for r in rays), 3), np.uint8)
-        for i, ray in enumerate(rays):
-            for j, c in enumerate(ray):
-                res[i * 50 : (i + 1) * 50, j] = c
-        show_imgs(res, block=False)
-        # exit()
 
     def find_orientation_points(
         img: np.ndarray,
@@ -2444,20 +2532,34 @@ class CV:
         # -----------------------------
         # Find corners
         def find_corners(img):
-            img = cv2.blur(img, ksize=(7, 7))
+            # img = cv2.blur(img, ksize=(7, 7))
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            corners = cv2.Sobel(
+            img = cv2.equalizeHist(img)
+            img = cv2.GaussianBlur(img, (5, 5), 0)
+
+            block_size = 2
+            kernel_size = 3
+            k = 0.04
+
+            corners = cv2.cornerHarris(
                 img,
-                cv2.CV_32F,
-                dx=1,
-                dy=1,
-                ksize=7,
+                block_size,
+                kernel_size,
+                k,
             )
-            corners = np.abs(corners)
+            threshold = 0.01 * corners.max()
+
+            corners = cv2.threshold(
+                corners, threshold, corners.max(), cv2.THRESH_BINARY
+            )[1]
             corners /= corners.max()
-            corners = np.uint8(corners * 255)
-            # Threshold
-            corners = cv2.threshold(corners, 100, 255, cv2.THRESH_BINARY)[1]
+            corners = cv2.dilate(corners, None)
+
+            # corners = np.abs(corners)
+            # corners /= corners.max()
+            # corners = np.uint8(corners * 255)
+            # # Threshold
+            # corners = cv2.threshold(corners, 100, 255, cv2.THRESH_BINARY)[1]
 
             return corners
 
@@ -2627,6 +2729,23 @@ class CV:
             + [x[2] for x in outer_ring_a]
             + [x[2] for x in outer_ring_b]
         )
+        global combined_img
+        if len(outer_ring_a + outer_ring_b) < 2:
+            print(
+                "ERROR: Not enough valid orientation points found (possibly too many outliers)."
+            )
+            if combined_img:
+                logpolar[corners != 0] = 255
+                combined_img.append(("FAILED: Not enough orientation points", logpolar))
+            return None
+        if len(surroundings) == 0:
+            print("ERROR: No valid surroundings found.")
+            if combined_img:
+                logpolar[corners != 0] = 255
+                combined_img.append(
+                    ("FAILED: no orientation point surroundings found", logpolar)
+                )
+            return None
         mean_surrounding = np.median(surroundings, axis=0).astype(np.uint8)
         if show:
             show_imgs(mean_surrounding=mean_surrounding, block=False)
@@ -2714,14 +2833,15 @@ class CV:
                 )
             return is_orientation_point, surrounding
 
-        if show:
+        prepare_show_img = show or combined_img
+        if prepare_show_img:
             logpolar_ = logpolar.copy()
 
         keeps: list[tuple[int, int, str]] = []
         for y, x, surrounding in inner_ring_a:
             # Check if valid surrounding
             is_orientation_point, surrounding_ = is_correct_surrounding(
-                mean_surrounding, surrounding, show=show
+                mean_surrounding, surrounding, show=prepare_show_img
             )
             if is_orientation_point:
                 keeps.append((y, x, "inner"))
@@ -2744,7 +2864,7 @@ class CV:
             if is_orientation_point:
                 keeps.append((y, x, "inner"))
 
-            if show:
+            if prepare_show_img:
                 # Draw point visualization
                 cv2.circle(logpolar_, (x, y), 5, (255, 255, 255))
                 cv2.circle(logpolar_, (x, y), 2, (0, 255, 0), -1)
@@ -2757,12 +2877,12 @@ class CV:
         for y, x, surrounding in outer_ring_a:
             # Check if valid surrounding
             is_orientation_point, surrounding_ = is_correct_surrounding(
-                mean_surrounding, surrounding, show=show
+                mean_surrounding, surrounding, show=prepare_show_img
             )
             if is_orientation_point:
                 keeps.append((y, x, "outer"))
 
-            if show:
+            if prepare_show_img:
                 # Draw point visualization
                 cv2.circle(logpolar_, (x, y), 5, (0, 0, 0))
                 cv2.circle(logpolar_, (x, y), 2, (0, 0, 255), -1)
@@ -2778,12 +2898,12 @@ class CV:
         for y, x, surrounding in outer_ring_b:
             # Check if valid surrounding
             is_orientation_point, surrounding_ = is_correct_surrounding(
-                mean_surrounding, surrounding, show=show
+                mean_surrounding, surrounding, show=prepare_show_img
             )
             if is_orientation_point:
                 keeps.append((y, x, "outer"))
 
-            if show:
+            if prepare_show_img:
                 # Draw point visualization
                 cv2.circle(logpolar_, (x, y), 5, (0, 0, 0))
                 cv2.circle(logpolar_, (x, y), 2, (0, 255, 0), -1)
@@ -2796,8 +2916,14 @@ class CV:
                         y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
                     ] = surrounding_
 
+        if sum(1 for p in keeps if p[-1] == "outer") < 2:
+            print("ERROR: Too few orientation points!")
+            return None
+
         if show:
             show_imgs(positions=logpolar_, block=False)
+        if combined_img:
+            combined_img.append(("Logpolar Orientation Points", logpolar_))
 
         # -----------------------------
         # Sort keeps into bins
@@ -2851,10 +2977,14 @@ class CV:
         r_triple_inner = 170
         r_triple_outer = 190
         r_double_inner = 480
+        # print(outer_dists)
 
         src = []
         dst = []
-        if show:
+
+        global combined_img
+        prepare_show_img = show or combined_img
+        if prepare_show_img:
             img = img_undistort.copy()
 
         for i, angle_positions in enumerate(orientation_point_candidates):
@@ -2879,7 +3009,7 @@ class CV:
                 src.append((src_x, src_y))
                 dst.append((dst_x, dst_y))
 
-                if show:
+                if prepare_show_img:
                     if abs(abs(dst_r) - r_triple_outer) < 1e-3:
                         c = (255, 0, 0)
                     elif abs(abs(dst_r) - r_double_inner) < 1e-3:
@@ -2900,14 +3030,26 @@ class CV:
                         (int(dst_x), int(dst_y)),
                         (255, 0, 0),
                     )
-        if show:
+
+        if prepare_show_img:
             cv2.circle(img, (cx, cy), int(double_threshold), (127, 127, 127))
+        if show:
             show_imgs(projection_mapping=img, block=False)
+        if combined_img:
+            combined_img.append(("Orientation Point Projections", img))
+
         return src, dst  # (x, y), (x, y)
 
     def get_alignment_matrix(
-        src_pts: list[tuple[float, float]], dst_pts: list[tuple[float, float]]
+        src_pts: list[tuple[float, float]],
+        dst_pts: list[tuple[float, float]],
+        cy: int,
+        cx: int,
     ) -> np.ndarray:
+        # If there are not enough points, we return
+        if len(src_pts) < 4:
+            return np.eye(3)
+
         # In case we still have some outliers, we randomly sample 75% of the src and dst points
         # and find a homography between these point sets. In the end, we take the mean of all homographies
         n_tries = 16
@@ -2915,12 +3057,24 @@ class CV:
         Ms = []
         src_pts = np.float32(src_pts)
         dst_pts = np.float32(dst_pts)
+        src_center = [cx, cy]
+        dst_center = [400, 400]
+        ransac_amount = max(4, int(ransac_percent * len(src_pts)))
         for i in range(n_tries):
-            try_indices = np.random.permutation(len(src_pts))[: int(0.7 * len(src_pts))]
+            try_indices = np.random.permutation(len(src_pts))[:ransac_amount]
             try_src = src_pts[try_indices]
             try_dst = dst_pts[try_indices]
-            M, _ = cv2.findHomography(try_src, try_dst, method=cv2.RANSAC)
-            Ms.append(M)
+            M, _ = cv2.findHomography(
+                np.insert(try_src, 0, src_center, axis=0),  # always add center points
+                np.insert(try_dst, 0, dst_center, axis=0),
+                method=cv2.RANSAC,
+            )
+            if M is not None:
+                Ms.append(M)
+
+        if len(Ms) == 0:
+            print("ERROR: Could not find alignment homography.")
+            return np.eye(3)
         M = np.median(Ms, axis=0)
         return M
 
@@ -2941,14 +3095,25 @@ if __name__ == "__main__":
 
     # img_paths.reverse()
     for f in img_paths:
+        combined_img = None
+        combined_img = []
+
         from time import time
 
         start = time()
 
         # -----------------------------
         # Load Image
-        img_full = Utils.load_img(f, show=True)
+        print(f)
+        img_full = Utils.load_img(f, show=False)
+        if img_full is None:
+            print("WARNING: Could not load image path", f)
+            continue
         img = Utils.downsample_img(img_full)
+
+        # show_imgs(input=img, block=False)
+        if combined_img is not None:
+            combined_img.append((f"Input: {f}", img))
 
         # -----------------------------
         # EDGES
@@ -2997,17 +3162,24 @@ if __name__ == "__main__":
         cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
 
         orientation_point_candidates = CV.find_orientation_points(
-            img_undistort, int(cy_undistort), int(cx_undistort), show=True
+            img_undistort, int(cy_undistort), int(cx_undistort), show=False
         )
+        if orientation_point_candidates is None:
+            if combined_img:
+                combined_img = Utils.create_combined_img(combined_img)
+                show_imgs(combined_img)
+            continue
 
         src_pts, dst_pts = CV.structure_orientation_candidates(
             orientation_point_candidates,
             int(cy_undistort),
             int(cx_undistort),
-            show=True,
+            show=False,
         )
 
-        M_align = CV.get_alignment_matrix(src_pts, dst_pts)
+        M_align = CV.get_alignment_matrix(
+            src_pts, dst_pts, int(cy_undistort), int(cx_undistort)
+        )
 
         # Combine all matrices
         scale = img.shape[0] / img_full.shape[0]
@@ -3018,6 +3190,13 @@ if __name__ == "__main__":
         M_full = M_align @ M_full  # align to correct scale and orientation
 
         res = apply_matrix(img_full, M_full, adapt_frame=True)
-        show_imgs(aligned=res, block=False)
+        # show_imgs(aligned=res, block=False)
+
+        if combined_img:
+            combined_img.append(("Aligned Image", res))
+            combined_img = Utils.create_combined_img(combined_img)
+            show_imgs(combined_img)
+
+
 
         show_imgs()
