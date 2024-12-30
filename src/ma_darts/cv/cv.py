@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-from sklearn.cluster import KMeans
+from scipy.signal import find_peaks
 
 from ma_darts.cv.utils import draw_polar_line, show_imgs, draw_polar_line_through_point
 from ma_darts.cv.utils import (
@@ -2129,55 +2129,133 @@ class Lines:
         cx: int,
         show: bool = False,
     ):
-        thetas = np.array([line[-1] for line in lines])
+        # Draw lines onto black canvas
+        line_img = np.zeros(img_shape, np.uint8)
+        for line in lines:
+            cv2.line(
+                line_img, line[0][::-1], line[1][::-1], (255, 255, 255), thickness=2
+            )
 
-        # Calculate sample weights
-        sample_weight = []
+        # Line positions to origin
+        y_indices, x_indices = np.nonzero(line_img)
+        y_shifted, x_shifted = y_indices - cy, x_indices - cx
+
+        # Weigh each points by its distance to the center
         diag = np.sqrt(img_shape[0] ** 2 + img_shape[1] ** 2)
-        for i, line in enumerate(lines):
-            length = line[2]
-            d1 = Utils.point_point_dist(line[0], (cy, cx))
-            d2 = Utils.point_point_dist(line[1], (cy, cx))
-            center_dist = min(d1, d2)
-            center_dist = 1 - center_dist / diag
-            sample_weight.append(length * center_dist)
+        center_dist = np.sqrt(x_shifted**2 + y_shifted**2)
+        center_dist_norm = center_dist / diag
+        weights = 1 / (center_dist_norm + 1)
 
-        ideal_angles = (np.arange(0, np.pi, np.pi / 10) + np.pi / 20).reshape(-1, 1)
-        kmeans = KMeans(
-            n_clusters=10,
-            # init="k-means++",
-            init=ideal_angles,
-            # algorithm="lloyd",
-            algorithm="elkan",
+        # For each point, get line angle
+        angles = np.arctan2(y_shifted, x_shifted)  # -pi, pi
+        angles = (angles + np.pi) % np.pi
+
+        # Quantize into bins
+        angle_step = 0.5
+        bins = np.arange(0, np.pi, np.deg2rad(angle_step))
+        bin_indices = np.digitize(angles, bins) - 1
+
+        # Accumulate bin sizes
+        accumulator = np.zeros(len(bins), np.float32)
+        for bin_idx, weight in zip(bin_indices, weights):
+            accumulator[bin_idx] += weight
+
+        # Smooth accumulated sizes
+        smooth_degrees = 5
+        window_size = int(np.ceil(smooth_degrees / angle_step))
+        kernel = np.ones(window_size) / window_size
+        acc_extended = np.concatenate(
+            [accumulator[-window_size:], accumulator, accumulator[:window_size]]
         )
-        kmeans.fit(thetas.reshape(-1, 1), sample_weight=sample_weight)
-        target_angles = sorted(kmeans.cluster_centers_.flatten())
+
+        # Double-smoothing to prevent mini-peaks
+        acc_extended_smooth = np.convolve(acc_extended, kernel, mode="same")
+        acc_extended_smooth = np.convolve(acc_extended_smooth, kernel, mode="same")
+
+        # Find peaks
+        peaks_extended, _ = find_peaks(acc_extended_smooth)
+
+        # Normalize peaks to non-extended indices
+        peaks = peaks_extended - window_size
+        peaks = peaks[peaks >= 0]
+        peaks = peaks[peaks < len(bins)]
+
+        # Get peak values
+        acc_smooth = acc_extended_smooth[window_size:-window_size]
+        peak_values = acc_smooth[peaks]
+        peak_thetas = np.deg2rad(angle_step) * peaks
+        peak_thetas = (peak_thetas + np.pi / 2) % np.pi
+
+        if len(peak_values) > 10:
+            # Remove smallest peaks
+            peak_cutoff = sorted(peak_values)[-10]
+            cutoff_indices = peak_values >= peak_cutoff
+            peaks = peaks[cutoff_indices]
+            peak_values = peak_values[cutoff_indices]
+            peak_thetas = peak_thetas[cutoff_indices]
+        elif len(peaks) < 10:
+            # Interpolate peaks
+            step_size = int(np.median(np.diff(peaks)))
+
+            extended = []
+            for i, peak in enumerate(peaks[:-1]):
+                extended.append(peaks[i])
+                gap = peaks[i + 1] - peak
+                if gap > step_size * 1.5:
+                    n_missing = round(gap / step_size) - 1
+                    missing_values = [
+                        peak + step_size * (j + 1) for j in range(n_missing)
+                    ]
+
+                    extended.extend(missing_values)
+            extended.append(peaks[-1])
+
+            # TODO: interpolate peak_thetas and peak_values for added values
 
         global combined_img
         if show or combined_img:
-            res = np.zeros((img_shape[0], img_shape[1], 3), np.uint8)
+            res = img // 2
             for line in lines:
                 cv2.line(
                     res,
                     line[0][::-1],
                     line[1][::-1],
-                    (0, 255, 0),
-                    1,
+                    color=(0, 255, 0),
+                    thickness=1,
                     lineType=cv2.LINE_AA,
                 )
+            for t, v in zip(peak_thetas, peak_values / peak_values.max()):
+                intensity = v / 2 + 0.5
+                draw_polar_line_through_point(
+                    res,
+                    (cy, cx),
+                    t,
+                    color=(255, 0, 0),
+                    intensity=intensity,
+                )
 
-            for angle in ideal_angles[:, 0]:
-                draw_polar_line_through_point(res, (cy, cx), angle, color=(0, 0, 200))
-            for angle in target_angles:
-                draw_polar_line_through_point(res, (cy, cx), angle, color=(255, 0, 0))
+            # with open("dump/out.txt", "w") as f:
+            #     for i, (v, vs) in enumerate(zip(accumulator, acc_smooth)):
+            #         common = min(v, vs)
+            #         diff = max(v, vs) - common
+            #         delimiter = "+" if vs > v else "."
 
-            res = cv2.addWeighted(img, 0.2, res, 0.9, 1)
+            #         main_bar = "#" if i in peaks else ">"
+            #         print(
+            #             i,
+            #             "\t",
+            #             main_bar * int(common),
+            #             delimiter * int(diff),
+            #             sep="",
+            #             file=f,
+            #         )
             if show:
-                show_imgs(angles_target=res, block=False)
+                show_imgs(field_separating_lines=res, block=False)
             if combined_img:
-                combined_img.append(("Field Lines", res))
+                combined_img.append(("Field-Separating Lines", res))
 
-        return target_angles
+        thetas = sorted(peak_thetas)
+        return thetas
 
 
 class Orientation:
@@ -3154,7 +3232,9 @@ if __name__ == "__main__":
         # ORIENTATION
 
         # Align lines by filtered edges
-        lines = Orientation.align_angles(lines_filtered, thetas, img.shape[:2], show=False)
+        lines = Orientation.align_angles(
+            lines_filtered, thetas, img.shape[:2], show=False
+        )
 
         # Calculate better center coordinates
         cy, cx = Orientation.center_point_from_lines(lines)
@@ -3202,7 +3282,3 @@ if __name__ == "__main__":
             combined_img.append(("Aligned Image", res))
             combined_img = Utils.create_combined_img(combined_img)
             show_imgs(combined_img)
-
-
-
-        show_imgs()
