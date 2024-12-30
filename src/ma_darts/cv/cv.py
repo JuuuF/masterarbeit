@@ -155,11 +155,12 @@ class Utils:
         imgs,
         target_w: int = 1440,
         target_h: int = 2560 - 125,
+        failed: bool = False,
     ):
         if imgs is None:
             return
 
-        failed = any(["fail" in l.lower() for l, _ in imgs])
+        failed = failed or any(["fail" in l.lower() for l, _ in imgs])
 
         bg_color = 50 if not failed else 10
 
@@ -1570,6 +1571,12 @@ if __name__ == "__main__":
         thetas = Lines.get_rough_line_angles(
             img.shape[:2], lines_filtered, cy, cx, show=False
         )
+        if len(thetas) != 10:
+            print("ERROR: Could not find all lines!")
+            if combined_img:
+                combined_img = Utils.create_combined_img(combined_img, failed=True)
+                show_imgs(combined_img)
+            continue
 
         # -----------------------------
         # ORIENTATION
