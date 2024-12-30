@@ -1901,7 +1901,7 @@ class Unused:
         return
 
 
-class CV:
+class Edges:
 
     def edge_detect(
         img: np.ndarray, kernel_size: int = 5, show: bool = False
@@ -1958,6 +1958,9 @@ class CV:
         if combined_img:
             combined_img.append(("Skeletonized Edges", skeleton))
         return skeleton
+
+
+class Lines:
 
     def extract_lines(
         img: np.ndarray,
@@ -2175,6 +2178,9 @@ class CV:
                 combined_img.append(("Field Lines", res))
 
         return target_angles
+
+
+class Orientation:
 
     def align_angles(
         lines_filtered: list[tuple[float, float, float, float, float]],
@@ -3080,11 +3086,11 @@ class CV:
 
 
 def extract_center(img: np.ndarray):
-    edges = CV.edge_detect(img)
-    skeleton = CV.skeleton(edges)
-    lines = CV.extract_lines(skeleton)  # (p1, p2, length, rho, theta)
-    lines_binned = CV.bin_lines_by_angle(lines)
-    cy, cx = CV.get_center_point(img.shape, lines_binned)
+    edges = Edges.edge_detect(img)
+    skeleton = Edges.skeleton(edges)
+    lines = Lines.extract_lines(skeleton)  # (p1, p2, length, rho, theta)
+    lines_binned = Lines.bin_lines_by_angle(lines)
+    cy, cx = Lines.get_center_point(img.shape, lines_binned)
     return cy, cx
 
 
@@ -3119,28 +3125,28 @@ if __name__ == "__main__":
         # EDGES
 
         # Detect Edges
-        edges = CV.edge_detect(img, show=False)
+        edges = Edges.edge_detect(img, show=False)
         # Skeletonize edges
-        skeleton = CV.skeleton(edges, show=False)
+        skeleton = Edges.skeleton(edges, show=False)
 
         # -----------------------------
         # LINES
 
         # Extract lines
-        lines = CV.extract_lines(skeleton, show=False)
+        lines = Lines.extract_lines(skeleton, show=False)
 
         # Bin lines by angle
-        lines_binned = CV.bin_lines_by_angle(lines)
+        lines_binned = Lines.bin_lines_by_angle(lines)
 
         # Find Board Center
-        cy, cx = CV.get_center_point(img.shape, lines_binned, show=False)
+        cy, cx = Lines.get_center_point(img.shape, lines_binned, show=False)
 
         # Filter Lines by Center Distance
-        lines_filtered = CV.filter_lines_by_center_dist(
+        lines_filtered = Lines.filter_lines_by_center_dist(
             lines, cy, cx
         )  # p1, p2, length (normalized), center distance [px], rho, theta
 
-        thetas = CV.get_rough_line_angles(
+        thetas = Lines.get_rough_line_angles(
             img.shape[:2], lines_filtered, cy, cx, show=False
         )
 
@@ -3148,20 +3154,20 @@ if __name__ == "__main__":
         # ORIENTATION
 
         # Align lines by filtered edges
-        lines = CV.align_angles(lines_filtered, thetas, img.shape[:2], show=False)
+        lines = Orientation.align_angles(lines_filtered, thetas, img.shape[:2], show=False)
 
         # Calculate better center coordinates
-        cy, cx = CV.center_point_from_lines(lines)
+        cy, cx = Orientation.center_point_from_lines(lines)
 
         # Get undistortion matrix
-        M_undistort = CV.undistort_by_lines(cy, cx, lines, show=False)
+        M_undistort = Orientation.undistort_by_lines(cy, cx, lines, show=False)
 
         # Undistort image
         img_undistort = apply_matrix(img, M_undistort)
 
         cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
 
-        orientation_point_candidates = CV.find_orientation_points(
+        orientation_point_candidates = Orientation.find_orientation_points(
             img_undistort, int(cy_undistort), int(cx_undistort), show=False
         )
         if orientation_point_candidates is None:
@@ -3170,14 +3176,14 @@ if __name__ == "__main__":
                 show_imgs(combined_img)
             continue
 
-        src_pts, dst_pts = CV.structure_orientation_candidates(
+        src_pts, dst_pts = Orientation.structure_orientation_candidates(
             orientation_point_candidates,
             int(cy_undistort),
             int(cx_undistort),
             show=False,
         )
 
-        M_align = CV.get_alignment_matrix(
+        M_align = Orientation.get_alignment_matrix(
             src_pts, dst_pts, int(cy_undistort), int(cx_undistort)
         )
 
