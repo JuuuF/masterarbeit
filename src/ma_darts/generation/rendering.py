@@ -310,7 +310,7 @@ class SceneUtils:
             env_tex_node.image = hdri
             return True
 
-        def random_strength(min: float = 0.1, max: float = 0.8):
+        def random_strength(min: float = 0.1, max: float = 1.0):
             for bg_node in nodes:
                 if bg_node.name == "Background":
                     break
@@ -379,7 +379,7 @@ class SceneUtils:
 
 class ObjectPlacement:
 
-    min_dart_dist = 0.01
+    min_dart_dist = 0.005  # 5mm
     min_dart_y_displacement = 0.0075  # 7.5mm
     max_dart_y_displacement = 0.025  # 2.5cm
 
@@ -518,7 +518,7 @@ class ObjectPlacement:
             dart = SceneUtils.get_object(f"Dart {i}")
 
             # Randomly skip dart
-            if i > 1 and True and np.random.random() < 1 / 6:
+            if i > 1 and np.random.random() < 1 / 6:
                 dart.location = (0, 0, 0)
                 dart.hide_render = True
                 continue
@@ -999,8 +999,8 @@ def render_image(id=None):
 
     # Place Camera
     ObjectPlacement.place_camera()
-    ObjectPlacement.randomize_camera_parameters()
     SceneUtils.random_motion_blur()
+    ObjectPlacement.randomize_camera_parameters()
 
     # Rendering
     Utils.render_sample_with_masks()
