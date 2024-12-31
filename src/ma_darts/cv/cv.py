@@ -943,103 +943,19 @@ class Orientation:
         cx: int,
         show: bool = False,
     ) -> list[list[tuple[int, str]]]:
-
-        # Convert image to logpolar representation
-        max_r = max(
-            Utils.point_point_dist((cy, cx), (0, 0)),
-            Utils.point_point_dist((cy, cx), (0, img.shape[1])),
-            Utils.point_point_dist((cy, cx), (img.shape[0], 0)),
-            Utils.point_point_dist((cy, cx), (img.shape[0], img.shape[1])),
-        )
-        logpolar = cv2.warpPolar(
-            img,
-            dsize=(
-                int(max_r),
-                1000,
-            ),  # I use 1000 because this is enough resolution and is easy to calculate with
-            center=(int(cx), int(cy)),
-            maxRadius=int(max_r),
-            flags=cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS,
-        )
-        if show:
-            show_imgs(logpolar=logpolar, block=False)
-
-        # -----------------------------
-        # Find corners
-        def find_corners(img):
-            # img = cv2.blur(img, ksize=(7, 7))
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            img = cv2.equalizeHist(img)
-            img = cv2.GaussianBlur(img, (5, 5), 0)
-
-            block_size = 2
-            kernel_size = 3
-            k = 0.04
-
-            corners = cv2.cornerHarris(
+        def get_logpolar(img: np.ndarray, max_r: int, cy: int, cx: int) -> np.ndarray:
+            logpolar = cv2.warpPolar(
                 img,
-                block_size,
-                kernel_size,
-                k,
+                dsize=(
+                    int(max_r),
+                    1000,
+                ),  # I use 1000 because this is enough resolution and is easy to calculate with
+                center=(int(cx), int(cy)),
+                maxRadius=int(max_r),
+                flags=cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS,
             )
-            threshold = 0.01 * corners.max()
+            return logpolar
 
-            corners = cv2.threshold(
-                corners, threshold, corners.max(), cv2.THRESH_BINARY
-            )[1]
-            corners /= corners.max()
-            corners = cv2.dilate(corners, None)
-
-            # corners = np.abs(corners)
-            # corners /= corners.max()
-            # corners = np.uint8(corners * 255)
-            # # Threshold
-            # corners = cv2.threshold(corners, 100, 255, cv2.THRESH_BINARY)[1]
-
-            return corners
-
-        corners = find_corners(logpolar)  # (1000, x)
-
-        # -----------------------------
-        # Find corners on intersection lines
-        corner_band_width = 6
-
-        line_ys = (
-            np.arange(0, corners.shape[0], corners.shape[0] // 20)
-            + corners.shape[0] // 40
-        )
-        corner_strips = [
-            corners[i - corner_band_width : i + corner_band_width] for i in line_ys
-        ]
-        corner_strip_values = [np.max(s, axis=0) for s in corner_strips]
-
-        # Find positions of corners on strips
-        corner_positions = []
-        for strip in corner_strip_values:
-            nonzeros = np.nonzero(strip)[0]
-            if len(nonzeros) == 0:
-                corner_positions.append([])
-                continue
-            diffs = np.diff(nonzeros)
-            breaks = np.where(diffs > 1)[0] + 1
-            groups = np.split(nonzeros, breaks)
-            centers = [round(np.mean(g)) for g in groups]
-            corner_positions.append(centers)
-
-        # Visualize corner strips
-        if show:
-            corners_ = corners.copy()
-            for i in line_ys:
-                corners_[i - corner_band_width : i + corner_band_width][
-                    corners_[i - corner_band_width : i + corner_band_width] == 0
-                ] = 60
-            show_imgs(corner_strips=corners_, block=False)
-
-        search_distance = 2
-        search_width = 8
-
-        # -----------------------------
-        # Get Colors
         def sort_logpolar_into_strips(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
             # Slice logpolar aling fields
@@ -1058,7 +974,9 @@ class Orientation:
 
             return white, black
 
-        def get_colors(logpolar: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        def get_black_white_and_center_size(
+            logpolar: np.ndarray,
+        ) -> tuple[np.ndarray, np.ndarray]:
             strip_w, strip_b = sort_logpolar_into_strips(logpolar)
             white_colors = np.median(strip_w, axis=0).astype(np.uint8)
             black_colors = np.median(strip_b, axis=0).astype(np.uint8)
@@ -1099,94 +1017,103 @@ class Orientation:
             white, field_end_w = extract_field_color(white_colors, field_start)
             black, field_end_b = extract_field_color(black_colors, field_start)
 
-            return white, black
+            return white, black, field_start
 
-        white, black = get_colors(logpolar)
+        def find_logpolar_corners(img):
+            # This looks weird, but is intended
+            # Convert RGB -> Lab -> Gray
+            # This increases the contrast for corners
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            img = cv2.GaussianBlur(img, (7, 7), 0)
 
-        # -----------------------------
-        # Check points for surrounding color
-        surrounding_width = 14
-        middle_deadspace = 2
-        color_threshold = 30
-        intrude = (surrounding_width - middle_deadspace) // 2
-        inner_ring_a = []
-        inner_ring_b = []
-        outer_ring_a = []
-        outer_ring_b = []
-        for i, points in enumerate(corner_positions):
-            y = 25 + 50 * i
-            for x in points:
-                surrounding = logpolar[
-                    y - surrounding_width : y + surrounding_width,
-                    x - surrounding_width : x + surrounding_width,
-                ]
-                # Find partial fields in surrounding area
-                top_left = surrounding[:intrude, :intrude]
-                top_right = surrounding[:intrude, -intrude:]
-                bottom_left = surrounding[-intrude:, :intrude]
-                bottom_right = surrounding[-intrude:, -intrude:]
-                # Extract mean colors from fields
-                color_top_left = top_left.mean(axis=0).mean(axis=0)
-                color_top_right = top_right.mean(axis=0).mean(axis=0)
-                color_bottom_left = bottom_left.mean(axis=0).mean(axis=0)
-                color_bottom_right = bottom_right.mean(axis=0).mean(axis=0)
-                # Determine if fields are black or white
-                top_left_white = abs((color_top_left - white).mean()) < color_threshold  # fmt: skip
-                top_left_black = abs((color_top_left - black).mean()) < color_threshold  # fmt: skip
-                top_right_white = abs((color_top_right - white).mean()) < color_threshold  # fmt: skip
-                top_right_black = abs((color_top_right - black).mean()) < color_threshold  # fmt: skip
-                bottom_left_white = abs((color_bottom_left - white).mean()) < color_threshold  # fmt: skip
-                bottom_left_black = abs((color_bottom_left - black).mean()) < color_threshold  # fmt: skip
-                bottom_right_white = abs((color_bottom_right - white).mean()) < color_threshold  # fmt: skip
-                bottom_right_black = abs((color_bottom_right - black).mean()) < color_threshold  # fmt: skip
-                # Sort color cases
-                if top_left_black and bottom_left_white:
-                    surrounding_normalized = surrounding
-                    inner_ring_a.append((y, x, surrounding_normalized))
+            block_size = 2
+            kernel_size = 5
+            k = 0.04
 
-                if top_left_white and bottom_left_black:
-                    surrounding_normalized = surrounding[::-1]  # flip vertical
-                    inner_ring_b.append((y, x, surrounding_normalized))
-
-                if top_right_black and bottom_right_white:
-                    surrounding_normalized = surrounding[:, ::-1]  # flip horizontal
-                    outer_ring_a.append((y, x, surrounding_normalized))
-
-                if top_right_white and bottom_right_black:
-                    surrounding_normalized = surrounding[::-1, ::-1]  # flip both
-                    outer_ring_b.append((y, x, surrounding_normalized))
-
-        # -----------------------------
-        # Get common surrounding
-        surroundings = (
-            [x[2] for x in inner_ring_a]
-            + [x[2] for x in inner_ring_b]
-            + [x[2] for x in outer_ring_a]
-            + [x[2] for x in outer_ring_b]
-        )
-        global combined_img
-        if len(outer_ring_a + outer_ring_b) < 2:
-            print(
-                "ERROR: Not enough valid orientation points found (possibly too many outliers)."
+            corners = cv2.cornerHarris(
+                img,
+                block_size,
+                kernel_size,
+                k,
             )
-            if combined_img:
-                logpolar[corners != 0] = 255
-                combined_img.append(("FAILED: Not enough orientation points", logpolar))
-            return None
-        if len(surroundings) == 0:
-            print("ERROR: No valid surroundings found.")
-            if combined_img:
-                logpolar[corners != 0] = 255
-                combined_img.append(
-                    ("FAILED: no orientation point surroundings found", logpolar)
-                )
-            return None
-        mean_surrounding = np.median(surroundings, axis=0).astype(np.uint8)
-        if show:
-            show_imgs(mean_surrounding=mean_surrounding, block=False)
+            threshold = 0.01 * corners.max()
 
-        # -----------------------------
-        # Classify surroundings
+            corners = cv2.threshold(
+                corners, threshold, corners.max(), cv2.THRESH_BINARY
+            )[1]
+            corners /= corners.max()
+            corners = cv2.dilate(corners, None)
+            corners = np.uint8(corners * 255)
+
+            return corners
+
+        def to_cryv(patch: np.ndarray) -> np.ndarray:
+
+            # black / white different
+            # black / red+green different
+            # white / red+green different
+            # -> red/green similar
+
+            YCrCb = cv2.cvtColor(patch, cv2.COLOR_BGR2YCrCb)
+            Cr = YCrCb[:, :, 1:2]  # white / green, red / green
+            Y = YCrCb[:, :, 0:1]  # black / red, black / white, white / green
+
+            HSV = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+            V = HSV[:, :, 2:3]  # black / red
+
+            res = np.concatenate(
+                [
+                    Cr,
+                    Y,
+                    V,
+                ],
+                axis=-1,
+            )
+            return res
+
+        def is_black(patch, black_cryv):
+            b_Cr, b_Y, b_V = black_cryv
+            Cr, Y, V = patch
+
+            diff_Cr = np.abs(b_Cr - Cr)
+            diff_Y = np.abs(b_Y - Y)
+            diff_V = np.abs(b_V - V)
+
+            return round(diff_Cr + diff_Y + diff_V)
+
+        def is_white(patch, white_cryv):
+            w_Cr, w_Y, w_V = np.float32(white_cryv)
+            Cr, Y, V = patch
+
+            diff_Cr = np.abs(w_Cr - Cr)
+            diff_Y = np.abs(w_Y - Y)
+            diff_V = np.abs(w_V - V)
+
+            return round(diff_Cr + diff_Y + diff_V)
+
+        def is_color(patch):
+            Cr, _Y, _V = patch
+            target_Cr_red = 200.0
+            target_Cr_green = 30.0
+
+            diff_Cr_red = np.abs(target_Cr_red - Cr)
+            diff_Cr_green = np.abs(target_Cr_green - Cr)
+            diff_Cr = min(diff_Cr_red, diff_Cr_green)
+
+            return round(diff_Cr)
+
+        def show_cryv(img, name=None):
+
+            full = []
+            for i in range(img.shape[-1]):
+                full.append(img[:, :, i])
+            res = np.hstack(full)
+            if name is not None:
+                show_imgs(**{name: res}, block=False)
+            else:
+                show_imgs(res, block=False)
+
         def is_correct_surrounding(
             mean_surrounding: np.ndarray, surrounding: np.ndarray, show: bool = False
         ) -> tuple[bool, np.ndarray]:
@@ -1268,6 +1195,233 @@ class Orientation:
                 )
             return is_orientation_point, surrounding
 
+        def y_to_angle_bin(
+            keeps: list[tuple[int, int, str]]
+        ) -> list[list[tuple[int, str]]]:
+            out = [[] for _ in range(10)]
+            for y, x, position in keeps:
+                i = (y - 25) // 50
+
+                # If we are in the left half, we invert x,
+                # indicating that we move backwards from the center
+                if i >= 10:
+                    x *= -1
+                    i %= 10
+                out[i].append((x, position))
+            return out
+
+        # Convert image to logpolar representation
+        max_r = max(
+            Utils.point_point_dist((cy, cx), (0, 0)),
+            Utils.point_point_dist((cy, cx), (0, img.shape[1])),
+            Utils.point_point_dist((cy, cx), (img.shape[0], 0)),
+            Utils.point_point_dist((cy, cx), (img.shape[0], img.shape[1])),
+        )
+        logpolar = get_logpolar(img, max_r, cy, cx)
+        if show:
+            show_imgs(logpolar=logpolar, block=False)
+
+        # -----------------------------
+        # Get Colors and Rough Scaling
+        white, black, center_size = get_black_white_and_center_size(logpolar)
+
+        # -----------------------------
+        # Stretch logpolar image to ensure the multiplier fields are big enough
+        width_scaling = max(1, 25 / center_size)
+        if width_scaling > 1:
+            img_resized = cv2.resize(
+                img,
+                (int(width_scaling * img.shape[1]), int(width_scaling * img.shape[0])),
+            )
+            logpolar = get_logpolar(
+                img_resized,
+                max_r * width_scaling,
+                int(width_scaling * cy),
+                int(width_scaling * cx),
+            )
+
+        # -----------------------------
+        # Find corners
+        corners = find_logpolar_corners(logpolar)  # (1000, x)
+
+        # -----------------------------
+        # Find corners on intersection lines
+        corner_band_width = 6
+
+        line_ys = (
+            np.arange(0, corners.shape[0], corners.shape[0] // 20)
+            + corners.shape[0] // 40
+        )
+        corner_strips = [
+            corners[i - corner_band_width : i + corner_band_width] for i in line_ys
+        ]
+        corner_strip_values = [np.max(s, axis=0) for s in corner_strips]
+
+        # Find positions of corners on strips
+        corner_positions = []
+        for strip in corner_strip_values:
+            nonzeros = np.nonzero(strip)[0]
+            if len(nonzeros) == 0:
+                corner_positions.append([])
+                continue
+            diffs = np.diff(nonzeros)
+            breaks = np.where(diffs > 1)[0] + 1
+            groups = np.split(nonzeros, breaks)
+            centers = [round(np.mean(g)) for g in groups]
+            corner_positions.append(centers)
+
+        # Visualize corner strips
+        if show:
+            corners_ = corners.copy()
+            for i in line_ys:
+                corners_[i - corner_band_width : i + corner_band_width][
+                    corners_[i - corner_band_width : i + corner_band_width] == 0
+                ] = 60
+            corners_ = cv2.addWeighted(
+                logpolar, 0.5, cv2.cvtColor(corners_, cv2.COLOR_GRAY2BGR), 1.0, 1.0
+            )
+            show_imgs(recognized_corners=corners_, block=False)
+
+        search_distance = 2
+        search_width = 8
+
+        # -----------------------------
+        # Check points for surrounding color
+        surrounding_width = 14
+        middle_deadspace = 2
+        color_threshold = 100
+        intrude = (surrounding_width - middle_deadspace) // 2
+        inner_ring_a = []
+        inner_ring_b = []
+        outer_ring_a = []
+        outer_ring_b = []
+
+        # Convert colors into a format that emphasizes the differences
+        white_cryv = to_cryv(white[None, None])[0, 0]
+        black_cryv = to_cryv(black[None, None])[0, 0]
+
+        logpolar_cryv = to_cryv(logpolar)
+        # show_cryv(logpolar_cryv, name="logpolar_cryv")
+
+        for i, points in enumerate(corner_positions):
+            y = 25 + 50 * i
+            for x in points:
+                surrounding = logpolar[
+                    y - surrounding_width : y + surrounding_width,
+                    x - surrounding_width : x + surrounding_width,
+                ]
+                surrounding_cryv = logpolar_cryv[
+                    y - surrounding_width : y + surrounding_width,
+                    x - surrounding_width : x + surrounding_width,
+                ]
+                # Find partial fields in surrounding area
+                top_left = surrounding_cryv[:intrude, :intrude]
+                top_right = surrounding_cryv[:intrude, -intrude:]
+                bottom_left = surrounding_cryv[-intrude:, :intrude]
+                bottom_right = surrounding_cryv[-intrude:, -intrude:]
+                # Extract mean colors from fields
+                color_top_left = top_left.mean(axis=0).mean(axis=0)
+                color_top_right = top_right.mean(axis=0).mean(axis=0)
+                color_bottom_left = bottom_left.mean(axis=0).mean(axis=0)
+                color_bottom_right = bottom_right.mean(axis=0).mean(axis=0)
+                # Determine field colors
+                top_left_black = is_black(color_top_left, black_cryv) < color_threshold
+                top_left_white = is_white(color_top_left, white_cryv) < color_threshold
+                top_left_color = is_color(color_top_left) < color_threshold
+                top_right_black = (
+                    is_black(color_top_right, black_cryv) < color_threshold
+                )
+                top_right_white = (
+                    is_white(color_top_right, white_cryv) < color_threshold
+                )
+                top_right_color = is_color(color_top_right) < color_threshold
+                bottom_left_black = (
+                    is_black(color_bottom_left, black_cryv) < color_threshold
+                )
+                bottom_left_white = (
+                    is_white(color_bottom_left, white_cryv) < color_threshold
+                )
+                bottom_left_color = is_color(color_bottom_left) < color_threshold
+                bottom_right_black = (
+                    is_black(color_bottom_right, black_cryv) < color_threshold
+                )
+                bottom_right_white = (
+                    is_white(color_bottom_right, white_cryv) < color_threshold
+                )
+                bottom_right_color = is_color(color_bottom_right) < color_threshold
+
+                # --------------------- #
+                # DEBUGGING
+                # print()
+                # print("top_left:", f"black: {is_black(color_top_left, black_cryv)}", f"white: {is_white(color_top_left, white_cryv)}", f"color: {is_color(color_top_left)}", sep="\n\t")  # fmt: skip
+                # print("top_right:", f"black: {is_black(color_top_right, black_cryv)}", f"white: {is_white(color_top_right, white_cryv)}", f"color: {is_color(color_top_right)}", sep="\n\t")  # fmt: skip
+                # print("bottom_left:", f"black: {is_black(color_bottom_left, black_cryv)}", f"white: {is_white(color_bottom_left, white_cryv)}", f"color: {is_color(color_bottom_left)}", sep="\n\t")  # fmt: skip
+                # print("bottom_right:", f"black: {is_black(color_bottom_right, black_cryv)}", f"white: {is_white(color_bottom_right, white_cryv)}", f"color: {is_color(color_bottom_right)}", sep="\n\t")  # fmt: skip
+                # show_cryv(
+                #     cv2.resize(
+                #         surrounding_cryv,
+                #         (
+                #             surrounding_cryv.shape[1] * 4,
+                #             surrounding_cryv.shape[0] * 4,
+                #         ),
+                #         interpolation=cv2.INTER_NEAREST,
+                #     ),
+                #     name="surrounding_cryv",
+                # )
+                # in-depth debugging
+                # show_imgs(surrounding=surrounding, block=False)
+                # show_imgs()
+
+                left_color = top_left_color and bottom_left_color
+                right_color = top_right_color and bottom_right_color
+
+                if top_left_black and bottom_left_white and right_color:
+                    surrounding_normalized = surrounding
+                    inner_ring_a.append((y, x, surrounding_normalized))
+
+                if top_left_white and bottom_left_black and right_color:
+                    surrounding_normalized = surrounding[::-1]  # flip vertical
+                    inner_ring_b.append((y, x, surrounding_normalized))
+
+                if top_right_black and bottom_right_white and left_color:
+                    surrounding_normalized = surrounding[:, ::-1]  # flip horizontal
+                    outer_ring_a.append((y, x, surrounding_normalized))
+
+                if top_right_white and bottom_right_black and left_color:
+                    surrounding_normalized = surrounding[::-1, ::-1]  # flip both
+                    outer_ring_b.append((y, x, surrounding_normalized))
+
+        # -----------------------------
+        # Get common surrounding
+        surroundings = (
+            [x[2] for x in inner_ring_a]
+            + [x[2] for x in inner_ring_b]
+            + [x[2] for x in outer_ring_a]
+            + [x[2] for x in outer_ring_b]
+        )
+        global combined_img
+        if len(outer_ring_a + outer_ring_b) < 2:
+            print(
+                "ERROR: Not enough valid orientation points found (possibly too many outliers)."
+            )
+            if combined_img:
+                logpolar[corners != 0] = 255
+                combined_img.append(("FAILED: Not enough orientation points", logpolar))
+            return None
+        if len(surroundings) == 0:
+            print("ERROR: No valid surroundings found.")
+            if combined_img:
+                logpolar[corners != 0] = 255
+                combined_img.append(
+                    ("FAILED: no orientation point surroundings found", logpolar)
+                )
+            return None
+        mean_surrounding = np.median(surroundings, axis=0).astype(np.uint8)
+        if show:
+            show_imgs(mean_surrounding=mean_surrounding, block=False)
+
+        # -----------------------------
+        # Classify surroundings
         prepare_show_img = show or combined_img
         if prepare_show_img:
             logpolar_ = logpolar.copy()
@@ -1355,28 +1509,22 @@ class Orientation:
             print("ERROR: Too few orientation points!")
             return None
 
-        if show:
-            show_imgs(positions=logpolar_, block=False)
-        if combined_img:
-            combined_img.append(("Logpolar Orientation Points", logpolar_))
+        if show or combined_img:
+            surrounding_preview = cv2.resize(
+                mean_surrounding,
+                (mean_surrounding.shape[1] * 3, mean_surrounding.shape[0] * 3),
+                interpolation=cv2.INTER_NEAREST,
+            )
+            logpolar_[
+                : surrounding_preview.shape[0], -surrounding_preview.shape[1] :
+            ] = surrounding_preview
+            if show:
+                show_imgs(positions=logpolar_, block=False)
+            if combined_img:
+                combined_img.append(("Logpolar Orientation Points", logpolar_))
 
         # -----------------------------
         # Sort keeps into bins
-        def y_to_angle_bin(
-            keeps: list[tuple[int, int, str]]
-        ) -> list[list[tuple[int, str]]]:
-            out = [[] for _ in range(10)]
-            for y, x, position in keeps:
-                i = (y - 25) // 50
-
-                # If we are in the left half, we invert x,
-                # indicating that we move backwards from the center
-                if i >= 10:
-                    x *= -1
-                    i %= 10
-                out[i].append((x, position))
-            return out
-
         positions: list[list[tuple[int, str]]] = y_to_angle_bin(keeps)
         # Resolve logpolar bins to real bins
         # Logpolar distortion starts at 3 o'clock while we start rotation at 12
@@ -1384,6 +1532,11 @@ class Orientation:
         for i in range(5):
             positions[i] = [(-p[0], p[1]) for p in positions[i]]
 
+        # -----------------------------
+        # Re-Scale positions
+        if width_scaling > 1:
+            for i, pos_bin in enumerate(positions):
+                positions[i] = [(int(p[0] / width_scaling), p[1]) for p in pos_bin]
         return positions  # (x, inner/outer)
 
     def structure_orientation_candidates(
@@ -3288,7 +3441,6 @@ class Unused:
 
             draw_polar_line(img, line_rho, line_theta, intensity=line_length)
 
-            # TODO: soft binning
             # angle_bins[bin_idx - 2] += line_length * min_dist * abs((target_angle - angle) / angle_step)  # deadzone, falloff
             angle_bins[bin_idx - 1] += line_length * min_dist
 
