@@ -42,6 +42,40 @@ img_paths = [
     # "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
 ]
 
+# Generated images
+img_paths_gen = [
+    os.path.join("data/generation/out", i, "render.png")
+    for i in sorted(os.listdir("data/generation/out"), key=lambda x: int(x))
+]
+# img_paths = img_paths[46:]
+
+# Paper images
+img_paths_paper = [
+    os.path.join("data/paper/imgs", d, f)
+    for d in os.listdir("data/paper/imgs")
+    for f in os.listdir(os.path.join("data/paper/imgs", d))
+]
+np.random.shuffle(img_paths_paper)
+img_paths_paper = img_paths_paper[:200]
+
+# Own References
+img_paths_jess = [
+    os.path.join("data/darts_references/jess", f)
+    for f in os.listdir("data/darts_references/jess")
+]
+
+
+img_paths = (
+    []
+    # add paths
+    + img_paths_gen
+    + img_paths_paper
+    + img_paths_jess
+)
+np.random.shuffle(img_paths)
+
+img_paths[0] = "data/darts_references/jess/106_14-8-2.jpg"
+
 
 class Utils:
 
