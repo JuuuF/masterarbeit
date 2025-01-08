@@ -12,7 +12,11 @@ from ma_darts.cv.utils import (
     apply_matrix,
 )
 
-img_paths = [
+create_debug_img = True
+debug_out_images = None
+# debug_out_images = []
+
+img_paths_custom = [
     "dump/thomas.png",
     "data/darts_references/jess/001_0-0-1.jpg",
     "data/darts_references/jess/018_1-DB-DB.jpg",
@@ -63,7 +67,6 @@ img_paths_jess = [
     os.path.join("data/darts_references/jess", f)
     for f in os.listdir("data/darts_references/jess")
 ]
-
 
 img_paths = (
     []
@@ -185,14 +188,15 @@ class Utils:
 
         return y, x
 
-    def create_combined_img(
-        imgs,
+    def show_debug_img(
         target_w: int = 1440,
         target_h: int = 2560 - 125,
         failed: bool = False,
     ):
-        if imgs is None:
+        if not create_debug_img:
             return
+        global debug_out_images
+        imgs = debug_out_images.copy()
 
         failed = failed or any(["fail" in l.lower() for l, _ in imgs])
 
@@ -276,7 +280,14 @@ class Utils:
             y0 = row * cell_h
             y1 = y0 + cell_h
             res[y0:y1, x0:x1] = img
-        return res
+
+        show_imgs(**{"Debug Output": res})
+
+    def append_debug_img(img: np.ndarray, name: str = "<no name>") -> None:
+        if not create_debug_img:
+            return
+        global debug_out_images
+        debug_out_images.append((name, img))
 
 
 class Edges:
@@ -311,9 +322,7 @@ class Edges:
         if show:
             show_imgs(edges=edges, block=False)
 
-        global combined_img
-        if combined_img:
-            combined_img.append(("Edge Detection", edges))
+        Utils.append_debug_img(edges, "Edge Detection")
         return edges
 
     def skeleton(img: np.ndarray, show: bool = False) -> np.ndarray:
@@ -332,9 +341,7 @@ class Edges:
 
         if show:
             show_imgs(skeleton=skeleton, block=False)
-        global combined_img
-        if combined_img:
-            combined_img.append(("Skeletonized Edges", skeleton))
+        Utils.append_debug_img(skeleton, "Skeletonized Edges")
         return skeleton
 
 
@@ -392,8 +399,7 @@ class Lines:
         )
         lines = list(lines)
 
-        global combined_img
-        if show or combined_img:
+        if show or create_debug_img:
             if len(img.shape) == 2:
                 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
             line_img = np.zeros_like(img)
@@ -414,8 +420,7 @@ class Lines:
             out = cv2.addWeighted(img, 0.25, line_img, 1, 1.0)
             if show:
                 show_imgs(lines=out, block=False)
-            if combined_img:
-                combined_img.append(("Found Lines", out))
+            Utils.append_debug_img(out, "Found Lines")
 
         return lines  # (p1, p2, length, rho, theta)
 
@@ -467,15 +472,13 @@ class Lines:
         cy = round(np.mean(cy))
         cx = round(np.mean(cx))
 
-        global combined_img
-        if show or combined_img:
+        if show or create_debug_img:
             acc = np.uint8(np.float32(acc) / acc.max() * 255)
             acc = cv2.cvtColor(acc, cv2.COLOR_GRAY2BGR)
             cv2.circle(acc, (cx, cy), 10, (255, 0, 0), lineType=cv2.LINE_AA)
             if show:
                 show_imgs(center_point=acc, block=False)
-            if combined_img:
-                combined_img.append(("Center Point", acc))
+            Utils.append_debug_img(acc, "Center Point")
         return cy, cx
 
     def filter_lines_by_center_dist(
@@ -597,8 +600,7 @@ class Lines:
 
             # TODO: interpolate peak_thetas and peak_values for added values
 
-        global combined_img
-        if show or combined_img:
+        if show or create_debug_img:
             res = img // 8
             for line in lines:
                 cv2.line(
@@ -636,8 +638,7 @@ class Lines:
             #         )
             if show:
                 show_imgs(field_separating_lines=res, block=False)
-            if combined_img:
-                combined_img.append(("Field-Separating Lines", res))
+            Utils.append_debug_img(res, "Field-Separating Lines")
 
         thetas = sorted(peak_thetas)
         return thetas
@@ -744,15 +745,13 @@ class Orientation:
             # print(theta, theta_)
             out_lines.append((rho_, theta_))
 
-        global combined_img
-        if show or combined_img:
+        if show or create_debug_img:
             out = img.copy()
             for rho, theta in out_lines:
                 draw_polar_line(out, rho, theta)
             if show:
                 show_imgs(lines_aligned=out, block=False)
-            if combined_img:
-                combined_img.append(("Aligned Angles", out))
+            Utils.append_debug_img(out, "Aligned Angles")
         return out_lines
 
     def center_point_from_lines(
@@ -960,14 +959,12 @@ class Orientation:
 
         M = np.mean(transformation_matrices, axis=0)
 
-        global combined_img
-        if show or combined_img:
+        if show or create_debug_img:
             global img
             res = apply_matrix(img, M, True)
             if show:
                 show_imgs(img_undistort=res, block=False)
-            if combined_img:
-                combined_img.append(("Undistorted Angles", res))
+            Utils.append_debug_img(res, "Undistorted Angles")
 
         return M
 
@@ -1433,21 +1430,22 @@ class Orientation:
             + [x[2] for x in outer_ring_a]
             + [x[2] for x in outer_ring_b]
         )
-        global combined_img
         if len(outer_ring_a + outer_ring_b) < 2:
             print(
                 "ERROR: Not enough valid orientation points found (possibly too many outliers)."
             )
-            if combined_img:
+            if create_debug_img:
                 logpolar[corners != 0] = 255
-                combined_img.append(("FAILED: Not enough orientation points", logpolar))
+                Utils.append_debug_img(
+                    logpolar, "FAILED: Not enough orientation points found."
+                )
             return None
         if len(surroundings) == 0:
             print("ERROR: No valid surroundings found.")
-            if combined_img:
+            if create_debug_img:
                 logpolar[corners != 0] = 255
-                combined_img.append(
-                    ("FAILED: no orientation point surroundings found", logpolar)
+                Utils.append_debug_img(
+                    logpolar, "FAILED: No orientation point surroundings found."
                 )
             return None
         mean_surrounding = np.median(surroundings, axis=0).astype(np.uint8)
@@ -1456,7 +1454,7 @@ class Orientation:
 
         # -----------------------------
         # Classify surroundings
-        prepare_show_img = show or combined_img
+        prepare_show_img = show or create_debug_img
         if prepare_show_img:
             logpolar_ = logpolar.copy()
 
@@ -1543,7 +1541,7 @@ class Orientation:
             print("ERROR: Too few orientation points!")
             return None
 
-        if show or combined_img:
+        if prepare_show_img:
             surrounding_preview = cv2.resize(
                 mean_surrounding,
                 (mean_surrounding.shape[1] * 3, mean_surrounding.shape[0] * 3),
@@ -1554,8 +1552,7 @@ class Orientation:
             ] = surrounding_preview
             if show:
                 show_imgs(positions=logpolar_, block=False)
-            if combined_img:
-                combined_img.append(("Logpolar Orientation Points", logpolar_))
+            Utils.append_debug_img(logpolar_, "Logpolar Orientation Points")
 
         # -----------------------------
         # Sort keeps into bins
@@ -1645,7 +1642,7 @@ class Orientation:
         src = []
         dst = []
 
-        prepare_show_img = show or combined_img
+        prepare_show_img = show or create_debug_img
         if prepare_show_img:
             img = img_undistort.copy()
 
@@ -1703,8 +1700,7 @@ class Orientation:
                 cv2.line(img, p, p2, color=(127, 127, 127))
         if show:
             show_imgs(projection_mapping=img, block=False)
-        if combined_img:
-            combined_img.append(("Orientation Point Projections", img))
+        Utils.append_debug_img(img, "Orientation Point Projections")
 
         return src, dst  # (x, y), (x, y)
 
@@ -1763,8 +1759,6 @@ if __name__ == "__main__":
 
     # img_paths.reverse()
     for f in img_paths:
-        combined_img = None
-        combined_img = []
 
         from time import time
 
@@ -1780,8 +1774,7 @@ if __name__ == "__main__":
         img = Utils.downsample_img(img_full)
 
         # show_imgs(input=img, block=False)
-        if combined_img is not None:
-            combined_img.append((f"Input: {f}", img))
+        Utils.append_debug_img(img, f"Input: {f}")
 
         # -----------------------------
         # EDGES
@@ -1813,9 +1806,8 @@ if __name__ == "__main__":
         )
         if len(thetas) != 10:
             print("ERROR: Could not find all lines!")
-            if combined_img:
-                combined_img = Utils.create_combined_img(combined_img, failed=True)
-                show_imgs(combined_img)
+            if create_debug_img:
+                Utils.show_debug_img(failed=True)
             continue
 
         # -----------------------------
@@ -1834,18 +1826,18 @@ if __name__ == "__main__":
 
         # Undistort image
         img_undistort = apply_matrix(img, M_undistort)
-
         cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
 
+        # Find possible orientation points
         orientation_point_candidates = Orientation.find_orientation_points(
             img_undistort, int(cy_undistort), int(cx_undistort), show=False
         )
         if orientation_point_candidates is None:
-            if combined_img:
-                combined_img = Utils.create_combined_img(combined_img, failed=True)
-                show_imgs(combined_img)
+            if create_debug_img:
+                Utils.show_debug_img(failed=True)
             continue
 
+        # Filter out bad orientation points
         src_pts, dst_pts = Orientation.structure_orientation_candidates(
             orientation_point_candidates,
             int(cy_undistort),
@@ -1868,10 +1860,8 @@ if __name__ == "__main__":
         res = apply_matrix(img_full, M_full, adapt_frame=True)
         # show_imgs(aligned=res, block=False)
 
-        if combined_img:
-            combined_img.append(("Aligned Image", res))
-            combined_img = Utils.create_combined_img(combined_img)
-            show_imgs(combined_img)
+        Utils.append_debug_img(res, "Aligned Image")
+        Utils.show_debug_img()
 
 
 # -------------------------------------------------------------------------------------------------
