@@ -13,8 +13,7 @@ from ma_darts.cv.utils import (
 )
 
 create_debug_img = True
-debug_out_images = None
-# debug_out_images = []
+debug_out_images = []
 
 img_paths_custom = [
     "dump/thomas.png",
@@ -192,7 +191,7 @@ class Utils:
         target_w: int = 1440,
         target_h: int = 2560 - 125,
         failed: bool = False,
-    ):
+    ) -> None:
         if not create_debug_img:
             return
         global debug_out_images
@@ -289,6 +288,9 @@ class Utils:
         global debug_out_images
         debug_out_images.append((name, img))
 
+    def clear_debug_img() -> None:
+        global debug_out_images
+        debug_out_images = []
 
 class Edges:
 
@@ -1258,7 +1260,7 @@ class Orientation:
 
         # -----------------------------
         # Stretch logpolar image to ensure the multiplier fields are big enough
-        width_scaling = max(1, 25 / center_size)
+        width_scaling = max(1, 25 / center_size) if center_size > 1 else 1
         if width_scaling > 1:
             img_resized = cv2.resize(
                 img,
@@ -1723,9 +1725,9 @@ class Orientation:
         dst_pts = np.float32(dst_pts)
         src_center = [cx, cy]
         dst_center = [400, 400]
-        ransac_amount = max(4, int(ransac_percent * len(src_pts)))
+        n_ransac_points = max(4, int(ransac_percent * len(src_pts)))
         for i in range(n_tries):
-            try_indices = np.random.permutation(len(src_pts))[:ransac_amount]
+            try_indices = np.random.permutation(len(src_pts))[:n_ransac_points]
             try_src = src_pts[try_indices]
             try_dst = dst_pts[try_indices]
             M, _ = cv2.findHomography(
@@ -1845,6 +1847,7 @@ if __name__ == "__main__":
             show=False,
         )
 
+        # Convert orientation points to transformation matrix
         M_align = Orientation.get_alignment_matrix(
             src_pts, dst_pts, int(cy_undistort), int(cx_undistort)
         )
@@ -1857,11 +1860,14 @@ if __name__ == "__main__":
         M_full = M_undistort @ M_full  # undistort
         M_full = M_align @ M_full  # align to correct scale and orientation
 
-        res = apply_matrix(img_full, M_full, adapt_frame=True)
-        # show_imgs(aligned=res, block=False)
+        res = apply_matrix(img_full, M_full)
+        res = res[:800, :800]
+        cv2.circle(res, (400, 400), 10, (255, 255, 255), 2)
+        cv2.circle(res, (400, 400), 3, (255, 0, 0), -1)
 
         Utils.append_debug_img(res, "Aligned Image")
         Utils.show_debug_img()
+        Utils.clear_debug_img()
 
 
 # -------------------------------------------------------------------------------------------------
