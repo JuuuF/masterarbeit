@@ -198,6 +198,11 @@ class LinAlg:
 
 
 class MaskActions:
+    def load_mask(filepath: str) -> np.ndarray:
+        img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+        _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+        return img
+
     def get_lines_from_point_masks(
         img: np.ndarray,  # (y, x)
     ) -> tuple[tuple[float, float], tuple[float, float]]:
@@ -278,10 +283,6 @@ class MaskActions:
         return centers
 
     def calculate_darts_iou(sample_info: pd.Series):
-        def load_mask(filepath: str) -> np.ndarray:
-            img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
-            _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
-            return img
 
         def unite(*imgs: list[np.ndarray]) -> np.ndarray:
             union = imgs[0]
@@ -290,7 +291,7 @@ class MaskActions:
             return union
 
         darts_masks = [
-            load_mask(
+            MaskActions.load_mask(
                 sample_info["out_file_template"].format(filename=f"mask_Dart_{i}.png")
             )
             for i in range(1, 4)
@@ -304,6 +305,25 @@ class MaskActions:
         intersections = unite(intersections)
         iou = np.count_nonzero(intersections) / np.count_nonzero(union)
         return iou
+
+    def count_covered_tips(sample_info: pd.Series) -> int:
+        total_intersections = 0
+        tips = MaskActions.load_mask(
+            sample_info["out_file_template"].format(filename="mask_Intersections.png")
+        )
+
+        for i in range(1, 4):
+            dart_mask = MaskActions.load_mask(
+                sample_info["out_file_template"].format(filename=f"mask_Dart_{i}.png")
+            )
+            intersection = np.logical_and(tips, dart_mask)
+
+            # Contours = dart cover count, but darts cover their own tips (0-1 contours expected)
+            contours, _ = cv2.findContours(np.uint8(intersection) * 255, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if (n_intersections := len(contours)) > 1:
+                total_intersections += n_intersections - 1
+
+        return total_intersections
 
 
 def prepare_sample(sample_info: pd.Series):
@@ -339,6 +359,10 @@ def prepare_sample(sample_info: pd.Series):
     # Calculate Darts IoU
     dart_iou = MaskActions.calculate_darts_iou(sample_info)
     sample_info["dart_iou"] = dart_iou
+
+    # Check if dart tip is covered
+    amuont_tips_covered = MaskActions.count_covered_tips(sample_info)
+    sample_info["dart_tips_covered"] = amuont_tips_covered
 
     # Add Training Data utils
     cy, cx = extract_center(img)
