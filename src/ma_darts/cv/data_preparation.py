@@ -9,7 +9,8 @@ from tqdm import tqdm
 from scipy.ndimage import label, center_of_mass
 
 from ma_darts.cv.cv import extract_center
-from ma_darts.cv.utils import draw_polar_line
+from ma_darts.cv.utils import draw_polar_line, show_imgs
+
 
 class ImageUtils:
 
@@ -69,75 +70,33 @@ class ImageUtils:
     def undistort(
         sample_info: pd.Series,
         img: np.ndarray,  # (y, x, 3)
-        ellipse: tuple[tuple[int, int], tuple[int, int], float],
-        line_h: tuple[float, float],
-        line_v: tuple[float, float],
-    ) -> tuple[pd.Series, np.ndarray]:  # (800, 800, 3)
+        orientation_points: tuple[float, float, float, float],  # (t, r, b, l)
+    ) -> tuple[np.ndarray, np.ndarray]:  # (800, 800, 3), (3, 3)
 
         # Data as used in the paper
         dst_size = 800
         margin = 100
 
-        def get_src_pts(
-            ellipse: tuple[tuple[int, int], tuple[int, int], float],
-            line_h: tuple[float, float],
-            line_v: tuple[float, float],
-        ) -> np.ndarray:  # (5, 2): top, left, bottom, right, center
-            (ellipse_cx, ellipse_cy), (ellipse_w, ellipse_h), ellipse_theta = ellipse
-
-            # Draw outer board ellipse
-            img_ellipse = np.zeros(img.shape[:2], np.uint8)
-            cv2.ellipse(
-                img_ellipse,
-                (round(ellipse_cx), round(ellipse_cy)),
-                (round(ellipse_w / 2), round(ellipse_h / 2)),
-                ellipse_theta,
-                0,
-                360,
-                color=255,
-                thickness=2,
-            )
-
-            # Horizontal points intersection
-            img_line_h = draw_polar_line(
-                np.zeros_like(img_ellipse), *line_h, thickness=2
-            )
-            h_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_h)
-            right, left = ImageUtils.points_from_intersection(h_intersections)
-
-            # Vertical points intersection
-            img_line_v = draw_polar_line(
-                np.zeros_like(img_ellipse), *line_v, thickness=2
-            )
-            v_intersections = ImageUtils.intersect_imgs(img_ellipse, img_line_v)
-            top, bot = ImageUtils.points_from_intersection(v_intersections)
-
-            # Center point
-            c_intersection = ImageUtils.intersect_imgs(img_line_h, img_line_v)
-            center = np.mean(np.nonzero(c_intersection), axis=1)
-
-            return np.array([top, left, bot, right, center], np.float32)
-
-        def get_dst_points() -> np.ndarray:  # (5, 2): top, left, bottom, right, center
+        def get_dst_points() -> np.ndarray:  # (5, 2): top, right, bottom, left, center
             c = dst_size / 2
             dst_pts = []
 
+            r = dst_size // 2 - margin
             for angle in range(4):
-                angle *= 90
-                angle += 360 / 40  # shift by half a field
-                px = c - (c - margin) * np.sin(np.deg2rad(angle))
-                py = c - (c - margin) * np.cos(np.deg2rad(angle))
+                t = np.deg2rad(angle * 90 - 9)
+                px = c + r * np.sin(t)
+                py = c - r * np.cos(t)
                 dst_pts.append((py, px))
 
-            dst_pts.append((c, c))
+            # dst_pts.append((c, c))
 
-            return np.array(dst_pts, np.float32)  # t, l, b, r, c
+            return np.array(dst_pts, np.float32)  # (4, 2): t, r, b, l, c
 
         def transform_image(
             img: np.ndarray,  # (y, x, 3)
             src_pts: np.ndarray,  # (5, 2)
             dst_pts: np.ndarray,  # (5, 2)
-        ) -> np.ndarray:  # (800, 800, 3)
+        ) -> tuple[np.ndarray, np.ndarray]:  # (800, 800, 3), (3, 3)
             # we need to switch the element order from y, x to x, y because cv2 is special
             src_pts = src_pts[:, ::-1]
             dst_pts = dst_pts[:, ::-1]
@@ -145,17 +104,19 @@ class ImageUtils:
             H, _ = cv2.findHomography(src_pts, dst_pts)
             img = cv2.warpPerspective(img, H, (dst_size, dst_size))
 
-            sample_info["undistortion_homography"] = H
-
-            return img
+            return img, H
 
         # Get points
-        src_pts = get_src_pts(ellipse, line_h, line_v)
+        src_pts = np.array(
+            orientation_points,
+        )
         dst_pts = get_dst_points()
 
-        img_undistorted = transform_image(img, src_pts, dst_pts)
+        img_undistorted, undistortion_homography = transform_image(
+            img, src_pts, dst_pts
+        )
 
-        return sample_info, img_undistorted
+        return img_undistorted, undistortion_homography
 
 
 class LinAlg:
@@ -205,7 +166,9 @@ class MaskActions:
 
     def get_lines_from_point_masks(
         img: np.ndarray,  # (y, x)
-    ) -> tuple[tuple[float, float], tuple[float, float]]:
+    ) -> tuple[
+        tuple[float, float], tuple[float, float], tuple[float, float, float, float]
+    ]:
 
         def get_moment_center(
             M: dict,
@@ -236,7 +199,7 @@ class MaskActions:
         line_v = LinAlg.get_line_eq(top, bot)
         line_h = LinAlg.get_line_eq(rgt, lft)
 
-        return line_v, line_h
+        return line_v, line_h, (top, rgt, bot, lft)
 
     def get_ellipse_from_mask(
         img: np.ndarray,  # (y, x)
@@ -319,25 +282,32 @@ class MaskActions:
             intersection = np.logical_and(tips, dart_mask)
 
             # Contours = dart cover count, but darts cover their own tips (0-1 contours expected)
-            contours, _ = cv2.findContours(np.uint8(intersection) * 255, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(
+                np.uint8(intersection) * 255, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
             if (n_intersections := len(contours)) > 1:
                 total_intersections += n_intersections - 1
 
         return total_intersections
 
 
-def prepare_sample(sample_info: pd.Series):
+def prepare_sample(sample_info: pd.Series, debug: bool = False):
 
     # Load sample images
     img_dir = os.path.join(sample_info["OUT_DIR"], str(sample_info.sample_id))
     img, img_orient, img_area, img_intersections = ImageUtils.load_sample_imgs(img_dir)
 
     # Extract orientation lines
-    line_v, line_h = MaskActions.get_lines_from_point_masks(img_orient)
+    line_v, line_h, orientation_points = MaskActions.get_lines_from_point_masks(
+        img_orient
+    )
     sample_info["h_line_r"] = line_h[0] / img.shape[1]
     sample_info["h_line_theta"] = line_h[1]
     sample_info["v_line_r"] = line_v[0] / img.shape[0]
     sample_info["v_line_theta"] = line_v[1]
+    sample_info["orientation_points"] = tuple(
+        (round(o[0]), round(o[1])) for o in orientation_points
+    )  # (t, r, b, l)
 
     # Extract ellipse
     ellipse = MaskActions.get_ellipse_from_mask(img_area)
@@ -348,9 +318,10 @@ def prepare_sample(sample_info: pd.Series):
     sample_info["ellipse_theta"] = ellipse[2]
 
     # Undistort image
-    sample_info, img_undist = ImageUtils.undistort(
-        sample_info, img, ellipse, line_h, line_v
+    img_undist, undistortion_homography = ImageUtils.undistort(
+        sample_info, img, orientation_points
     )
+    sample_info["undistortion_homography"] = undistortion_homography
 
     # Extract dart positions
     dart_positions = MaskActions.get_dart_positions(sample_info, img_intersections)
@@ -374,7 +345,8 @@ def prepare_sample(sample_info: pd.Series):
     cv2.imwrite(os.path.join(img_dir, "undistort.png"), img_undist)
     with open(os.path.join(img_dir, "info.pkl"), "wb") as f:
         pickle.dump(sample_info, f)
-    return sample_info
+    if not debug:
+        return sample_info
 
     # -------------------------------------------
     # DEBUG CODE
@@ -404,10 +376,8 @@ def prepare_sample(sample_info: pd.Series):
         img_undist, (400, 400), radius=300, color=(255, 0, 0), lineType=cv2.LINE_AA
     )
 
-    cv2.imshow("original", img)
-    cv2.imshow("undistorted", img_undist)
-    if cv2.waitKey() == ord("q"):
-        exit()
+    show_imgs(original=img, undistorted=img_undist)
+    return sample_info
 
 
 if __name__ == "__main__":
