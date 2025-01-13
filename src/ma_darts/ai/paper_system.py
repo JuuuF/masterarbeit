@@ -9,7 +9,6 @@ REPO_PATH = "data/paper/deep-darts-master/"
 MODELS_PATH = "data/paper/models/"
 DATA_PATH = os.path.join(REPO_PATH, "dataset", "cropped_images", "800")
 
-
 def load_model(config="deepdarts_d1"):
 
     # Prepare config
@@ -23,7 +22,7 @@ def load_model(config="deepdarts_d1"):
     from yolov4.tf import YOLOv4
 
     yolo = YOLOv4(tiny=True)  # cfg.model.tiny = True
-    yolo.classes = os.path.join(REPO_PATH, "classes")
+    yolo.classes = os.path.join(REPO_PATH, "classes")  # {0: 'dart', 1: 'cal1', 2: 'cal2', 3: 'cal3', 4: 'cal4'}
     yolo.input_size = (cfg.model.input_size, cfg.model.input_size)  # (800, 800)
     yolo.batch_size = cfg.train.batch_size  # 4 / 16
 
@@ -82,7 +81,7 @@ def predict(model, img_paths: list = None):
             xys[i, : _xy.shape[0], 2] = 1
         xys = xys.astype(np.float32)  # (n, 7, 3)
     else:
-        xys = np.zeros((len(img_paths), 7, 3), np.float32)
+        xys = np.zeros((len(img_paths), 7, 3), np.float32)  # targets are zero for new images
 
     # Predict images
     preds = np.zeros((len(img_paths), 4 + 3, 3))
@@ -97,11 +96,12 @@ def predict(model, img_paths: list = None):
 
         # Predict
         bboxes = model.predict(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        preds[i] = bboxes_to_xy(bboxes)
+        preds[i] = bboxes_to_xy(bboxes)  # (7, 3): 4x orientation + 3x dart, [x, y, visibile]
 
-    fps = (len(img_paths) - 1) / (time() - ti)
-    print(f"FPS: {fps:.2f}")
-    print("\n" * 10)
+    if i > 0:
+        fps = (len(img_paths) - 1) / (time() - ti)
+        print(f"FPS: {fps:.2f}")
+        print("\n" * 10)
 
     scores = []
     for i, (pred, gt, path) in enumerate(zip(preds, xys, img_paths)):
@@ -138,13 +138,13 @@ def predict(model, img_paths: list = None):
     print(f"Mean Absolute Score Error (MASE): {MASE:.2f}")
 
 
-model = load_model()
+yolo = load_model()
 img_paths = [
-    "dump/DSC_0307.JPG",
-    "dump/0022_.png",
-    "dump/0022.png",
+    "data/paper/imgs/d2_03_03_2020/DSC_0004.JPG",
+    "data/paper/imgs/d2_03_03_2020/DSC_0005.JPG",
+    "data/paper/imgs/d2_03_03_2020/DSC_0006.JPG",
 ]
 predict(
-    model,
+    yolo,
     # img_paths=img_paths,
 )

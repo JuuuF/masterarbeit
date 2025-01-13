@@ -147,6 +147,11 @@ def board_radii(r_d):
 
 
 def get_circle(xy):
+    """
+    Calculate board size and center based on orientation points
+    c = center position
+    r = board radius
+    """
     c = np.mean(xy[:4], axis=0)
     r = np.mean(np.linalg.norm(xy[:4] - c, axis=-1))
     return c, r
@@ -210,42 +215,56 @@ def get_dart_scores(xy, numeric=False):
     valid_cal_pts = xy[:4][(xy[:4, 0] > 0) & (xy[:4, 1] > 0)]
     if xy.shape[0] <= 4 or valid_cal_pts.shape[0] < 4:  # missing calibration point
         return []
+
+    # Undistort positions based on orientation points
     xy, _, _ = transform(xy.copy(), angle=0)
+
+    # Get board radii from orientation points
     c, r_d = get_circle(xy)
     r_t, r_ob, r_ib, w_dt = board_radii(r_d)
+
+    # Extract polar coordinates from positions
     xy -= c
     angles = np.arctan2(-xy[4:, 1], xy[4:, 0]) / np.pi * 180
     angles = [a + 360 if a < 0 else a for a in angles]  # map to 0-360
     distances = np.linalg.norm(xy[4:], axis=-1)
+
+    # Map scores to polar coordinates
     scores = []
     for angle, dist in zip(angles, distances):
         if dist > r_d:
             scores.append("0")
-        elif dist <= r_ib:
+            continue
+        if dist <= r_ib:
             scores.append("DB")
-        elif dist <= r_ob:
+            continue
+        if dist <= r_ob:
             scores.append("B")
-        else:
-            number = BOARD_DICT[int(angle / 18)]
-            if dist <= r_d and dist > r_d - w_dt:
-                scores.append("D" + number)
-            elif dist <= r_t and dist > r_t - w_dt:
-                scores.append("T" + number)
-            else:
-                scores.append(number)
+            continue
+
+        number = BOARD_DICT[int(angle / 18)]
+
+        if dist <= r_d and dist > r_d - w_dt:
+            scores.append("D" + number)
+            continue
+        if dist <= r_t and dist > r_t - w_dt:
+            scores.append("T" + number)
+            continue
+        scores.append(number)
+
     if numeric:
         for i, s in enumerate(scores):
             if "B" in s:
                 if "D" in s:
                     scores[i] = 50
-                else:
-                    scores[i] = 25
-            else:
-                if "D" in s or "T" in s:
-                    scores[i] = int(s[1:])
-                    scores[i] = scores[i] * 2 if "D" in s else scores[i] * 3
-                else:
-                    scores[i] = int(s)
+                    continue
+                scores[i] = 25
+                continue
+            if "D" in s or "T" in s:
+                scores[i] = int(s[1:])
+                scores[i] = scores[i] * 2 if "D" in s else scores[i] * 3
+                continue
+            scores[i] = int(s)
     return scores
 
 
