@@ -8,6 +8,7 @@ from rich import print as pprint
 
 from ma_darts.generation.rendering import render_image
 from ma_darts.cv.data_preparation import prepare_sample
+from ma_darts.cv.utils import show_imgs
 
 
 def check_sample(sample_info: pd.Series):
@@ -97,7 +98,7 @@ def check_sample(sample_info: pd.Series):
     while max(*img.shape) > 2000:
         img = cv2.pyrDown(img)
 
-    cv2.imshow("", img)
+    show_imgs(**{"Data Preparation Result": img}, block=False)
     cv2.waitKey(1)
     # while (k := cv2.waitKey()) not in [
     #     ord("q"),
@@ -133,7 +134,7 @@ def create_sample(
             print("\t", e)
             return
         except Exception as e:
-            print("Something went wrong:", e)
+            print("Something went wrong while rendering:", e)
             return
     else:
         # ID given and existing -> load sample
@@ -167,7 +168,7 @@ def create_sample(
             os.remove(sample_info_path)
         return
     except Exception as e:
-        print("Something went wrong:", e)
+        print("Something went wrong while extracting information:", e)
         if os.path.exists(sample_info_path):
             os.remove(sample_info_path)
         return
@@ -186,8 +187,8 @@ def create_sample(
 
 
 if __name__ == "__main__":
-    for i in range(2048):
+    for i in range(88, 2048):
         sample_info = None
         while sample_info is None:
             sample_info = create_sample(i)
-        # check_sample(sample_info)
+        check_sample(sample_info)
