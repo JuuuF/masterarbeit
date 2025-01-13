@@ -7,7 +7,7 @@ Blender_/
 *.png
 *.JPG
 *.svg
-data/generation/hdri/
+data/generation/hdri*/
 data/generation/textures/
 data/paper/
 data/generation/references/
