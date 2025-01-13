@@ -10,7 +10,7 @@ from ma_darts.generation.rendering import render_image
 from ma_darts.cv.data_preparation import prepare_sample
 from ma_darts.cv.utils import show_imgs
 
-OUT_DIR = "data/generation/out_val"
+OUT_DIR = "data/generation/out"
 
 
 def check_sample(sample_info: pd.Series):
@@ -189,6 +189,7 @@ def create_sample(
 
 
 if __name__ == "__main__":
+    print(f"Output directory:\n\t{OUT_DIR}")
     for i in range(16):
         sample_info = None
         while sample_info is None:
