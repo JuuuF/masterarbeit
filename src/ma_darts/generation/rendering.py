@@ -47,13 +47,13 @@ WARNINGS = []
 
 class SampleInfo:
 
-    def reset(id=None):
+    def reset(id: int, out_dir: str):
         # Clear everything
         for name, attr in SampleInfo.get_attributes().items():
             delattr(SampleInfo, name)
 
         # Set defaults
-        SampleInfo.OUT_DIR = "data/generation/out/"
+        SampleInfo.OUT_DIR = out_dir
         if id is None:
             # Get id automatically
             samples = [int(f) for f in os.listdir(SampleInfo.OUT_DIR) if f.isnumeric()]
@@ -981,11 +981,11 @@ class MaskRendering:
 # -------------------------------------------------------------------------------------------------
 
 
-def render_image(id=None):
+def render_image(id=None, out_dir: str = "data/generation/out"):
     init_project()
 
     # Reset sample info
-    SampleInfo.reset(id=id)
+    SampleInfo.reset(id=id, out_dir=out_dir)
 
     # Randomize Scene
     Utils.randomize_looks()

@@ -10,6 +10,8 @@ from ma_darts.generation.rendering import render_image
 from ma_darts.cv.data_preparation import prepare_sample
 from ma_darts.cv.utils import show_imgs
 
+OUT_DIR = "data/generation/out_val"
+
 
 def check_sample(sample_info: pd.Series):
     # Load images
@@ -117,7 +119,7 @@ def check_sample(sample_info: pd.Series):
 
 def create_sample(
     id: int = None,
-    sample_path=os.path.join("data/generation/out/{id}/"),
+    sample_path=os.path.join(OUT_DIR, "{id}"),
 ) -> pd.Series | None:
     print("-" * 120)
     print(f"Sample {id}".center(120))
@@ -128,7 +130,7 @@ def create_sample(
     if id is None or not os.path.exists(sample_info_path.format(id=id)):
         # No ID given or info not available -> render sample
         try:
-            sample_info = render_image(id=id)
+            sample_info = render_image(id=id, out_dir=OUT_DIR)
         except AssertionError as e:
             print("Error while rendering sample:")
             print("\t", e)
@@ -187,7 +189,7 @@ def create_sample(
 
 
 if __name__ == "__main__":
-    for i in range(88, 2048):
+    for i in range(16):
         sample_info = None
         while sample_info is None:
             sample_info = create_sample(i)
