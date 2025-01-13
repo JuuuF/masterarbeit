@@ -75,6 +75,7 @@ def train_loop(
             steps=None,
         )
 
+    model.stop_training = False
     try:
         callbacks.on_train_begin()
         for epoch in range(epochs):
@@ -105,6 +106,9 @@ def train_loop(
             callbacks.on_epoch_end(epoch, epoch_logs)
 
             clear_session()
+            if model.stop_training:
+                print("\nTraining stopped.")
+                break
 
     except KeyboardInterrupt:
         print("\nTraining interrupted.")
