@@ -68,7 +68,6 @@ class ImageUtils:
         return intersected
 
     def undistort(
-        sample_info: pd.Series,
         img: np.ndarray,  # (y, x, 3)
         orientation_points: tuple[float, float, float, float],  # (t, r, b, l)
     ) -> tuple[np.ndarray, np.ndarray]:  # (800, 800, 3), (3, 3)
@@ -318,14 +317,21 @@ def prepare_sample(sample_info: pd.Series, debug: bool = False):
     sample_info["ellipse_theta"] = ellipse[2]
 
     # Undistort image
-    img_undist, undistortion_homography = ImageUtils.undistort(
-        sample_info, img, orientation_points
-    )
+    img_undist, undistortion_homography = ImageUtils.undistort(img, orientation_points)
     sample_info["undistortion_homography"] = undistortion_homography
 
     # Extract dart positions
     dart_positions = MaskActions.get_dart_positions(sample_info, img_intersections)
     sample_info["dart_positions"] = dart_positions
+
+    # Extract undistorted dart positions
+    img_intersections_undist = cv2.warpPerspective(
+        img_intersections, undistortion_homography, img_undist.shape[:2][::-1]
+    )
+    dart_positions_undist = MaskActions.get_dart_positions(
+        sample_info, img_intersections_undist
+    )
+    sample_info["dart_positions_undistort"] = dart_positions_undist
 
     # Calculate Darts IoU
     dart_iou = MaskActions.calculate_darts_iou(sample_info)
@@ -381,12 +387,22 @@ def prepare_sample(sample_info: pd.Series, debug: bool = False):
 
 
 if __name__ == "__main__":
-    samples = [d for d in os.listdir("data/generation/out") if d.isnumeric()]
+    data_dir = "data/generation/out_val"
+    samples = [d for d in os.listdir(data_dir) if d.isnumeric()]
     samples = sorted(samples, key=int)
-    for id in tqdm(samples):
-        info_path = f"data/generation/out/{id}/info.pkl"
+
+    def process_sample(id):
+        info_path = os.path.join(data_dir, str(id), "info.pkl")
+        print(info_path)
         if not os.path.exists(info_path):
-            continue
+            print("non-existing")
+            return
         with open(info_path, "rb") as f:
             sample_info = pickle.load(f)
+        print(sample_info.keys())
         prepare_sample(sample_info)
+
+    from multiprocessing import Pool
+
+    with Pool(os.cpu_count()) as pool:
+        list(tqdm(pool.imap_unordered(process_sample, samples), total=len(samples)))
