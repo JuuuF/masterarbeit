@@ -55,4 +55,6 @@ workspaces/*
 *.egg-info
 
 # TensorFlow Models
+data/ai/
 *.keras
+*.weights.h5
