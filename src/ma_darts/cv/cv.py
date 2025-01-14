@@ -15,68 +15,71 @@ from ma_darts.cv.utils import (
 create_debug_img = True
 debug_out_images = []
 
-img_paths_custom = [
-    "dump/thomas.png",
-    "data/darts_references/jess/001_0-0-1.jpg",
-    "data/darts_references/jess/018_1-DB-DB.jpg",
-    "data/darts_references/jess/022_2-2-18.jpg",
-    "data/darts_references/jess/061_6-7-T4.jpg",
-    "data/darts_references/jess/084_10-6-4.jpg",
-    "data/darts_references/jess/129_19-2-6.jpg",
-    "dump/test/double.png",
-    # "data/generation/out/0/render.png",
-    # "data/generation/out/6/render.png",
-    # "data/generation/out/7/render.png",
-    # "data/generation/out/8/render.png",
-    # "dump/test/x_90.png",
-    # "dump/test/x_67_5.png",
-    # "dump/test/x_45.png",
-    # "dump/test/x_22_5.png",
-    # "dump/test/y_90.png",
-    # "dump/test/y_67_5.png",
-    # "dump/test/y_45.png",
-    # "dump/test/y_22_5.png",
-    "dump/test/0001.jpg",
-    # "dump/test/0002.jpg",
-    # "dump/test/0003.jpg",
-    # "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
-    "dump/test/test_img.png",
-    "dump/test/test.png",
-    # "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
-]
+if __name__ == "__main__":
+    img_paths_custom = [
+        "dump/thomas.png",
+        "data/darts_references/jess/001_0-0-1.jpg",
+        "data/darts_references/jess/018_1-DB-DB.jpg",
+        "data/darts_references/jess/022_2-2-18.jpg",
+        "data/darts_references/jess/061_6-7-T4.jpg",
+        "data/darts_references/jess/084_10-6-4.jpg",
+        "data/darts_references/jess/129_19-2-6.jpg",
+        "dump/test/double.png",
+        # "data/generation/out/0/render.png",
+        # "data/generation/out/6/render.png",
+        # "data/generation/out/7/render.png",
+        # "data/generation/out/8/render.png",
+        # "dump/test/x_90.png",
+        # "dump/test/x_67_5.png",
+        # "dump/test/x_45.png",
+        # "dump/test/x_22_5.png",
+        # "dump/test/y_90.png",
+        # "dump/test/y_67_5.png",
+        # "dump/test/y_45.png",
+        # "dump/test/y_22_5.png",
+        "dump/test/0001.jpg",
+        # "dump/test/0002.jpg",
+        # "dump/test/0003.jpg",
+        # "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
+        "dump/test/test_img.png",
+        "dump/test/test.png",
+        # "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
+        "/home/justin/Downloads/test2.jpg",
+        "/home/justin/Downloads/test.jpg",
+    ]
 
-# Generated images
-img_paths_gen = [
-    os.path.join("data/generation/out", i, "render.png")
-    for i in sorted(os.listdir("data/generation/out"), key=lambda x: int(x))
-]
-# img_paths = img_paths[46:]
+    # Generated images
+    img_paths_gen = [
+        os.path.join("data/generation/out", i, "render.png")
+        for i in sorted(os.listdir("data/generation/out"), key=lambda x: int(x))
+    ]
+    # img_paths = img_paths[46:]
 
-# Paper images
-img_paths_paper = [
-    os.path.join("data/paper/imgs", d, f)
-    for d in os.listdir("data/paper/imgs")
-    for f in os.listdir(os.path.join("data/paper/imgs", d))
-]
-np.random.shuffle(img_paths_paper)
-img_paths_paper = img_paths_paper[:200]
+    # Paper images
+    img_paths_paper = [
+        os.path.join("data/paper/imgs", d, f)
+        for d in os.listdir("data/paper/imgs")
+        for f in os.listdir(os.path.join("data/paper/imgs", d))
+    ]
+    np.random.shuffle(img_paths_paper)
+    img_paths_paper = img_paths_paper[:200]
 
-# Own References
-img_paths_jess = [
-    os.path.join("data/darts_references/jess", f)
-    for f in os.listdir("data/darts_references/jess")
-]
+    # Own References
+    img_paths_jess = [
+        os.path.join("data/darts_references/jess", f)
+        for f in os.listdir("data/darts_references/jess")
+    ]
 
-img_paths = (
-    []
-    # add paths
-    + img_paths_gen
-    + img_paths_paper
-    + img_paths_jess
-)
-np.random.shuffle(img_paths)
+    img_paths = (
+        []
+        # add paths
+        + img_paths_gen
+        + img_paths_paper
+        + img_paths_jess
+    )
+    np.random.shuffle(img_paths)
 
-img_paths[0] = "data/darts_references/jess/106_14-8-2.jpg"
+    img_paths[0] = "data/generation/out/75/render.png"
 
 
 class Utils:
@@ -188,8 +191,8 @@ class Utils:
         return y, x
 
     def show_debug_img(
-        target_w: int = 1440,
-        target_h: int = 2560 - 125,
+        target_w: int = 2560,
+        target_h: int = 1080 - 125,
         failed: bool = False,
     ) -> None:
         if not create_debug_img:
