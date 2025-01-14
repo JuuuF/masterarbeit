@@ -34,7 +34,7 @@ class ImageUtils:
             cv2.IMREAD_GRAYSCALE,
         )
         if any(i is None for i in [img, img_orient, img_area, img_intersections]):
-            raise AssertionError("Images at {img_dir} could not be read.")
+            raise AssertionError(f"Images at {img_dir} could not be read.")
         return img, img_orient, img_area, img_intersections
 
     def points_from_intersection(
@@ -227,7 +227,7 @@ class MaskActions:
         contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         assert sample_info["dart_count"] == len(contours), (
             f"Intersection count ({len(contours)}) and dart count ({sample_info['dart_count']}) "
-            f"do not match up for sample {sample_info.name}."
+            f"do not match up for sample {sample_info.sample_id}."
         )
 
         # Extract center points
@@ -399,7 +399,7 @@ if __name__ == "__main__":
             return
         with open(info_path, "rb") as f:
             sample_info = pickle.load(f)
-        print(sample_info.keys())
+        sample_info["sample_id"] = id
         prepare_sample(sample_info)
 
     from multiprocessing import Pool
