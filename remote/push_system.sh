@@ -3,9 +3,11 @@
 SSH_ALIAS="ma_kiel"
 
 EXCLUDE_DIRS=(
-    "data/paper"
-    "data/generation/out*"
+    "data/darts_references"
     "data/cache"
+    "data/generation/out*"
+    "data/generation/references"
+    "data/paper"
     "data/ai"
     "dump"
     "notes"
