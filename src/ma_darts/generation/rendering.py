@@ -26,7 +26,7 @@ def init_project():
     # Set render engine
     bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
     bpy.context.scene.render.engine = "CYCLES"
-    bpy.context.scene.cycles.samples = 128
+    bpy.context.scene.cycles.samples = 32
 
     # Enable GPU rendering
     bpy.context.preferences.addons["cycles"].preferences.compute_device_type = "CUDA"
@@ -310,7 +310,7 @@ class SceneUtils:
             env_tex_node.image = hdri
             return True
 
-        def random_strength(min: float = 0.1, max: float = 1.0):
+        def random_strength(min: float = 0.5, max: float = 1.1):
             for bg_node in nodes:
                 if bg_node.name == "Background":
                     break
