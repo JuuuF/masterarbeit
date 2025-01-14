@@ -5,30 +5,52 @@ import matplotlib
 
 matplotlib.use("agg")
 from matplotlib import pyplot as plt
+from time import time
 
 
 class HistoryPlotter(Callback):
     def __init__(
         self,
         filepath,
-        update_on_batches: bool = True,
-        batch_update_frequency: int = 10,
+        update_on: str = "batches",
+        update_frequency: int | float = 10,
         ease_curves: bool = False,
         smooth_curves: bool = True,
+        dark_mode: bool = True,
     ):
         super().__init__()
+
+        # Internal trackkeeping
         self.train_logs = {}
         self.val_logs = {}
         self.filepath = filepath
 
-        self.update_on_batches = update_on_batches
-        self.batch_update_frequency = batch_update_frequency
+        # Updating
+        self.update_functions = {
+            "seconds": self._update_on_time,
+            "batches": self._update_on_batches,
+        }
+        if update_on not in self.update_functions.keys():
+            raise ValueError(
+                f"Invalid update type: {update_on}. Has to be one of {self.update_functions.keys()}."
+            )
+        self.update_fn = self.update_functions[update_on]
+        self.update_frequency = update_frequency
+        self.last_update = time()
+        print(
+            f"Plotting every {self.update_frequency} {update_on} to file: {self.filepath}."
+        )
 
+        # Drawing functions
         self.ease_curves = ease_curves
         self.smooth_curves = smooth_curves
 
+        # Utils
         self.dividers = []
         self.epoch = 0
+
+        if dark_mode:
+            plt.style.use("dark_background")
 
     def init_logs(self, logs: dict):
         # Get log keys
@@ -153,15 +175,22 @@ class HistoryPlotter(Callback):
         fig.savefig(self.filepath)
         plt.close()
 
+    def _update_on_batches(self, batch, *args, **kwargs):
+        return batch % self.update_frequency == 0
+
+    def _update_on_time(self, batch, *args, **kwargs):
+        if batch == 0 or time() - self.last_update > self.update_frequency:
+            self.last_update = time()
+            return True
+
+        return False
+
     def add_divider(self, label=None):
         self.dividers.append((self.epoch, label))
 
     def on_train_batch_end(self, batch, logs={}):
-        if not self.update_on_batches:
-            return
-        if batch % self.batch_update_frequency != 0:
-            return
-        self.plot_losses(extra_logs=logs)
+        if self.update_fn(batch):
+            self.plot_losses(extra_logs=logs)
 
     def on_epoch_end(self, epoch, logs=None):
         if not self.train_logs:
