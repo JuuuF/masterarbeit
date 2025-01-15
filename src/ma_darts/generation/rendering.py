@@ -41,6 +41,9 @@ def init_project():
 
     Compositor.init_vars()
 
+def close_project():
+    bpy.ops.wm.quit_blender()
+
 
 WARNINGS = []
 
@@ -178,6 +181,7 @@ class Utils:
             + np.sum(board_mask[:, -1])
         )
         if edge_sum != 0:
+            close_project()
             raise AssertionError("Invalid render. Board is not fully visible.")
 
 
@@ -190,6 +194,7 @@ class SceneUtils:
         for modifier in obj.modifiers:
             if modifier.type == "NODES":
                 return modifier.node_group
+        close_project()
         raise RuntimeError(f"Object {obj} does not contain Geometry Nodes.")
 
     def get_object(name: str):
@@ -752,6 +757,7 @@ class Compositor:
             if node.label == name:
                 return node
 
+        close_project()
         raise RuntimeError(
             f"No node with name {name} found in Compositor node tree."
             " Check the node name or set a name manually if unsure."
@@ -800,6 +806,7 @@ class Compositor:
                 dst_socket,
             ):
                 return link
+        close_project()
         raise RuntimeError(
             f"No link found from '{src_node}'[{src_socket}] -> '{dst_node}'[{dst_socket}] in Compositor."
             " Check the node name or set a name manually if unsure."
@@ -862,6 +869,7 @@ class MaskRendering:
         # Get node tree
         node_tree = bpy.context.scene.world.node_tree
         if not node_tree:
+            close_project()
             raise RuntimeError(
                 "No world node tree containing environment texture to clear."
             )
@@ -871,6 +879,7 @@ class MaskRendering:
             if bg_node.type == "BACKGROUND":
                 break
         else:
+            close_project()
             raise RuntimeError(
                 "No background node in world node tree. Could not remove environment texture."
             )
@@ -885,6 +894,7 @@ class MaskRendering:
         # Get node tree
         node_tree = bpy.context.scene.world.node_tree
         if not node_tree:
+            close_project()
             raise RuntimeError(
                 "No world node tree containing environment texture to clear."
             )
@@ -894,6 +904,7 @@ class MaskRendering:
             if bg_node.type == "BACKGROUND":
                 break
         else:
+            close_project()
             raise RuntimeError(
                 "No background node in world node tree. Could not remove environment texture."
             )
@@ -1017,6 +1028,9 @@ def render_image(id=None, out_dir: str = "data/generation/out"):
         for i, warning in enumerate(WARNINGS, 1):
             print(f"\t{i}. {warning}")
         print("=" * 120)
+
+    # Quit Blender
+    close_project()
 
     # print(SampleInfo(), flush=True)
     return sample_info
