@@ -7,7 +7,7 @@ import pickle
 from rich import print as pprint
 
 from ma_darts.generation.rendering import render_image
-from ma_darts.cv.data_preparation import prepare_sample
+from ma_darts.cv.data_preparation import prepare_sample, is_prepared
 from ma_darts.cv.utils import show_imgs
 
 OUT_DIR = "data/generation/out"
@@ -154,7 +154,7 @@ def create_sample(
 
     if (
         os.path.exists(os.path.join(sample_path, "undistort.png"))
-        and "dart_positions" in sample_info
+        and is_prepared(sample_info)
     ):
         print(f"Sample {sample_info.sample_id} already exists.".center(120))
         print("-" * 120)
@@ -190,8 +190,8 @@ def create_sample(
 
 if __name__ == "__main__":
     print(f"Output directory:\n\t{OUT_DIR}")
-    for i in range(16):
+    for i in range(8192):
         sample_info = None
         while sample_info is None:
             sample_info = create_sample(i)
-        check_sample(sample_info)
+        # check_sample(sample_info)

@@ -11,6 +11,29 @@ from scipy.ndimage import label, center_of_mass
 from ma_darts.cv.cv import extract_center
 from ma_darts.cv.utils import draw_polar_line, show_imgs
 
+added_keys = [
+    "h_line_r",
+    "h_line_theta",
+    "v_line_r",
+    "v_line_theta",
+    "orientation_points",
+    "ellipse_cx",
+    "ellipse_cy",
+    "ellipse_w",
+    "ellipse_h",
+    "ellipse_theta",
+    "undistortion_homography",
+    "dart_positions",
+    "dart_positions_undistort",
+    "dart_iou",
+    "dart_tips_covered",
+    "cv_ellipse_cy",
+    "cv_ellipse_cx",
+]
+
+def is_prepared(sample_info: pd.Series):
+    return all(k in sample_info.keys() for k in added_keys)
+
 
 class ImageUtils:
 
