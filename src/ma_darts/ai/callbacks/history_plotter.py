@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from tensorflow.keras.callbacks import Callback  # type: ignore
 
@@ -25,6 +26,9 @@ class HistoryPlotter(Callback):
         self.val_logs = {}
         self.filepath = filepath
 
+        if not os.path.exists(dirname := os.path.dirname(filepath)):
+            os.makedirs(dirname)
+
         # Updating
         self.update_functions = {
             "seconds": self._update_on_time,
@@ -38,7 +42,7 @@ class HistoryPlotter(Callback):
         self.update_frequency = update_frequency
         self.last_update = time()
         print(
-            f"Plotting every {self.update_frequency} {update_on} to file: {self.filepath}."
+            f"Plotting every {self.update_frequency} {update_on} to file: {self.filepath}"
         )
 
         # Drawing functions
