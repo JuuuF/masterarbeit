@@ -7,7 +7,7 @@ setup(
     author="JuuuF",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    python_requires=">=3.11.5",
+    python_requires=">=3.11.0",
     install_requires=[
         # TODO
     ],

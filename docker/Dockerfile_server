@@ -1,4 +1,23 @@
-FROM python:3.11.5
+FROM nvidia/cuda:12.4.0-base-ubuntu22.04
+
+# Install Python 3.11.5 and dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-distutils \
+    python3.11-venv \
+    python3-pip \
+    build-essential \
+    curl \
+    && apt-get clean
+
+# Install pip for Python 3.11
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.11
+# Set Python 3.11 as the default python version
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+# Install common Python packages (optional)
+RUN python -m pip install --upgrade pip setuptools wheel
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     x11-apps \
@@ -6,6 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxkbcommon0 \
     libgl1 \
     libegl1 \
+    libglib2.0-0 \
+    libxi6 \
     htop \
     nano && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -20,6 +41,8 @@ USER container
 
 # But we do need the requirements before
 COPY setup/requirements_gpu.txt /requirements.txt
-RUN pip install --upgrade pip && pip install --no-cache-dir -r /requirements.txt
+RUN  pip install --no-cache-dir -r /requirements.txt
+
+ENV GPU_SERVER=1
 
 CMD ["bash"]
