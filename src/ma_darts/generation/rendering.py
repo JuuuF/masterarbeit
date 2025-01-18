@@ -637,10 +637,6 @@ class ObjectPlacement:
         bpy.context.scene.render.resolution_x = dim_b if vertical else dim_a
         bpy.context.scene.render.resolution_y = dim_a if vertical else dim_b
 
-        # Flash light
-        use_flash = np.random.random() > SampleInfo.env_texture_strength
-        SceneUtils.get_object("Flash").hide_render = not use_flash
-
         # Exposure
         exposure = np.random.uniform(0.2, 1.0)
         bpy.context.scene.view_settings.exposure = exposure
@@ -649,7 +645,6 @@ class ObjectPlacement:
         SampleInfo.camera_distance = round(dist, 2)
         SampleInfo.camera_focal_mm = round(focal, 2)
         SampleInfo.camera_aperture = round(aperture, 2)
-        SampleInfo.camera_flash = int(use_flash)
         SampleInfo.camera_exposure = round(exposure, 2)
         SampleInfo.img_width = bpy.context.scene.render.resolution_x
         SampleInfo.img_height = bpy.context.scene.render.resolution_y
@@ -999,6 +994,66 @@ class MaskRendering:
         MaskRendering.restore_objects(obj_state)
 
 
+class Lights:
+    def setup_lights():
+        Lights.enable_flashlight()
+        Lights.enable_spot_light()
+        Lights.enable_surrounding()
+        Lights.enable_ceiling_lights()
+
+    def enable_flashlight():
+        use_flash = np.random.random() > SampleInfo.env_texture_strength
+        SceneUtils.get_object("Flash").hide_render = not use_flash
+        SampleInfo.light_camera_flash = int(use_flash)
+
+    def enable_spot_light():
+        enable_light = np.random.random() > SampleInfo.env_texture_strength
+        light = SceneUtils.get_object("Spot Light")
+
+        light.hide_render = not enable_light
+        scale = np.random.uniform(0.5, 20) if enable_light else 1
+        light.scale = (scale, scale, scale)
+
+        displacement = np.random.normal(0, 10, (3,))
+        light.location += Vector(displacement)
+
+        rotation = np.random.normal(0, 5, (3,))
+        light.rotation_euler = np.array(light.rotation_euler) + rotation
+
+        SampleInfo.light_spot = int(enable_light)
+
+    def enable_surrounding():
+
+        n = np.random.random()
+        enable_cabinet = n < 0.05
+        enable_ring_lights = n < 0.2 and not enable_cabinet
+
+        SceneUtils.get_collection("Cabinet").hide_render = not enable_cabinet
+        SceneUtils.get_collection("Ring Lights").hide_render = not enable_ring_lights
+
+        if enable_cabinet:
+            door_opening = np.deg2rad(np.random.uniform(0, 25))
+            print(door_opening)
+            SceneUtils.get_object("Cabinet Door L").rotation_euler = (0, 0, -door_opening)
+            SceneUtils.get_object("Cabinet Door R").rotation_euler = (0, 0, door_opening)
+
+        SampleInfo.cabinet = int(enable_cabinet)
+        SampleInfo.light_ring = int(enable_ring_lights)
+
+    def enable_ceiling_lights():
+        enable_lights = np.random.random() > SampleInfo.env_texture_strength
+
+        if (
+            not SampleInfo.light_camera_flash
+            and not SampleInfo.light_spot
+            and not SampleInfo.light_ring
+        ):
+            enable_lights = True
+
+        SceneUtils.get_collection("Ceiling Lights").hide_render = not enable_lights
+        SampleInfo.light_ceiling = int(enable_lights)
+
+
 # -------------------------------------------------------------------------------------------------
 
 
@@ -1022,6 +1077,9 @@ def render_image(id=None, out_dir: str = "data/generation/out"):
     ObjectPlacement.place_camera()
     SceneUtils.random_motion_blur()
     ObjectPlacement.randomize_camera_parameters()
+
+    # Lights
+    Lights.setup_lights()
 
     # Rendering
     Utils.render_sample_with_masks()
