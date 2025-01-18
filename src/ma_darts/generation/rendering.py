@@ -41,6 +41,7 @@ def init_project():
 
     Compositor.init_vars()
 
+
 def close_project():
     bpy.ops.wm.quit_blender()
 
@@ -140,6 +141,8 @@ class Utils:
         frame = np.random.randint(min_frame, max_frame + 1)
         bpy.context.scene.frame_set(frame)
 
+        SampleInfo.board_age = round((frame - min_frame) / (max_frame - min_frame), 2)
+
     def render_to_file(filename: str):
         if not filename.endswith(".png"):
             filename += ".png"
@@ -182,7 +185,7 @@ class Utils:
         )
         if edge_sum != 0:
             close_project()
-            raise AssertionError("Invalid render. Board is not fully visible.")
+            raise RuntimeError("Invalid render. Board is not fully visible.")
 
 
 class SceneUtils:
@@ -198,7 +201,14 @@ class SceneUtils:
         raise RuntimeError(f"Object {obj} does not contain Geometry Nodes.")
 
     def get_object(name: str):
-        return bpy.data.objects.get(name)
+        if obj := bpy.data.objects.get(name):
+            return obj
+        for o in bpy.data.objects:
+            if o.name == name:
+                return o
+
+    def get_collection(name: str):
+        return bpy.data.collections.get(name)
 
     def get_board_radii():
         board = SceneUtils.get_object("Darts Board")
@@ -315,7 +325,7 @@ class SceneUtils:
             env_tex_node.image = hdri
             return True
 
-        def random_strength(min: float = 0.5, max: float = 1.1):
+        def random_strength(min: float = 0.2, max: float = 1.0):
             for bg_node in nodes:
                 if bg_node.name == "Background":
                     break
@@ -401,7 +411,7 @@ class ObjectPlacement:
         def get_better_random_dart_rotation():
             # x rotation: up/down
             min_x = 5
-            max_x = -10
+            max_x = -35
             if np.random.uniform(min_x, max_x) < 0:
                 drx = abs(np.random.normal(0, min_x / 3))
             else:
@@ -1039,4 +1049,19 @@ def render_image(id=None, out_dir: str = "data/generation/out"):
 
 
 if __name__ == "__main__":
-    render_image()
+    while True:
+        try:
+            render_image()
+            print(SampleInfo.to_series())
+        except RuntimeError as e:
+            print(e, "\n")
+            continue
+
+        # Load image
+        render = cv2.imread(
+            SampleInfo.out_file_template.format(filename="render.png"),
+            # "data/generation/out/0/render.png"
+        )
+        from ma_darts.cv.utils import show_imgs
+
+        show_imgs(render)
