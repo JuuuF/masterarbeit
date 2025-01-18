@@ -9,6 +9,8 @@ import random
 from mathutils import Vector, Euler
 from contextlib import contextmanager, nullcontext
 
+from ma_darts.generation.sample_texts import top_snippets, bottom_snippets
+
 # -----------------------------------------------
 # Variables
 
@@ -390,6 +392,25 @@ class SceneUtils:
         if angle > 90:
             angle = 180 - angle
         return angle
+
+    def random_text():
+        if np.random.random() < 0.1:
+            return
+
+        top_text = SceneUtils.get_object("Top Text")
+        bottom_text = SceneUtils.get_object("Bottom Text")
+
+        # Text
+        top_text.data.body = np.random.choice(top_snippets)
+        bottom_text.data.body = np.random.choice(bottom_snippets)
+
+        # Displacement
+        r = 18.3189  # trust me.
+        u = 2 * np.pi * r
+        displacement = np.random.uniform(0, u) - u/2
+
+        top_text.location[0] += displacement
+        bottom_text.location[0] -= displacement
 
 
 class ObjectPlacement:
@@ -1068,6 +1089,9 @@ def render_image(id=None, out_dir: str = "data/generation/out"):
 
     # Randomize HDRI
     SceneUtils.random_env_texture()
+
+    # Randomize Text
+    SceneUtils.random_text()
 
     # Place Darts
     ObjectPlacement.place_darts()
