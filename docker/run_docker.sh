@@ -8,7 +8,7 @@ DOCKER_ARGS+=("-it")
 DOCKER_ARGS+=("-d")
 
 # Memory management
-DOCKER_ARGS+=("--memory=126GB")
+DOCKER_ARGS+=("--memory=32GB")
 DOCKER_ARGS+=("--memory-reservation=32GB")
 DOCKER_ARGS+=("--cpus=8")
 DOCKER_ARGS+=("--gpus=device=0")
