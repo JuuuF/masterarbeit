@@ -26,7 +26,7 @@ def init_project():
     bpy.ops.wm.open_mainfile(filepath=BLEND_FILE)
 
     # Set render engine
-    bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
+    # bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
     bpy.context.scene.render.engine = "CYCLES"
     bpy.context.scene.cycles.samples = 32
 
@@ -45,6 +45,8 @@ def init_project():
 
 
 def close_project():
+    bpy.ops.wm.read_factory_settings(use_empty=True)  # Reset to an empty scene
+    gc.collect()  # Invoke Python garbage collector
     bpy.ops.wm.quit_blender()
 
 
@@ -211,6 +213,10 @@ class SceneUtils:
 
     def get_collection(name: str):
         return bpy.data.collections.get(name)
+
+    def get_random_object_from_collection(name: str):
+        collection = SceneUtils.get_collection(name)
+        return np.random.choice(collection.objects)
 
     def get_board_radii():
         board = SceneUtils.get_object("Darts Board")
@@ -394,23 +400,53 @@ class SceneUtils:
         return angle
 
     def random_text():
+
+        # Choose random object (=font) from text collection
+        top_collection = SceneUtils.get_collection("Top")
+        bottom_collection = SceneUtils.get_collection("Bottom")
+
+        # Hide all fonts
+        for i, (top_text, bottom_text) in enumerate(
+            zip(top_collection.objects, bottom_collection.objects)
+        ):
+            top_text.hide_render = True
+            bottom_text.hide_render = True
+
+        # Un-hide correct font
+        id = np.random.randint(
+            0, min(len(top_collection.objects), len(bottom_collection.objects))
+        )
+        top_text = top_collection.objects[id]
+        bottom_text = bottom_collection.objects[id]
+        top_text.hide_render = False
+        bottom_text.hide_render = False
+
+        # Change text string
         if np.random.random() < 0.1:
             return
 
-        top_text = SceneUtils.get_object("Top Text")
-        bottom_text = SceneUtils.get_object("Bottom Text")
-
-        # Text
         top_text.data.body = np.random.choice(top_snippets)
         bottom_text.data.body = np.random.choice(bottom_snippets)
 
         # Displacement
         r = 18.3189  # trust me.
         u = 2 * np.pi * r
-        displacement = np.random.uniform(0, u) - u/2
+        displacement = np.random.uniform(0, u) - u / 2
 
         top_text.location[0] += displacement
         bottom_text.location[0] -= displacement
+
+        return
+
+        # This will lag the whole system really hard.
+        font_dir = "data/generation/fonts"
+        font_files = [f for f in os.listdir(font_dir) if f.endswith((".ttf", ".otf"))]
+        if font_files:
+            font_file = os.path.join(font_dir, np.random.choice(font_files))
+            font = bpy.data.fonts.load(font_file)
+
+            top_text.data.font = font
+            bottom_text.data.font = font
 
 
 class ObjectPlacement:
@@ -1054,9 +1090,16 @@ class Lights:
 
         if enable_cabinet:
             door_opening = np.deg2rad(np.random.uniform(0, 25))
-            print(door_opening)
-            SceneUtils.get_object("Cabinet Door L").rotation_euler = (0, 0, -door_opening)
-            SceneUtils.get_object("Cabinet Door R").rotation_euler = (0, 0, door_opening)
+            SceneUtils.get_object("Cabinet Door L").rotation_euler = (
+                0,
+                0,
+                -door_opening,
+            )
+            SceneUtils.get_object("Cabinet Door R").rotation_euler = (
+                0,
+                0,
+                door_opening,
+            )
 
         SampleInfo.cabinet = int(enable_cabinet)
         SampleInfo.light_ring = int(enable_ring_lights)

@@ -9,6 +9,7 @@ Blender_/
 *.svg
 data/generation/hdri*/
 data/generation/textures/
+data/generation/fonts/
 data/paper/
 data/generation/references/
 data/darts_references/
