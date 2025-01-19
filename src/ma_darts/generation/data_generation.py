@@ -10,6 +10,9 @@ from ma_darts.generation.rendering import render_image
 from ma_darts.cv.data_preparation import prepare_sample, is_prepared
 from ma_darts.cv.utils import show_imgs
 
+from argparse import ArgumentParser
+
+
 OUT_DIR = "data/generation/out"
 
 
@@ -152,9 +155,8 @@ def create_sample(
     # --------------------------------------------------------------------
     # Extract information
 
-    if (
-        os.path.exists(os.path.join(sample_path, "undistort.png"))
-        and is_prepared(sample_info)
+    if os.path.exists(os.path.join(sample_path, "undistort.png")) and is_prepared(
+        sample_info
     ):
         print(f"Sample {sample_info.sample_id} already exists.".center(120))
         print("-" * 120)
@@ -189,13 +191,50 @@ def create_sample(
 
 
 if __name__ == "__main__":
+
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--start",
+        type=int,
+        default=0,
+        help="Start sample ID.",
+    )
+    parser.add_argument(
+        "--n_samples",
+        type=int,
+        default=-1,
+        help="Number of samples to create.",
+    )
+    parser.add_argument(
+        "--end",
+        type=int,
+        default=16,
+        help="End sample ID.",
+    )
+    parser.add_argument(
+        "--display",
+        action="store_true",
+        help="Show each sample after rendering.",
+    )
+    parser.add_argument(
+        "--out_dir",
+        type=str,
+        default="data/generation/out",
+        help="Output directory.",
+    )
+    args = parser.parse_args()
+
     print(f"Output directory:\n\t{OUT_DIR}")
 
-    for i in range(8192):
-        from ma_darts.generation.rendering import render_image
-        from ma_darts.cv.data_preparation import prepare_sample, is_prepared
+    start_sample = args.start
+    end_sample = args.start + args.n_samples if args.n_samples > 0 else args.end
+
+    for i in range(start_sample, end_sample):
+        # from ma_darts.generation.rendering import render_image
+        # from ma_darts.cv.data_preparation import prepare_sample, is_prepared
+
         sample_info = None
         while sample_info is None:
             sample_info = create_sample(i)
         # check_sample(sample_info)
-        del render_image, prepare_sample, is_prepared
+        # del render_image, prepare_sample, is_prepared

@@ -1,3 +1,4 @@
+import gc
 import os
 import bpy
 import cv2
