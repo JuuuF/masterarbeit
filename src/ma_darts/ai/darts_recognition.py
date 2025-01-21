@@ -1,6 +1,7 @@
 import os
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "0"
+os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=2"
 
 import re
 import cv2
@@ -11,152 +12,20 @@ import tensorflow as tf
 
 from ma_darts.ai import callbacks as ma_callbacks
 from ma_darts.ai.training import train_loop
+from ma_darts.ai.utils import get_dart_scores, get_absolute_score_error
 from ma_darts.cv.utils import show_imgs, matrices
 
+from tqdm import tqdm
 from shutil import rmtree
+from argparse import ArgumentParser
 from datetime import datetime
 from itertools import permutations
 from tensorflow.keras import layers
 from tensorflow.keras.applications import *
 
 IMG_SIZE = 800
-BATCH_SIZE = 32 if "GPU_SERVER" in os.environ.keys() else 4
-clear_cache = True
-
-train = True
-predict = True
-
-
-class CombinedLoss(tf.keras.Loss):
-
-    def __init__(
-        self, positions_loss=None, existence_loss=None, existence_threshold=0.5
-    ):
-        super().__init__()
-        if positions_loss is None:
-            positions_loss = tf.keras.losses.MeanSquaredError()
-        self.positions_loss = positions_loss
-
-        if existence_loss is None:
-            existence_loss = tf.keras.losses.BinaryCrossentropy()
-        self.existence_loss = existence_loss
-        self.existence_threshold = existence_threshold
-
-    def call(self, y_true, y_pred):
-
-        permutation_list = list(permutations(range(3)))  # (6, 3)
-        permutation_losses = []
-
-        for perm in permutation_list:
-            y_true_perm = tf.gather(y_true, perm, axis=1)  # (bs, 3, 3)
-            y_pred_perm = tf.gather(y_pred, perm, axis=1)  # (bs, 3, 3)
-            perm_loss = self.calculate_permutation_loss(
-                y_true_perm, y_pred_perm
-            )  # (1,)
-            permutation_losses.append(perm_loss)
-
-        losses = tf.stack(permutation_losses, axis=-1)  # (6,)
-        min_losses = tf.reduce_min(losses, axis=-1)  # (6,)
-        loss = tf.reduce_mean(min_losses)  # (1,)
-
-        return loss
-
-    def calculate_permutation_loss(self, y_true, y_pred):
-        # Split inputs into positions and existence
-        true_positions = y_true[..., :2]  # (bs, 3, 2)
-        true_existence = y_true[..., -1:]  # (bs, 3, 1)
-
-        pred_positions = y_pred[..., :2]  # (bs, 3, 2)
-        pred_existence = y_pred[..., -1:]  # (bs, 3, 1)
-
-        # Existence loss
-        existence_loss = self.existence_loss(true_existence, pred_existence)  # (1,)
-
-        # Mask out non-existing positions
-        true_positions_masked = true_positions * true_existence  # (bs, 3, 2)
-        pred_positions_masked = pred_positions * true_existence  # (bs, 3, 2)
-
-        # Calculate masked positional loss
-        positions_loss = self.positions_loss(
-            true_positions_masked, pred_positions_masked
-        )  # (1,)
-
-        return existence_loss + positions_loss
-
-    def compute_positions_loss_vectorized(self, y_true_pos, y_pred_pos, y_true_pres):
-        batch_size = tf.shape(y_true_pos)[0]
-
-        perms = tf.constant(list(permutations(range(3))), dtype=tf.int32)
-
-        # Expand dimensions for pairwise comparison
-        y_true_pos_exp = tf.gather(y_true_pos, perms, axis=1)  # (batch_size, 6, 3, 2)
-        y_pred_pos_exp = tf.expand_dims(y_pred_pos, axis=1)  # (batch_size, 1, 3, 2)
-
-        # Compute squared distances for all permutations
-        pos_diff = y_true_pos_exp - y_pred_pos_exp  # (batch_size, 6, 3, 2)
-        pos_loss = tf.reduce_sum(tf.square(pos_diff), axis=-1)  # (batch_size, 6, 3)
-
-        # Mask position loss using presence scores
-        y_true_pres_exp = tf.expand_dims(y_true_pres, axis=1)  # (batch_size, 1, 3)
-        pos_loss = pos_loss * y_true_pres_exp  # (batch_size, 6, 3)
-
-        # Sum losses across dart tips and find the minimum loss for each batch
-        pos_loss = tf.reduce_sum(pos_loss, axis=-1)  # (batch_size, 6)
-        min_pos_loss = tf.reduce_min(pos_loss, axis=-1)  # (batch_size,)
-
-        # Return average position loss across the batch
-        return tf.reduce_mean(min_pos_loss)
-
-
-def get_model():
-
-    input_shape = (IMG_SIZE, IMG_SIZE, 3)
-
-    # Input
-    inputs = layers.Input(shape=input_shape)
-    x = layers.Rescaling(scale=255, offset=0, name="input_rescaling")(inputs)
-
-    # Backbone
-    backbone = EfficientNetV2B0(
-        include_top=False,
-        weights="imagenet",
-        input_shape=input_shape,
-    )
-    # backbone = MobileNetV3Large(
-    #     include_top=False,
-    #     weights="imagenet",
-    #     input_shape=input_shape,
-    #     dropout_rate=0.3,
-    # )
-    backbone.trainable = False
-    x = backbone(x)
-
-    # Flatten
-    x = layers.GlobalAveragePooling2D()(x)
-
-    # Head
-    for i, n in enumerate([256, 128, 64]):
-        x = layers.Dense(n, activation="relu", name=f"head_{i}_dense")(x)
-        x = layers.Dropout(0.3, name=f"head_{i}_dropout")(x)
-
-    # Output
-    outputs = x
-    outputs = layers.Dense(9, name="output_downsample")(outputs)
-    outputs = layers.Reshape((3, 3))(outputs)
-
-    # Output activations
-    positions = layers.Activation("linear", name="output_positions")(outputs[:, :, :2])
-    existences = layers.Activation("sigmoid", name="output_existences")(
-        outputs[:, :, -1:]
-    )
-    outputs = layers.Concatenate(axis=-1, name="output_concatenation")(
-        [positions, existences]
-    )
-
-    # Build model
-    model = tf.keras.Model(inputs=inputs, outputs=outputs)
-
-    return model
+BATCH_SIZE = 128 if "GPU_SERVER" in os.environ.keys() else 4
+from ma_darts.ai.models import yolo_v8_model, YOLOv8Loss
 
 
 class Utils:
@@ -172,7 +41,7 @@ class Utils:
             ma_callbacks.HistoryPlotter(
                 filepath="dump/training_history.png",
                 update_on="seconds",
-                update_frequency=5,
+                update_frequency=10,
                 ease_curves=False,
                 smooth_curves=True,
             )
@@ -201,6 +70,10 @@ class Utils:
         checkpoint_dir = os.path.dirname(Utils.model_checkpoint_filepath)
         filenames = ""
         basename = Utils.model_checkpoint_filepath.split("/")[-1]
+
+        # Check if directory exists
+        if not os.path.exists(checkpoint_dir):
+            return
 
         # Convert basename to regex
         while basename:
@@ -253,18 +126,60 @@ class Utils:
         best_file = files[0]
         return best_file
 
+    def get_args():
+        parser = ArgumentParser()
+
+        parser.add_argument(
+            "--train",
+            action="store_true",
+            help="Train model.",
+        )
+        parser.add_argument(
+            "--epochs",
+            type=int,
+            default=1000,
+            help="Training epochs.",
+        )
+        parser.add_argument(
+            "--limit_data",
+            type=int,
+            default=-1,
+            help="Dataset size limitation.",
+        )
+        parser.add_argument(
+            "--clear_cache",
+            action="store_true",
+            help="Clear dataset cache files.",
+        )
+        parser.add_argument(
+            "--predict",
+            action="store_true",
+            help="Predict test dataset using model.",
+        )
+        parser.add_argument(
+            "--model_path",
+            type=str,
+            default=None,
+            help="Model path (optional).",
+        )
+        parser.add_argument(
+            "--model_type",
+            type=str,
+            default="n",
+            help="Model architecture size. Avaulable: n, s, m, l, x",
+        )
+
+        args = parser.parse_args()
+        return args
+
 
 class Data:
 
     def read_sample_img(sample_dir: str):
-        filepath = os.path.join(sample_dir, "undistort.png")
+        filepath = tf.strings.join([sample_dir, "/undistort.png"])
         img = tf.io.read_file(filepath)
         img = tf.image.decode_image(img, channels=3)
-        assert img.shape == (
-            IMG_SIZE,
-            IMG_SIZE,
-            3,
-        ), f"Image shape must be (800, 800, 3). Received {img.shape} for image {filepath}"
+        img = tf.image.resize(img, [IMG_SIZE, IMG_SIZE])
         img = tf.reverse(img, axis=[-1])
         img /= 255
         return img
@@ -296,20 +211,49 @@ class Data:
         if type(sample_dir) == bytes:
             sample_dir = sample_dir.decode("utf-8")
 
-        img = Data.read_sample_img(sample_dir)
+        img = Data.read_sample_img(sample_dir)  # (800, 800, 3)
         sample_info = Data.read_sample_info(sample_dir)
-        dart_positions = Data.extract_darts_positions(sample_info)
+        dart_positions = Data.extract_darts_positions(
+            sample_info
+        )  # (3, 3): 3x (x, y, 0/1)
+
+        # Convert to cell positions
+        outputs = []
+        for s in [25, 50, 100]:
+            grid_size = 800 // s
+            cell_idxs, cell_poss = np.divmod(dart_positions[:, :2] * 800, grid_size)
+            cell_idxs = np.int32(cell_idxs)  # (2, 3)
+            cell_poss /= grid_size  # (2, 3)
+
+            scaled_output = np.zeros((s, s, 3, 3), np.float32)
+            existing = dart_positions[:, -1] == 1
+            for i in range(3):
+                if not existing[i]:
+                    continue
+                grid_y = cell_idxs[i, 0]
+                grid_x = cell_idxs[i, 1]
+                cell = scaled_output[grid_y, grid_x]  # (3, 3)
+                j = np.where(cell[:, -1] == 0)[0][0]
+                cell[:2, j] = cell_poss[i]
+                cell[-1, j] = 1
+
+            outputs.append(scaled_output)
+
+        return img, *[tf.cast(o, tf.float32) for o in outputs]
 
         """ assure correct position placement: """
-        # img = (img.numpy() * 255).astype(np.uint8)
-        # print(dart_positions * 800)
-        # import cv2
-        # from ma_darts.cv.utils import show_imgs
-        # for y, x, _ in dart_positions * 800:
-        #     cv2.circle(img, (int(x), int(y)), 5, (255, 255, 255), 2)
-        # show_imgs(img)
+        img = (img.numpy() * 255).astype(np.uint8)
+        positions_s = Data.convert_to_img_positions(outputs[0])
+        positions_m = Data.convert_to_img_positions(outputs[1])
+        positions_l = Data.convert_to_img_positions(outputs[2])
 
-        return img, tf.cast(dart_positions, tf.float32)
+        import cv2
+        from ma_darts.cv.utils import show_imgs
+
+        for y, x, _ in positions_s:
+            cv2.circle(img, (int(x), int(y)), 5, (255, 255, 255), 2)
+        show_imgs(img)
+        return img, *[tf.cast(o, tf.float32) for o in outputs]
 
     class Augmentation:
         def __init__(
@@ -489,7 +433,7 @@ class Data:
         cache_dir = os.path.join(cache_base, cache_id)
 
         # Remove existing cache files
-        if clear_cache and os.path.exists(cache_dir):
+        if args.clear_cache and os.path.exists(cache_dir):
             rmtree(cache_dir)
             rm_files = os.listdir(os.path.dirname(cache_dir))
             rm_files = [
@@ -501,7 +445,7 @@ class Data:
                 os.remove(os.path.join(cache_base, f))
 
         # Create clean cache directory
-        os.makedirs(cache_dir)
+        os.makedirs(cache_dir, exist_ok=True)
 
         # Cache to directory
         return ds.cache(cache_dir)
@@ -513,9 +457,13 @@ class Data:
         show: bool = False,
     ):
         # Load sample IDs
-        sample_ids = [
-            f for f in os.listdir(data_dir) if f.isnumeric() and int(f) < 1024
-        ]
+        sample_ids = [f for f in os.listdir(data_dir) if f.isnumeric()]
+
+        # Limit data
+        if args.limit_data > 0:
+            sample_ids = [f for f in sample_ids if int(f) < args.limit_data]
+
+        # Shuffle or sort
         if shuffle:
             np.random.shuffle(sample_ids)
         else:
@@ -563,7 +511,7 @@ class Data:
         ds = ds.batch(BATCH_SIZE)
 
         # Prefetch
-        ds = ds.prefetch(8)
+        ds = ds.prefetch(tf.data.AUTOTUNE)
 
         return ds
 
@@ -581,7 +529,16 @@ class Data:
             show_imgs(img)
 
     def visualize_data_predictions(model, ds):
-        preds = model.predict(ds)
+
+        preds = []
+
+        try:
+            print("Predicting...")
+            for X, y_true in tqdm(ds):
+                y_pred = model.predict(X, verbose=0)
+                preds.extend([(x, y, y_) for x, y, y_ in zip(X, y_true, y_pred)])
+        except KeyboardInterrupt:
+            print("\nPrediction aborted.")
 
         def matrix_to_string(matrix):
             # Scale positions and format as a string
@@ -593,32 +550,56 @@ class Data:
             # Join the rows into a single string with line breaks
             return "\n".join(formatted_rows)
 
-        def plot_points(img, pts, color):
+        def plot_points(img, pts, color, add_unsure: bool = False):
             for y, x, existing in pts:
                 if existing < 0.5:
+                    if add_unsure:
+                        color = (0, 0, round(255 * existing * 2))
+                        cv2.circle(img, (int(x), int(y)), 5, color, 2)
+                        cv2.circle(img, (int(x), int(y)), 2, (255, 255, 255), -1)
                     continue
+                color = tuple(round(c * (existing / 2 + 0.5)) for c in color)
                 cv2.circle(img, (int(x), int(y)), 5, color, 2)
-                cv2.circle(img, (int(x), int(y)), 2, color, -1)
+                cv2.circle(img, (int(x), int(y)), 2, (255, 255, 255), -1)
 
-        for i, (img, y_true) in enumerate(ds.unbatch()):
+        for img, y_true, y_pred in preds:
 
             img = np.uint8(img * 255)
             y_true = np.array(y_true, np.float32)
-            y_pred = np.array(preds[i], np.float32)
+            y_pred = np.array(y_pred, np.float32)
 
             y_true[:, 0] *= img.shape[0]
             y_true[:, 1] *= img.shape[1]
+            y_pred[:, 0] *= img.shape[0]
+            y_pred[:, 1] *= img.shape[1]
+
+            scoring_true = y_true[y_true[:, -1] > 0.5, :2]
+            scoring_pred = y_pred[y_pred[:, -1] > 0.5, :2]
+            scores_true = get_dart_scores(
+                list(scoring_true), img_size=IMG_SIZE, margin=100
+            )
+            scores_pred = get_dart_scores(
+                list(scoring_pred), img_size=IMG_SIZE, margin=100
+            )
+            ase = get_absolute_score_error(scores_true, scores_pred)
             print()
-            print("Target values:")
+            print("Target values:", sorted(scores_true))
             print(matrix_to_string(y_true))
-            print("Predicted values:")
+            print("Predicted values:", sorted(scores_pred))
             print(matrix_to_string(y_pred))
+            print("Absolute Score Error:", ase)
 
             plot_points(img, y_true, (0, 255, 0))
-            plot_points(img, y_pred, (255, 0, 0))
+            plot_points(img, y_pred, (255, 0, 0), add_unsure=True)
 
             show_imgs(img)
 
+
+
+# -----------------------------------------------
+# Command Line Arguments
+
+args = Utils.get_args()
 
 # -----------------------------------------------
 # Get Model
@@ -661,11 +642,18 @@ test_ds = Data.get_ds(
 # -----------------------------------------------
 # Fit Model
 
-if train:
+if args.train:
+    # Warmup
+    print("Warmup...")
+    for _ in range(5):
+        model.predict(
+            np.zeros((BATCH_SIZE, IMG_SIZE, IMG_SIZE, 3), np.float32), verbose=0
+        )
+
     try:
         model.fit(
             train_ds,
-            epochs=1000,
+            epochs=args.epochs,
             validation_data=val_ds,
             callbacks=Utils.get_callbacks(),
         )
@@ -683,7 +671,252 @@ if train:
     if best_weights := Utils.get_best_model_checkpoint():
         model.load_weights(best_weights)
 
-    model.save("data/ai/darts_model.keras")
+    model_path = "data/ai/darts_model.keras"
+    model.save(model_path)
+    print(f"Model saved to {model_path}.")
 
-if predict:
+if args.predict:
     Data.visualize_data_predictions(model, test_ds)
+
+
+class Unused:
+    class CombinedLoss(tf.keras.Loss):
+
+        def __init__(
+            self, positions_loss=None, existence_loss=None, existence_threshold=0.5
+        ):
+            super().__init__()
+            if positions_loss is None:
+                positions_loss = tf.keras.losses.MeanSquaredError()
+            self.positions_loss = positions_loss
+
+            if existence_loss is None:
+                existence_loss = tf.keras.losses.BinaryCrossentropy()
+            self.existence_loss = existence_loss
+            self.existence_threshold = existence_threshold
+
+        def call(self, y_true, y_pred):
+
+            permutation_list = list(permutations(range(3)))  # (6, 3)
+            permutation_losses = []
+
+            for perm in permutation_list:
+                y_true_perm = tf.gather(y_true, perm, axis=1)  # (bs, 3, 3)
+                y_pred_perm = tf.gather(y_pred, perm, axis=1)  # (bs, 3, 3)
+                perm_loss = self.calculate_permutation_loss(
+                    y_true_perm, y_pred_perm
+                )  # (1,)
+                permutation_losses.append(perm_loss)
+
+            losses = tf.stack(permutation_losses, axis=-1)  # (6,)
+            min_losses = tf.reduce_min(losses, axis=-1)  # (6,)
+            loss = tf.reduce_mean(min_losses)  # (1,)
+
+            return loss
+
+        def calculate_permutation_loss(self, y_true, y_pred):
+            # Split inputs into positions and existence
+            true_positions = y_true[..., :2]  # (bs, 3, 2)
+            true_existence = y_true[..., -1:]  # (bs, 3, 1)
+
+            pred_positions = y_pred[..., :2]  # (bs, 3, 2)
+            pred_existence = y_pred[..., -1:]  # (bs, 3, 1)
+
+            # Existence loss
+            existence_loss = self.existence_loss(true_existence, pred_existence)  # (1,)
+
+            # Mask out non-existing positions
+            true_positions_masked = true_positions * true_existence * 8  # (bs, 3, 2)
+            pred_positions_masked = pred_positions * true_existence * 8  # (bs, 3, 2)
+
+            # Calculate distances
+            dists_y = (
+                true_positions_masked[..., 0] - pred_positions_masked[..., 0]
+            )  # (bs, 3)
+            dists_x = (
+                true_positions_masked[..., 1] - pred_positions_masked[..., 1]
+            )  # (bs, 3)
+
+            # MSE over distances
+            dists = dists_y**2 + dists_x**2  # (bs, 3)
+            dists_loss = tf.reduce_mean(dists)
+
+            # Calculate masked positional loss
+            # positions_loss = self.positions_loss(
+            #     true_positions_masked, pred_positions_masked
+            # )  # (1,)
+
+            return existence_loss + (1 + existence_loss) * (dists_loss)
+
+    class Backbones:
+        def bipolar_rescale() -> dict:
+            """(-1, 1) rescaling"""
+            return dict(scale=2, offset=-1)
+
+        def unnormalized_rescale() -> dict:
+            """(0, 255) rescaling"""
+            return dict(scale=255, offset=0)
+
+        def mobilenet_v3_large(
+            input_tensor,
+            input_shape: list[int | None],
+            trainable: bool = False,
+        ) -> tf.Tensor:
+            # Rescale to (-1, 1)
+            x = layers.Rescaling(**Backbones.bipolar_rescale(), name="input_rescaling")(
+                input_tensor
+            )
+
+            # Get backbone
+            backbone = MobileNetV3Large(
+                include_top=False,
+                weights="imagenet",
+                input_shape=input_shape,
+                include_preprocessing=False,
+            )
+            backbone.trainable = trainable
+
+            # Apply backbone
+            x = backbone(x)
+            return x
+
+        def mobilenet_v2(
+            input_tensor,
+            input_shape: list[int | None],
+            trainable: bool = False,
+        ) -> tf.Tensor:
+            # Rescale to (-1, 1)
+            x = layers.Rescaling(**Backbones.bipolar_rescale(), name="input_rescaling")(
+                input_tensor
+            )
+
+            # Get backbone
+            backbone = MobileNetV2(
+                include_top=False,
+                weights="imagenet",
+                input_shape=input_shape,
+            )
+            backbone.trainable = trainable
+
+            # Apply backbone
+            x = backbone(x)
+            return x
+
+        def efficientnet_v2_b1(
+            input_tensor,
+            input_shape: list[int | None],
+            trainable: bool = False,
+        ) -> tf.Tensor:
+            # Rescale to (-1, 1)
+            x = layers.Rescaling(**Backbones.bipolar_rescale(), name="input_rescaling")(
+                input_tensor
+            )
+
+            # Get backbone
+            backbone = EfficientNetV2B1(
+                include_top=False,
+                weights="imagenet",
+                input_shape=input_shape,
+                include_preprocessing=False,
+            )
+            backbone.trainable = trainable
+
+            # Apply backbone
+            x = backbone(x)
+            return x
+
+        def convnext_tiny(
+            input_tensor,
+            input_shape: list[int | None],
+            trainable: bool = False,
+        ) -> tf.Tensor:
+            # Rescale to (0, 255)
+            x = layers.Rescaling(
+                **Backbones.unnormalized_rescale(), name="input_rescaling"
+            )(input_tensor)
+
+            # Get backbone
+            backbone = ConvNeXtTiny(
+                include_top=False,
+                weights="imagenet",
+                input_shape=input_shape,
+                include_preprocessing=False,
+            )
+            backbone.trainable = trainable
+
+            # Apply backbone
+            x = backbone(x)
+            return x
+
+        def yolo_v8(
+            input_tensor,
+            input_shape: list[int | None],
+            trainable: bool = False,
+        ) -> tf.Tensor:
+            from keras_cv.models import YOLOV8Backbone
+
+            # Get backbone
+            backbone = YOLOV8Backbone(
+                stackwise_channels=[64, 128, 256, 512],
+                stackwise_depth=[1, 2, 8, 8],
+                include_rescaling=False,
+                input_shape=input_shape,
+            )
+            backbone.trainable = trainable
+
+            # Apply backbone
+            x = backbone(input_tensor)
+            return x
+
+    def get_model():
+
+        input_shape = (IMG_SIZE, IMG_SIZE, 3)
+
+        # Input
+        inputs = layers.Input(shape=input_shape)
+
+        # Backbone
+        x = Backbones.mobilenet_v3_large(inputs, input_shape, trainable=True)
+
+        # Convolve
+        x = layers.Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu")(x)
+        x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Dropout(0.3)(x)
+        x = layers.Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu")(x)
+        x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Dropout(0.3)(x)
+
+        # Flatten
+        x = layers.GlobalAveragePooling2D()(x)
+
+        # Head
+        for i, n in enumerate([256, 128, 64]):
+            x = layers.Dense(n, activation="mish", name=f"head_{i}_dense")(x)
+            x = layers.BatchNormalization()(x)
+            x = layers.Dropout(0.3, name=f"head_{i}_dropout")(x)
+        x = layers.BatchNormalization()(x)
+
+        # Output
+        outputs = x
+        outputs = layers.Dense(9, activation="linear", name="output_downsample")(
+            outputs
+        )
+        outputs = layers.Reshape((3, 3))(outputs)
+
+        # Output activations
+        positions = layers.Activation("hard_sigmoid", name="output_positions")(
+            outputs[..., :2]
+        )
+        existences = layers.Activation("sigmoid", name="output_existences")(
+            outputs[..., -1:]
+        )
+        outputs = layers.Concatenate(axis=-1, name="output_concatenation")(
+            [positions, existences]
+        )
+
+        # Build model
+        model = tf.keras.Model(inputs=inputs, outputs=outputs)
+
+        return model
