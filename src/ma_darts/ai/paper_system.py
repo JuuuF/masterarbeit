@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import tensorflow as tf
+import pickle
 
 from time import time
 
@@ -47,6 +48,9 @@ def load_model(config="deepdarts_d1"):
 
     yolo.model.load_weights(weights_path)
 
+    # with open(f"data/ai/paper_model/{config}.pkl", "wb") as f:
+    #     pickle.dump(yolo)
+
     return yolo
 
 
@@ -58,14 +62,16 @@ def predict(model, img_paths: list = None):
         data = get_splits(
             path="data/paper/labels.pkl",
             dataset="d1",
-            split="train",  # train / val / test
+            split="val",  # train / val / test
         )  # columns: img_folder, img_name, bbox, xy
+
+        data = data[:10]
+        # data = data[:1000]
+
         img_paths = [
             os.path.join(DATA_PATH, folder, name)
             for folder, name in zip(data.img_folder, data.img_name)
         ]
-
-        img_paths = img_paths[10:100]
 
         # Extract relevant data
         """
@@ -75,7 +81,7 @@ def predict(model, img_paths: list = None):
             3: x, y, visible
         """
         xys = np.zeros((len(data), 7, 3))
-        data.xy = data.xy.apply(np.array)
+        data.xy = data.xy.apply(np.array)  # convert xy to numpy array
         for i, _xy in enumerate(data.xy):
             xys[i, : _xy.shape[0], :2] = _xy
             xys[i, : _xy.shape[0], 2] = 1
@@ -96,46 +102,54 @@ def predict(model, img_paths: list = None):
 
         # Predict
         bboxes = model.predict(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        print(bboxes)
         preds[i] = bboxes_to_xy(bboxes)  # (7, 3): 4x orientation + 3x dart, [x, y, visibile]
 
     if i > 0:
         fps = (len(img_paths) - 1) / (time() - ti)
         print(f"FPS: {fps:.2f}")
-        print("\n" * 10)
 
     scores = []
-    for i, (pred, gt, path) in enumerate(zip(preds, xys, img_paths)):
+    mses = []
+    custom_losses = []
+    for i, (y_pred, y_true, path) in enumerate(zip(preds, xys, img_paths)):
         # Calculate score
-        target_scores = get_dart_scores(gt[:, :2], numeric=True)
-        pred_scores = get_dart_scores(pred[:, :2], numeric=True)
-        score = abs(sum(pred_scores) - sum(target_scores))
+        true_scores = get_dart_scores(y_true[:, :2], numeric=True)
+        pred_scores = get_dart_scores(y_pred[:, :2], numeric=True)
+        score = abs(sum(pred_scores) - sum(true_scores))
         scores.append(score)
-        print(
-            f"Target score: {target_scores} | Prediction Score: {pred_scores} | {path}",
-            " " * 10,
-            end="\r",
-        )
+
+        mse = np.mean((y_true - y_pred) ** 2)
+        mses.append(mse)
+        # print(
+        #     f"Target score: {target_scores} | Prediction Score: {pred_scores} | {path}",
+        #     " " * 10,
+        #     end="\r",
+        # )
 
         # Show image
-        xy = preds[i]
-        xy = xy[xy[:, -1] == 1]
-        res = draw(
-            cv2.imread(path),
-            xy[:, :2],
-            circles=True,
-            score=True,
-        )
-        cv2.imshow("Pred", res)
-        if cv2.waitKey() == ord("q"):
-            break
+        # xy = preds[i]
+        # xy = xy[xy[:, -1] == 1]
+        # res = draw(
+        #     cv2.imread(path),
+        #     xy[:, :2],
+        #     circles=True,
+        #     score=True,
+        # )
+        # cv2.imshow("Pred", res)
+        # if cv2.waitKey() == ord("q"):
+        #     break
 
-    print(" " * (len(str(target_scores) + str(pred_scores) + path) + 40), end="\r")
+    # print(" " * (len(str(target_scores) + str(pred_scores) + path) + 40), end="\r")
     ASE = np.array(scores)  # absolute score errors
     PCS = len(ASE[ASE == 0]) / len(ASE) * 100
     MASE = np.mean(ASE)
 
+    MSE = np.mean(mses)
+
     print(f"Percent Correct Score (PCS): {PCS:.1f}%")
     print(f"Mean Absolute Score Error (MASE): {MASE:.2f}")
+    print(f"Mean Squared Error (MSE): {MSE}")
 
 
 yolo = load_model()
