@@ -224,6 +224,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    OUT_DIR = args.out_dir
     print(f"Output directory:\n\t{OUT_DIR}")
 
     start_sample = args.start
