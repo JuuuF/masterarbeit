@@ -31,18 +31,20 @@ added_keys = [
     "cv_ellipse_cx",
 ]
 
+
 def is_prepared(sample_info: pd.Series):
     return all(k in sample_info.keys() for k in added_keys)
 
 
 class ImageUtils:
 
-    def load_sample_imgs(img_dir: str) -> tuple[
+    def load_sample_imgs(sample_info: pd.Series) -> tuple[
         np.ndarray,  # (y, x, 3)
         np.ndarray,  # (y, x, 3)
         np.ndarray,  # (y, x, 3)
         np.ndarray,  # (y, x, 3)
     ]:
+        img_dir = os.path.join(sample_info["OUT_DIR"], str(sample_info.sample_id))
         img = cv2.imread(os.path.join(img_dir, "render.png"))
         img_orient = cv2.imread(
             os.path.join(img_dir, "mask_Board_Orientation.png"),
@@ -52,13 +54,53 @@ class ImageUtils:
             os.path.join(img_dir, "mask_Darts_Board_Area.png"),
             cv2.IMREAD_GRAYSCALE,
         )
-        img_intersections = cv2.imread(
-            os.path.join(img_dir, "mask_Intersections.png"),
-            cv2.IMREAD_GRAYSCALE,
-        )
+        img_intersections = ImageUtils.load_intersections_img(sample_info)
         if any(i is None for i in [img, img_orient, img_area, img_intersections]):
             raise AssertionError(f"Images at {img_dir} could not be read.")
         return img, img_orient, img_area, img_intersections
+
+    def load_intersections_img(sample_info: pd.Series):
+        intersections_img = MaskActions.load_mask(
+            sample_info.out_file_template.format(filename="mask_Intersections.png")
+        )
+        dart_masks = [
+            MaskActions.load_mask(
+                sample_info.out_file_template.format(filename=f"mask_Dart_{i}.png")
+            )
+            for i in range(1, 4)
+        ]
+        dart_masks = list(enumerate(dart_masks))
+
+        out_img = np.zeros(
+            (intersections_img.shape[0], intersections_img.shape[1], 3), np.uint8
+        )
+        current_idx = -1
+        while dart_masks:
+            current_idx += 1
+            current_idx %= len(dart_masks)
+            dart_id, dart_mask = dart_masks[current_idx]
+
+            # Cont number of intersections between dart mask and intersection image
+            intersection = np.logical_and(intersections_img, dart_mask)
+            contours, _ = cv2.findContours(
+                np.uint8(intersection) * 255, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
+            n_intersections = len(contours)
+
+            # only a single intersection means we are certain which dart we are looking at
+            if n_intersections == 1:
+                # Remove current mask
+                dart_masks.pop(current_idx)
+                current_idx -= 1
+
+                # add dart index as color into the output intersection image
+                out_img[:, :, dart_id] = np.uint8(intersection) * 255
+
+                # Remove intersection point from image
+                intersections_img = np.logical_and(
+                    intersections_img, np.logical_not(intersection)
+                )
+        return out_img
 
     def points_from_intersection(
         intersection_img: np.ndarray,  # (y, x)
@@ -243,22 +285,21 @@ class MaskActions:
 
     def get_dart_positions(
         sample_info: pd.Series,
-        img: np.ndarray,  # (y, x)
+        img: np.ndarray,  # (y, x, 3)
     ) -> list[tuple[float, float]]:
-        # Extract intersections
-        _, img = cv2.threshold(img, 64, 255, cv2.THRESH_BINARY)
-        contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        assert sample_info["dart_count"] == len(contours), (
-            f"Intersection count ({len(contours)}) and dart count ({sample_info['dart_count']}) "
-            f"do not match up for sample {sample_info.sample_id}."
-        )
 
-        # Extract center points
         centers = []
-        for c in contours:
-            M = cv2.moments(c)
-            assert M["m00"] != 0, "Could not find intersection point. Whoops."
+        for i in range(3):
+            # Get contour
+            _, dart_intersect_img = cv2.threshold(
+                img[:, :, i], 64, 255, cv2.THRESH_BINARY
+            )
+            contour = cv2.findContours(
+                dart_intersect_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )[0][0]
 
+            # Extract center point
+            M = cv2.moments(contour)
             cy = M["m01"] / M["m00"]
             cx = M["m10"] / M["m00"]
             cy /= img.shape[0]
@@ -316,8 +357,9 @@ class MaskActions:
 def prepare_sample(sample_info: pd.Series, debug: bool = False):
 
     # Load sample images
-    img_dir = os.path.join(sample_info["OUT_DIR"], str(sample_info.sample_id))
-    img, img_orient, img_area, img_intersections = ImageUtils.load_sample_imgs(img_dir)
+    img, img_orient, img_area, img_intersections = ImageUtils.load_sample_imgs(
+        sample_info
+    )
 
     # Extract orientation lines
     line_v, line_h, orientation_points = MaskActions.get_lines_from_point_masks(
@@ -371,8 +413,10 @@ def prepare_sample(sample_info: pd.Series, debug: bool = False):
 
     # Save results
     sample_info.sort_index(inplace=True)
-    cv2.imwrite(os.path.join(img_dir, "undistort.png"), img_undist)
-    with open(os.path.join(img_dir, "info.pkl"), "wb") as f:
+    cv2.imwrite(
+        sample_info.out_file_template.format(filename="undistort.png"), img_undist
+    )
+    with open(sample_info.out_file_template.format(filename="info_new.pkl"), "wb") as f:
         pickle.dump(sample_info, f)
     if not debug:
         return sample_info
