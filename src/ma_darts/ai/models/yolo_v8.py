@@ -2,8 +2,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 
-tf.config.run_functions_eagerly(False)
-print("Eager execution enabled:", tf.executing_eagerly())
+# tf.config.run_functions_eagerly(False)
+# print("Eager execution enabled:", tf.executing_eagerly())
 
 """
 https://cdn.prod.website-files.com/6479eab6eb2ed5e597810e9e/65bf057de6cebfb11455514f_flamelink%252Fmedia%252F222874205-3873bdac-7135-4ecc-8ab2-ca18b8e13fdf.webp
@@ -604,3 +604,122 @@ class YOLOv8Loss(tf.keras.Loss):
         iou = tf.math.divide_no_nan(intersection, union + 1e-6)
 
         return iou
+
+
+# =================================================================================================
+# Data Loader
+
+CLASSES = ["nothing", "black", "white", "red", "green", "out"]
+
+
+def yolo_v8_convert_darts(
+    img_size: int,
+    darts_info: list[tuple[tuple[int, int], str]],
+):
+    # Convert scores to classes
+    darts_info = [(pos, score2color(s)) for pos, s in darts_info]
+    # Filter out non-existing darts
+    darts_info = [(pos, cls) for pos, cls in darts_info if not cls == 0]
+
+    outputs = []
+
+    for i in range(3):
+        # print()
+        # Calculate grid size
+        grid_size = img_size // 2 ** (5 - i)
+        cell_size = img_size / grid_size
+        # print(f"{grid_size=}")
+
+        scale_output = np.zeros(
+            (grid_size, grid_size, 2 + len(CLASSES), 3)
+        )  # (s, s, 2+nc, 3)
+        scale_output[:, :, 2, :] = 1
+
+        for (y, x), color_cls in darts_info:
+
+            # Bin position into grid
+            grid_pos, local_pos = np.divmod([y, x], cell_size)
+            grid_pos = np.int32(grid_pos)
+            local_pos /= cell_size
+            # print(grid_pos, local_pos, CLASSES[color_cls])
+
+            # get cell idx
+            cell = scale_output[grid_pos[0], grid_pos[1]]  # (3, 3)
+            # print("CELL", cell)
+            cell_col = np.where(cell[2, :] != 0)[0][
+                0
+            ]  # smallest index with nothing class
+
+            # Set position, class and un-set nothing class
+            cell[:2, cell_col] = local_pos
+            cell[2 + color_cls, cell_col] = 1
+            cell[2, cell_col] = 0
+            # print("CELL", cell)
+
+        outputs.append(scale_output)
+
+    return outputs
+
+
+def score2color(score: str):
+    if score == "HIDDEN":
+        return CLASSES.index("nothing")
+    if score == "OUT":
+        return CLASSES.index("out")
+
+    # bull
+    if "B" in score:
+        if "D" in score:
+            return CLASSES.index("red")
+        return CLASSES.index("green")
+
+    dart_order = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
+    multiplier = score[0] in "DT"
+    score = int(score[1:]) if multiplier else int(score)
+
+    if score == 0:
+        return CLASSES.index("out")
+
+    dark_color = dart_order.index(score) % 2 == 0
+
+    if dark_color and not multiplier:
+        return CLASSES.index("black")
+    if dark_color and multiplier:
+        return CLASSES.index("red")
+    if not dark_color and not multiplier:
+        return CLASSES.index("white")
+    if not dark_color and multiplier:
+        return CLASSES.index("green")
+
+
+if __name__ == "__main__":
+    model = yolo_v8_model(
+        input_size=800,
+        classes=["black", "white", "red", "green", "out", "nothing"],
+        variant="n",
+    )
+
+    y_true = yolo_v8_convert_darts(
+        800,
+        [
+            ((490, 120), "D18"),
+            ((493, 123), "12"),
+            ((665, 584), "OUT"),
+            ((0, 0), "HIDDEN"),
+        ],
+    )
+
+    y_pred = yolo_v8_convert_darts(
+        800,
+        [
+            ((400, 150), "11"),
+            ((493, 123), "12"),
+            ((665, 584), "OUT"),
+            ((0, 0), "HIDDEN"),
+        ],
+    )
+
+    print(len(y_true))
+    print(y_true[0].shape)
+    print(y_true[1].shape)
+    print(y_true[2].shape)
