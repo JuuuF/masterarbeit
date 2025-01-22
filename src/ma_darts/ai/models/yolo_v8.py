@@ -2,9 +2,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 
-# tf.config.run_functions_eagerly(False)
-# print("Eager execution enabled:", tf.executing_eagerly())
-
 """
 https://cdn.prod.website-files.com/6479eab6eb2ed5e597810e9e/65bf057de6cebfb11455514f_flamelink%252Fmedia%252F222874205-3873bdac-7135-4ecc-8ab2-ca18b8e13fdf.webp
 """
@@ -400,8 +397,8 @@ class YOLOv8Loss(tf.keras.Loss):
         # Get best class
         found_classes = tf.argmax(y_cls, axis=-2, output_type=tf.int32)  # (bs, y, x, 3)
 
-        # nothing-class is the last class by design
-        nothing_class = tf.shape(y_cls)[-2] - 1
+        # nothing-class is the first class by design
+        nothing_class = 0
         is_present = tf.cast(
             tf.not_equal(found_classes, nothing_class),
             tf.int32,
@@ -411,13 +408,23 @@ class YOLOv8Loss(tf.keras.Loss):
 
         return tf.cast(is_present, tf.float32)
 
+    @tf.function
     def get_class_loss(
         self,
         cls_true: tf.Tensor,  # (bs, y, x, nc, 3)
         cls_pred: tf.Tensor,
     ) -> tf.Tensor:
+
+        # For some reason, upon startup there's smaller samples coming in
+        if tf.not_equal(tf.shape(tf.shape(cls_true))[0], 5):
+            return tf.constant(14, tf.float32)
+
         # Flatten the grid
-        bs, s, _, nc, r = tf.shape(cls_true)
+        bs = tf.shape(cls_true)[0]
+        s = tf.shape(cls_true)[1]
+        nc = tf.shape(cls_true)[3]
+        r = tf.shape(cls_true)[4]
+        # bs, s, _, nc, r = tf.shape(cls_true)
         cls_true = tf.reshape(cls_true, (bs, -1, nc, r))  # (bs, y*X, nc, 3)
         cls_pred = tf.reshape(cls_pred, (bs, -1, nc, r))
 
@@ -525,11 +532,11 @@ class YOLOv8Loss(tf.keras.Loss):
             tf.cast(grid_indices, tf.float32) * cell_size
         )  # top-left corners for each cell, (y, x, 2)
 
-        global_pos_true = global_grid_pos[None, :, :, :, None] + pos_true * tf.cast(
-            s, tf.float32
+        global_pos_true = (
+            global_grid_pos[None, :, :, :, None] + pos_true * cell_size
         )  # (bs, y, x, 2, 3)
-        global_pos_pred = global_grid_pos[None, :, :, :, None] + pos_pred * tf.cast(
-            s, tf.float32
+        global_pos_pred = (
+            global_grid_pos[None, :, :, :, None] + pos_pred * cell_size
         )  # (bs, y, x, 2, 3)
 
         return global_pos_true, global_pos_pred
@@ -552,12 +559,12 @@ class YOLOv8Loss(tf.keras.Loss):
 
         # Add x and y indices into dimension 2
         pad = tf.zeros_like(positions_idx[:, :1])
-        x_ids = tf.concat(
+        y_ids = tf.concat(
             [positions_idx[:, :2], pad + 0, positions_idx[:, 2:]], axis=1
         )  # (n, 4)
-        y_ids = tf.concat([positions_idx[:, :2], pad + 1, positions_idx[:, 2:]], axis=1)
-        x_pos = tf.gather_nd(positions, x_ids)  # (n,)
-        y_pos = tf.gather_nd(positions, y_ids)
+        x_ids = tf.concat([positions_idx[:, :2], pad + 1, positions_idx[:, 2:]], axis=1)
+        y_pos = tf.gather_nd(positions, y_ids)  # (n,)
+        x_pos = tf.gather_nd(positions, x_ids)
 
         # Get min and max values
         half_size = self.square_size / 2
@@ -702,8 +709,9 @@ if __name__ == "__main__":
     y_true = yolo_v8_convert_darts(
         800,
         [
+            ((410, 410), "DB"),
             ((490, 120), "D18"),
-            ((493, 123), "12"),
+            ((400, 123), "12"),
             ((665, 584), "OUT"),
             ((0, 0), "HIDDEN"),
         ],
@@ -712,14 +720,21 @@ if __name__ == "__main__":
     y_pred = yolo_v8_convert_darts(
         800,
         [
-            ((400, 150), "11"),
-            ((493, 123), "12"),
-            ((665, 584), "OUT"),
-            ((0, 0), "HIDDEN"),
+            # ((400, 150), "11"),
+            # ((493, 123), "12"),
+            # ((665, 584), "OUT"),
+            # ((0, 0), "HIDDEN"),
         ],
     )
 
-    print(len(y_true))
-    print(y_true[0].shape)
-    print(y_true[1].shape)
-    print(y_true[2].shape)
+    y_pred = model.predict(np.zeros((1, 800, 800, 3), np.float32))
+
+    for i in range(3):
+        y_pred[i][:, 14, 14, 3, 0] = 1
+        y_pred[i][:, 14, 14, 2, 0] = 0
+
+    y_true = [np.expand_dims(y, 0) for y in y_true]
+    # y_pred = [np.expand_dims(y, 0) for y in y_pred]
+    loss = YOLOv8Loss(800, 50)
+    l = loss(y_true, y_true)
+    print(l)
