@@ -60,13 +60,15 @@ class ImageUtils:
         return img, img_orient, img_area, img_intersections
 
     def load_intersections_img(sample_info: pd.Series):
+
         intersections_img = MaskActions.load_mask(
             sample_info.out_file_template.format(filename="mask_Intersections.png")
-        )
+        ).astype(bool)
+
         dart_masks = [
             MaskActions.load_mask(
                 sample_info.out_file_template.format(filename=f"mask_Dart_{i}.png")
-            )
+            ).astype(bool)
             for i in range(1, 4)
         ]
         dart_masks = list(enumerate(dart_masks))
@@ -75,12 +77,30 @@ class ImageUtils:
             (intersections_img.shape[0], intersections_img.shape[1], 3), np.uint8
         )
         current_idx = -1
+        n_calls = 0
+
         while dart_masks:
+            n_calls += 1
+            if n_calls > 100:
+                raise AssertionError(
+                    f"Too many loops. There's something wring in identifying the dart order. ({sample_info.sample_id})"
+                )
+
+            # Advance to next index
             current_idx += 1
             current_idx %= len(dart_masks)
+
+            # Load mask and dart index
             dart_id, dart_mask = dart_masks[current_idx]
 
-            # Cont number of intersections between dart mask and intersection image
+            # mask empty = dart not visible
+            if not np.any(dart_mask):
+                # Remove empty mask and continue
+                dart_masks.pop(current_idx)
+                current_idx -= 1
+                continue
+
+            # Count number of intersections between dart mask and intersection image
             intersection = np.logical_and(intersections_img, dart_mask)
             contours, _ = cv2.findContours(
                 np.uint8(intersection) * 255, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
@@ -95,6 +115,13 @@ class ImageUtils:
 
                 # add dart index as color into the output intersection image
                 out_img[:, :, dart_id] = np.uint8(intersection) * 255
+
+                # Make the intersection area bigger to prevent bugs
+                intersection = cv2.dilate(
+                    intersection.astype(np.uint8) * 255,
+                    kernel=None,
+                    iterations=2,
+                ).astype(bool)
 
                 # Remove intersection point from image
                 intersections_img = np.logical_and(
@@ -294,12 +321,23 @@ class MaskActions:
             _, dart_intersect_img = cv2.threshold(
                 img[:, :, i], 64, 255, cv2.THRESH_BINARY
             )
+            # Empty mask
+            if not np.any(dart_intersect_img):
+                centers.append((0, 0))
+                continue
+
             contour = cv2.findContours(
                 dart_intersect_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
             )[0][0]
 
             # Extract center point
             M = cv2.moments(contour)
+            if M["m00"] == 0:
+                # There may only be a single line with no area as intersection,
+                # that's a weird case and I honestly don't want to handle that.
+                raise AssertionError(
+                    "Weird intersection. If this error bothers you, please implement a fix."
+                )
             cy = M["m01"] / M["m00"]
             cx = M["m10"] / M["m00"]
             cy /= img.shape[0]
@@ -416,7 +454,7 @@ def prepare_sample(sample_info: pd.Series, debug: bool = False):
     cv2.imwrite(
         sample_info.out_file_template.format(filename="undistort.png"), img_undist
     )
-    with open(sample_info.out_file_template.format(filename="info_new.pkl"), "wb") as f:
+    with open(sample_info.out_file_template.format(filename="info.pkl"), "wb") as f:
         pickle.dump(sample_info, f)
     if not debug:
         return sample_info
@@ -454,22 +492,31 @@ def prepare_sample(sample_info: pd.Series, debug: bool = False):
 
 
 if __name__ == "__main__":
-    data_dir = "data/generation/out_val"
+    data_dir = "data/generation/out"
     samples = [d for d in os.listdir(data_dir) if d.isnumeric()]
     samples = sorted(samples, key=int)
 
     def process_sample(id):
         info_path = os.path.join(data_dir, str(id), "info.pkl")
-        print(info_path)
+        # print(info_path)
+
         if not os.path.exists(info_path):
             print("non-existing")
             return
         with open(info_path, "rb") as f:
             sample_info = pickle.load(f)
         sample_info["sample_id"] = id
-        prepare_sample(sample_info)
+        sample_info["OUT_DIR"] = data_dir
+        sample_info["out_file_template"] = data_dir + "/" + str(id) + "/{filename}"
+        try:
+            prepare_sample(sample_info)
+        except Exception as e:
+            # If we find an error, just remove it and re-create later
+            print(e)
+            print(sample_info.sample_id)
+            os.remove(sample_info.out_file_template.format(filename="info.pkl"))
 
     from multiprocessing import Pool
 
-    with Pool(os.cpu_count()) as pool:
+    with Pool(8) as pool:
         list(tqdm(pool.imap_unordered(process_sample, samples), total=len(samples)))
