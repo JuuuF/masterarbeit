@@ -668,16 +668,47 @@ def yolo_v8_convert_darts(
     return outputs
 
 
-def score2color(score: str):
+def yolo_to_positions(
+    grid_positions: np.ndarray | tf.Tensor,  # (y, x, 3, 3)
+) -> np.ndarray:  # (n, 3)
+    s = tf.shape(grid_positions)[0]  # 25/50/100
+    cell_indices = tf.stack(
+        tf.meshgrid(tf.range(s), tf.range(s), indexing="ij"),
+        axis=-1,
+    )  # (s, s, 2)
+    global_grid_pos = cell_indices * 800 / s  # (s, s, 2)
+
+    xst = grid_positions[:, :, -1:, :]  # (y, x, 1, 3)
+    pos = grid_positions[:, :, :-1, :]  # (y, x, 2, 3)
+
+    pos_abs = pos * (800 / s) + global_grid_pos[:, :, :, None]  # (s, s, 2, 3)
+
+    pos_abs = tf.transpose(pos_abs, [0, 1, 3, 2])  # (y, x, 3, 2)
+    pos_abs = tf.reshape(pos_abs, [-1, 2])  # (m, 2)
+
+    xst = tf.transpose(xst, [0, 1, 3, 2])  # (y, x, 3, 1)
+    xst = tf.reshape(xst, [-1, 1])  # (m, 1)
+
+    existing = xst[:, 0] > 0.5  # (m,)
+    darts_positions = pos_abs[existing]  # (n, 2), n <= m, n = amount of found points
+    darts_existence = xst[existing]  # (n, 1)
+    res = np.concatenate(
+        [darts_positions, darts_existence], axis=-1
+    )  # (n, 3): y, x, existence
+
+    return res
+
+
+def score2class(score: str):
     if score == "HIDDEN":
         return CLASSES.index("nothing")
     if score == "OUT":
         return CLASSES.index("out")
 
     # bull
-    if "B" in score:
-        if "D" in score:
-            return CLASSES.index("red")
+    if score in ["DB", "DBull"]:
+        return CLASSES.index("red")
+    if score in ["B", "Bull"]:
         return CLASSES.index("green")
 
     dart_order = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
@@ -706,7 +737,7 @@ if __name__ == "__main__":
         variant="n",
     )
 
-    y_true = yolo_v8_convert_darts(
+    y_true = positions_to_yolo(
         800,
         [
             ((410, 410), "DB"),
@@ -717,7 +748,7 @@ if __name__ == "__main__":
         ],
     )
 
-    y_pred = yolo_v8_convert_darts(
+    y_pred = positions_to_yolo(
         800,
         [
             # ((400, 150), "11"),
@@ -736,5 +767,11 @@ if __name__ == "__main__":
     y_true = [np.expand_dims(y, 0) for y in y_true]
     # y_pred = [np.expand_dims(y, 0) for y in y_pred]
     loss = YOLOv8Loss(800, 50)
-    l = loss(y_true, y_true)
+
+    from cProfile import Profile
+    import pstats
+
+    with Profile() as p:
+        l = loss(y_true, y_true)
+    pstats.Stats(p).dump_stats("dump/profile.prof")
     print(l)

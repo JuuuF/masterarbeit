@@ -253,10 +253,10 @@ class SceneUtils:
 
             if r < radii[0]:
                 score = 50
-                score_str = "DBull"
+                score_str = "DB"
             elif r < radii[1]:
                 score = 25
-                score_str = "Bull"
+                score_str = "B"
             elif r < radii[2]:
                 score = number
             elif r < radii[3]:
