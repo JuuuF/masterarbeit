@@ -6,6 +6,7 @@ DOCKER_ARGS=()
 DOCKER_ARGS+=("--name=jf_masterarbeit")
 DOCKER_ARGS+=("-it")
 DOCKER_ARGS+=("-d")
+DOCKER_ARGS+=("-h=MA")
 
 # Memory management
 DOCKER_ARGS+=("--memory=32GB")
