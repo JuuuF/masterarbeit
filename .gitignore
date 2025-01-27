@@ -15,7 +15,7 @@ data/generation/references/
 data/darts_references/
 
 # Generation data
-data/generation/out*/
+data/generation/out*
 
 # dump files
 dump/*
