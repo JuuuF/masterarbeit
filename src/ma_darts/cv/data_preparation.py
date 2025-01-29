@@ -456,6 +456,10 @@ def prepare_sample(sample_info: pd.Series, debug: bool = False):
     )
     with open(sample_info.out_file_template.format(filename="info.pkl"), "wb") as f:
         pickle.dump(sample_info, f)
+    sample_info.to_json(
+        sample_info.out_file_template.format(filename="info.json"),
+        double_precision=15,
+    )
     if not debug:
         return sample_info
 

@@ -262,10 +262,45 @@ def OutputTansformation(
 # Model Itself
 
 
-# This loss only works for a single class - needs an update, but before that I wanted to commit my changes
-def yolo_v8_model(input_size: int, classes: list[str], variant="n"):
+def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.Model:
+    """
+    YOLOv8 implementation in TensorFlow (which is way cooler than PyTorch).
+
+    Parameters
+    ----------
+
+    input_size: int
+        Input image size for the model.
+    classes: list[str]
+        Classes to predict. Note that there's an implicit "nothing"-class
+        as the first element of the list.
+    variant: str
+        Variant of the model. Can be one of (n, s, m, l, x).
+        The default is "n".
+
+    Returns
+    -------
+
+    model: tf.keras.Model
+        YOLOv8 model in TensorFlow.
+        input_shape: (input_size, input_size, 3)
+        output_shape: [
+            (s, s, 2 + n_classes, 3),
+            (m, m, 2 + n_classes, 3),
+            (l, l, 2 + n_classes, 3),
+        ]
+        where:
+            s = input_size // 32
+            m = input_size // 16
+            l = input_size // 8
+    """
     inputs = layers.Input(shape=(input_size, input_size, 3), name="Input")
+
+    # Implicit addition of nothing class as first index
     classes = list(set(classes))
+    if "nothing" in classes:
+        classes.remove("nothing")
+    classes.insert(0, "nothing")
 
     variants = {  # d, w, r
         "n": (1 / 3, 0.25, 2),
@@ -338,95 +373,83 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n"):
 # =================================================================================================
 # Loss
 
+tf.config.set_soft_device_placement(True)
+
 
 class YOLOv8Loss(tf.keras.Loss):
     def __init__(
         self,
         img_size: int,
         square_size: int = 50,
+        class_introduction_threshold: int | float = np.Inf,
+        position_introduction_threshold: int | float = np.Inf,
     ) -> None:
         super().__init__()
         self.img_size = img_size
         self.square_size = square_size
         self.existence_threshold = 0.5
-        self.existence_loss = tf.keras.losses.BinaryCrossentropy()
+        self.xst_loss = tf.keras.losses.BinaryFocalCrossentropy()
 
-    def call(
-        self,
-        y_true: tf.Tensor,  # 3x (bs, y, x, 2+n, 3)
-        y_pred: tf.Tensor,
-    ) -> tf.Tensor:
-
-        # Calculate loss for each scale
-        scale_losses = tf.map_fn(
-            lambda scl: self.single_loss(y_true[scl], y_pred[scl], scl),
-            tf.range(3),
-            dtype=tf.float32,
+        self.class_introduction_threshold = tf.constant(
+            class_introduction_threshold, tf.float32
+        )
+        self.position_introduction_threshold = tf.constant(
+            position_introduction_threshold, tf.float32
         )
 
-        return tf.reduce_max(scale_losses)
-
-    def single_loss(
+    @tf.function(jit_compile=False)
+    def call(
         self,
         y_true: tf.Tensor,  # (bs, y, x, 2+n, 3)
         y_pred: tf.Tensor,
-        scl: tf.Tensor,  # (1,)
     ) -> tf.Tensor:
         # Split tensors
         pos_true = y_true[..., :2, :]  # (bs, y, x, 2, 3)
         pos_pred = y_pred[..., :2, :]
         cls_true = y_true[..., 2:, :]  # (bs, y, x, n, 3)
         cls_pred = y_pred[..., 2:, :]
-        xst_true = self.get_existence(cls_true)  # (bs, y, x, 1, 3)
-        xst_pred = self.get_existence(cls_pred)
 
-        # Compute existence loss
-        class_loss = self.get_class_loss(cls_true, cls_pred)
+        # ---------------------------------------
+        # 1. Existence per cell
+        # Get existences
+        xst_true = self.get_cell_existence(cls_true)  # (bs, y, x)
+        xst_pred = self.get_cell_existence(cls_pred)
 
-        # Compute position loss
-        positions_loss = self.get_positions_loss(
-            xst_true, pos_true, xst_pred, pos_pred, scl
+        # Calculate existence loss
+        total_loss = self.xst_loss(xst_true, xst_pred)
+
+        # ---------------------------------------
+        # 2. Classes of existing cells
+
+        cls_loss, pos_pred, cls_pred = tf.cond(
+            tf.less(total_loss, self.class_introduction_threshold),
+            true_fn=lambda: self.get_cls_loss(y_pred, cls_true, cls_pred),
+            false_fn=lambda: (tf.constant(100, tf.float32), pos_pred, cls_pred),
         )
-        return class_loss + positions_loss
 
-    def get_existence(
+        total_loss = total_loss + cls_loss
+
+        # ---------------------------------------
+        # 3. Positions loss
+
+        pos_loss = tf.cond(
+            tf.less(total_loss, self.position_introduction_threshold),
+            true_fn=lambda: self.get_positions_loss(
+                pos_true, pos_pred, cls_true, cls_pred
+            ),
+            false_fn=lambda: tf.constant(100, tf.float32),
+        )
+
+        total_loss = total_loss + pos_loss
+
+        return total_loss
+
+    def get_cls_loss(
         self,
-        y_cls: tf.Tensor,  # (bs, y, x, n, 3)
-    ) -> tf.Tensor:
-
-        # Get best class
-        found_classes = tf.argmax(y_cls, axis=-2, output_type=tf.int32)  # (bs, y, x, 3)
-
-        # nothing-class is the first class by design
-        nothing_class = 0
-        is_present = tf.cast(
-            tf.not_equal(found_classes, nothing_class),
-            tf.int32,
-        )  # (bs, y, x, 3)
-
-        is_present = tf.expand_dims(is_present, axis=-2)  # (bs, y, x, 1, 3)
-
-        return tf.cast(is_present, tf.float32)
-
-    @tf.function
-    def get_class_loss(
-        self,
-        cls_true: tf.Tensor,  # (bs, y, x, nc, 3)
-        cls_pred: tf.Tensor,
-    ) -> tf.Tensor:
-
-        # For some reason, upon startup there's smaller samples coming in
-        if tf.not_equal(tf.shape(tf.shape(cls_true))[0], 5):
-            return tf.constant(14, tf.float32)
-
-        # Flatten the grid
-        bs = tf.shape(cls_true)[0]
-        s = tf.shape(cls_true)[1]
-        nc = tf.shape(cls_true)[3]
-        r = tf.shape(cls_true)[4]
-        # bs, s, _, nc, r = tf.shape(cls_true)
-        cls_true = tf.reshape(cls_true, (bs, -1, nc, r))  # (bs, y*X, nc, 3)
-        cls_pred = tf.reshape(cls_pred, (bs, -1, nc, r))
+        y_pred,
+        cls_true,
+        cls_pred,
+    ):
 
         # Get all output permutations
         permutations = tf.constant(
@@ -434,94 +457,227 @@ class YOLOv8Loss(tf.keras.Loss):
             dtype=tf.int32,
         )  # if you can figure out how to tf-vectorize this, go for it!
 
-        losses = []  # -> (r!, bs, y*x)
+        # Gather permutations - we step into weird territory here
+        # (bs, y, x, 18, 6)
+        cls_pred_permuted = self.get_permutations(cls_pred, permutations)
+        cls_true_permuted = self.get_permutations(cls_true, [[0, 1, 2]] * 6)
 
-        perm_losses = tf.map_fn(
-            lambda p: self.get_permuted_positions_loss(p, cls_true, cls_pred),
-            permutations,
-            dtype=tf.float32,
-        )  # (r!, bs, y*x)
+        # Get best loss per cell permutation and its permutation index
+        cls_loss, cell_perm_idx = self.binary_focal_crossentropy_per_permutation_cell(
+            cls_true_permuted, cls_pred_permuted
+        )  # (1,), (bs, y, x)
 
-        # Take minimal loss to determine each correct permutation
-        cell_loss = tf.reduce_min(perm_losses, axis=0)  # (b, y*x)
+        # Switch to the best class permutation orders
+        y_pred = self.apply_cell_permutations(
+            y_pred, permutations, cell_perm_idx
+        )  # (bs, y, x, 2+n, 3)
+        pos_pred = y_pred[..., :2, :]  # (bs, y, x, 2, 3)
+        cls_pred = y_pred[..., 2:, :]  # (bs, y, x, n, 3)
 
-        # The final position loss is the mean of each cell loss
-        total_loss = tf.reduce_mean(cell_loss)
-
-        return total_loss
-
-    def get_permuted_positions_loss(
-        self,
-        perm: tf.Tensor,  # (3,)
-        cls_true: tf.Tensor,  # (bs, y*X, nc, 3)
-        cls_pred: tf.Tensor,  # (bs, y*X, nc, 3)
-    ) -> tf.Tensor:
-        # Get permutation (3* = 3, but permuted)
-        cls_true_perm = tf.gather(cls_true, perm, axis=-1)  # (bs, y*x, nc, 3*)
-        cls_pred_perm = tf.gather(cls_pred, perm, axis=-1)
-
-        # Calculate loss for permutation
-        loss = tf.keras.backend.categorical_crossentropy(
-            cls_true_perm, cls_pred_perm, axis=-2
-        )  # (bs, y*x, 3*)
-
-        # Take mean loss for permutation order
-        loss = tf.reduce_mean(loss, axis=-1)  # (bs, y*x)
-        return loss
+        return cls_loss, pos_pred, cls_pred
 
     def get_positions_loss(
         self,
-        xst_true: tf.Tensor,  # (bs, y, x, 2, 3)
-        pos_true: tf.Tensor,
-        xst_pred: tf.Tensor,  # (, bsy, x, 1, 3)
+        pos_true: tf.Tensor,  # (bs, y, x, 2, 3)
         pos_pred: tf.Tensor,
-        scl: int,
-    ) -> tf.Tensor:
-        # Map to global positions
-        pos_true, pos_pred = self.convert_to_absolute_coordinates(
-            pos_true, pos_pred, scl
-        )  # (bs, y, x, 1, 3)
+        cls_true: tf.Tensor,  # (bs, y, x, 6, 3)
+        cls_pred: tf.Tensor,
+    ):
+        # Convert to absolute coordinates
+        pos_true, pos_pred = self.convert_to_absolute_coordinates(pos_true, pos_pred)
 
-        # Filter predicted points by confidence
-        valid_pos_true_mask = tf.cast(
-            xst_true > self.existence_threshold, tf.float32
-        )  # (bs, y, x, 1, 3): 0/1
-        valid_pos_pred_mask = tf.cast(xst_pred > self.existence_threshold, tf.float32)
-        valid_pos_true_mask = tf.repeat(
-            valid_pos_true_mask, repeats=2, axis=-2
-        )  # (bs, y, x, 2, 3)
-        valid_pos_pred_mask = tf.repeat(valid_pos_pred_mask, repeats=2, axis=-2)
+        # Find predicted classes
+        cls_true = tf.transpose(cls_true, (0, 1, 2, 4, 3))  # (bs, y, x, 3, 6)
+        cls_pred = tf.transpose(cls_pred, (0, 1, 2, 4, 3))
+        cls_true = tf.argmax(cls_true, axis=-1)  # (bs, y, x, 3)
+        cls_pred = tf.argmax(cls_pred, axis=-1)
 
-        # Apply confidence threshold
-        pos_true_filtered = valid_pos_true_mask * pos_true  # (bs, y, x, 2, 3)
-        pos_pred_filtered = valid_pos_pred_mask * pos_pred
+        # Flatten grid dimension
+        batch_size = tf.shape(cls_true)[0]
+        cls_true = tf.reshape(cls_true, (batch_size, -1, 3))  # (bs, s, 3), s=y*x
+        cls_pred = tf.reshape(cls_pred, (batch_size, -1, 3))
+        pos_true = tf.reshape(pos_true, (batch_size, -1, 2, 3))  # (bs, s, 2, 3)
+        pos_pred = tf.reshape(pos_pred, (batch_size, -1, 2, 3))
+        pos_true = tf.transpose(pos_true, (0, 1, 3, 2))  # (bs, s, 3, 2)
+        pos_pred = tf.transpose(pos_pred, (0, 1, 3, 2))
 
-        # Generate masks
-        batch_size = tf.shape(pos_pred_filtered)[0]
-        mask_true = tf.map_fn(
-            lambda b: self.get_mask(pos_true_filtered[b]),
-            tf.range(batch_size),
-            tf.bool,
+        # Mask positions
+        mask_true = cls_true != 0  # (bs, s, 3)
+        mask_pred = cls_pred != 0
+        mask_true = tf.cast(tf.expand_dims(mask_true, -1), tf.float32)  # (bs, s, 3, 1)
+        mask_pred = tf.cast(tf.expand_dims(mask_pred, -1), tf.float32)
+        mask_true = tf.repeat(mask_true, repeats=2, axis=-1)  # (bs, s, 3, 2)
+        mask_pred = tf.repeat(mask_pred, repeats=2, axis=-1)
+
+        # batch_size = tf.shape(cls_true)[0]
+        # pos_loss_batch = tf.map_fn(
+        #     lambda batch: self.single_sample_iou(
+        #         tf.reshape(tf.boolean_mask(pos_true[batch], mask_true[batch]), [-1, 2]),
+        #         tf.reshape(tf.boolean_mask(pos_pred[batch], mask_pred[batch]), [-1, 2]),
+        #     ),
+        #     elems=tf.range(batch_size),
+        #     dtype=tf.float32,
+        # )
+        # pos_loss = tf.reduce_mean(pos_loss_batch)
+        # return tf.cast(pos_loss, tf.float32)
+        pos_true_reduced = tf.boolean_mask(pos_true, mask_true)
+        pos_pred_reduced = tf.boolean_mask(pos_pred, mask_true)
+
+        mse = tf.reduce_mean(tf.square(pos_true_reduced - pos_pred_reduced))
+        return tf.cast(mse, tf.float32)
+
+    def single_sample_iou(
+        self,
+        # pos_true: tf.Tensor,  # (3, 2)
+        # pos_pred: tf.Tensor,  # (n, 2)
+        pos_true,  # (s, 3, 2)
+        pos_pred,
+        mask_true,  # (s, 3, 2)
+        mask_pred,
+        batch,
+    ):
+        """
+        Okay, here we step into very deep abstraction levels:
+        We want to compute IoU scores of squares of _equal_ sizes each -
+        that turns out to be really handy.
+        """
+        pos_true = pos_pred
+        pos_pred = pos_pred
+        mask_true = mask_pred
+        mask_pred = mask_pred
+        return tf.constant(10, tf.float32)  # NOTE: does not work with this
+
+        def iou_computation(pos_true, pos_pred, square_size):
+            # Extending dimensions
+            # return tf.constant(10, tf.float32)  # XXX
+
+            pos_true = tf.expand_dims(pos_true, 1)  # (m, 1, 2)
+            pos_pred = tf.expand_dims(pos_pred, 0)  # (1, n, 2)
+
+            # Get distances to square centers
+            dists = tf.abs(pos_true - pos_pred)  # (m, n, 2)
+
+            # Compute intersection area
+            # NOTE: we do not handle self-intersection within a mask
+            side_lengths = tf.maximum(square_size - dists, 0)
+            intersections = tf.reduce_prod(side_lengths, axis=-1)
+            intersection_area = tf.cast(tf.reduce_sum(intersections), tf.float32)
+
+            # Compute union area
+            n_points = tf.shape(pos_true)[0] + tf.shape(pos_pred)[0]
+            total_area = tf.cast(n_points * square_size * square_size, tf.float32)
+            union_area = total_area - intersection_area
+
+            # Compute IoU
+            iou = tf.math.divide_no_nan(intersection_area, union_area)
+            return iou
+
+        def iou_guess(pos_true, square_size, img_size):
+            intersection = tf.cast(
+                tf.shape(pos_true)[0] * square_size * square_size, tf.float32
+            )
+            union = tf.cast(img_size * img_size, tf.float32)
+            return tf.math.divide_no_nan(intersection, union)
+
+        # cut-down lengths for graph compilation
+        pos_true = pos_true[:251]
+        pos_pred = pos_pred[:251]
+
+        iou = tf.cond(
+            tf.shape(pos_pred)[0] < 250,
+            lambda: iou_computation(pos_true, pos_pred, self.square_size),
+            lambda: iou_guess(pos_true, self.square_size, self.img_size),
         )
-        mask_pred = tf.map_fn(
-            lambda b: self.get_mask(pos_pred_filtered[b]),
-            tf.range(batch_size),
-            tf.bool,
-        )
-
-        # Get IoU score
-        iou = self.get_iou(mask_true, mask_pred)
 
         return 1 - iou
+
+    def apply_cell_permutations(
+        self,
+        y: tf.Tensor,  # (bs, y, x, n, 3)
+        permutations: tf.Tensor,  # (6, 3)
+        cell_perm_idx: tf.Tensor,  # (bs, y, x)
+    ):
+        # Get permutation per cell
+        target_perms = tf.gather(permutations, cell_perm_idx)  # (bs, y, x, 3)
+
+        # Apply permutations per cell
+        y_perm = tf.gather(y, target_perms, axis=-1, batch_dims=3)  # (bs, y, x, n, 3)
+
+        return y_perm
+
+    def get_permutations(
+        self,
+        y: tf.Tensor,  # (bs)
+        perms: tf.Tensor,
+    ):
+        batch_size = tf.shape(y)[0]
+        s = tf.shape(y)[1]
+
+        # Apply all given permutations
+        gathered_perms = tf.gather(y, perms, axis=-1)  # (bs, y, x, 6, 6, 3)
+
+        # Transpose to re-order axes
+        transposed_perms = tf.transpose(
+            gathered_perms, [0, 1, 2, 5, 3, 4]
+        )  # (bs, y, x, 3, 6, 6)
+
+        # Combine corresponding axes
+        y_permuted = tf.reshape(
+            transposed_perms, [batch_size, s, s, 18, 6]
+        )  # (bs, y, x, 18, 6)
+
+        return y_permuted
+
+    def binary_focal_crossentropy_per_permutation_cell(
+        self,
+        cls_true: tf.Tensor,
+        cls_pred: tf.Tensor,
+        gamma: float = 2.0,
+        alpha: float = 0.25,
+    ):
+        epsilon = tf.keras.backend.epsilon()
+        cls_pred = tf.clip_by_value(cls_pred, epsilon, 1.0 - epsilon)
+
+        # Compute binary focal crossentropy loss per element
+        loss_pos = (
+            -alpha * cls_true * tf.math.pow(1 - cls_pred, gamma) * tf.math.log(cls_pred)
+        )
+        loss_neg = (
+            -(1 - alpha)
+            * (1 - cls_true)
+            * tf.math.pow(cls_pred, gamma)
+            * tf.math.log(1 - cls_pred)
+        )
+        loss_per_element = loss_pos + loss_neg  # (bs, y, x, 18, 6)
+
+        loss_per_permutation = tf.reduce_mean(loss_per_element, axis=3)  # (bs, y, x, 6)
+
+        loss_per_cell = tf.reduce_min(loss_per_permutation, axis=-1)  # (bs, y, x)
+        cls_loss = tf.reduce_mean(loss_per_cell)
+
+        cell_perm_idx = tf.argmin(loss_per_permutation, axis=-1)  # (bs, y, x)
+
+        return cls_loss, cell_perm_idx
+
+    def get_cell_existence(
+        self,
+        y_cls: tf.Tensor,  # (bs, y, x, n, 3)
+    ) -> tf.Tensor:
+        # Flatten all predictions per cell
+        y_cls = tf.reduce_max(y_cls, axis=-1)  # (bs, y, x, n)
+
+        # Binarize existences
+        some_class_found = tf.reduce_max(y_cls[..., 1:], axis=-1)  # (bs, y, x)
+
+        y_xst = tf.where(some_class_found > 0.5, 1, 0)  # (bs, y, x)
+        return y_xst
 
     def convert_to_absolute_coordinates(
         self,
         pos_true: tf.Tensor,  # (bs, y, x, 2, 3)
         pos_pred: tf.Tensor,
-        scl: int,
     ) -> tuple[tf.Tensor, tf.Tensor]:
-        s = self.img_size // 2 ** (5 - scl)
-        grid_size = (s, s)
+        s = tf.shape(pos_true)[1]
         cell_size = self.img_size / tf.cast(s, tf.float32)
 
         grid_indices = tf.stack(
@@ -541,77 +697,6 @@ class YOLOv8Loss(tf.keras.Loss):
 
         return global_pos_true, global_pos_pred
 
-    def get_mask(
-        self,
-        positions,  # (y, x, 2, 3)
-    ) -> tf.Tensor:  # bool
-
-        # Filter out masked positions
-        positions_idx = tf.where(
-            tf.logical_and(positions[:, :, 0, :] != 0, positions[:, :, 1, :] != 0)
-        )  # (n, 3)
-
-        # When there are too many points, we just skip the calculation
-        # because "masks" might cause OOM error else
-        if tf.shape(positions_idx)[0] > 50:
-            # positions_idx = positions_idx[:50]
-            return tf.ones((self.img_size, self.img_size), tf.bool)
-
-        # Add x and y indices into dimension 2
-        pad = tf.zeros_like(positions_idx[:, :1])
-        y_ids = tf.concat(
-            [positions_idx[:, :2], pad + 0, positions_idx[:, 2:]], axis=1
-        )  # (n, 4)
-        x_ids = tf.concat([positions_idx[:, :2], pad + 1, positions_idx[:, 2:]], axis=1)
-        y_pos = tf.gather_nd(positions, y_ids)  # (n,)
-        x_pos = tf.gather_nd(positions, x_ids)
-
-        # Get min and max values
-        half_size = self.square_size / 2
-        y_min = tf.clip_by_value(y_pos - half_size, 0, self.img_size - 1)  # (n,)
-        y_max = tf.clip_by_value(y_pos + half_size, 0, self.img_size - 1)
-        x_min = tf.clip_by_value(x_pos - half_size, 0, self.img_size - 1)
-        x_max = tf.clip_by_value(x_pos + half_size, 0, self.img_size - 1)
-
-        # Get image positions
-        y_indices, x_indices = tf.meshgrid(
-            tf.range(self.img_size), tf.range(self.img_size), indexing="ij"
-        )
-        indices = tf.cast(
-            tf.stack([y_indices, x_indices], axis=-1), tf.float32
-        )  # (800, 800, 2)
-
-        # Apply square conditions
-        # (1, 800, 800) x (n, 1, 1) = (n, 800, 800)
-        masks = tf.logical_and(
-            tf.logical_and(  # square height constraints
-                indices[None, ..., 0] >= y_min[:, None, None],
-                indices[None, ..., 0] <= y_max[:, None, None],
-            ),
-            tf.logical_and(  # square width constraints
-                indices[None, ..., 1] >= x_min[:, None, None],
-                indices[None, ..., 1] <= x_max[:, None, None],
-            ),
-        )  # (n, 800, 800)
-
-        final_mask = tf.reduce_any(masks, axis=0)  # (800, 800)
-        return final_mask
-
-    def get_iou(
-        self,
-        mask_true: tf.Tensor,  # bool
-        mask_pred: tf.Tensor,  # bool
-    ) -> tf.Tensor:
-
-        intersection = tf.reduce_sum(
-            tf.cast(tf.logical_and(mask_true, mask_pred), tf.float32)
-        )
-        union = tf.reduce_sum(tf.cast(tf.logical_or(mask_true, mask_pred), tf.float32))
-
-        iou = tf.math.divide_no_nan(intersection, union + 1e-6)
-
-        return iou
-
 
 # =================================================================================================
 # Data Loader
@@ -619,12 +704,12 @@ class YOLOv8Loss(tf.keras.Loss):
 CLASSES = ["nothing", "black", "white", "red", "green", "out"]
 
 
-def yolo_v8_convert_darts(
+def positions_to_yolo(
     img_size: int,
-    darts_info: list[tuple[tuple[int, int], str]],
-):
+    darts_info: list[tuple[tuple[int, int], str]],  # (y, x), score_str
+) -> list[np.ndarray]:
     # Convert scores to classes
-    darts_info = [(pos, score2color(s)) for pos, s in darts_info]
+    darts_info = [(pos, score2class(s)) for pos, s in darts_info]
     # Filter out non-existing darts
     darts_info = [(pos, cls) for pos, cls in darts_info if not cls == 0]
 
@@ -731,11 +816,24 @@ def score2class(score: str):
 
 
 if __name__ == "__main__":
+    exit()
     model = yolo_v8_model(
         input_size=800,
         classes=["black", "white", "red", "green", "out", "nothing"],
         variant="n",
     )
+    model.compile(
+        loss=lambda x, y: yolo_v8_loss(x, y, 50),
+        optimizer="adam",
+    )
+
+    model.fit(
+        np.zeros((4, 800, 800, 3), np.uint8),
+        [np.zeros((4, s, s, 8, 3), np.uint8) for s in [25, 50, 100]],
+        epochs=1,
+        batch_size=4,
+    )
+    exit()
 
     y_true = positions_to_yolo(
         800,
@@ -751,22 +849,25 @@ if __name__ == "__main__":
     y_pred = positions_to_yolo(
         800,
         [
-            # ((400, 150), "11"),
-            # ((493, 123), "12"),
-            # ((665, 584), "OUT"),
-            # ((0, 0), "HIDDEN"),
+            ((400, 150), "11"),
+            ((493, 123), "12"),
+            ((665, 584), "OUT"),
+            ((0, 0), "HIDDEN"),
         ],
     )
 
-    y_pred = model.predict(np.zeros((1, 800, 800, 3), np.float32))
+    # y_pred = model.predict(np.zeros((1, 800, 800, 3), np.float32))
 
-    for i in range(3):
-        y_pred[i][:, 14, 14, 3, 0] = 1
-        y_pred[i][:, 14, 14, 2, 0] = 0
+    # for i in range(3):
+    #     y_pred[i][:, 14, 14, 3, 0] = 1
+    #     y_pred[i][:, 14, 14, 2, 0] = 0
 
     y_true = [np.expand_dims(y, 0) for y in y_true]
-    # y_pred = [np.expand_dims(y, 0) for y in y_pred]
+    y_pred = [np.expand_dims(y, 0) for y in y_pred]
+
     loss = YOLOv8Loss(800, 50)
+    l = loss(y_true, y_true)
+    exit()
 
     from cProfile import Profile
     import pstats
