@@ -1,8 +1,73 @@
-\usepackage[utf8]{inputenc}
-% \usepackage{amsmath}
-% \usepackage{graphicx}
-\usepackage{hyperref}
+% !TEX root = ./main.tex
 
-% bibliography
+% -----------------------------------------------
+% PACKAGES
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+\usepackage{csquotes}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{subcaption}
 \usepackage{biblatex}
 \addbibresource{bibliography.bib}
+
+% -----------------------------------------------
+% Document setup
+
+% Kapitelbeginn
+% \newcommand{\pagediff}{\clearpage}
+\newcommand{\pagediff}{\cleardoublepage}
+
+% Zeilenabstand
+% \renewcommand{\baselinestretch}{1.5}
+
+% Seitenabstand
+\usepackage[a4paper, inner=3.5cm, outer=2.5cm, top=2.5cm, bottom=2.5cm, bindingoffset=1cm]{geometry}
+
+% Worttrennungen
+\hyphenpenalty=1000
+\tolerance=5000
+
+% Dark Mode
+\usepackage{pagecolor}
+\usepackage{xcolor}
+
+\newcommand{\darkmode}{
+    \pagecolor{black} % Set background to black
+    \color{white} % Set text color to white
+    \hypersetup{
+        colorlinks=true,
+        linkcolor=cyan,  % Adjust hyperlink colors for dark mode
+        citecolor=lightgray,
+        urlcolor=yellow
+    }
+}
+% \darkmode
+
+% Anführungszeichen
+\newcommand{\quotes}[1]{\glqq{#1}\grqq{}}
+
+% Grad °
+\newcommand{\degree}{^{\circ}}
+
+% Abstände in Enumerations und Item lists
+\usepackage{enumitem}
+\setlist[itemize]{itemsep=0pt, parsep=2pt}
+
+% Plots
+\usepackage{pgfplots}
+\usepackage{caption}
+\captionsetup[figure]{hypcap=false}
+\pgfplotsset{compat=1.18}
+
+% -----------------------------------------------
+% Acronyms
+
+\usepackage{acro}
+
+\DeclareAcronym{WDF}{
+    short = WDF ,
+    long = World Dart Federation ,
+}

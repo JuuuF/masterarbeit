@@ -1,14 +1,32 @@
-\documentclass{report}
+% !TEX root = main.tex
+\documentclass[10pt,twoside,a4paper]{report}
 
 \input{preamble}
 
 \begin{document}
 
 \input{chapters/0-title}
-\include{chapters/1-einleitung}
 
-% \bibliographystyle{plain}
-\cite{sample2021}
+\pagenumbering{Roman}
+\tableofcontents
+\pagediff
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\input{chapters/1-einleitung}
+\pagediff
+\input{chapters/2-grundlagen-methodik}
+\pagediff
+\input{chapters/3-implementierung}
+\pagediff
+\input{chapters/4-ergebnisse}
+\pagediff
+\input{chapters/5-diskussion}
+\pagediff
+\input{chapters/6-fazit}
+\pagediff
+
+
 \printbibliography
 
 \end{document}

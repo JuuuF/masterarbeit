@@ -40,6 +40,9 @@ data/cache/
 *.xml
 *.toc
 !main.pdf
+*.latexmkrc
+*.md5
+*.auxlock
 
 # GIMP
 *.xcf
