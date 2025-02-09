@@ -10,11 +10,16 @@
 \usepackage{hyperref}
 \usepackage{multirow}
 \usepackage{subcaption}
+\usepackage{nameref}
+\usepackage{svg}
 \usepackage{biblatex}
 \addbibresource{bibliography.bib}
 
 % -----------------------------------------------
 % Document setup
+
+% Tiefe der Nummerierung der Kapitel
+\setcounter{secnumdepth}{3}
 
 % Kapitelbeginn
 % \newcommand{\pagediff}{\clearpage}
@@ -31,8 +36,8 @@
 \tolerance=5000
 
 % Dark Mode
-\usepackage{pagecolor}
 \usepackage{xcolor}
+\usepackage{pagecolor}
 
 \newcommand{\darkmode}{
     \pagecolor{black} % Set background to black
@@ -51,6 +56,7 @@
 
 % Grad °
 \newcommand{\degree}{^{\circ}}
+\DeclareMathOperator{\arctan2}{arctan2}
 
 % Abstände in Enumerations und Item lists
 \usepackage{enumitem}
@@ -62,6 +68,17 @@
 \captionsetup[figure]{hypcap=false}
 \pgfplotsset{compat=1.18}
 
+% Tikz
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows, fit}
+
+\tikzstyle{io} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
+\tikzstyle{prep} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!20]
+\tikzstyle{edges} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!20]
+\tikzstyle{lines} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!20]
+\tikzstyle{orientation} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!20]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
 % -----------------------------------------------
 % Acronyms
 
@@ -71,3 +88,4 @@
     short = WDF ,
     long = World Dart Federation ,
 }
+
