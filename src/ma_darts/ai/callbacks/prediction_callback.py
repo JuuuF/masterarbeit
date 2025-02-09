@@ -90,9 +90,46 @@ class PredictionCallback(Callback):
         out = cv2.addWeighted(img, 0.5, mask, 0.5, 1.0)
         return out
 
-    def get_cls_tile(self, cls_true, cls_pred):
+    def get_cls_tile(
+        self,
+        cls_true,  # (s, s, 6, 3)
+        cls_pred,  # (s, s, 6, 3)
+    ):
         grid_size = cls_true.shape[0]
         img = self.get_grid_img(grid_size)
+
+        overlay = np.zeros((grid_size * 8, grid_size * 8), np.float32)
+        for y, (cls_true_row, cls_pred_row) in enumerate(zip(cls_true, cls_pred)):
+            y *= 8
+            for x, (cell_true, cell_pred) in enumerate(zip(cls_true_row, cls_pred_row)):
+                x *= 8
+                if (cell_pred[0] > cell_pred[1:]).all() and (cell_true[0] == 1).all():
+                    continue
+                # Nothing class
+                overlay[y + 1, x + 1 : x + 4] = cell_true[0]
+                overlay[y + 1, x + 5 : x + 8] = cell_pred[0]
+                # Other classes
+                overlay[y + 3 : y + 8, x + 1 : x + 4] = cell_true[1:]
+                overlay[y + 3 : y + 8, x + 5 : x + 8] = cell_pred[1:]
+        overlay = np.uint8(overlay * 255)
+        overlay = cv2.applyColorMap(overlay, cv2.COLORMAP_PLASMA)
+        overlay = cv2.cvtColor(overlay, cv2.COLOR_BGR2BGRA)
+
+        # Light strips
+        overlay[2::8, ..., -1] = 1
+        overlay[:, 4::8, ..., -1] = 1
+        # Dark strips
+        overlay[::8, ..., -1] = 1
+        overlay[:, ::8, ..., -1] = 1
+
+        scl = img.shape[0] // overlay.shape[0]
+        overlay = np.kron(overlay, np.ones((scl, scl, 1), np.uint8))
+
+        # Combine images
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+        img = cv2.addWeighted(img, 1.0, overlay, 0.75, 1.0)
+
+        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
         return img
 
     def get_pos_tile(self, pos_true, pos_pred):
@@ -117,14 +154,21 @@ class PredictionCallback(Callback):
 
         xst_tile = self.get_xst_tile(xst_true, xst_pred)
         cls_tile = self.get_cls_tile(cls_true, cls_pred)
-        pos_tile = self.get_pos_tile(pos_true, pos_pred)
+        # pos_tile = self.get_pos_tile(pos_true, pos_pred)
 
-        out_tile = np.concatenate([xst_tile, cls_tile, pos_tile], axis=0)
+        out_tile = np.concatenate(
+            [
+                xst_tile,
+                cls_tile,
+                # pos_tile,
+            ],
+            axis=0,
+        )
 
         return out_tile
 
-    def plot_prediction(self):
-        y_pred = self.model.predict(
+    def plot_prediction(self, y_pred=None):
+        y_pred = y_pred or self.model.predict(
             self.X, verbose=0
         )  # (bs, s, s, 8, 3) for s = 25, 50, 100
 
