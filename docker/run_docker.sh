@@ -12,7 +12,7 @@ DOCKER_ARGS+=("-h=MA")
 DOCKER_ARGS+=("--memory=32GB")
 DOCKER_ARGS+=("--memory-reservation=32GB")
 DOCKER_ARGS+=("--cpus=8")
-DOCKER_ARGS+=("--gpus=device=0")
+DOCKER_ARGS+=("--gpus=device=1")
 
 # Volumes
 DOCKER_ARGS+=("-v" "$HOME/masterarbeit:/masterarbeit")

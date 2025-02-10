@@ -2,6 +2,8 @@ import os
 
 # os.environ["TF_CPP_MIN_LOG_LEVEL"] = "0"
 os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=2"
+os.environ["TF_XLA_FLAGS"] = "--tf_xla_disable_constant_folding=true"
+os.environ["XLA_FLAGS"] = "--xla_dump_to=/masterarbeit/dump/logs"
 
 import re
 import cv2
@@ -26,7 +28,7 @@ from tensorflow.keras import layers
 from tensorflow.keras.applications import *
 
 IMG_SIZE = 800
-BATCH_SIZE = 8 if "GPU_SERVER" in os.environ.keys() else 4
+BATCH_SIZE = 4 if "GPU_SERVER" in os.environ.keys() else 4
 
 
 class Utils:
@@ -38,35 +40,44 @@ class Utils:
     def get_callbacks():
         callbacks = []
         # History plotter
-        callbacks.append(
-            ma_callbacks.HistoryPlotter(
-                filepath="dump/training_history.png",
-                update_on="seconds",
-                update_frequency=10,
-                ease_curves=False,
-                smooth_curves=True,
-            )
+        hp = ma_callbacks.HistoryPlotter(
+            filepath="dump/training_history.png",
+            update_on="seconds",
+            update_frequency=60,
+            ease_curves=False,
+            smooth_curves=True,
         )
+        callbacks.append(hp)
 
         # Model Checkpoint
-        callbacks.append(
-            ma_callbacks.ModelCheckpoint(
-                filepath=Utils.model_checkpoint_filepath,
-                monitor="val_loss",
-                save_best_only=True,
-                max_saves=10,
-                save_weights_only=True,
-            )
+        mc = ma_callbacks.ModelCheckpoint(
+            filepath=Utils.model_checkpoint_filepath,
+            monitor="val_loss",
+            save_best_only=True,
+            max_saves=10,
+            save_weights_only=True,
         )
+        callbacks.append(mc)
+
+        # Prediction callback
+        X, y = next(iter(val_ds.take(1)))
+        pc = ma_callbacks.PredictionCallback(
+            X=X,
+            y=y,
+            output_file="dump/pred.png",
+            update_on="seconds",
+            update_frequency=60,
+        )
+        callbacks.append(pc)
 
         # TensorBoard
-        # callbacks.append(
-        #     tf.keras.callbacks.TensorBoard(
-        #         log_dir="data/ai/logs",
-        #         histogram_freq=1,
-        #         profile_batch=(0, 500),
-        #     )
-        # )
+        tb = tf.keras.callbacks.TensorBoard(
+            log_dir="data/ai/logs",
+            histogram_freq=1,
+            profile_batch=(0, 500),
+        )
+        # callbacks.append(tb)
+
         return callbacks
 
     def get_best_model_checkpoint():
@@ -981,18 +992,19 @@ else:
     model = tf.keras.models.load_model(args.model_path, compile=False)
 
 # Compile model
+metrics = [
+    tf.keras.metrics.MeanSquaredError(name="mse"),
+    tf.keras.metrics.MeanAbsoluteError(name="mae"),
+]
 model.compile(
     optimizer=tf.keras.optimizers.Adam(0.001),
     loss=YOLOv8Loss(
         img_size=800,
         square_size=50,
-        # class_introduction_threshold=0.5,
-        # position_introduction_threshold=0.5,
+        class_introduction_threshold=0.5,
+        position_introduction_threshold=0.5,
     ),
-    # metrics=[
-    #     tf.keras.metrics.MeanSquaredError(name="mse"),
-    #     tf.keras.metrics.MeanAbsoluteError(name="mae"),
-    # ],
+    # metrics=[metrics for _ in range(3)],
 )
 # model.summary(160)
 # print(model.input_shape)
@@ -1027,12 +1039,6 @@ test_ds = Data.get_ds(
 # Fit Model
 
 if args.train:
-    # Warmup
-    print("Warmup...")
-    for _ in range(5):
-        model.predict(
-            np.zeros((BATCH_SIZE, IMG_SIZE, IMG_SIZE, 3), np.float32), verbose=0
-        )
 
     try:
         model.fit(
@@ -1061,278 +1067,3 @@ if args.train:
 
 if args.predict:
     Data.visualize_data_predictions(model, test_ds)
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-
-class Unused:
-    class CombinedLoss(tf.keras.Loss):
-
-        def __init__(
-            self, positions_loss=None, existence_loss=None, existence_threshold=0.5
-        ):
-            super().__init__()
-            if positions_loss is None:
-                positions_loss = tf.keras.losses.MeanSquaredError()
-            self.positions_loss = positions_loss
-
-            if existence_loss is None:
-                existence_loss = tf.keras.losses.BinaryCrossentropy()
-            self.existence_loss = existence_loss
-            self.existence_threshold = existence_threshold
-
-        def call(self, y_true, y_pred):
-
-            permutation_list = list(permutations(range(3)))  # (6, 3)
-            permutation_losses = []
-
-            for perm in permutation_list:
-                y_true_perm = tf.gather(y_true, perm, axis=1)  # (bs, 3, 3)
-                y_pred_perm = tf.gather(y_pred, perm, axis=1)  # (bs, 3, 3)
-                perm_loss = self.calculate_permutation_loss(
-                    y_true_perm, y_pred_perm
-                )  # (1,)
-                permutation_losses.append(perm_loss)
-
-            losses = tf.stack(permutation_losses, axis=-1)  # (6,)
-            min_losses = tf.reduce_min(losses, axis=-1)  # (6,)
-            loss = tf.reduce_mean(min_losses)  # (1,)
-
-            return loss
-
-        def calculate_permutation_loss(self, y_true, y_pred):
-            # Split inputs into positions and existence
-            true_positions = y_true[..., :2]  # (bs, 3, 2)
-            true_existence = y_true[..., -1:]  # (bs, 3, 1)
-
-            pred_positions = y_pred[..., :2]  # (bs, 3, 2)
-            pred_existence = y_pred[..., -1:]  # (bs, 3, 1)
-
-            # Existence loss
-            existence_loss = self.existence_loss(true_existence, pred_existence)  # (1,)
-
-            # Mask out non-existing positions
-            true_positions_masked = true_positions * true_existence * 8  # (bs, 3, 2)
-            pred_positions_masked = pred_positions * true_existence * 8  # (bs, 3, 2)
-
-            # Calculate distances
-            dists_y = (
-                true_positions_masked[..., 0] - pred_positions_masked[..., 0]
-            )  # (bs, 3)
-            dists_x = (
-                true_positions_masked[..., 1] - pred_positions_masked[..., 1]
-            )  # (bs, 3)
-
-            # MSE over distances
-            dists = dists_y**2 + dists_x**2  # (bs, 3)
-            dists_loss = tf.reduce_mean(dists)
-
-            # Calculate masked positional loss
-            # positions_loss = self.positions_loss(
-            #     true_positions_masked, pred_positions_masked
-            # )  # (1,)
-
-            return existence_loss + (1 + existence_loss) * (dists_loss)
-
-    class Backbones:
-        def bipolar_rescale() -> dict:
-            """(-1, 1) rescaling"""
-            return dict(scale=2, offset=-1)
-
-        def unnormalized_rescale() -> dict:
-            """(0, 255) rescaling"""
-            return dict(scale=255, offset=0)
-
-        def mobilenet_v3_large(
-            input_tensor,
-            input_shape: list[int | None],
-            trainable: bool = False,
-        ) -> tf.Tensor:
-            # Rescale to (-1, 1)
-            x = layers.Rescaling(**Backbones.bipolar_rescale(), name="input_rescaling")(
-                input_tensor
-            )
-
-            # Get backbone
-            backbone = MobileNetV3Large(
-                include_top=False,
-                weights="imagenet",
-                input_shape=input_shape,
-                include_preprocessing=False,
-            )
-            backbone.trainable = trainable
-
-            # Apply backbone
-            x = backbone(x)
-            return x
-
-        def mobilenet_v2(
-            input_tensor,
-            input_shape: list[int | None],
-            trainable: bool = False,
-        ) -> tf.Tensor:
-            # Rescale to (-1, 1)
-            x = layers.Rescaling(**Backbones.bipolar_rescale(), name="input_rescaling")(
-                input_tensor
-            )
-
-            # Get backbone
-            backbone = MobileNetV2(
-                include_top=False,
-                weights="imagenet",
-                input_shape=input_shape,
-            )
-            backbone.trainable = trainable
-
-            # Apply backbone
-            x = backbone(x)
-            return x
-
-        def efficientnet_v2_b1(
-            input_tensor,
-            input_shape: list[int | None],
-            trainable: bool = False,
-        ) -> tf.Tensor:
-            # Rescale to (-1, 1)
-            x = layers.Rescaling(**Backbones.bipolar_rescale(), name="input_rescaling")(
-                input_tensor
-            )
-
-            # Get backbone
-            backbone = EfficientNetV2B1(
-                include_top=False,
-                weights="imagenet",
-                input_shape=input_shape,
-                include_preprocessing=False,
-            )
-            backbone.trainable = trainable
-
-            # Apply backbone
-            x = backbone(x)
-            return x
-
-        def convnext_tiny(
-            input_tensor,
-            input_shape: list[int | None],
-            trainable: bool = False,
-        ) -> tf.Tensor:
-            # Rescale to (0, 255)
-            x = layers.Rescaling(
-                **Backbones.unnormalized_rescale(), name="input_rescaling"
-            )(input_tensor)
-
-            # Get backbone
-            backbone = ConvNeXtTiny(
-                include_top=False,
-                weights="imagenet",
-                input_shape=input_shape,
-                include_preprocessing=False,
-            )
-            backbone.trainable = trainable
-
-            # Apply backbone
-            x = backbone(x)
-            return x
-
-        def yolo_v8(
-            input_tensor,
-            input_shape: list[int | None],
-            trainable: bool = False,
-        ) -> tf.Tensor:
-            from keras_cv.models import YOLOV8Backbone
-
-            # Get backbone
-            backbone = YOLOV8Backbone(
-                stackwise_channels=[64, 128, 256, 512],
-                stackwise_depth=[1, 2, 8, 8],
-                include_rescaling=False,
-                input_shape=input_shape,
-            )
-            backbone.trainable = trainable
-
-            # Apply backbone
-            x = backbone(input_tensor)
-            return x
-
-    def get_model():
-
-        input_shape = (IMG_SIZE, IMG_SIZE, 3)
-
-        # Input
-        inputs = layers.Input(shape=input_shape)
-
-        # Backbone
-        x = Backbones.mobilenet_v3_large(inputs, input_shape, trainable=True)
-
-        # Convolve
-        x = layers.Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu")(x)
-        x = layers.MaxPooling2D(pool_size=(2, 2))(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.Dropout(0.3)(x)
-        x = layers.Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu")(x)
-        x = layers.MaxPooling2D(pool_size=(2, 2))(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.Dropout(0.3)(x)
-
-        # Flatten
-        x = layers.GlobalAveragePooling2D()(x)
-
-        # Head
-        for i, n in enumerate([256, 128, 64]):
-            x = layers.Dense(n, activation="mish", name=f"head_{i}_dense")(x)
-            x = layers.BatchNormalization()(x)
-            x = layers.Dropout(0.3, name=f"head_{i}_dropout")(x)
-        x = layers.BatchNormalization()(x)
-
-        # Output
-        outputs = x
-        outputs = layers.Dense(9, activation="linear", name="output_downsample")(
-            outputs
-        )
-        outputs = layers.Reshape((3, 3))(outputs)
-
-        # Output activations
-        positions = layers.Activation("hard_sigmoid", name="output_positions")(
-            outputs[..., :2]
-        )
-        existences = layers.Activation("sigmoid", name="output_existences")(
-            outputs[..., -1:]
-        )
-        outputs = layers.Concatenate(axis=-1, name="output_concatenation")(
-            [positions, existences]
-        )
-
-        # Build model
-        model = tf.keras.Model(inputs=inputs, outputs=outputs)
-
-        return model
