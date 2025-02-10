@@ -220,8 +220,9 @@ def Reshape(
 
 def Softmax(
     x: tf.Tensor,
+    axis: int = -1,
 ) -> tf.Tensor:
-    sm = layers.Softmax()
+    sm = layers.Softmax(axis=axis)
     return sm(x)
 
 
@@ -256,7 +257,7 @@ def OutputTansformation(
 
     # Activations
     x_pos = HardSigmoid(x_pos)  # clamp between 0 and 1
-    x_cls = Softmax(x_cls)  # determine class percentage-wise
+    x_cls = Softmax(x_cls, axis=-2)  # determine class percentage-wise
 
     # Combining
     x = Concat([x_pos, x_cls], axis=-2)
