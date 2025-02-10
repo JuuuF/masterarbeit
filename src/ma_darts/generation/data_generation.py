@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import pandas as pd
 import pickle
+import subprocess
 from rich import print as pprint
 
 from ma_darts.generation.rendering import render_image
@@ -123,6 +124,7 @@ def check_sample(sample_info: pd.Series):
 def create_sample(
     id: int = None,
     sample_path=os.path.join(OUT_DIR, "{id}"),
+    clean_up: bool = False,
 ) -> pd.Series | None:
     print("-" * 120)
     print(f"Sample {id}".center(120))
@@ -178,6 +180,28 @@ def create_sample(
         return
 
     # --------------------------------------------------------------------
+    # Clean up
+    if clean_up:
+        os.remove(os.path.join(sample_path, "mask_Board_Orientation.png"))
+        os.remove(os.path.join(sample_path, "mask_Darts_Board_Area.png"))
+        os.remove(os.path.join(sample_path, "mask_Intersections.png"))
+
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-i",
+                os.path.join(sample_path, "render.png"),
+                "-q:v",
+                "1",
+                "-qmin",
+                "1",
+                os.path.join(sample_path, "render.jpg"),
+            ]
+        )
+        if os.path.exists(os.path.join(sample_path, "render.jpg")):
+            os.remove(os.path.join(sample_path, "render.png"))
+
+    # --------------------------------------------------------------------
     # Report
 
     pd.set_option("display.width", 120)
@@ -222,6 +246,11 @@ if __name__ == "__main__":
         default="data/generation/out",
         help="Output directory.",
     )
+    parser.add_argument(
+        "--clean_up",
+        action="store_true",
+        help="Clean up data after data preparation.",
+    )
     args = parser.parse_args()
 
     OUT_DIR = args.out_dir
@@ -236,6 +265,6 @@ if __name__ == "__main__":
 
         sample_info = None
         while sample_info is None:
-            sample_info = create_sample(i)
+            sample_info = create_sample(i, clean_up=args.clean_up)
         # check_sample(sample_info)
         # del render_image, prepare_sample, is_prepared
