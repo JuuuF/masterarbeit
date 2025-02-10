@@ -105,11 +105,14 @@ def Conv(
     s: int,
     p: bool,
     c: int,
+    dropout: float = 0.0,
     name: str | None = None,
 ) -> tf.Tensor:
     x = Conv2d(x, k, s, p, c)
     x = BatchNorm2d(x)
     x = SiLU(x)
+    if dropout:
+        x = layers.Dropout(dropout)(x)
     return x
 
 
@@ -135,13 +138,14 @@ def SPPF(
 def Bottleck(
     x: tf.Tensor,
     shortcut: bool,
+    dropout: float = 0.0,
     name: str | None = None,
 ) -> tf.Tensor:
 
     c = x.shape[-1]
     x_conv = x
-    x_conv = Conv(x_conv, k=3, s=1, p=True, c=c // 2)
-    x_conv = Conv(x_conv, k=3, s=1, p=True, c=c)
+    x_conv = Conv(x_conv, k=3, s=1, p=True, c=c // 2, dropout=dropout)
+    x_conv = Conv(x_conv, k=3, s=1, p=True, c=c, dropout=dropout)
 
     if shortcut:
         x_conv = Add([x, x_conv])
@@ -154,13 +158,14 @@ def Detect(
     reg_max: int,
     nc: int,
     name: str | None = None,
+    dropout: float = 0.0,
 ) -> tuple[tf.Tensor, tf.Tensor]:
     x_pos = x
     x_cls = x
     c = x.shape[-1]
 
-    x_pos = Conv(x_pos, k=3, s=1, p=True, c=c)
-    x_pos = Conv(x_pos, k=3, s=1, p=True, c=c)
+    x_pos = Conv(x_pos, k=3, s=1, p=True, c=c, dropout=dropout)
+    x_pos = Conv(x_pos, k=3, s=1, p=True, c=c, dropout=dropout)
     x_pos = Conv2d(
         x_pos, k=1, s=1, p=False, c=2 * reg_max
     )  # original: c=4 * reg_max, but we omit w and h
@@ -179,20 +184,21 @@ def C2f(
     shortcut: bool,
     n: int,
     c: int,
+    dropout: float = 0.0,
     name: str | None = None,
 ) -> tf.Tensor:
 
-    x = Conv(x, k=1, s=1, p=False, c=c)
+    x = Conv(x, k=1, s=1, p=False, c=c, dropout=dropout)
     x_0, x_1 = Split(x)
 
-    xs = [x_0, x_1]
+    concat_tensors = [x_0, x_1]
     for i in range(n):
         x_1 = Bottleck(x_1, shortcut=shortcut)
-        xs.append(x_1)
+        concat_tensors.append(x_1)
 
-    x = Concat(xs)
+    x = Concat(concat_tensors)
 
-    x = Conv(x, k=1, s=1, p=False, c=c)
+    x = Conv(x, k=1, s=1, p=False, c=c, dropout=dropout)
 
     return x
 
@@ -312,7 +318,7 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.
 
     d, w, r = variants[variant]
     reg_max = 3
-    n_classes = len(classes)  # black / green / red / white / out / nothing
+    n_classes = len(classes)  # nothing / black / green / red / white / out
 
     # Backbone
     x = inputs
@@ -331,22 +337,34 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.
     # Head
     x_10 = Upsample(x_9)
     x_11 = Concat([x_6, x_10])
-    x_12 = C2f(x_11, shortcut=False, n=round(3 * d), c=round(512 * w))
+    x_12 = C2f(x_11, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=0.2)
     x_13 = Upsample(x_12)
     x_14 = Concat([x_4, x_13])
-    x_15 = C2f(x_14, shortcut=False, n=round(3 * d), c=round(256 * w))  # P3
+    x_15 = C2f(
+        x_14, shortcut=False, n=round(3 * d), c=round(256 * w), dropout=0.2
+    )  # P3
 
-    x_16 = Conv(x_15, k=3, s=2, p=True, c=round(256 * w))  # P3
+    x_16 = Conv(x_15, k=3, s=2, p=True, c=round(256 * w), dropout=0.2)  # P3
     x_17 = Concat([x_12, x_16])
-    x_18 = C2f(x_17, shortcut=False, n=round(3 * d), c=round(512 * w))  # P4
-    x_19 = Conv(x_18, k=3, s=2, p=True, c=round(512 * w))
+    x_18 = C2f(
+        x_17, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=0.2
+    )  # P4
+    x_19 = Conv(x_18, k=3, s=2, p=True, c=round(512 * w), dropout=0.2)
     x_20 = Concat([x_9, x_19])
-    x_21 = C2f(x_20, shortcut=False, n=round(3 * d), c=round(512 * w * r))  # P5
+    x_21 = C2f(
+        x_20, shortcut=False, n=round(3 * d), c=round(512 * w * r), dropout=0.2
+    )  # P5
 
     # (n, n, 2)
-    detect_s_pos, detect_s_cls = Detect(x_21, reg_max=reg_max, nc=n_classes)
-    detect_m_pos, detect_m_cls = Detect(x_18, reg_max=reg_max, nc=n_classes)
-    detect_l_pos, detect_l_cls = Detect(x_15, reg_max=reg_max, nc=n_classes)
+    detect_s_pos, detect_s_cls = Detect(
+        x_21, reg_max=reg_max, nc=n_classes, dropout=0.2
+    )
+    detect_m_pos, detect_m_cls = Detect(
+        x_18, reg_max=reg_max, nc=n_classes, dropout=0.2
+    )
+    detect_l_pos, detect_l_cls = Detect(
+        x_15, reg_max=reg_max, nc=n_classes, dropout=0.2
+    )
 
     # Output Transformation
     detect_s = OutputTansformation(
