@@ -241,6 +241,11 @@ class Data:
             sample_info["dart_positions_undistort"], dtype=np.float32
         ).T  # (2, 3)
         scores = np.array([s[1] for s in sample_info["scores"]], dtype=str)
+
+        # Sort by descending y value
+        order = np.argsort(positions[0])[::-1]
+        positions = positions[:, order]
+        scores = scores[order]
         return positions, scores
 
     @staticmethod
@@ -708,11 +713,11 @@ class Data:
         ) -> tuple[tf.Tensor, tf.Tensor]:
 
             img = self.pixel_augmentation(img)
-            img, positions = tf.numpy_function(
-                func=self.transformation_augmentation,
-                inp=[img, positions],
-                Tout=[tf.float32, tf.float32],
-            )
+            # img, positions = tf.numpy_function(
+            #     func=self.transformation_augmentation,
+            #     inp=[img, positions],
+            #     Tout=[tf.float32, tf.float32],
+            # )
 
             # TODO: positions MIGHT fall out of frame
             # -> filter them out by setting class to nothing
@@ -792,18 +797,18 @@ class Data:
         )
 
         # Cache data
-        # ds = Data.cache_dataset(ds, data_dir)
+        ds = Data.cache_dataset(ds, data_dir)
 
         # Shuffle
         if shuffle:
             ds = ds.shuffle(BATCH_SIZE * 3)
 
         # Augment
-        # if augment:
-        # ds = ds.map(
-        #     Data.Augmentation(),
-        #     num_parallel_calls=num_parallel_calls,
-        # )
+        if augment:
+            ds = ds.map(
+                Data.Augmentation(),
+                num_parallel_calls=num_parallel_calls,
+            )
 
         # Convert to yolo outputs
         ds = ds.map(

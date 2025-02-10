@@ -407,7 +407,19 @@ class YOLOv8Loss(tf.keras.Loss):
         self.img_size = img_size
         self.square_size = square_size
         self.existence_threshold = 0.5
-        self.xst_loss = tf.keras.losses.BinaryFocalCrossentropy()
+        self.xst_loss_fn = tf.keras.losses.BinaryFocalCrossentropy(
+            alpha=0.75,
+            gamma=2.5,
+        )
+
+        self.cls_loss_fn = tf.keras.losses.CategoricalFocalCrossentropy(
+            alpha=0.75,
+            gamma=2.5,
+            axis=-2,
+            reduction=None,
+        )
+
+        self.pos_loss_fn = tf.keras.losses.MeanSquaredError()
 
         self.class_introduction_threshold = tf.constant(
             class_introduction_threshold, tf.float32
@@ -416,7 +428,6 @@ class YOLOv8Loss(tf.keras.Loss):
             position_introduction_threshold, tf.float32
         )
 
-    @tf.function(jit_compile=False)
     def call(
         self,
         y_true: tf.Tensor,  # (bs, y, x, 2+n, 3)
@@ -429,23 +440,19 @@ class YOLOv8Loss(tf.keras.Loss):
         cls_pred = y_pred[..., 2:, :]
 
         # ---------------------------------------
-        # 1. Existence per cell
-        # Get existences
-        xst_true = self.get_cell_existence(cls_true)  # (bs, y, x)
-        xst_pred = self.get_cell_existence(cls_pred)
+        # 1. Existence loss
 
         # Calculate existence loss
-        total_loss = self.xst_loss(xst_true, xst_pred)
+        total_loss = self.get_xst_loss(cls_true, cls_pred)
 
         # ---------------------------------------
-        # 2. Classes of existing cells
+        # 2. Class loss
 
-        cls_loss, pos_pred, cls_pred = tf.cond(
+        cls_loss = tf.cond(
             tf.less(total_loss, self.class_introduction_threshold),
-            true_fn=lambda: self.get_cls_loss(y_pred, cls_true, cls_pred),
-            false_fn=lambda: (tf.constant(100, tf.float32), pos_pred, cls_pred),
+            true_fn=lambda: self.get_cls_loss(cls_true, cls_pred),
+            false_fn=lambda: tf.constant(10, tf.float32),
         )
-
         total_loss = total_loss + cls_loss
 
         # ---------------------------------------
@@ -453,49 +460,70 @@ class YOLOv8Loss(tf.keras.Loss):
 
         pos_loss = tf.cond(
             tf.less(total_loss, self.position_introduction_threshold),
-            true_fn=lambda: self.get_positions_loss(
-                pos_true, pos_pred, cls_true, cls_pred
-            ),
-            false_fn=lambda: tf.constant(100, tf.float32),
+            true_fn=lambda: self.get_pos_loss(pos_true, pos_pred, cls_true, cls_pred),
+            false_fn=lambda: tf.constant(10, tf.float32),
         )
-
         total_loss = total_loss + pos_loss
 
         return total_loss
 
+    # --------------------------------------------------------------------
+    # Existence loss
+
+    def get_xst_loss(
+        self,
+        cls_true: tf.Tensor,  # (bs, y, x, 6, 3)
+        cls_pred: tf.Tensor,
+    ):
+        # Get existences
+        xst_true = self.get_cell_existence(cls_true)  # (bs, y, x)
+        xst_pred = self.get_cell_existence(cls_pred)
+
+        shape = tf.shape(xst_true)
+        xst_true = tf.reshape(xst_true, (shape[0], -1, 1))  # (bs, y*x, 1)
+        xst_pred = tf.reshape(xst_pred, (shape[0], -1, 1))  # (bs, y*x, 1)
+        loss = self.xst_loss_fn(xst_true, xst_pred)
+        return loss
+
+    def get_cell_existence(
+        self,
+        y_cls: tf.Tensor,  # (bs, y, x, n, 3)
+    ) -> tf.Tensor:
+        # Split into confidences of nothing and something
+        nothing = tf.reduce_sum(y_cls[..., 0, :], axis=-1)  # (bs, y, x)
+
+        # indices = tf.range(1, shape[-2])
+        something = tf.reduce_sum(y_cls[..., 1:, :], axis=[-2, -1])  # (bs, y, x)
+
+        # Calculate score some existence
+        denom = tf.maximum(something + nothing, 1e-8)
+        xst_prob = something / denom
+        return xst_prob  # (bs, y, x)
+
+    # Class loss
+    # --------------------------------------------------------------------
+
     def get_cls_loss(
         self,
-        y_pred,
+        # y_pred,
         cls_true,
         cls_pred,
     ):
 
-        # Get all output permutations
-        permutations = tf.constant(
-            [(0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)],
-            dtype=tf.int32,
-        )  # if you can figure out how to tf-vectorize this, go for it!
+        # Apply classification loss to axis -2
+        loss = self.cls_loss_fn(cls_true, cls_pred)  # (ba, y, x, 3)
 
-        # Gather permutations - we step into weird territory here
-        # (bs, y, x, 18, 6)
-        cls_pred_permuted = self.get_permutations(cls_pred, permutations)
-        cls_true_permuted = self.get_permutations(cls_true, [[0, 1, 2]] * 6)
+        # Sum losses in a cell
+        loss = tf.reduce_sum(loss, axis=-1)  # (bs, y, x)
 
-        # Get best loss per cell permutation and its permutation index
-        cls_loss, cell_perm_idx = self.binary_focal_crossentropy_per_permutation_cell(
-            cls_true_permuted, cls_pred_permuted
-        )  # (1,), (bs, y, x)
+        # Mean losses across grid
+        loss = tf.reduce_mean(loss)
+        return loss
 
-        # Switch to the best class permutation orders
-        y_pred = self.apply_cell_permutations(
-            y_pred, permutations, cell_perm_idx
-        )  # (bs, y, x, 2+n, 3)
-        pos_pred = y_pred[..., :2, :]  # (bs, y, x, 2, 3)
-        cls_pred = y_pred[..., 2:, :]  # (bs, y, x, n, 3)
+    # --------------------------------------------------------------------
+    # Position loss
 
-        return cls_loss, pos_pred, cls_pred
-
-    def get_positions_loss(
+    def get_pos_loss(
         self,
         pos_true: tf.Tensor,  # (bs, y, x, 2, 3)
         pos_pred: tf.Tensor,
@@ -505,7 +533,11 @@ class YOLOv8Loss(tf.keras.Loss):
         # Convert to absolute coordinates
         pos_true, pos_pred = self.convert_to_absolute_coordinates(pos_true, pos_pred)
 
-        # Find predicted classes
+        # Normalize positions
+        pos_true /= 800
+        pos_pred /= 800
+
+        # Extract predicted classes
         cls_true = tf.transpose(cls_true, (0, 1, 2, 4, 3))  # (bs, y, x, 3, 6)
         cls_pred = tf.transpose(cls_pred, (0, 1, 2, 4, 3))
         cls_true = tf.argmax(cls_true, axis=-1)  # (bs, y, x, 3)
@@ -513,7 +545,7 @@ class YOLOv8Loss(tf.keras.Loss):
 
         # Flatten grid dimension
         batch_size = tf.shape(cls_true)[0]
-        cls_true = tf.reshape(cls_true, (batch_size, -1, 3))  # (bs, s, 3), s=y*x
+        cls_true = tf.reshape(cls_true, (batch_size, -1, 3))  # (bs, s, 3), s := y*x
         cls_pred = tf.reshape(cls_pred, (batch_size, -1, 3))
         pos_true = tf.reshape(pos_true, (batch_size, -1, 2, 3))  # (bs, s, 2, 3)
         pos_pred = tf.reshape(pos_pred, (batch_size, -1, 2, 3))
@@ -528,22 +560,17 @@ class YOLOv8Loss(tf.keras.Loss):
         mask_true = tf.repeat(mask_true, repeats=2, axis=-1)  # (bs, s, 3, 2)
         mask_pred = tf.repeat(mask_pred, repeats=2, axis=-1)
 
-        # batch_size = tf.shape(cls_true)[0]
-        # pos_loss_batch = tf.map_fn(
-        #     lambda batch: self.single_sample_iou(
-        #         tf.reshape(tf.boolean_mask(pos_true[batch], mask_true[batch]), [-1, 2]),
-        #         tf.reshape(tf.boolean_mask(pos_pred[batch], mask_pred[batch]), [-1, 2]),
-        #     ),
-        #     elems=tf.range(batch_size),
-        #     dtype=tf.float32,
-        # )
-        # pos_loss = tf.reduce_mean(pos_loss_batch)
-        # return tf.cast(pos_loss, tf.float32)
-        pos_true_reduced = tf.boolean_mask(pos_true, mask_true)
-        pos_pred_reduced = tf.boolean_mask(pos_pred, mask_true)
+        # Apply mask
+        pos_true_masked = pos_true * tf.cast(mask_true, tf.float32)  # (bs, s, 3, 2)
+        pos_pred_masked = pos_pred * tf.cast(mask_true, tf.float32)
 
-        mse = tf.reduce_mean(tf.square(pos_true_reduced - pos_pred_reduced))
-        return tf.cast(mse, tf.float32)
+        # Reshape to just positions
+        pos_true_masked = tf.reshape(pos_true_masked, (batch_size, -1, 2))  # (bs, n, 2)
+        pos_pred_masked = tf.reshape(pos_pred_masked, (batch_size, -1, 2))
+
+        # Apply MSE loss
+        mse = self.pos_loss_fn(pos_true_masked, pos_pred_masked)  # (1,)
+        return mse
 
     def single_sample_iou(
         self,
@@ -609,87 +636,6 @@ class YOLOv8Loss(tf.keras.Loss):
         )
 
         return 1 - iou
-
-    def apply_cell_permutations(
-        self,
-        y: tf.Tensor,  # (bs, y, x, n, 3)
-        permutations: tf.Tensor,  # (6, 3)
-        cell_perm_idx: tf.Tensor,  # (bs, y, x)
-    ):
-        # Get permutation per cell
-        target_perms = tf.gather(permutations, cell_perm_idx)  # (bs, y, x, 3)
-
-        # Apply permutations per cell
-        y_perm = tf.gather(y, target_perms, axis=-1, batch_dims=3)  # (bs, y, x, n, 3)
-
-        return y_perm
-
-    def get_permutations(
-        self,
-        y: tf.Tensor,  # (bs)
-        perms: tf.Tensor,
-    ):
-        batch_size = tf.shape(y)[0]
-        s = tf.shape(y)[1]
-
-        # Apply all given permutations
-        gathered_perms = tf.gather(y, perms, axis=-1)  # (bs, y, x, 6, 6, 3)
-
-        # Transpose to re-order axes
-        transposed_perms = tf.transpose(
-            gathered_perms, [0, 1, 2, 5, 3, 4]
-        )  # (bs, y, x, 3, 6, 6)
-
-        # Combine corresponding axes
-        y_permuted = tf.reshape(
-            transposed_perms, [batch_size, s, s, 18, 6]
-        )  # (bs, y, x, 18, 6)
-
-        return y_permuted
-
-    def binary_focal_crossentropy_per_permutation_cell(
-        self,
-        cls_true: tf.Tensor,
-        cls_pred: tf.Tensor,
-        gamma: float = 2.0,
-        alpha: float = 0.25,
-    ):
-        epsilon = tf.keras.backend.epsilon()
-        cls_pred = tf.clip_by_value(cls_pred, epsilon, 1.0 - epsilon)
-
-        # Compute binary focal crossentropy loss per element
-        loss_pos = (
-            -alpha * cls_true * tf.math.pow(1 - cls_pred, gamma) * tf.math.log(cls_pred)
-        )
-        loss_neg = (
-            -(1 - alpha)
-            * (1 - cls_true)
-            * tf.math.pow(cls_pred, gamma)
-            * tf.math.log(1 - cls_pred)
-        )
-        loss_per_element = loss_pos + loss_neg  # (bs, y, x, 18, 6)
-
-        loss_per_permutation = tf.reduce_mean(loss_per_element, axis=3)  # (bs, y, x, 6)
-
-        loss_per_cell = tf.reduce_min(loss_per_permutation, axis=-1)  # (bs, y, x)
-        cls_loss = tf.reduce_mean(loss_per_cell)
-
-        cell_perm_idx = tf.argmin(loss_per_permutation, axis=-1)  # (bs, y, x)
-
-        return cls_loss, cell_perm_idx
-
-    def get_cell_existence(
-        self,
-        y_cls: tf.Tensor,  # (bs, y, x, n, 3)
-    ) -> tf.Tensor:
-        # Flatten all predictions per cell
-        y_cls = tf.reduce_max(y_cls, axis=-1)  # (bs, y, x, n)
-
-        # Binarize existences
-        some_class_found = tf.reduce_max(y_cls[..., 1:], axis=-1)  # (bs, y, x)
-
-        y_xst = tf.where(some_class_found > 0.5, 1, 0)  # (bs, y, x)
-        return y_xst
 
     def convert_to_absolute_coordinates(
         self,
@@ -835,7 +781,6 @@ def score2class(score: str):
 
 
 if __name__ == "__main__":
-    exit()
     model = yolo_v8_model(
         input_size=800,
         classes=["black", "white", "red", "green", "out", "nothing"],
@@ -845,14 +790,6 @@ if __name__ == "__main__":
         loss=lambda x, y: yolo_v8_loss(x, y, 50),
         optimizer="adam",
     )
-
-    model.fit(
-        np.zeros((4, 800, 800, 3), np.uint8),
-        [np.zeros((4, s, s, 8, 3), np.uint8) for s in [25, 50, 100]],
-        epochs=1,
-        batch_size=4,
-    )
-    exit()
 
     y_true = positions_to_yolo(
         800,
@@ -869,6 +806,31 @@ if __name__ == "__main__":
         800,
         [
             ((400, 150), "11"),
+            (
+                (np.random.randint(0, 800), np.random.randint(0, 800)),
+                str(np.random.randint(1, 21)),
+            ),
+            (
+                (np.random.randint(0, 800), np.random.randint(0, 800)),
+                str(np.random.randint(1, 21)),
+            ),
+            (
+                (np.random.randint(0, 800), np.random.randint(0, 800)),
+                str(np.random.randint(1, 21)),
+            ),
+            (
+                (np.random.randint(0, 800), np.random.randint(0, 800)),
+                str(np.random.randint(1, 21)),
+            ),
+            (
+                (np.random.randint(0, 800), np.random.randint(0, 800)),
+                str(np.random.randint(1, 21)),
+            ),
+            (
+                (np.random.randint(0, 800), np.random.randint(0, 800)),
+                str(np.random.randint(1, 21)),
+            ),
+            ((400, 150), "11"),
             ((493, 123), "12"),
             ((665, 584), "OUT"),
             ((0, 0), "HIDDEN"),
@@ -883,6 +845,18 @@ if __name__ == "__main__":
 
     y_true = [np.expand_dims(y, 0) for y in y_true]
     y_pred = [np.expand_dims(y, 0) for y in y_pred]
+
+    from ma_darts.ai.callbacks import PredictionCallback
+    from ma_darts.cv.utils import show_imgs
+    import cv2
+
+    X = cv2.imread("data/generation/out_test/12305/undistort.png")
+    X = np.float32(X) / 255
+    X = np.expand_dims(X, 0)
+    pc = PredictionCallback(X=X, y=y_true, output_file="dump/pred.png")
+    pc.set_model(model)
+    pc.plot_prediction(y_pred)
+    exit()
 
     loss = YOLOv8Loss(800, 50)
     l = loss(y_true, y_true)
