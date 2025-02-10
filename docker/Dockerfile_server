@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libxi6 \
     htop \
+    ffmpeg \
     nano && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Setup working directory (will be mounted later on)

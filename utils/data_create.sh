@@ -13,11 +13,11 @@ stop=$2
 if ((stop >= start)); then
     for ((i = $start; i <= $stop; i++)); do
         echo "Running script with argument: $i"
-        python src/ma_darts/generation/data_generation.py --start $i --n_samples 1
+        python src/ma_darts/generation/data_generation.py --start $i --n_samples 1 --clean_up
     done
 else
     for ((i = $start; i >= $stop; i--)); do
         echo "Running script with argument: $i"
-        python src/ma_darts/generation/data_generation.py --start $i --n_samples 1
+        python src/ma_darts/generation/data_generation.py --start $i --n_samples 1  --clean_up
     done
 fi
