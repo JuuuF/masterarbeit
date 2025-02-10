@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -780,6 +781,111 @@ def score2class(score: str):
         return CLASSES.index("green")
 
 
+# =================================================================================================
+# Prediction
+
+
+def convert_to_absolute_coordinates(
+    pos: np.ndarray,  # (bs, s, s, 2, 3)
+):
+    s = pos.shape[1]
+    cell_size = 800 // s
+
+    grid_indices = np.stack(
+        np.meshgrid(np.arange(s), np.arange(s), indexing="ij"), axis=-1
+    )  # (s, s, 2)
+    global_grid_pos = grid_indices * cell_size  # (s, s, 2)
+    pos_abs = global_grid_pos[None, ..., None] + pos * cell_size
+    return pos_abs  # (bs, s, s, 2, 3)
+
+
+def yolo_v8_predict(
+    model,
+    imgs: np.array,  # (bs, 800, 800, 3)
+):
+    # Add batch dimension
+    if len(imgs.shape) == 3:
+        imgs = np.expand_dims(imgs, 0)
+
+    # Predict images
+    preds = model.predict(imgs)
+
+    # Convert to absolute coordinates
+    pos_pred = [
+        convert_to_absolute_coordinates(pred_scale[..., :2, :]) for pred_scale in preds
+    ]
+
+    # Extract best classes
+    cls_pred = [
+        np.argmax(pred_scale[..., 2:, :], axis=-2) for pred_scale in preds
+    ]  # (bs, s, s, 3)
+    cnf_pred = [
+        np.max(pred_scale[..., 2:, :], axis=-2) for pred_scale in preds
+    ]  # (bs, s, s, 3)
+
+    # Flatten grid dimensions
+    n_samples = imgs.shape[0]
+    pos_pred = [
+        np.transpose(pos_scl, (0, 1, 2, 4, 3)) for pos_scl in pos_pred
+    ]  # (bs, s, s, 3, 2)
+    pos_pred = [
+        np.reshape(pos_scl, (n_samples, -1, 3, 2)) for pos_scl in pos_pred
+    ]  # (bs, s*s, 3, 2)
+    cls_pred = [
+        np.reshape(cls_scl, (n_samples, -1, 3)) for cls_scl in cls_pred
+    ]  # (bs, s*s, 3)
+    cnf_pred = [
+        np.reshape(cnf_scl, (n_samples, -1, 3)) for cnf_scl in cnf_pred
+    ]  # (bs, s*s, 3)
+
+    # Start drawing
+    imgs_out = imgs.copy()  # (bs, 800, 800, 3)
+
+    colors = [
+        (50, 50, 50),  # nothing
+        (0, 0, 0),  # black
+        (255, 255, 255),  # white
+        (0, 0, 255),  # red
+        (0, 255, 0),  # green
+        (127, 127, 127),  # out
+    ]
+
+    # Iterate over samples
+    for sample_idx in range(n_samples):
+        for pos_scl, cls_scl, cnf_scl in zip(pos_pred, cls_pred, cnf_pred):
+            # Iterate over scales
+            for pos, cls, cnf in zip(
+                pos_pred[sample_idx], cls_pred[sample_idx], cnf_pred[sample_idx]
+            ):
+                # Iterate over cells
+                for cell_idx in range(pos.shape[0]):
+                    # Iterate over predictions per cell
+                    for pred_idx in range(3):
+
+                        # Extract information
+                        if (confidence := cnf[cell_idx, pred_idx]) < 0.5:
+                            continue
+                        if (cls_id := int(cls[cell_idx, pred_idx])) == 0:
+                            continue
+                        y, x = map(int, pos[cell_idx, pred_idx])
+
+                        # Draw circle at position
+                        color = tuple(c * confidence for c in colors[cls_id])
+                        cv2.circle(
+                            imgs_out[sample_idx],
+                            (x, y),
+                            4,
+                            color,
+                            2,
+                            lineType=cv2.LINE_AA,
+                        )
+
+    out_img = np.hstack(imgs_out)
+    from ma_darts.cv.utils import show_imgs
+
+    show_imgs(*imgs_out)
+
+
 if __name__ == "__main__":
     model = yolo_v8_model(
         input_size=800,
@@ -790,6 +896,20 @@ if __name__ == "__main__":
         loss=lambda x, y: yolo_v8_loss(x, y, 50),
         optimizer="adam",
     )
+
+    model.load_weights("data/ai/darts/yolov8_train1.weights.h5")
+    imgs = (
+        np.array(
+            [
+                cv2.imread(f"data/paper/imgs/d1_02_04_2020/IMG_108{i}.JPG")
+                for i in range(1, 10)
+            ],
+            dtype=np.float32,
+        )
+        / 255
+    )
+    yolo_v8_predict(model, imgs)
+    exit()
 
     y_true = positions_to_yolo(
         800,
