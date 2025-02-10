@@ -295,6 +295,32 @@ class Utils:
         global debug_out_images
         debug_out_images = []
 
+    def display_line_peaks(acc, acc_smooth):
+
+        acc /= acc_smooth.max() * 1.5
+        colors_base = cv2.applyColorMap(
+            np.uint8(acc_smooth.reshape(-1, 1, 1) * 255), cv2.COLORMAP_SUMMER
+        ).astype(np.float32) / 4
+        colors_base = np.uint8(colors_base)
+
+        acc_smooth /= acc_smooth.max() * 1.5
+        colors = cv2.applyColorMap(
+            np.uint8(acc_smooth.reshape(-1, 1, 1) * 255), cv2.COLORMAP_WINTER
+        )
+
+        out_base = np.zeros((360, 360, 3), np.uint8)
+        for i, a in enumerate(acc):
+            out_base[: round(a * 360), i] = colors_base[i]
+        out_base = out_base[::-1]
+
+        out = np.zeros((360, 360, 3), np.uint8)
+        for i, a in enumerate(acc_smooth):
+            out[: round(a * 360), i] = colors[i]
+        out = out[::-1]
+
+        out = cv2.addWeighted(out, 1.0, out_base, 0.75, 1.0)
+        show_imgs(out)
+
 class Edges:
 
     def edge_detect(
@@ -477,6 +503,41 @@ class Lines:
         cy = round(np.mean(cy))
         cx = round(np.mean(cx))
 
+        # out = np.zeros((img_shape[0], img_shape[1], 3), np.float32)
+        # colors = [
+        #     (166, 206, 227),
+        #     (31, 120, 180),
+        #     (178, 223, 138),
+        #     (51, 160, 44),
+        #     (251, 154, 153),
+        #     (227, 26, 28),
+        #     (253, 191, 111),
+        #     (255, 127, 0),
+        #     (202, 178, 214),
+        #     (106, 61, 154),
+        # ]
+        # colors = [
+        #     (180, 119, 31),
+        #     (14, 127, 255),
+        #     (44, 160, 44),
+        #     (40, 39, 214),
+        #     (189, 103, 148),
+        #     (75, 86, 140),
+        #     (194, 119, 227),
+        #     (127, 127, 127),
+        #     (34, 189, 188),
+        #     (207, 190, 23),
+        # ]
+        # for i, bin_img in enumerate(bin_imgs):
+        #     bin_img = cv2.cvtColor(bin_img, cv2.COLOR_GRAY2BGR)
+        #     col = colors[i]  # [int(((c / 255)**1.2)*255) for c in colors[i]]
+        #     bin_img = np.float32(bin_img * col) / 255
+        #     out += bin_img
+        # out /= out.max()
+        # out = cv2.blur(out, (3, 3))
+        # out = np.uint8(out * 255)
+        # show_imgs(out)
+
         if show or create_debug_img:
             acc = np.uint8(np.float32(acc) / acc.max() * 255)
             acc = cv2.cvtColor(acc, cv2.COLOR_GRAY2BGR)
@@ -578,6 +639,8 @@ class Lines:
         peak_values = acc_smooth[peaks]
         peak_thetas = np.deg2rad(angle_step) * peaks
         peak_thetas = (peak_thetas + np.pi / 2) % np.pi
+
+        # Utils.display_line_peaks(accumulator, acc_smooth)
 
         if len(peak_values) > 10:
             # Remove smallest peaks
@@ -1640,9 +1703,9 @@ class Orientation:
 
         # TODO: correct radii
         print("TODO: CV.structure_orientation_candidates: Get board radii")
-        r_triple_inner = 170
-        r_triple_outer = 190
-        r_double_inner = 480
+        r_triple_inner = 97*2
+        r_triple_outer = 107*2
+        r_double_inner = 160*2
 
         src = []
         dst = []
@@ -1677,7 +1740,7 @@ class Orientation:
                     elif abs(abs(dst_r) - r_double_inner) < 1e-3:
                         c = (0, 255, 0)
                     else:
-                        c = (250, 250, 250)
+                        c = (0, 0, 255)
                     cv2.circle(img, (int(src_x), int(src_y)), 5, c, thickness=2)
                     cv2.circle(
                         img,
@@ -1832,6 +1895,14 @@ if __name__ == "__main__":
         # Undistort image
         img_undistort = apply_matrix(img, M_undistort)
         cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
+
+        # angle_step = np.pi / 10
+        # angles = np.arange(0, np.pi, angle_step) + angle_step / 2
+        # img_undistort //= 2
+        # for t in angles:
+        #     draw_polar_line_through_point(img_undistort, (cy_undistort, cx_undistort), t)
+        # show_imgs(img_undistort)
+        # exit()
 
         # Find possible orientation points
         orientation_point_candidates = Orientation.find_orientation_points(
