@@ -42,16 +42,16 @@ class PredictionCallback(Callback):
     def init_grid_imgs(self):
         self.grid_imgs = {}
         for s in [y.shape[1] for y in self.y]:
-            img = np.uint8(self.X[0] * 255)
-            cs = img.shape[0] // s
-            img[0::cs] //= 4
-            img[cs - 1 :: cs] //= 4
+            img = np.uint8(self.X * 255)
+            cs = img.shape[1] // s
             img[:, 0::cs] //= 4
             img[:, cs - 1 :: cs] //= 4
+            img[:, :, 0::cs] //= 4
+            img[:, :, cs - 1 :: cs] //= 4
             self.grid_imgs[str(s)] = img
 
-    def get_grid_img(self, grid_size: int):
-        return self.grid_imgs[str(grid_size)].copy()
+    def get_grid_img(self, batch: int, grid_size: int):
+        return self.grid_imgs[str(grid_size)][batch].copy()
 
     def _update_on_batches(self, batch, *args, **kwargs):
         return batch % self.update_frequency == 0
@@ -65,11 +65,12 @@ class PredictionCallback(Callback):
 
     def get_xst_tile(
         self,
+        batch: int,
         xst_true: np.ndarray,  # (s, s)
         xst_pred: np.ndarray,
     ):
         grid_size = xst_true.shape[0]
-        img = self.get_grid_img(grid_size)
+        img = self.get_grid_img(batch, grid_size)
 
         mask = np.zeros((grid_size, grid_size, 3))  # (s, s, 3)
 
@@ -92,35 +93,36 @@ class PredictionCallback(Callback):
 
     def get_cls_tile(
         self,
+        batch: int,
         cls_true,  # (s, s, 6, 3)
         cls_pred,  # (s, s, 6, 3)
     ):
         grid_size = cls_true.shape[0]
-        img = self.get_grid_img(grid_size)
+        img = self.get_grid_img(batch, grid_size)
 
         overlay = np.zeros((grid_size * 8, grid_size * 8), np.float32)
         for y, (cls_true_row, cls_pred_row) in enumerate(zip(cls_true, cls_pred)):
             y *= 8
             for x, (cell_true, cell_pred) in enumerate(zip(cls_true_row, cls_pred_row)):
                 x *= 8
-                if (cell_pred[0] > cell_pred[1:]).all() and (cell_true[0] == 1).all():
+                if np.all(cell_pred[0] > cell_pred[1:]) and np.all(cell_true[0] == 1):
                     continue
                 # Nothing class
-                overlay[y + 1, x + 1 : x + 4] = cell_true[0]
-                overlay[y + 1, x + 5 : x + 8] = cell_pred[0]
+                overlay[y + 1, x + 1 : x + 4] = 0.5 + cell_true[0] / 2
+                overlay[y + 1, x + 5 : x + 8] = 0.5 + cell_pred[0] / 2
                 # Other classes
-                overlay[y + 3 : y + 8, x + 1 : x + 4] = cell_true[1:]
-                overlay[y + 3 : y + 8, x + 5 : x + 8] = cell_pred[1:]
+                overlay[y + 3 : y + 8, x + 1 : x + 4] = 0.5 + cell_true[1:] / 2
+                overlay[y + 3 : y + 8, x + 5 : x + 8] = 0.5 + cell_pred[1:] / 2
         overlay = np.uint8(overlay * 255)
         overlay = cv2.applyColorMap(overlay, cv2.COLORMAP_PLASMA)
         overlay = cv2.cvtColor(overlay, cv2.COLOR_BGR2BGRA)
 
         # Light strips
-        overlay[2::8, ..., -1] = 1
-        overlay[:, 4::8, ..., -1] = 1
+        overlay[2::8, ..., -1] = 0
+        overlay[:, 4::8, ..., -1] = 0
         # Dark strips
-        overlay[::8, ..., -1] = 1
-        overlay[:, ::8, ..., -1] = 1
+        overlay[::8, ..., -1] = 0
+        overlay[:, ::8, ..., -1] = 0
 
         scl = img.shape[0] // overlay.shape[0]
         overlay = np.kron(overlay, np.ones((scl, scl, 1), np.uint8))
@@ -139,6 +141,7 @@ class PredictionCallback(Callback):
 
     def get_scaled_output(
         self,
+        batch: int,
         y_true: np.ndarray,  # (s, s, 8, 3)
         y_pred: np.ndarray,
     ):
@@ -152,9 +155,9 @@ class PredictionCallback(Callback):
         xst_true = np.max(np.argmax(cls_true, axis=-2) != 0, axis=-1)  # (s, s) bool
         xst_pred = np.max(np.argmax(cls_pred, axis=-2) != 0, axis=-1)
 
-        xst_tile = self.get_xst_tile(xst_true, xst_pred)
-        cls_tile = self.get_cls_tile(cls_true, cls_pred)
-        # pos_tile = self.get_pos_tile(pos_true, pos_pred)
+        xst_tile = self.get_xst_tile(batch, xst_true, xst_pred)
+        cls_tile = self.get_cls_tile(batch, cls_true, cls_pred)
+        # pos_tile = self.get_pos_tile(batch, pos_true, pos_pred)
 
         out_tile = np.concatenate(
             [
@@ -173,11 +176,14 @@ class PredictionCallback(Callback):
         )  # (bs, s, s, 8, 3) for s = 25, 50, 100
 
         # Get output tiles
-        out_tiles = [
-            self.get_scaled_output(self.y[i][0], y_pred[i][0]) for i in range(3)
-        ]
-
-        out_img = np.concatenate(out_tiles, axis=1)
+        batch_imgs = []
+        for b in range(self.X.shape[0]):
+            out_tiles = [
+                self.get_scaled_output(b, self.y[i][b], y_pred[i][b]) for i in range(3)
+            ]
+            batch_img = np.concatenate(out_tiles, axis=1)
+            batch_imgs.append(batch_img)
+        out_img = np.concatenate(batch_imgs, axis=0)
         cv2.imwrite(self.output_file, out_img)
 
     def on_train_batch_end(self, batch, logs={}):
