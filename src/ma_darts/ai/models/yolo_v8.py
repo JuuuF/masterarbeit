@@ -422,6 +422,7 @@ class YOLOv8Loss(tf.keras.Loss):
         self.square_size = square_size
         self.existence_threshold = 0.5
         self.xst_loss_fn = tf.keras.losses.BinaryFocalCrossentropy(
+            apply_class_balancing=True,
             alpha=0.75,
             gamma=2.5,
         )
@@ -498,6 +499,10 @@ class YOLOv8Loss(tf.keras.Loss):
         xst_true = tf.reshape(xst_true, (shape[0], -1, 1))  # (bs, y*x, 1)
         xst_pred = tf.reshape(xst_pred, (shape[0], -1, 1))  # (bs, y*x, 1)
         loss = self.xst_loss_fn(xst_true, xst_pred)
+
+        # Loss adaptation
+        loss *= 100
+
         return loss
 
     def get_cell_existence(
@@ -533,6 +538,10 @@ class YOLOv8Loss(tf.keras.Loss):
 
         # Mean losses across grid
         loss = tf.reduce_mean(loss)
+
+        # Loss adaptation
+        loss *= 10
+
         return loss
 
     # --------------------------------------------------------------------
