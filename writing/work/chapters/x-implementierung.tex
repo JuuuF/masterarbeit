@@ -1,0 +1,120 @@
+\section{Implementierung}
+\label{sec:impl}
+
+% -------------------------------------------------------------------------------------------------
+% DATENGENERIERUNG
+\subsection{Datengenerierung}
+\label{seC:impl:daten}
+
+Paper-Daten
+Echte Daten
+Blender
+Degrees-of-Freedom-Metrik
+
+% -------------------------------------------------------------------------------------------------
+% DARTSCHEIBE
+
+\subsection{Dartscheiben-Alignment}
+\label{sec:impl:align}
+
+Das Scoring von fotografierten Dartscheiben wird in einem mehrschrittigen Verfahren ermittelt. Dieses orientiert sich an dem Vorgehen des in \cite{deepdarts} vorgestellten Algorithmus. \citeauthor{deepdarts} et al. identifizieren bis zu 7 Punkte in dem vorgestellten Bild. Im ersten Schritt werden 4 dieser Punkte als Orientierungspunkte genutzt. Die Position dieser Punkte auf der Dartscheibe ist 
+
+Das in dieser Arbeit vorgestellte Verfahren zum Scoring von Steeldarts auf Grundlage von Amateur-Aufnahmen basiert in seinem Grundprinzip auf dem von McNelly et al. vorgestellten System. In ihrem System etablieren sie einen mehrschrittigen Prozess, in dem zuerst die perspektivische Verzerrung der Dartscheibe aufgelöst und anschließend auf diesem normalisierten Bild die Vorhersage der Punktzahl getroffen wird. Die perspektivische Entzerrung der Dartscheibe geschieht dabei durch das Lokalisieren von 4 Orientierungspunkten, deren Positionen auf der Dartscheibe festgelegt sind. Durch die Identifizierung von 4 Punkten ist es möglich, beliebige perspektivische Verzerrungen durch eine Homographie zu erlangen. Diese Orientierungspunkte sind Teile des Outputs eines CNNs und werden als Positionen im Eingabebild ausgegeben.
+
+Das System von McNally et al. unterliegt der Annahme, dass diese fixen Punkte auf der Dartscheibe im Bild sichtbar sind und von einen CNN identifiziert werden können. Ebenfalls ist die Anzahl von 4 Orientierungspunkten nötiges Minimum, um eine solche Homographie zu erstellen, mit weniger Punkten ist diese Art der Entzerrung nicht eindeutig möglich. Diese Aspekte schlagen sich in den Schwachpunkten des Systems nieder: Sind diese Orientierungspunkte beispielsweise durch Dartpfeile verdeckt und nicht erkennbar, ist eine Entzerrung der Dartscheibe nicht möglich und es kann keine Vorhersage über die erzielte Punktzahl der Runde getroffen werden.
+
+Ein von McNally et al. gegebener Vorschlag zum Angehen dieser Schwachstelle ist das Identifizieren mehrerer Orientierungspunkte durch Erweiterung des Neuronalen Netzes. Die Erfolgsaussichten dieser Herangehensweise scheinen hoch, jedoch wurde in dieser Arbeit auf andere Weise auf das zugrundeliegende Problem eingegangen. Das System dieser Arbeit verfolgt das unterbreitete das Ziel, mehr Fixpunkte auf der Dartscheibe zu identifizieren und anhand dieser die perspektivische Verzerrung der Dartscheibe zu normalisieren, jedoch nicht durch den Einsatz Neuronaler Netze, sondern durch Techniken der Computer Vision.
+
+Der Hintergrund dieser Entscheidung ist der einheitliche Aufbau von Dartscheiben und die auf dieser Grundlage zu treffenden Annahmen. Die kontrastreichen, abwechselnden Felder von Dartscheiben ermöglichen ein effektives Identifizieren. Ihr Aufbau teilt Charakteristiken von Schachbrettmustern, die seit Jahrzehnten in der Computer Vision beispielsweise zur Kalibrierung von Kameras verwendet werden. Auf dieser Grundlage basiert die Annahme, dass auch ohne den Einsatz von maschinellem Lernen ein Algorithmus entwickelt werden kann, mit dem eine Dartscheibe robust in einem Bild lokalisiert und entzerrt werden kann.
+
+Die algorithmische Lösung dieses Problems ermöglicht im Gegensatz zum Einsatz Neuronaler Netze die Möglichkeit, die inneren Vorgehensweisen und Parameter zu beleuchten und die Grenzen des Systems präzise aufzuzeigen. Weiterhin kann das System ohne Training und den damit verbundenen Aufwand an Arbeit und Infrastruktur an neue Umgebungen und Umstände angepasst werden.
+
+Die Lösung dieses Problems hat sich trotz den vielversprechenden Charakteristiken von Dartscheiben als komplexer Sachverhalt herausgestellt und wird in den folgenden Unterkapiteln schrittweise erläutert.
+
+% - Paper: CNN für Orientierungspunkte + Dartpfeile
+% - Problem: Wenig Orientierungspunkte -> Verdeckung = unbrauchbar
+% - Lösungsvorschlag laut Paper: Mehr Orientierungspunkte fitten
+% - Lösungsvorschlag laut Justin: Computer Vision
+% - Dartscheiben sehr markantes Aussehen -> gut für CV
+% - Nicht alle Probleme müssen mit KI gelöst werden; Blackbox, deren Grenzen nicht klar definierbar sind
+% - Umsetzung komplexer als antizipiert, aber robuste Lösung gefunden
+
+\subsubsection{Vorverarbeitung}
+\label{sec:impl:align:pre}
+% Bild laden + skalieren
+
+Der erste Schritt in der Verarbeitung des Eingabebildes ist das Laden des Bildes und eine Einschränkung der Bildgröße. Mit steigender Zahl an Pixeln im Bild steigt gleichermaßen die benötigte Rechenleistung, diese zu verarbeiten. Da das System auf einen Einsatz als Echtzeitanwendung zu strebt, ist die Dauer der Datenverarbeitung ein Aspekt, der nicht außer Acht gelassen werden sollte.
+
+Die Skalierung der Eingabebilder geht mit einer Verzerrung der Datengrundlage und Datenverlust einher. Auf der anderen Seite steigt die Geschwindigkeit der Datenverarbeitung. Ein Mittelweg zwischen Informationsgehalt der Daten und Dauer der Verarbeitung wurde empirisch ermittelt und final wie folgt festgesetzt: Solange die Breite und Höhe des Bildes nicht jeweils unter 1600 Pixeln liegt, wird das Bild um den Faktor 2 herunterskaliert. Das Seitenverhältnis ist hierbei im Gegensatz zum Einsatz von KI nicht relevant.
+
+Bei dieser Skalierung wird die Annahme getroffen, dass die Dartscheibe einen ausreichend großen Anteil des Bildes einnimmt, dass diese Verkleinerung des Bildes die Erkennbarbeit der Dartscheibe bewahrt.
+
+\subsubsection{Kantenerkennung}
+\label{sec:impl:align:edges}
+% Kanten erkennen + Skeletonization
+
+Der erste Schritt nach der Vorverarbeitung des Eingabebildes ist die Kantenerkennung. Ziel der Kantenerkennung ist die Verringerung der im Bild enthaltenen Informationen auf die relevanten Kanten, die die Dartscheibe ausmachen.
+Die Kantenerkennung läuft auf dem in Graustufen umgewandelten Eingabebild ab, in welchem der Kontrast erhöht wurde. In diesem Bild werden durch je einen horizontalen und einen vertikalen Sobel-Filter Gradienten in den Hellligkeiten benachbarter Pixelregionen identifiziert. Diese werden normalisiert zusammengeführt und durch Thresholding in eine binäre Maske von Kanten umgewandelt. Diese Maske wird mittels Skeletonization nachverarbeitet, um möglichst präzise Kanten zu erlangen.
+
+Die Sobel-Filter haben eine Größe von 15x15 Pixeln, was im Vergleich zu herkömmlichen Filtern außergewöhnlich groß ist. Diese Größe der Filter basiert auf der Annahme, dass die Grenzen von Dartfeldern große Bereiche des Bildes abdecken. Durch die Nutzung großer Filter können kleine Kanten und Artefakte gezielt umgangen werden. Im Gegensatz zur generischen Kantenerkennung ist das Ziel nicht, alle Kanten im Bild zu identifizieren, sonden die Kanten der Dartscheibe vorzuheben.
+
+\subsubsection{Linienerkennung}
+\label{sec:impl:align:lines}
+% HoughLines
+
+Aus binären Kantenbildern werden in diesem Schritt Linien erkannt. Dazu wird die Hough-Transformation angewandt, in der Bildpixel vom xy-Raum in den Hough Space transformiert werden und dort durch Akkumulation dieser Punkte mögliche Linien im Originalbild identifiziert werden. Der Hough Space zeichnet sich dadurch aus, dass Punkte und Linien ihre Darstellung tauschen; Punkte im xy-Raum sind Linien im Hough Space und umgekehrt. Liegen mehrere Punkte im xy-Raum in einer Linie, überschneiden sich die Linien im Hough Space an dem Punkt, der die gemeinsame Verbindungslinie im xy-Raum beschreibt.
+
+Erkannte Linien werden sowohl als Tupel aus Start- und Endpunkt $ (p_0, p_1) $ mit $ p_0, p_1 \in \mathbb{R}^2 $ als auch als Polar-Linien der Form $ (\rho, \theta) $ mit $ \rho \in \mathbb{R}, \theta \in (0, \pi) $ identifiziert.
+
+\subsubsection{Mittelpunkt-Extraktion}
+\label{sec:impl:align:center}
+% Linien binnen + Überlagern + Mittelpunkt extrahieren
+
+Die erkannten Polarlinien werden in diesem Schritt durch Binning in unterschiedliche Gruppen unterteilt. Die Linien werden in Abhängigkeit ihrer Winkel $\rho$ in 10 Bins kategorisiert. (Erklärung für 10 Bins).
+Auf Grundlage diese Bins werden 10 Bilder erstellt, jeweils ein Bild pro Bin, auf dem alle Polarlinien des Bins enthalten sind. Durch die Überlagerung dieser Bilder werden diejenigen Punkte ausfindig gemacht, an denen sich Polarlinien aus möglichst vielen Winkeln überlagern. Der Punkt mit den meisten Überschneidungen zeichnet sich dadurch aus, dass er in der Flucht der meisten Linien im Kantenbild ist. Auf diese Weise kann der Mittelpunkt der Dartscheibe identifiziert werden.
+
+\subsubsection{Linienfilterung}
+\label{sec:impl:align:line_filter}
+% Linien nach Distanz zu Mittelpunkt filtern
+
+Nachdem der Mittelpunkt der Dartscheibe bekannt ist, werden die in \autoref{sec:impl:align:lines} identifizierten Polarlinien durch ihren minimalen Abstand zu diesem gefiltert. Linien, deren minimaler Abstand zum Miitelpunkt mehr als 10 Pixel beträgt, werden im weiteren Verlauf des Algorithmus nicht weiter betrachtet.
+
+\subsubsection{Feldlinien-Berechnung}
+\label{sec:impl:align:field_lines}
+Linien finden + Linien an Punkten ausrichten
+
+\subsubsection{Mittelpunkt-Verfeinerung}
+\label{sec:impl:align:center_fine}
+Neue Linien -> besserer Mittelpunkt
+
+\subsubsection{Feldlinien-Winkelentzerrung}
+\label{sec:impl:align:undistort}
+Bekannte Winkel -> Ausrichten (viel Mathe)
+
+\subsubsection{Orientierungspunkte identifizieren}
+\label{sec:impl:align:orient}
+Logpolar + Corner Detection + Surroundings + SSIM
+
+\subsubsection{Einordnen der Orientierungspunkte}
+\label{sec:impl:align:sort_orient}
+Distanzen etc.
+
+\subsubsection{Homographiefindung durch Orientierungspunkte}
+\label{sec:impl:align:homography}
+OpenCV, aber mit eigemen RANSAC-Ansatz
+
+\subsubsection{Undistortion + Alignment}
+\label{sec:impl:align:alignment}
+Originalbild mit Matrizen entzerren + Croppen
+
+% -------------------------------------------------------------------------------------------------
+% DARTPFEILE
+
+\subsection{Dartpfeil-Erkennung}
+\label{sec:impl:arrows}
+
+TODO
+
+Vortrainiertes CNN-Backbone
+Erkennung der Dartpfeil-Spitzen
+Klassifizierung der Dartpfeile in Felder?
