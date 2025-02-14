@@ -18,8 +18,8 @@ from ma_darts.ai.training import train_loop
 from ma_darts.ai.utils import get_dart_scores, get_absolute_score_error
 from ma_darts.cv.utils import show_imgs, matrices
 from ma_darts.ai.models import yolo_v8_model, YOLOv8Loss, score2class, YOLOv8
-from ma_darts.ai.dataloader.core import finalize_base_ds
-from ma_darts.ai.dataloader import dataloader_paper
+from ma_darts.ai.data.utils import finalize_base_ds
+from ma_darts.ai.data import dataloader_paper, dataloader_ma
 
 from tqdm import tqdm
 from shutil import rmtree
@@ -192,17 +192,6 @@ class Data:
     img_size = IMG_SIZE
 
     @staticmethod
-    def read_sample_img(filepath: tf.Tensor):
-        img = tf.io.read_file(filepath)
-        img = tf.image.decode_png(img, channels=3)
-        img = tf.reverse(img, axis=[-1])  # BGR
-        img = tf.cast(img, tf.float32) / 255  # 0..1
-
-        # Ensure shape consistency
-        img.set_shape((Data.img_size, Data.img_size, 3))
-        return img
-
-    @staticmethod
     def get_class_table():
         keys = tf.constant(
             ["HIDDEN", "OUT", "DB", "DBull", "B", "Bull"]
@@ -223,95 +212,6 @@ class Data:
         return lut
 
     @staticmethod
-    def extract_dart_classes(scores: list[str]):
-        class_table = Data.get_class_table()
-        class_ids = class_table.lookup(scores)  # (3,)
-        scores_onehot = tf.one_hot(class_ids, depth=6, dtype=tf.int32)  # (3, 6)
-        return tf.transpose(scores_onehot)  # (6, 3)
-
-        def get_class(s) -> int:
-            if s == "HIDDEN":
-                return 0  # nothing
-            if s == "OUT":
-                return 5  # out
-            if s in ["DB", "DBull"]:
-                return 3  # red
-            if s in ["B", "Bull"]:
-                return 4  # green
-            if s.isnumeric():
-                par = Data.dart_order.index(int(s)) % 2
-                return 1 if par == 0 else 2  # 1: black, 2: white
-            s = s[1:]
-            par = Data.dart_order.index(int(s)) % 2
-            return 3 if par == 0 else 4  # 3: red, 4: green
-
-    @staticmethod
-    def parse_positions_and_scores(json_str: tf.string):
-        sample_info = json.loads(json_str.numpy().decode("utf-8"))
-        positions = np.array(
-            sample_info["dart_positions_undistort"], dtype=np.float32
-        ).T  # (2, 3)
-        scores = np.array([s[1] for s in sample_info["scores"]], dtype=str)
-
-        # Sort by descending y value
-        order = np.argsort(positions[0])[::-1]
-        positions = positions[:, order]
-        scores = scores[order]
-        return positions, scores
-
-    @staticmethod
-    def read_positions_and_classes(filepath: tf.Tensor):
-        sample_json = tf.io.read_file(filepath)
-
-        # Parse position and score values
-        positions, scores = tf.py_function(
-            Data.parse_positions_and_scores,
-            [sample_json],
-            Tout=[tf.float32, tf.string],
-        )
-
-        # Process classes
-        classes = tf.py_function(
-            Data.extract_dart_classes,
-            [scores],
-            Tout=tf.int32,
-        )  # (6, 3)
-
-        positions.set_shape((2, 3))
-        classes.set_shape((6, 3))
-
-        return positions, classes
-
-    @staticmethod
-    def load_sample(img_path: tf.Tensor, info_path: tf.Tensor):
-
-        # Load data
-        img = Data.read_sample_img(img_path)  # (800, 800, 3)
-
-        positions, classes = Data.read_positions_and_classes(
-            info_path
-        )  # (2, 3), (6, 3)
-
-        return (
-            tf.cast(img, tf.float32),
-            tf.cast(positions, tf.float32),
-            tf.cast(classes, tf.int32),
-        )
-
-        """ assure correct position placement: """
-        img = (img.numpy() * 255).astype(np.uint8)
-        positions_s = Data.convert_to_img_positions(outputs[0])
-        positions_m = Data.convert_to_img_positions(outputs[1])
-        positions_l = Data.convert_to_img_positions(outputs[2])
-
-        import cv2
-        from ma_darts.cv.utils import show_imgs
-
-        for y, x, _ in positions_s:
-            cv2.circle(img, (int(x), int(y)), 5, (255, 255, 255), 2)
-        show_imgs(img)
-        return img, *[tf.cast(o, tf.float32) for o in outputs]
-
     class Augmentation:
         def __init__(
             self,
@@ -521,48 +421,6 @@ class Data:
 
             return img, positions, classes
 
-    def get_ds(
-        data_dir: str,
-        shuffle: bool = False,
-        augment: bool = False,
-        show: bool = False,
-    ):
-        num_parallel_calls = tf.data.AUTOTUNE
-        # num_parallel_calls = 1
-
-        # Collect files
-        img_paths = tf.data.Dataset.list_files(
-            os.path.join(data_dir, "*", "undistort.png"),
-            shuffle=False,
-        )
-        info_paths = tf.data.Dataset.list_files(
-            os.path.join(data_dir, "*", "info.json"),
-            shuffle=False,
-        )
-        ds = tf.data.Dataset.zip(img_paths, info_paths)  # (img_path, info_path)
-
-        # Shuffle files
-        if shuffle:
-            ds = ds.shuffle(16 * BATCH_SIZE)
-
-        # Load Samples into Dataset
-        ds = ds.map(
-            Data.load_sample,
-            num_parallel_calls=num_parallel_calls,
-        )  # (800, 800, 3), (2, 3), (6, 3)
-
-        ds = finalize_base_ds(
-            ds,
-            data_dir=data_dir,
-            img_size=800,
-            shuffle=shuffle,
-            augment=augment,
-            batch_size=BATCH_SIZE,
-            cache=True,
-            clear_cache=args.clear_cache,
-        )
-        return ds
-
     def check_ds(ds: tf.data.Dataset) -> None:
         import cv2
 
@@ -726,35 +584,32 @@ model.compile(
 # -----------------------------------------------
 # Get Data
 
-train_ds = Data.get_ds(
+train_ds = dataloader_ma(
     "data/generation/out/",
+    batch_size=BATCH_SIZE,
     shuffle=True,
     augment=True,
-    show=False,
+    cache=True,
+    clear_cache=args.clear_cache,
 )
-
-# val_ds = Data.get_ds(
-#     "data/generation/out_val/",
-#     shuffle=False,
-#     augment=False,
-#     show=False,
-# )
 
 val_ds = dataloader_paper(
     base_dir="data/paper/",
     dataset="d2",
     split="val",
-    cache=False,
+    img_size=IMG_SIZE,
     shuffle=False,
     augment=False,
+    batch_size=BATCH_SIZE,
+    cache=False,
+    clear_cache=args.clear_cache,
 )
 
-test_ds = Data.get_ds(
-    "data/generation/out_test/",
-    shuffle=False,
-    augment=False,
-    show=False,
-)
+# test_ds = Data.get_ds(
+#     "data/generation/out_test/",
+#     shuffle=False,
+#     augment=False,
+# )
 
 # -----------------------------------------------
 # Fit Model
