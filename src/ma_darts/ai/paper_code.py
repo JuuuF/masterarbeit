@@ -139,7 +139,7 @@ def board_radii(r_d):
     r_inner_bull = 0.00635
     w_double_treble = 0.01  # wire apex to apex for double and treble
 
-    r_t = r_d * (r_treble / r_double)  # treble radius, in px
+    r_t = r_d * (r_treble / r_double)  # outer treble radius, in px
     r_ib = r_d * (r_inner_bull / r_double)  # inner bull radius, in px
     r_ob = r_d * (r_outer_bull / r_double)  # outer bull radius, in px
     w_dt = w_double_treble * (r_d / r_double)  # width of double and treble
@@ -211,7 +211,10 @@ def transform(xy, img=None, angle=9, M=None):
     return xy_dst, img, M
 
 
-def get_dart_scores(xy, numeric=False):
+def get_dart_scores(
+    xy,  # (7, 3): 4x orientation + <= 3x dart; (x, y, visible)
+    numeric=False,
+):
     valid_cal_pts = xy[:4][(xy[:4, 0] > 0) & (xy[:4, 1] > 0)]
     if xy.shape[0] <= 4 or valid_cal_pts.shape[0] < 4:  # missing calibration point
         return []
