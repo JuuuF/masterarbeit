@@ -1,9 +1,9 @@
 import os
 
 # os.environ["TF_CPP_MIN_LOG_LEVEL"] = "0"
-os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=2"
-os.environ["TF_XLA_FLAGS"] = "--tf_xla_disable_constant_folding=true"
-os.environ["XLA_FLAGS"] = "--xla_dump_to=/masterarbeit/dump/logs"
+# os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=0"
+# os.environ["TF_XLA_FLAGS"] = "--tf_xla_disable_constant_folding=true"
+# os.environ["XLA_FLAGS"] = "--xla_dump_to=/masterarbeit/dump/logs"
 
 import re
 import cv2
@@ -17,15 +17,15 @@ from ma_darts.ai import callbacks as ma_callbacks
 from ma_darts.ai.training import train_loop
 from ma_darts.ai.utils import get_dart_scores, get_absolute_score_error
 from ma_darts.cv.utils import show_imgs, matrices
-from ma_darts.ai.models import yolo_v8_model, YOLOv8Loss, score2class
+from ma_darts.ai.models import yolo_v8_model, YOLOv8Loss, score2class, YOLOv8
+from ma_darts.ai.dataloader.core import finalize_base_ds
+from ma_darts.ai.dataloader import dataloader_paper
 
 from tqdm import tqdm
 from shutil import rmtree
 from argparse import ArgumentParser
 from datetime import datetime
-from itertools import permutations
 from tensorflow.keras import layers
-from tensorflow.keras.applications import *
 
 IMG_SIZE = 800
 BATCH_SIZE = 4 if "GPU_SERVER" in os.environ.keys() else 4
@@ -60,15 +60,15 @@ class Utils:
         callbacks.append(mc)
 
         # Prediction callback
-        X, y = next(iter(val_ds.take(1)))
-        pc = ma_callbacks.PredictionCallback(
-            X=X,
-            y=y,
-            output_file="dump/pred.png",
-            update_on="seconds",
-            update_frequency=60,
-        )
-        callbacks.append(pc)
+        # X, y = next(iter(val_ds.take(1)))
+        # pc = ma_callbacks.PredictionCallback(
+        #     X=X,
+        #     y=y,
+        #     output_file="dump/pred.png",
+        #     update_on="seconds",
+        #     update_frequency=60,
+        # )
+        # callbacks.append(pc)
 
         # TensorBoard
         tb = tf.keras.callbacks.TensorBoard(
@@ -713,10 +713,10 @@ model.compile(
     loss=YOLOv8Loss(
         img_size=800,
         square_size=50,
-        class_introduction_threshold=0.5,
-        position_introduction_threshold=0.5,
+        class_introduction_threshold=0.1,
+        position_introduction_threshold=0.1,
     ),
-    # metrics=[metrics for _ in range(3)],
+    metrics=[metrics for _ in range(3)],
 )
 # model.summary(160)
 # print(model.input_shape)
@@ -770,14 +770,6 @@ if args.train:
         )
     except KeyboardInterrupt:
         print("\nTraining interrupted.")
-
-    # train_loop(
-    #     model,
-    #     epochs=1000,
-    #     train_data=train_ds,
-    #     val_data=val_ds,
-    #     callbacks=Utils.get_callbacks(),
-    # )
 
     if best_weights := Utils.get_best_model_checkpoint():
         model.load_weights(best_weights)
