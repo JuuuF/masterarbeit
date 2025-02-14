@@ -831,7 +831,7 @@ def yolo_v8_predict(
         imgs = np.expand_dims(imgs, 0)
 
     # Predict images
-    preds = model.predict(imgs)
+    preds = model.predict(imgs, verbose=0)
 
     # Convert to absolute coordinates
     pos_pred = [
@@ -862,7 +862,7 @@ def yolo_v8_predict(
     ]  # (bs, s*s, 3)
 
     # Start drawing
-    imgs_out = imgs.copy()  # (bs, 800, 800, 3)
+    imgs_out = np.uint8(imgs * 255)  # (bs, 800, 800, 3)
 
     colors = [
         (50, 50, 50),  # nothing
@@ -872,6 +872,7 @@ def yolo_v8_predict(
         (0, 255, 0),  # green
         (127, 127, 127),  # out
     ]
+    classes = ["nothing", "black", "white", "red", "green", "out"]
 
     # Iterate over samples
     for sample_idx in range(n_samples):
@@ -898,9 +899,44 @@ def yolo_v8_predict(
                             imgs_out[sample_idx],
                             (x, y),
                             4,
-                            color,
-                            2,
+                            (255, 255, 255),
+                            -1,
                             lineType=cv2.LINE_AA,
+                        )
+                        cv2.circle(
+                            imgs_out[sample_idx],
+                            (x, y),
+                            2,
+                            color,
+                            -1,
+                            lineType=cv2.LINE_AA,
+                        )
+
+                        # Draw text label
+                        overlay = imgs_out[sample_idx].copy()
+                        txt_params = dict(
+                            img=overlay,
+                            text=f"{classes[cls_id]} ({confidence:.2f})",
+                            org=(x + 5, y - 5),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=0.5,
+                            lineType=cv2.LINE_AA,
+                        )
+                        cv2.putText(
+                            **txt_params,
+                            thickness=4,
+                            color=(255, 255, 255),
+                        )
+                        cv2.putText(
+                            **txt_params,
+                            thickness=2,
+                            color=color,
+                        )
+
+                        # Blend overlay with the original image
+                        blend = 0.2
+                        imgs_out[sample_idx] = cv2.addWeighted(
+                            overlay, 1 - blend, imgs_out[sample_idx], blend, 1.0
                         )
 
     out_img = np.hstack(imgs_out)
@@ -921,17 +957,13 @@ if __name__ == "__main__":
     )
 
     model.load_weights("data/ai/darts/yolov8_train1.weights.h5")
-    imgs = (
-        np.array(
-            [
-                cv2.imread(f"data/paper/imgs/d1_02_04_2020/IMG_108{i}.JPG")
-                for i in range(1, 10)
-            ],
-            dtype=np.float32,
-        )
-        / 255
-    )
-    yolo_v8_predict(model, imgs)
+    data_dir = "data/paper/imgs/d1_02_04_2020/"
+    import os
+
+    files = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
+    for f in files:
+        img = np.array([cv2.imread(f)], dtype=np.float32) / 255
+        yolo_v8_predict(model, img)
     exit()
 
     y_true = positions_to_yolo(
