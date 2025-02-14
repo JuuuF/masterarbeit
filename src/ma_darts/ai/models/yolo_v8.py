@@ -244,6 +244,7 @@ def OutputTansformation(
     x_cls: tf.Tensor,
     reg_max: int,
     n_classes: int,
+    out_name: str | None = None,
 ) -> tf.Tensor:
 
     # Reshaping
@@ -261,7 +262,7 @@ def OutputTansformation(
     x_cls = Softmax(x_cls, axis=-2)  # determine class percentage-wise
 
     # Combining
-    x = Concat([x_pos, x_cls], axis=-2)
+    x = Concat([x_pos, x_cls], axis=-2, name=out_name)
 
     return x
 
@@ -370,13 +371,25 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.
 
     # Output Transformation
     detect_s = OutputTansformation(
-        detect_s_pos, detect_s_cls, reg_max=reg_max, n_classes=n_classes
+        detect_s_pos,
+        detect_s_cls,
+        reg_max=reg_max,
+        n_classes=n_classes,
+        out_name="out_25",
     )  # (s, s, 2 + n_classes, reg_max)
     detect_m = OutputTansformation(
-        detect_m_pos, detect_m_cls, reg_max=reg_max, n_classes=n_classes
+        detect_m_pos,
+        detect_m_cls,
+        reg_max=reg_max,
+        n_classes=n_classes,
+        out_name="out_50",
     )  # (m, m, 2 + n_classes, reg_max)
     detect_l = OutputTansformation(
-        detect_l_pos, detect_l_cls, reg_max=reg_max, n_classes=n_classes
+        detect_l_pos,
+        detect_l_cls,
+        reg_max=reg_max,
+        n_classes=n_classes,
+        out_name="out_100",
     )  # (l, l, 2 + n_classes, reg_max)
 
     outputs = [
@@ -401,8 +414,8 @@ class YOLOv8Loss(tf.keras.Loss):
         self,
         img_size: int,
         square_size: int = 50,
-        class_introduction_threshold: int | float = np.Inf,
-        position_introduction_threshold: int | float = np.Inf,
+        class_introduction_threshold: int | float = np.inf,
+        position_introduction_threshold: int | float = np.inf,
     ) -> None:
         super().__init__()
         self.img_size = img_size
@@ -444,7 +457,8 @@ class YOLOv8Loss(tf.keras.Loss):
         # 1. Existence loss
 
         # Calculate existence loss
-        total_loss = self.get_xst_loss(cls_true, cls_pred)
+        xst_loss = self.get_xst_loss(cls_true, cls_pred)
+        total_loss = xst_loss
 
         # ---------------------------------------
         # 2. Class loss
