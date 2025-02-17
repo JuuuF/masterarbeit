@@ -743,19 +743,21 @@ def positions_to_yolo(
 
 
 def yolo_to_positions(
-    grid_positions: np.ndarray | tf.Tensor,  # (y, x, 3, 3)
+    y: np.ndarray | tf.Tensor,  # (y, x, 8, 3)
 ) -> np.ndarray:  # (n, 3)
-    s = tf.shape(grid_positions)[0]  # 25/50/100
+
+    s = tf.shape(y)[0]  # 25/50/100
     cell_indices = tf.stack(
         tf.meshgrid(tf.range(s), tf.range(s), indexing="ij"),
         axis=-1,
     )  # (s, s, 2)
     global_grid_pos = cell_indices * 800 / s  # (s, s, 2)
+    global_grid_pos = tf.cast(global_grid_pos, tf.float32)
 
-    xst = grid_positions[:, :, -1:, :]  # (y, x, 1, 3)
-    pos = grid_positions[:, :, :-1, :]  # (y, x, 2, 3)
+    xst = 1 - y[:, :, 2:3, :]  # (y, x, 1, 3)
+    pos = y[:, :, :2, :]  # (y, x, 2, 3)
 
-    pos_abs = pos * (800 / s) + global_grid_pos[:, :, :, None]  # (s, s, 2, 3)
+    pos_abs = pos * tf.cast(800 / s, tf.float32) + global_grid_pos[:, :, :, None]  # (s, s, 2, 3)
 
     pos_abs = tf.transpose(pos_abs, [0, 1, 3, 2])  # (y, x, 3, 2)
     pos_abs = tf.reshape(pos_abs, [-1, 2])  # (m, 2)
@@ -765,12 +767,7 @@ def yolo_to_positions(
 
     existing = xst[:, 0] > 0.5  # (m,)
     darts_positions = pos_abs[existing]  # (n, 2), n <= m, n = amount of found points
-    darts_existence = xst[existing]  # (n, 1)
-    res = np.concatenate(
-        [darts_positions, darts_existence], axis=-1
-    )  # (n, 3): y, x, existence
-
-    return res
+    return darts_positions
 
 
 def score2class(score: str):
