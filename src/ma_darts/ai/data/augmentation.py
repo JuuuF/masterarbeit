@@ -17,18 +17,22 @@ class Augmentation:
         self,
         img: tf.Tensor,  # (800, 800, 3)
     ):
+        seed = tf.random.uniform((2,), 0, 2**15, dtype=tf.int32)
+
         # Brightness
-        img = tf.image.random_brightness(
+        img = tf.image.stateless_random_brightness(
             img,
             max_delta=self.brightness_adjust,
+            seed=seed,
         )
         img = tf.clip_by_value(img, 0.0, 1.0)
 
         # Contrast
-        img = tf.image.random_contrast(
+        img = tf.image.stateless_random_contrast(
             img,
-            lower= 1 - self.contrast_adjust,
-            upper = 1 + self.contrast_adjust,
+            lower=1 - self.contrast_adjust,
+            upper=1 + self.contrast_adjust,
+            seed=seed,
         )
         img = tf.clip_by_value(img, 0.0, 1.0)
 
