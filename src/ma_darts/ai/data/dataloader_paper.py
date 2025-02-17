@@ -10,7 +10,7 @@ from tqdm import tqdm
 from ma_darts.ai.paper_code import d1_val, d1_test, d2_val, d2_test, BOARD_DICT
 from ma_darts.ai.paper_code import board_radii
 from ma_darts.cv.utils import apply_matrix, show_imgs
-from ma_darts.ai.data.utils import finalize_base_ds
+from ma_darts.ai.data import finalize_base_ds
 
 
 def load_labels(base_dir: str) -> pd.DataFrame:

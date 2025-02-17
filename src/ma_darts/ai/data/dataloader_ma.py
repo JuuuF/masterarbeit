@@ -1,6 +1,33 @@
 import os
+import json
+import numpy as np
 import tensorflow as tf
+
 from ma_darts.ai.data import finalize_base_ds
+from ma_darts import dart_order
+
+from functools import lru_cache
+
+
+@lru_cache
+def get_class_table():
+    keys = tf.constant(
+        ["HIDDEN", "OUT", "DB", "DBull", "B", "Bull"]
+        + [f"{x}" for x in dart_order]
+        + [f"D{x}" for x in dart_order]
+        + [f"T{x}" for x in dart_order]
+    )
+    values = tf.constant(
+        [0, 5, 3, 3, 4, 4]
+        + [1 if i % 2 == 0 else 2 for i in range(len(dart_order))]  # single
+        + [3 if i % 2 == 0 else 4 for i in range(len(dart_order))]  # double
+        + [3 if i % 2 == 0 else 4 for i in range(len(dart_order))]  # triple
+    )
+    lut = tf.lookup.StaticHashTable(
+        tf.lookup.KeyValueTensorInitializer(keys, values),
+        default_value=0,
+    )
+    return lut
 
 
 def parse_positions_and_scores(json_str: tf.string):
@@ -18,7 +45,7 @@ def parse_positions_and_scores(json_str: tf.string):
 
 
 def extract_dart_classes(scores: list[str]):
-    class_table = Data.get_class_table()
+    class_table = get_class_table()
     class_ids = class_table.lookup(scores)  # (3,)
     scores_onehot = tf.one_hot(class_ids, depth=6, dtype=tf.int32)  # (3, 6)
     return tf.transpose(scores_onehot)  # (6, 3)
@@ -34,10 +61,10 @@ def get_class(s) -> int:
     if s in ["B", "Bull"]:
         return 4  # green
     if s.isnumeric():
-        par = Data.dart_order.index(int(s)) % 2
+        par = dart_order.index(int(s)) % 2
         return 1 if par == 0 else 2  # 1: black, 2: white
     s = s[1:]
-    par = Data.dart_order.index(int(s)) % 2
+    par = dart_order.index(int(s)) % 2
     return 3 if par == 0 else 4  # 3: red, 4: green
 
 
