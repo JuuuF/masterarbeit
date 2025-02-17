@@ -231,28 +231,18 @@ def cache_ds(
 
     # Get cache files
     cache_base = "data/cache/datasets"
-    cache_id = data_dir.replace("/", "-")
-    if cache_id.endswith("-"):
-        cache_id = cache_id[:-1]
-    cache_dir = os.path.join(cache_base, cache_id)
+    cache_id = data_dir.replace("/", "-").rstrip("-")
+    cache_file = os.path.join(cache_base, cache_id + ".tfdata")
 
     # Remove existing cache files
-    if clear_cache and os.path.exists(cache_dir):
-        rmtree(cache_dir)
-        rm_files = os.listdir(os.path.dirname(cache_dir))
-        rm_files = [
-            f
-            for f in rm_files
-            if f.startswith(cache_id + ".") or f.startswith(cache_id + "_0")
-        ]
-        for f in rm_files:
-            os.remove(os.path.join(cache_base, f))
+    if clear_cache and os.path.exists(cache_file):
+        os.remove(cache_file)
 
     # Create clean cache directory
-    os.makedirs(cache_dir, exist_ok=True)
+    os.makedirs(cache_base, exist_ok=True)
 
     # Cache to directory
-    return ds.cache(cache_dir)
+    return ds.cache(cache_file)
 
 
 def finalize_base_ds(
