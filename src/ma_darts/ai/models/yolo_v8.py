@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
+from ma_darts import classes
 
 """
 https://cdn.prod.website-files.com/6479eab6eb2ed5e597810e9e/65bf057de6cebfb11455514f_flamelink%252Fmedia%252F222874205-3873bdac-7135-4ecc-8ab2-ca18b8e13fdf.webp
@@ -406,9 +407,6 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.
 # =================================================================================================
 # Loss
 
-tf.config.set_soft_device_placement(True)
-
-
 class YOLOv8Loss(tf.keras.Loss):
     def __init__(
         self,
@@ -690,8 +688,6 @@ class YOLOv8Loss(tf.keras.Loss):
 # =================================================================================================
 # Data Loader
 
-CLASSES = ["nothing", "black", "white", "red", "green", "out"]
-
 
 def positions_to_yolo(
     img_size: int,
@@ -712,7 +708,7 @@ def positions_to_yolo(
         # print(f"{grid_size=}")
 
         scale_output = np.zeros(
-            (grid_size, grid_size, 2 + len(CLASSES), 3)
+            (grid_size, grid_size, 2 + len(classes), 3)
         )  # (s, s, 2+nc, 3)
         scale_output[:, :, 2, :] = 1
 
@@ -722,7 +718,7 @@ def positions_to_yolo(
             grid_pos, local_pos = np.divmod([y, x], cell_size)
             grid_pos = np.int32(grid_pos)
             local_pos /= cell_size
-            # print(grid_pos, local_pos, CLASSES[color_cls])
+            # print(grid_pos, local_pos, classes[color_cls])
 
             # get cell idx
             cell = scale_output[grid_pos[0], grid_pos[1]]  # (3, 3)
@@ -742,7 +738,7 @@ def positions_to_yolo(
     return outputs
 
 
-def yolo_to_positions(
+def yolo_to_positions_and_class(
     y: np.ndarray | tf.Tensor,  # (y, x, 8, 3)
 ) -> np.ndarray:  # (n, 3)
 
@@ -756,49 +752,55 @@ def yolo_to_positions(
 
     xst = 1 - y[:, :, 2:3, :]  # (y, x, 1, 3)
     pos = y[:, :, :2, :]  # (y, x, 2, 3)
+    cls = y[:, :, 2:, :]  # (y, x, 6, 3)
 
     pos_abs = pos * tf.cast(800 / s, tf.float32) + global_grid_pos[:, :, :, None]  # (s, s, 2, 3)
 
     pos_abs = tf.transpose(pos_abs, [0, 1, 3, 2])  # (y, x, 3, 2)
     pos_abs = tf.reshape(pos_abs, [-1, 2])  # (m, 2)
 
+    cls = tf.transpose(cls, [0, 1, 3, 2])  # (y, x, 3, 6)
+    cls = tf.reshape(cls, [-1, len(classes)])  # (m, 6)
+
     xst = tf.transpose(xst, [0, 1, 3, 2])  # (y, x, 3, 1)
     xst = tf.reshape(xst, [-1, 1])  # (m, 1)
 
     existing = xst[:, 0] > 0.5  # (m,)
     darts_positions = pos_abs[existing]  # (n, 2), n <= m, n = amount of found points
-    return darts_positions
+    dart_classes = cls[existing]  # (n, 6)
+    dart_classes = tf.argmax(dart_classes, axis=1)  # (n,)
+    return darts_positions, dart_classes
 
 
 def score2class(score: str):
     if score == "HIDDEN":
-        return CLASSES.index("nothing")
+        return classes.index("nothing")
     if score == "OUT":
-        return CLASSES.index("out")
+        return classes.index("out")
 
     # bull
     if score in ["DB", "DBull"]:
-        return CLASSES.index("red")
+        return classes.index("red")
     if score in ["B", "Bull"]:
-        return CLASSES.index("green")
+        return classes.index("green")
 
     dart_order = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
     multiplier = score[0] in "DT"
     score = int(score[1:]) if multiplier else int(score)
 
     if score == 0:
-        return CLASSES.index("out")
+        return classes.index("out")
 
     dark_color = dart_order.index(score) % 2 == 0
 
     if dark_color and not multiplier:
-        return CLASSES.index("black")
+        return classes.index("black")
     if dark_color and multiplier:
-        return CLASSES.index("red")
+        return classes.index("red")
     if not dark_color and not multiplier:
-        return CLASSES.index("white")
+        return classes.index("white")
     if not dark_color and multiplier:
-        return CLASSES.index("green")
+        return classes.index("green")
 
 
 # =================================================================================================
