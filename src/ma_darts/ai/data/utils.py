@@ -1,5 +1,6 @@
 import os
 import tensorflow as tf
+from ma_darts.ai.data import Augmentation
 
 
 def get_out_grid(out_size, n_pos, n_cls):
@@ -283,8 +284,11 @@ def finalize_base_ds(
         ds = ds.shuffle(16 * batch_size)
 
     if augment:
-        # TODO: augmentation
-        pass
+        aug = Augmentation()
+        ds = ds.map(
+            aug,
+            num_parallel_calls=tf.data.AUTOTUNE,
+        )
 
     # Convert to yolo outputs
     ds = ds.map(

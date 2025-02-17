@@ -188,29 +188,9 @@ class Utils:
 
 
 class Data:
-    dart_order = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
     img_size = IMG_SIZE
 
     @staticmethod
-    def get_class_table():
-        keys = tf.constant(
-            ["HIDDEN", "OUT", "DB", "DBull", "B", "Bull"]
-            + [f"{x}" for x in Data.dart_order]
-            + [f"D{x}" for x in Data.dart_order]
-            + [f"T{x}" for x in Data.dart_order]
-        )
-        values = tf.constant(
-            [0, 5, 3, 3, 4, 4]
-            + [1 if i % 2 == 0 else 2 for i in range(len(Data.dart_order))]  # single
-            + [3 if i % 2 == 0 else 4 for i in range(len(Data.dart_order))]  # double
-            + [3 if i % 2 == 0 else 4 for i in range(len(Data.dart_order))]  # triple
-        )
-        lut = tf.lookup.StaticHashTable(
-            tf.lookup.KeyValueTensorInitializer(keys, values),
-            default_value=0,
-        )
-        return lut
-
     @staticmethod
     class Augmentation:
         def __init__(
