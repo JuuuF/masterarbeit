@@ -17,7 +17,13 @@ from ma_darts.ai import callbacks as ma_callbacks
 from ma_darts.ai.training import train_loop
 from ma_darts.ai.utils import get_dart_scores, get_absolute_score_error
 from ma_darts.cv.utils import show_imgs, matrices
-from ma_darts.ai.models import yolo_v8_model, YOLOv8Loss, score2class, YOLOv8
+from ma_darts.ai.models import (
+    yolo_v8_model,
+    YOLOv8Loss,
+    score2class,
+    YOLOv8,
+    yolo_to_positions,
+)
 from ma_darts.ai.data.utils import finalize_base_ds
 from ma_darts.ai.data import dataloader_paper, dataloader_ma
 
@@ -27,7 +33,8 @@ from argparse import ArgumentParser
 from datetime import datetime
 from tensorflow.keras import layers
 
-IMG_SIZE = 800
+from ma_darts import img_size
+
 BATCH_SIZE = 4 if "GPU_SERVER" in os.environ.keys() else 4
 
 
@@ -186,11 +193,21 @@ class Utils:
         args = parser.parse_args()
         return args
 
+    def check_dataset(ds):
+
+        for Xs, ys in ds:
+            imgs = np.uint8(Xs * 255)
+            y_ss, y_ms, y_ls = ys
+            for img, y_s, y_m, y_l in zip(imgs, y_ss, y_ms, y_ls):
+                pos = yolo_to_positions(y_s).numpy()
+                for y, x in pos:
+                    y, x = round(y), round(x)
+                    cv2.circle(img, (x, y), 4, (255, 255, 255), 2, cv2.LINE_AA)
+                show_imgs(img)
+
 
 class Data:
-    img_size = IMG_SIZE
 
-    @staticmethod
     @staticmethod
     class Augmentation:
         def __init__(
@@ -297,7 +314,7 @@ class Data:
             img_transformed = tf.raw_ops.ImageProjectiveTransformV3(
                 images=tf.expand_dims(img, 0),  # as batch
                 transforms=tf.expand_dims(M_flat, 0),  # as batch
-                output_shape=tf.constant([IMG_SIZE, IMG_SIZE], dtype=tf.int32),
+                output_shape=tf.constant([img_size, img_size], dtype=tf.int32),
                 interpolation="BILINEAR",
                 fill_mode="CONSTANT",
                 fill_value=0,
@@ -332,7 +349,7 @@ class Data:
             return positions_transformed
 
             # Extract positions
-            positions_abs = positions[:, :2] * IMG_SIZE
+            positions_abs = positions[:, :2] * img_size
 
             # Make positions x, y instead of y, x
             positions_abs = positions_abs[:, ::-1]
@@ -366,7 +383,7 @@ class Data:
             # print(trans_positions_abs)
 
             # Un-Normalize
-            out_pos = trans_positions_abs / IMG_SIZE
+            out_pos = trans_positions_abs / img_size
             # print("un-normalized")
             # print(out_pos)
 
@@ -491,10 +508,10 @@ class Data:
             scoring_true = y_true[y_true[:, -1] > 0.5, :2]
             scoring_pred = y_pred[y_pred[:, -1] > 0.5, :2]
             scores_true = get_dart_scores(
-                list(scoring_true), img_size=IMG_SIZE, margin=100
+                list(scoring_true), img_size=img_size, margin=100
             )
             scores_pred = get_dart_scores(
-                list(scoring_pred), img_size=IMG_SIZE, margin=100
+                list(scoring_pred), img_size=img_size, margin=100
             )
             ase = get_absolute_score_error(scores_true, scores_pred)
             print()
@@ -549,7 +566,7 @@ metrics = [
 model.compile(
     optimizer=tf.keras.optimizers.Adam(0.001),
     loss=YOLOv8Loss(
-        img_size=800,
+        img_size=img_size,
         square_size=50,
         class_introduction_threshold=0.1,
         position_introduction_threshold=0.1,
