@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
-from ma_darts import classes
+from ma_darts import classes, img_size
 
 """
 https://cdn.prod.website-files.com/6479eab6eb2ed5e597810e9e/65bf057de6cebfb11455514f_flamelink%252Fmedia%252F222874205-3873bdac-7135-4ecc-8ab2-ca18b8e13fdf.webp
@@ -272,18 +272,16 @@ def OutputTransformation(
 # Model Itself
 
 
-def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.Model:
+def yolo_v8_model(
+    classes=classes,
+    variant="n",
+) -> tf.keras.Model:
     """
     YOLOv8 implementation in TensorFlow (which is way cooler than PyTorch).
 
     Parameters
     ----------
 
-    input_size: int
-        Input image size for the model.
-    classes: list[str]
-        Classes to predict. Note that there's an implicit "nothing"-class
-        as the first element of the list.
     variant: str
         Variant of the model. Can be one of (n, s, m, l, x).
         The default is "n".
@@ -293,18 +291,18 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.
 
     model: tf.keras.Model
         YOLOv8 model in TensorFlow.
-        input_shape: (input_size, input_size, 3)
+        input_shape: (img_size, img_size, 3)
         output_shape: [
             (s, s, 2 + n_classes, 3),
             (m, m, 2 + n_classes, 3),
             (l, l, 2 + n_classes, 3),
         ]
         where:
-            s = input_size // 32
-            m = input_size // 16
-            l = input_size // 8
+            s = img_size // 32
+            m = img_size // 16
+            l = img_size // 8
     """
-    inputs = layers.Input(shape=(input_size, input_size, 3), name="Input")
+    inputs = layers.Input(shape=(img_size, img_size, 3), name="Input")
 
     # Implicit addition of nothing class as first index
     classes = list(set(classes))
@@ -755,7 +753,9 @@ def yolo_to_positions_and_class(
     pos = y[:, :, :2, :]  # (y, x, 2, 3)
     cls = y[:, :, 2:, :]  # (y, x, 6, 3)
 
-    pos_abs = pos * tf.cast(800 / s, tf.float32) + global_grid_pos[:, :, :, None]  # (s, s, 2, 3)
+    pos_abs = (
+        pos * tf.cast(800 / s, tf.float32) + global_grid_pos[:, :, :, None]
+    )  # (s, s, 2, 3)
 
     pos_abs = tf.transpose(pos_abs, [0, 1, 3, 2])  # (y, x, 3, 2)
     pos_abs = tf.reshape(pos_abs, [-1, 2])  # (m, 2)
@@ -872,7 +872,6 @@ def yolo_v8_predict(
         (0, 255, 0),  # green
         (127, 127, 127),  # out
     ]
-    classes = ["nothing", "black", "white", "red", "green", "out"]
 
     # Iterate over samples
     for sample_idx in range(n_samples):
@@ -947,8 +946,6 @@ def yolo_v8_predict(
 
 if __name__ == "__main__":
     model = yolo_v8_model(
-        input_size=800,
-        classes=["black", "white", "red", "green", "out", "nothing"],
         variant="n",
     )
     model.compile(
