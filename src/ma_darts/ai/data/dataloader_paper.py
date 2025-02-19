@@ -392,7 +392,10 @@ def paper_base_ds(
     ds_Ms = tf.data.Dataset.from_tensor_slices(Ms)
 
     # Read images
-    ds_imgs = ds_filepaths.map(read_img)
+    ds_imgs = ds_filepaths.map(
+        read_img,
+        num_parallel_calls=tf.data.AUTOTUNE,
+    )
 
     # Apply undistortion
     ds_imgs = tf.data.Dataset.zip(ds_imgs, ds_Ms).map(
@@ -400,7 +403,8 @@ def paper_base_ds(
             func=undistort_img,
             inp=[img, M],
             Tout=tf.float32,
-        )
+        ),
+        num_parallel_calls=tf.data.AUTOTUNE,
     )
 
     ds = tf.data.Dataset.zip(ds_imgs, ds_pos, ds_cls)
