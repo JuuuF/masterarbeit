@@ -305,3 +305,41 @@ def finalize_base_ds(
     ds = ds.padded_batch(batch_size)
     ds = ds.prefetch(prefetch)
     return ds
+
+
+def dummy_ds(batch_size=4, n_samples=128):
+    # Define a function that generates samples
+    def generator():
+        input_sample = tf.random.uniform((800, 800, 3), dtype=tf.float32)
+        output_sample = (
+            tf.random.uniform((25, 25, 8, 3), dtype=tf.float32),
+            tf.random.uniform((50, 50, 8, 3), dtype=tf.float32),
+            tf.random.uniform((100, 100, 8, 3), dtype=tf.float32),
+        )
+
+        for _ in range(n_samples):
+            yield (
+                input_sample,
+                output_sample,
+            )
+
+    # Define output signature for TensorFlow
+    output_signature = (
+        tf.TensorSpec(shape=(800, 800, 3), dtype=tf.float32),
+        (
+            tf.TensorSpec(shape=(25, 25, 8, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(50, 50, 8, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(100, 100, 8, 3), dtype=tf.float32),
+        ),
+    )
+
+    # Create dataset
+    ds = tf.data.Dataset.from_generator(generator, output_signature=output_signature)
+    ds = ds.apply(tf.data.experimental.assert_cardinality(n_samples))
+
+    # Batch the dataset
+    ds = ds.batch(batch_size)
+
+    ds = ds.prefetch(tf.data.AUTOTUNE)
+
+    return ds
