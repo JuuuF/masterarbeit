@@ -32,23 +32,20 @@ def get_class_table():
 
 def parse_positions_and_scores(json_str: tf.string):
     sample_info = json.loads(json_str.numpy().decode("utf-8"))
-    positions = np.array(
-        sample_info["dart_positions_undistort"], dtype=np.float32
-    ).T  # (2, 3)
-    scores = np.array([s[1] for s in sample_info["scores"]], dtype=str)
+    positions = tf.convert_to_tensor(
+        sample_info["dart_positions_undistort"], dtype=tf.float32
+    )  # (3, 2)
+    positions = tf.transpose(positions)  # (2, 3)
+
+    scores = tf.convert_to_tensor(
+        [s[1] for s in sample_info["scores"]], dtype=tf.string
+    )  # (3,)
 
     # Sort by descending y value
-    order = np.argsort(positions[0])[::-1]
-    positions = positions[:, order]
-    scores = scores[order]
+    order = tf.argsort(positions[0], direction="DESCENDING")
+    positions = tf.gather(positions, order, axis=1)
+    scores = tf.gather(scores, order)
     return positions, scores
-
-
-def extract_dart_classes(scores: list[str]):
-    class_table = get_class_table()
-    class_ids = class_table.lookup(scores)  # (3,)
-    scores_onehot = tf.one_hot(class_ids, depth=6, dtype=tf.int32)  # (3, 6)
-    return tf.transpose(scores_onehot)  # (6, 3)
 
 
 def get_class(s) -> int:
@@ -79,11 +76,10 @@ def read_positions_and_classes(filepath: tf.Tensor):
     )
 
     # Process classes
-    classes = tf.py_function(
-        extract_dart_classes,
-        [scores],
-        Tout=tf.int32,
-    )  # (6, 3)
+    class_table = get_class_table()
+    class_ids = class_table.lookup(scores)  # (3,)
+    scores_onehot = tf.one_hot(class_ids, depth=6, dtype=tf.int32)  # (3, 6)
+    classes = tf.transpose(scores_onehot)  # (6, 3)
 
     positions.set_shape((2, 3))
     classes.set_shape((6, 3))
@@ -109,25 +105,21 @@ def load_sample(img_path: tf.Tensor, info_path: tf.Tensor):
 
     positions, classes = read_positions_and_classes(info_path)  # (2, 3), (6, 3)
 
-    return (
-        tf.cast(img, tf.float32),
-        tf.cast(positions, tf.float32),
-        tf.cast(classes, tf.int32),
-    )
+    return img, positions, classes
 
     """ assure correct position placement: """
-    img = (img.numpy() * 255).astype(np.uint8)
-    positions_s = convert_to_img_positions(outputs[0])
-    positions_m = convert_to_img_positions(outputs[1])
-    positions_l = convert_to_img_positions(outputs[2])
+    # img = (img.numpy() * 255).astype(np.uint8)
+    # positions_s = convert_to_img_positions(outputs[0])
+    # positions_m = convert_to_img_positions(outputs[1])
+    # positions_l = convert_to_img_positions(outputs[2])
 
-    import cv2
-    from ma_darts.cv.utils import show_imgs
+    # import cv2
+    # from ma_darts.cv.utils import show_imgs
 
-    for y, x, _ in positions_s:
-        cv2.circle(img, (int(x), int(y)), 5, (255, 255, 255), 2)
-    show_imgs(img)
-    return img, *[tf.cast(o, tf.float32) for o in outputs]
+    # for y, x, _ in positions_s:
+    #     cv2.circle(img, (int(x), int(y)), 5, (255, 255, 255), 2)
+    # show_imgs(img)
+    # return img, *[tf.cast(o, tf.float32) for o in outputs]
 
 
 def dataloader_ma(
