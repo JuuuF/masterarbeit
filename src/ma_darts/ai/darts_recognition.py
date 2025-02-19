@@ -10,15 +10,24 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
+# GPU setup
+gpus = tf.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
+    tf.config.experimental.set_virtual_device_configuration(
+        gpu,
+        [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2**14)],  # 16GB
+    )
+
 from ma_darts.ai import callbacks as ma_callbacks
 from ma_darts.ai.utils import get_dart_scores, get_absolute_score_error
 from ma_darts.cv.utils import show_imgs, matrices
 from ma_darts.ai.models import (
     yolo_v8_model,
-    YOLOv8Loss,
     yolo_to_positions_and_class,
 )
-from ma_darts.ai.data import dataloader_paper, dataloader_ma
+from ma_darts.ai.data import dataloader_paper, dataloader_ma, dummy_ds
+from ma_darts.ai.losses import YOLOv8Loss, ExistenceLoss, ClassesLoss, PositionsLoss
 
 from tqdm import tqdm
 from argparse import ArgumentParser
@@ -26,7 +35,7 @@ from datetime import datetime
 
 from ma_darts import img_size, classes
 
-BATCH_SIZE = 4 if "GPU_SERVER" in os.environ.keys() else 4
+BATCH_SIZE = 32 if "GPU_SERVER" in os.environ.keys() else 4
 
 
 class Utils:
@@ -40,10 +49,12 @@ class Utils:
         # History plotter
         hp = ma_callbacks.HistoryPlotter(
             filepath="dump/training_history.png",
-            update_on="seconds",
-            update_frequency=60,
+            update_on="batches",
+            update_frequency=1024,
             ease_curves=False,
             smooth_curves=True,
+            dark_mode=True,
+            log_scale=True,
         )
         callbacks.append(hp)
 
@@ -209,48 +220,6 @@ class Utils:
 
 class Data:
 
-    def check_ds(ds: tf.data.Dataset) -> None:
-        import cv2
-
-        classes = ["nothing", "black", "white", "red", "green", "out"]
-
-        for img, (out_s, out_m, out_l) in ds:
-
-            img = (img.numpy() * 255).astype(np.uint8)
-
-            grid = out_s.numpy()
-            for y, grid_row in enumerate(grid):
-                if (grid_row[:, 2] == 1).all():
-                    continue
-                for x, grid_cell in enumerate(grid_row):  # (8, 3)
-                    if (grid_cell[2] == 1).all():
-                        continue
-
-                    for i in range(3):
-                        col = grid_cell[:, i]
-                        if col[2] == 1:
-                            continue
-                        pos = col[:2]
-                        cell_class = np.argmax(col[2:])
-                        pos_y = y * 32 + round(pos[0] * 32)
-                        pos_x = x * 32 + round(pos[1] * 32)
-                        img[pos_y, pos_x] = (255, 255, 255)
-                        for i, c in enumerate([0, 255]):
-                            cv2.putText(
-                                img,
-                                classes[cell_class],
-                                org=(pos_x + 10, pos_y),
-                                fontFace=cv2.FONT_HERSHEY_PLAIN,
-                                fontScale=1,
-                                color=(c, c, c),
-                                thickness=2 - i,
-                            )
-                        # print(pos_y, pos_x)
-                        cv2.circle(img, (pos_x, pos_y), 3, (255, 0, 0), 1)
-                        cv2.circle(img, (pos_x, pos_y), 6, (255, 255, 255), 1)
-
-            show_imgs(img)
-
     def visualize_data_predictions(model, ds):
 
         preds = []
@@ -342,8 +311,6 @@ args = Utils.get_args()
 
 if args.model_path is None:
     model = yolo_v8_model(
-        input_size=800,
-        classes=["nothing", "black", "white", "red", "green", "out"],
         variant=args.model_type,
     )
 else:
@@ -351,16 +318,16 @@ else:
 
 # Compile model
 metrics = [
-    tf.keras.metrics.MeanSquaredError(name="mse"),
-    tf.keras.metrics.MeanAbsoluteError(name="mae"),
+    ExistenceLoss(),
+    ClassesLoss(),
+    PositionsLoss(),
 ]
 model.compile(
     optimizer=tf.keras.optimizers.Adam(0.001),
     loss=YOLOv8Loss(
-        img_size=img_size,
         square_size=50,
-        class_introduction_threshold=0.1,
-        position_introduction_threshold=0.1,
+        class_introduction_threshold=0.25,
+        position_introduction_threshold=0.25,
     ),
     metrics=[metrics for _ in range(3)],
 )
@@ -380,6 +347,8 @@ train_ds = dataloader_ma(
     cache=True,
     clear_cache=args.clear_cache,
 )
+if "GPU_SERVER" not in os.environ.keys():
+    train_ds = dummy_ds(n_samples=32)
 
 val_ds = dataloader_paper(
     base_dir="data/paper/",
@@ -392,6 +361,9 @@ val_ds = dataloader_paper(
     cache=False,
     clear_cache=args.clear_cache,
 )
+if "GPU_SERVER" not in os.environ.keys():
+    val_ds = dummy_ds(n_samples=8)
+
 
 # Utils.check_dataset(train_ds)
 # Utils.check_dataset(val_ds)
