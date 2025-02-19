@@ -137,7 +137,7 @@ def SPPF(
     return x
 
 
-def Bottleck(
+def Bottleneck(
     x: tf.Tensor,
     shortcut: bool,
     dropout: float = 0.0,
@@ -195,7 +195,7 @@ def C2f(
 
     concat_tensors = [x_0, x_1]
     for i in range(n):
-        x_1 = Bottleck(x_1, shortcut=shortcut)
+        x_1 = Bottleneck(x_1, shortcut=shortcut)
         concat_tensors.append(x_1)
 
     x = Concat(concat_tensors)
@@ -240,7 +240,7 @@ def HardSigmoid(
     return tf.keras.activations.hard_sigmoid(x)
 
 
-def OutputTansformation(
+def OutputTransformation(
     x_pos: tf.Tensor,
     x_cls: tf.Tensor,
     reg_max: int,
@@ -371,26 +371,26 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.
     )
 
     # Output Transformation
-    detect_s = OutputTansformation(
+    detect_s = OutputTransformation(
         detect_s_pos,
         detect_s_cls,
         reg_max=reg_max,
         n_classes=n_classes,
-        out_name="out_25",
+        out_name="out_s",
     )  # (s, s, 2 + n_classes, reg_max)
-    detect_m = OutputTansformation(
+    detect_m = OutputTransformation(
         detect_m_pos,
         detect_m_cls,
         reg_max=reg_max,
         n_classes=n_classes,
-        out_name="out_50",
+        out_name="out_m",
     )  # (m, m, 2 + n_classes, reg_max)
-    detect_l = OutputTansformation(
+    detect_l = OutputTransformation(
         detect_l_pos,
         detect_l_cls,
         reg_max=reg_max,
         n_classes=n_classes,
-        out_name="out_100",
+        out_name="out_l",
     )  # (l, l, 2 + n_classes, reg_max)
 
     outputs = [
@@ -406,6 +406,7 @@ def yolo_v8_model(input_size: int, classes: list[str], variant="n") -> tf.keras.
 
 # =================================================================================================
 # Loss
+
 
 class YOLOv8Loss(tf.keras.Loss):
     def __init__(
