@@ -32,7 +32,7 @@ class Augmentation:
             img,
             lower=1 - self.contrast_adjust,
             upper=1 + self.contrast_adjust,
-            seed=seed,
+            seed=seed + 1,
         )
         img = tf.clip_by_value(img, 0.0, 1.0)
 
@@ -51,7 +51,7 @@ class Augmentation:
             img,
             lower=1 - self.saturation_amount,
             upper=1 + self.saturation_amount,
-            seed=seed,
+            seed=seed + 2,
         )
 
         # JPEG compression
@@ -59,7 +59,7 @@ class Augmentation:
             img,
             min_jpeg_quality=self.min_jpeg_quality,
             max_jpeg_quality=100,
-            seed=seed,
+            seed=seed + 3,
         )
 
         return img
@@ -139,7 +139,6 @@ class Augmentation:
     ):
         # Flipping
         flips = tf.random.uniform((2,))
-        flips = [0, 0]
         if flips[0] > 0.5:
             img = tf.image.flip_left_right(img)
             pos = tf.stack([pos[0], 1 - pos[1]], axis=0)
@@ -166,9 +165,12 @@ class Augmentation:
 
         # Apply matrix to image
         M = tf.reshape(M, (9,))[:-1]
-        img = tf.keras.ops.image.affine_transform(
-            tf.expand_dims(img, 0),
-            tf.expand_dims(M, 0),
+        img = tf.raw_ops.ImageProjectiveTransformV3(
+            images=tf.expand_dims(img, 0),
+            transforms=tf.expand_dims(M, 0),
+            output_shape=(self.img_size, self.img_size),
+            interpolation="BILINEAR",
+            fill_value=0.0,
         )[0]
 
         # Clip ranges
