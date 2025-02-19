@@ -18,6 +18,7 @@ class HistoryPlotter(Callback):
         ease_curves: bool = False,
         smooth_curves: bool = True,
         dark_mode: bool = True,
+        log_scale: bool = False,
     ):
         super().__init__()
 
@@ -52,6 +53,7 @@ class HistoryPlotter(Callback):
         # Utils
         self.dividers = []
         self.epoch = 0
+        self.log_scale = log_scale
 
         if dark_mode:
             plt.style.use("dark_background")
@@ -141,6 +143,8 @@ class HistoryPlotter(Callback):
                 )
                 axs[i].axhline(y=0, **kwargs)
                 axs[i].axhline(y=1, **kwargs)
+            elif self.log_scale:
+                axs[i].set_yscale("log")
 
             # Draw train log
             draw_single_loss(axs[i], train_log, "train", "blue")
