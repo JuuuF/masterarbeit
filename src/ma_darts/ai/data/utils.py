@@ -175,42 +175,43 @@ def scaled_out(
 
     return out_grid
 
-    updates = []
-    indices = []
+    # updates = []
+    # indices = []
 
-    for i in tf.range(3):
-        # Get target cell
-        grid_y, grid_x = grid_pos[0, i], grid_pos[1, i]
-        current_cell = out_grid[grid_y, grid_x]
+    # for i in tf.range(3):
+    #     # Get target cell
+    #     grid_y, grid_x = grid_pos[0, i], grid_pos[1, i]
+    #     current_cell = out_grid[grid_y, grid_x]
 
-        # Get next available cell column
-        cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
-        cell_col = tf.cast(cell_col, tf.int32)
-        # tf.print("cell_col:")
-        # tf.print(cell_col)
+    #     # Get next available cell column
+    #     cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
+    #     cell_col = tf.cast(cell_col, tf.int32)
+    #     # tf.print("cell_col:")
+    #     # tf.print(cell_col)
 
-        # Update position and class data
-        pos_update = tf.concat([local_pos[:, i], cls[:, i]], axis=0)
+    #     # Update position and class data
+    #     pos_update = tf.concat([local_pos[:, i], cls[:, i]], axis=0)
 
-        # Get update indices
-        for cell_row in tf.range(tf.shape(pos_update)[0], dtype=tf.int32):
-            indices.append([grid_y, grid_x, cell_row, cell_col])
-            updates.append(pos_update[cell_row])
+    #     # Get update indices
+    #     for cell_row in tf.range(tf.shape(pos_update)[0], dtype=tf.int32):
+    #         indices.append([grid_y, grid_x, cell_row, cell_col])
+    #         updates.append(pos_update[cell_row])
 
-    indices = tf.convert_to_tensor(indices, dtype=tf.int32)
-    updates = tf.convert_to_tensor(updates, dtype=tf.float32)
+    # indices = tf.convert_to_tensor(indices, dtype=tf.int32)
+    # updates = tf.convert_to_tensor(updates, dtype=tf.float32)
 
-    # Apply updates
-    out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
+    # # Apply updates
+    # out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
 
-    # tf.print("--- indices + updates")
-    # for i, u in zip(indices, updates):
-    #     tf.print(i, ":", u, "->", out_grid[i[0], i[1], i[2], i[3]])
-    # tf.print("-"*50)
+    # # tf.print("--- indices + updates")
+    # # for i, u in zip(indices, updates):
+    # #     tf.print(i, ":", u, "->", out_grid[i[0], i[1], i[2], i[3]])
+    # # tf.print("-"*50)
 
-    return out_grid
+    # return out_grid
 
 
+@tf.function
 def positions_to_yolo(
     img: tf.Tensor,  # (800, 800, 3)
     pos: tf.Tensor,  # (2, 3)
@@ -271,7 +272,7 @@ def finalize_base_ds(
         ds = cache_ds(ds, data_dir)
 
     if shuffle:
-        ds = ds.shuffle(16 * batch_size)
+        ds = ds.shuffle(32 * batch_size)
 
     if augment:
         aug = Augmentation()
@@ -282,7 +283,8 @@ def finalize_base_ds(
 
     # Convert to yolo outputs
     ds = ds.map(
-        positions_to_yolo, num_parallel_calls=tf.data.AUTOTUNE
+        positions_to_yolo,
+        num_parallel_calls=tf.data.AUTOTUNE,
     )  # (800, 800, 3), (25, 25, 8, 3), (50, 50, 8, 3), (100, 100, 8, 3)
 
     # Set shapes
