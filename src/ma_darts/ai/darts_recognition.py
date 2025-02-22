@@ -51,7 +51,7 @@ class Utils:
             filepath="dump/training_history.png",
             update_on="batches",
             update_frequency=1024,
-            ease_curves=False,
+            ease_curves=True,
             smooth_curves=True,
             dark_mode=True,
             log_scale=True,
@@ -78,6 +78,14 @@ class Utils:
         #     update_frequency=60,
         # )
         # callbacks.append(pc)
+        lr = tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss",
+            factor=0.5,
+            patience=10,
+            verbose=1,
+            min_lr=1e-6,
+        )
+        callbacks.append(lr)
 
         # TensorBoard
         tb = tf.keras.callbacks.TensorBoard(
@@ -323,7 +331,7 @@ metrics = [
     PositionsLoss(),
 ]
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(0.001),
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
     loss=YOLOv8Loss(
         square_size=50,
         class_introduction_threshold=0.25,
