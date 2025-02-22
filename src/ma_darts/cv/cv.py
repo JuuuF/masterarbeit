@@ -12,7 +12,7 @@ from ma_darts.cv.utils import (
     apply_matrix,
 )
 
-create_debug_img = True
+create_debug_img = False
 debug_out_images = []
 
 if __name__ == "__main__":
@@ -69,17 +69,23 @@ if __name__ == "__main__":
         os.path.join("data/darts_references/jess", f)
         for f in os.listdir("data/darts_references/jess")
     ]
+    # Own References
+    img_paths_sb = [
+        os.path.join("data/darts_references/strongbows", f)
+        for f in os.listdir("data/darts_references/strongbows")
+    ]
 
     img_paths = (
         []
         # add paths
-        + img_paths_gen
-        + img_paths_paper
-        + img_paths_jess
+        # + img_paths_gen
+        # + img_paths_paper
+        # + img_paths_jess
+        + img_paths_sb
     )
     np.random.shuffle(img_paths)
 
-    img_paths[0] = "data/generation/out/75/render.png"
+    # img_paths[0] = "data/generation/out/75/render.png"
 
 
 class Utils:
@@ -1935,7 +1941,7 @@ def undistort_img(img: np.ndarray):
 
     res = apply_matrix(img_full, M_full)
     res = res[:800, :800]
-    return res
+    return res, M_full
 
     res_show = res.copy()
     cv2.circle(res_show, (400, 400), 10, (255, 255, 255), 2)
