@@ -722,6 +722,8 @@ class Orientation:
         lines_filtered: list[tuple[float, float, float, float, float]],
         thetas: list[float],
         img_shape: tuple[int, int],
+        cy: float,
+        cx: float,
         show: bool = False,
     ) -> list[tuple[float, float]]:
         rho_guess = np.sqrt(img_shape[0] ** 2 + img_shape[1] ** 2) / 2
@@ -1643,6 +1645,7 @@ class Orientation:
         return positions  # (x, inner/outer)
 
     def structure_orientation_candidates(
+        img: np.ndarray,
         orientation_point_candidates: list[list[tuple[int, str]]],
         cy: int,
         cx: int,
@@ -1705,11 +1708,10 @@ class Orientation:
 
         double_thresholds = [o * 1.2 for o in outer_radii]
 
-        # TODO: correct radii
-        print("TODO: CV.structure_orientation_candidates: Get board radii")
-        r_triple_inner = 97 * 2
-        r_triple_outer = 107 * 2
-        r_double_inner = 160 * 2
+        radius_scale = 300 / 17.0  # px/cm
+        r_triple_inner = 9.8 * radius_scale
+        r_triple_outer = 10.7 * radius_scale
+        r_double_inner = 16.2 * radius_scale
 
         src = []
         dst = []
@@ -1824,6 +1826,126 @@ def extract_center(img: np.ndarray):
     return cy, cx
 
 
+def undistort_img(img: np.ndarray):
+
+    # -----------------------------
+    # Preprocess Image
+
+    # img_full = Utils.load_img(f, show=False)
+    # if img_full is None:
+    #     print("WARNING: Could not load image path", f)
+    #     continue
+
+    img_full = img.copy()
+    img = Utils.downsample_img(img_full)
+
+    # show_imgs(input=img, block=False)
+    Utils.append_debug_img(img, "Input")
+
+    # -----------------------------
+    # EDGES
+
+    # Detect Edges
+    edges = Edges.edge_detect(img, show=False)
+    # Skeletonize edges
+    skeleton = Edges.skeleton(edges, show=False)
+
+    # -----------------------------
+    # LINES
+
+    # Extract lines
+    lines = Lines.extract_lines(skeleton, show=False)
+
+    # Bin lines by angle
+    lines_binned = Lines.bin_lines_by_angle(lines)
+
+    # Find Board Center
+    cy, cx = Lines.get_center_point(img.shape, lines_binned, show=False)
+
+    # Filter Lines by Center Distance
+    lines_filtered = Lines.filter_lines_by_center_dist(
+        lines, cy, cx
+    )  # p1, p2, length (normalized), center distance [px], rho, theta
+
+    thetas = Lines.get_rough_line_angles(
+        img.shape[:2], lines_filtered, cy, cx, show=False
+    )
+    if len(thetas) != 10:
+        print("ERROR: Could not find all lines!")
+        if create_debug_img:
+            Utils.show_debug_img(failed=True)
+        return
+
+    # -----------------------------
+    # ORIENTATION
+
+    # Align lines by filtered edges
+    lines = Orientation.align_angles(
+        lines_filtered, thetas, img.shape[:2], cy, cx, show=False
+    )
+
+    # Calculate better center coordinates
+    cy, cx = Orientation.center_point_from_lines(lines)
+
+    # Get undistortion matrix
+    M_undistort = Orientation.undistort_by_lines(cy, cx, lines, show=False)
+
+    # Undistort image
+    img_undistort = apply_matrix(img, M_undistort)
+    cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
+
+    # angle_step = np.pi / 10
+    # angles = np.arange(0, np.pi, angle_step) + angle_step / 2
+    # img_undistort //= 2
+    # for t in angles:
+    #     draw_polar_line_through_point(img_undistort, (cy_undistort, cx_undistort), t)
+    # show_imgs(img_undistort)
+    # exit()
+
+    # Find possible orientation points
+    orientation_point_candidates = Orientation.find_orientation_points(
+        img_undistort, int(cy_undistort), int(cx_undistort), show=False
+    )
+    if orientation_point_candidates is None:
+        if create_debug_img:
+            Utils.show_debug_img(failed=True)
+        return
+
+    # Filter out bad orientation points
+    src_pts, dst_pts = Orientation.structure_orientation_candidates(
+        img,
+        orientation_point_candidates,
+        int(cy_undistort),
+        int(cx_undistort),
+        show=False,
+    )
+
+    # Convert orientation points to transformation matrix
+    M_align = Orientation.get_alignment_matrix(
+        src_pts, dst_pts, int(cy_undistort), int(cx_undistort)
+    )
+
+    # Combine all matrices
+    scale = img.shape[0] / img_full.shape[0]
+
+    M_full = np.eye(3)
+    M_full = scaling_matrix(scale) @ M_full  # downscale to calculation size
+    M_full = M_undistort @ M_full  # undistort
+    M_full = M_align @ M_full  # align to correct scale and orientation
+
+    res = apply_matrix(img_full, M_full)
+    res = res[:800, :800]
+    return res
+
+    res_show = res.copy()
+    cv2.circle(res_show, (400, 400), 10, (255, 255, 255), 2)
+    cv2.circle(res_show, (400, 400), 3, (255, 0, 0), -1)
+
+    Utils.append_debug_img(res_show, "Aligned Image")
+    Utils.show_debug_img()
+    Utils.clear_debug_img()
+
+
 # -----------------------------------------------
 
 if __name__ == "__main__":
@@ -1835,114 +1957,3 @@ if __name__ == "__main__":
         from time import time
 
         start = time()
-
-        # -----------------------------
-        # Load Image
-        print(f)
-        img_full = Utils.load_img(f, show=False)
-        if img_full is None:
-            print("WARNING: Could not load image path", f)
-            continue
-        img = Utils.downsample_img(img_full)
-
-        # show_imgs(input=img, block=False)
-        Utils.append_debug_img(img, f"Input: {f}")
-
-        # -----------------------------
-        # EDGES
-
-        # Detect Edges
-        edges = Edges.edge_detect(img, show=False)
-        # Skeletonize edges
-        skeleton = Edges.skeleton(edges, show=False)
-
-        # -----------------------------
-        # LINES
-
-        # Extract lines
-        lines = Lines.extract_lines(skeleton, show=False)
-
-        # Bin lines by angle
-        lines_binned = Lines.bin_lines_by_angle(lines)
-
-        # Find Board Center
-        cy, cx = Lines.get_center_point(img.shape, lines_binned, show=False)
-
-        # Filter Lines by Center Distance
-        lines_filtered = Lines.filter_lines_by_center_dist(
-            lines, cy, cx
-        )  # p1, p2, length (normalized), center distance [px], rho, theta
-
-        thetas = Lines.get_rough_line_angles(
-            img.shape[:2], lines_filtered, cy, cx, show=False
-        )
-        if len(thetas) != 10:
-            print("ERROR: Could not find all lines!")
-            if create_debug_img:
-                Utils.show_debug_img(failed=True)
-            continue
-
-        # -----------------------------
-        # ORIENTATION
-
-        # Align lines by filtered edges
-        lines = Orientation.align_angles(
-            lines_filtered, thetas, img.shape[:2], show=False
-        )
-
-        # Calculate better center coordinates
-        cy, cx = Orientation.center_point_from_lines(lines)
-
-        # Get undistortion matrix
-        M_undistort = Orientation.undistort_by_lines(cy, cx, lines, show=False)
-
-        # Undistort image
-        img_undistort = apply_matrix(img, M_undistort)
-        cx_undistort, cy_undistort = (M_undistort @ np.array([cx, cy, 1]))[:2]
-
-        # angle_step = np.pi / 10
-        # angles = np.arange(0, np.pi, angle_step) + angle_step / 2
-        # img_undistort //= 2
-        # for t in angles:
-        #     draw_polar_line_through_point(img_undistort, (cy_undistort, cx_undistort), t)
-        # show_imgs(img_undistort)
-        # exit()
-
-        # Find possible orientation points
-        orientation_point_candidates = Orientation.find_orientation_points(
-            img_undistort, int(cy_undistort), int(cx_undistort), show=False
-        )
-        if orientation_point_candidates is None:
-            if create_debug_img:
-                Utils.show_debug_img(failed=True)
-            continue
-
-        # Filter out bad orientation points
-        src_pts, dst_pts = Orientation.structure_orientation_candidates(
-            orientation_point_candidates,
-            int(cy_undistort),
-            int(cx_undistort),
-            show=False,
-        )
-
-        # Convert orientation points to transformation matrix
-        M_align = Orientation.get_alignment_matrix(
-            src_pts, dst_pts, int(cy_undistort), int(cx_undistort)
-        )
-
-        # Combine all matrices
-        scale = img.shape[0] / img_full.shape[0]
-
-        M_full = np.eye(3)
-        M_full = scaling_matrix(scale) @ M_full  # downscale to calculation size
-        M_full = M_undistort @ M_full  # undistort
-        M_full = M_align @ M_full  # align to correct scale and orientation
-
-        res = apply_matrix(img_full, M_full)
-        res = res[:800, :800]
-        cv2.circle(res, (400, 400), 10, (255, 255, 255), 2)
-        cv2.circle(res, (400, 400), 3, (255, 0, 0), -1)
-
-        Utils.append_debug_img(res, "Aligned Image")
-        Utils.show_debug_img()
-        Utils.clear_debug_img()
