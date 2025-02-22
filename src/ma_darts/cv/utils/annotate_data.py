@@ -152,6 +152,11 @@ class Annotation:
         out_dir = os.path.join(self.dst_dir, str(id))
         os.makedirs(out_dir, exist_ok=True)
 
+        # Fix scores
+        for i, s in enumerate(self.current_marks["scores"]):
+            if s[1] == "0":
+                self.current_marks["scores"][i] = (0, "OUT")
+
         # Undistort img
         if self.img_undistort is None:
             self.img_undistort, self.H = ImageUtils.undistort(
@@ -159,22 +164,28 @@ class Annotation:
             )
 
         # Undistort points
-        dart_pos = np.array([(float(x), float(y)) for y, x in self.current_marks["positions"]])
-        dart_pos_undist = cv2.perspectiveTransform(np.expand_dims(dart_pos, 0), self.H)[0]
+        dart_pos = np.array(
+            [(float(x), float(y)) for y, x in self.current_marks["positions"]]
+        )
+        dart_pos_undist = cv2.perspectiveTransform(np.expand_dims(dart_pos, 0), self.H)[
+            0
+        ]
         pos_undist = []
         for (x, y), s in zip(dart_pos_undist, self.current_marks["scores"]):
             if s[1] == "HIDDEN":
                 pos_undist.append((0, 0))
                 continue
-            pos_undist.append((y, x))
-        self.current_marks["positions_undistorted"] = pos_undist
+            pos_undist.append((y / 800, x / 800))
+        self.current_marks["dart_positions_undistort"] = pos_undist
 
         # Save images
         cv2.imwrite(os.path.join(out_dir, "undistort.png"), self.img_undistort)
         cv2.imwrite(os.path.join(out_dir, "render.png"), self.img)
 
         for x, y in dart_pos_undist:
-            cv2.circle(self.img_undistort, (int(x), int(y)), 4, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.circle(
+                self.img_undistort, (int(x), int(y)), 4, (0, 255, 0), 2, cv2.LINE_AA
+            )
 
         # Save info
         with open(os.path.join(out_dir, "info.json"), "w") as f:
@@ -515,110 +526,3 @@ class Annotation:
 
 
 Annotation(src_dir=src_dir, dst_dir=dst_dir)()
-
-marks = {}
-current_img = 0
-filepath = ""
-img = None
-
-
-def draw_mark(y, x):
-    cv2.circle(img, (x, y), 5, (255, 255, 255), 2)
-    cv2.imshow("Image", img)
-
-
-def load_img():
-    global img, current_img, filepath
-    img = cv2.imread(os.path.join(src_dir, filepath))
-    while img is None:
-        print(filepath, "not found.")
-        current_img += 1
-        filepath = files[current_img]
-
-    while max(*img.shape[:2]) > 1600:
-        img = cv2.pyrDown(img)
-
-
-def store():
-    id, fp = filepath.split("_")
-    id = int(id)
-
-    os.makedirs(os.path.join(src_dir, str(id)), exist_ok=True)
-    cv2.imwrite(os.path.join(src_dir, str(id), fp), img)
-
-    # Save the marks as JSON
-    with open(os.path.join(src_dir, str(id), "info.json"), "w") as f:
-        json.dump(marks[filepath], f)
-    cv2.imwrite(os.path.join(out_dir, "render.jpg"))
-
-
-colors = dict(b="black", w="white", r="red", g="green", o="out")
-
-
-def click_event(event, x, y, flags, param):
-    global img, score_idx
-    if event == cv2.EVENT_MBUTTONDOWN:
-        # Add mark to score
-        score = scores[score_idx]
-        marks[filepath]["positions"][score_idx] = (y, x)
-        marks[filepath]["scores"][score_idx] = score
-        draw_mark(y, x)
-        score_idx += 1
-
-    elif event == cv2.EVENT_RBUTTONDOWN:
-        # Clear marks
-        marks[filepath] = default_marks()
-        load_img()
-        cv2.imshow("Image", img)
-        score_idx = 0
-
-
-quit = False
-while current_img < len(files):
-    filepath = files[current_img]
-    load_img()
-
-    if filepath not in marks.keys():
-        marks[filepath] = default_marks()
-    else:
-        for y, x in marks[filepath]["positions"]:
-            draw_mark(y, x)
-    scores = filepath.split("_")[1].split(".")[0].split("-")
-    score_idx = 0
-
-    cv2.imshow("Image", img)
-    cv2.setMouseCallback("Image", click_event)
-
-    for s in scores:
-        if s == "0":
-            continue
-        print(f"Click tip for score {s}")
-        while score_idx < len(scores):
-            key = cv2.waitKey(0)
-
-            if key == 83:  # right arrow
-                store()
-                current_img += 1
-                current_img %= len(files)
-                break
-            elif key == 81:  # left arrow
-                store()
-                current_img -= 1
-                current_img %= len(files)
-                break
-            elif key == ord("q"):
-                quit = true
-            elif key == 13:  # Enter
-                store()
-                current_img += 1
-                current_img %= len(files)
-                break
-            elif key == ord("x"):
-                marks[filepath] = default_marks()
-                load_img()
-                cv2.imshow("Image", img)
-                score_idx = 0
-                break
-
-    if quit:
-        break
