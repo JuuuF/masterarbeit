@@ -6,10 +6,7 @@ import tensorflow as tf
 from ma_darts.ai.data import finalize_base_ds
 from ma_darts import dart_order
 
-from functools import lru_cache
 
-
-@lru_cache
 def get_class_table():
     keys = tf.constant(
         ["HIDDEN", "OUT", "DB", "DBull", "B", "Bull"]
@@ -23,11 +20,11 @@ def get_class_table():
         + [3 if i % 2 == 0 else 4 for i in range(len(dart_order))]  # double
         + [3 if i % 2 == 0 else 4 for i in range(len(dart_order))]  # triple
     )
-    lut = tf.lookup.StaticHashTable(
+    class_table = tf.lookup.StaticHashTable(
         tf.lookup.KeyValueTensorInitializer(keys, values),
         default_value=0,
     )
-    return lut
+    return class_table
 
 
 def parse_positions_and_scores(json_str: tf.string):
