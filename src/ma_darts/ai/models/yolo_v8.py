@@ -240,6 +240,12 @@ def HardSigmoid(
     return tf.keras.activations.hard_sigmoid(x)
 
 
+def ClampReLU(
+    x: tf.Tensor,
+) -> tf.Tensor:
+    return layers.ReLU(max_value=1.0)(x)
+
+
 def OutputTransformation(
     x_pos: tf.Tensor,
     x_cls: tf.Tensor,
@@ -252,18 +258,18 @@ def OutputTransformation(
     x_pos = Reshape(
         x_pos,
         shape=x_pos.shape[1:3] + (2, reg_max),
-    )  # (bs, y, x, 2, 3)
+    )  # (y, x, 2, 3)
     x_cls = Reshape(
         x_cls,
         shape=x_cls.shape[1:3] + (n_classes, reg_max),
-    )  # (bs, y, x, n, 3)
+    )  # (y, x, n, 3)
 
     # Activations
-    x_pos = HardSigmoid(x_pos)  # clamp between 0 and 1
+    x_pos = ClampReLU(x_pos)  # clamp between 0 and 1
     x_cls = Softmax(x_cls, axis=-2)  # determine class percentage-wise
 
     # Combining
-    x = Concat([x_pos, x_cls], axis=-2, name=out_name)
+    x = Concat([x_pos, x_cls], axis=-2, name=out_name)  # (s, s, 8, 3)
 
     return x
 
@@ -320,7 +326,7 @@ def yolo_v8_model(
 
     d, w, r = variants[variant]
     reg_max = 3
-    n_classes = len(classes)  # nothing / black / green / red / white / out
+    n_classes = len(classes)  # nothing / black / white / red / green / out
 
     # Backbone
     x = inputs
@@ -867,7 +873,7 @@ def yolo_v8_predict(
     colors = [
         (50, 50, 50),  # nothing
         (0, 0, 0),  # black
-        (255, 255, 255),  # white
+        (127, 127, 127),  # white
         (0, 0, 255),  # red
         (0, 255, 0),  # green
         (127, 127, 127),  # out
@@ -886,8 +892,9 @@ def yolo_v8_predict(
                     for pred_idx in range(3):
 
                         # Extract information
-                        if (confidence := cnf[cell_idx, pred_idx]) < 0.5:
-                            continue
+                        if (confidence := cnf[cell_idx, pred_idx]) < 0.00:
+                            # continue
+                            pass
                         if (cls_id := int(cls[cell_idx, pred_idx])) == 0:
                             continue
                         y, x = map(int, pos[cell_idx, pred_idx])
@@ -953,11 +960,19 @@ if __name__ == "__main__":
         optimizer="adam",
     )
 
-    model.load_weights("data/ai/darts/yolov8_train1.weights.h5")
-    data_dir = "data/paper/imgs/d1_02_04_2020/"
+    model.load_weights("data/ai/darts/yolov8_train4.weights.h5")
+    data_dir_paper = "data/paper/imgs/d1_02_04_2020/"
+    data_dir_ma = "data/generation/out_val/"
     import os
 
-    files = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
+    files_paper = [os.path.join(data_dir_paper, f) for f in os.listdir(data_dir_paper)]
+    files_ma = [
+        os.path.join(data_dir_ma, s, "undistort.png") for s in os.listdir(data_dir_ma)
+    ]
+    files = [f for tup in zip(files_paper, files_ma) for f in tup]
+    files[0] = "dump/test.png"
+    files[1] = "dump/test_2.png"
+
     for f in files:
         img = np.array([cv2.imread(f)], dtype=np.float32) / 255
         yolo_v8_predict(model, img)
