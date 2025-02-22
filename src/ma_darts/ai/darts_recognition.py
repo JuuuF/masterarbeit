@@ -350,31 +350,47 @@ model.compile(
 train_ds = dataloader_ma(
     "data/generation/out/",
     batch_size=BATCH_SIZE,
-    shuffle=True,
+    shuffle=False,
     augment=True,
     cache=True,
     clear_cache=args.clear_cache,
 )
+# Utils.check_dataset(train_ds)
 if "GPU_SERVER" not in os.environ.keys():
     train_ds = dummy_ds(n_samples=32)
 
-val_ds = dataloader_paper(
+val_ds_paper = dataloader_paper(
     base_dir="data/paper/",
-    dataset="d2",
-    split="train",
+    dataset="d1",
+    split="val",
     img_size=img_size,
     shuffle=False,
     augment=False,
     batch_size=BATCH_SIZE,
     cache=False,
     clear_cache=args.clear_cache,
-)
+).take(256)
+val_ds_ma = dataloader_ma(
+    "data/generation/out_val/",
+    batch_size=BATCH_SIZE,
+    shuffle=False,
+    augment=False,
+    cache=False,
+).take(256)
+val_ds_real = dataloader_ma(
+    "data/darts_references/strongbows_out/",
+    batch_size=BATCH_SIZE,
+    shuffle=False,
+    augment=False,
+    cache=False,
+    prefetch=1,
+).take(256)
+# Utils.check_dataset(val_ds_paper)
+val_ds = val_ds_real.concatenate(val_ds_paper).concatenate(val_ds_ma)
+Utils.check_dataset(val_ds)
 if "GPU_SERVER" not in os.environ.keys():
     val_ds = dummy_ds(n_samples=8)
 
-
-# Utils.check_dataset(train_ds)
-# Utils.check_dataset(val_ds)
 
 # -----------------------------------------------
 # Fit Model
