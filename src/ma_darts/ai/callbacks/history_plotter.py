@@ -5,8 +5,9 @@ from tensorflow.keras.callbacks import Callback  # type: ignore
 import matplotlib
 
 matplotlib.use("agg")
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, ticker
 from time import time
+from scipy.ndimage import gaussian_filter1d
 
 
 class HistoryPlotter(Callback):
@@ -79,21 +80,15 @@ class HistoryPlotter(Callback):
 
         if window_size <= 1:
             return y
+
         if window_size % 2 == 0:
             window_size += 1
 
-        window = np.ones(window_size) / window_size
-        # pad y
-        pad_width = (window_size - 1) // 2
-        y_pad = np.pad(y, pad_width, mode="edge")
-
-        y_smooth = np.convolve(y_pad, window, mode="same")
-        # remove padding
-        y_smooth = y_smooth[pad_width:-pad_width]
+        y_smooth = gaussian_filter1d(1, sigma=2, mode="nearest")
 
         # fade start and end
         if self.ease_curves:
-            for i in range(window_size):
+            for i in range(min(window_size, len(y))):
                 fac = (window_size - i) / window_size
                 y_smooth[i] = fac * y[i] + (1 - fac) * y_smooth[i]
                 y_smooth[-i - 1] = fac * y[-i - 1] + (1 - fac) * y_smooth[-i - 1]
@@ -145,6 +140,7 @@ class HistoryPlotter(Callback):
                 axs[i].axhline(y=1, **kwargs)
             elif self.log_scale:
                 axs[i].set_yscale("log")
+                axs[i].yaxis.set_major_formatter(ticker.ScalarFormatter())
 
             # Draw train log
             draw_single_loss(axs[i], train_log, "train", "blue")
@@ -196,9 +192,9 @@ class HistoryPlotter(Callback):
     def add_divider(self, label=None):
         self.dividers.append((self.epoch, label))
 
-    def on_train_batch_end(self, batch, logs={}):
-        if self.update_fn(batch):
-            self.plot_losses(extra_logs=logs)
+    # def on_train_batch_end(self, batch, logs={}):
+    #     if self.update_fn(batch):
+    #         self.plot_losses(extra_logs=logs)
 
     def on_epoch_end(self, epoch, logs=None):
         if not self.train_logs:
