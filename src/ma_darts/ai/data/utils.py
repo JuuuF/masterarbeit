@@ -62,8 +62,6 @@ def scaled_out(
 
     # cell_cols = tf.argmax()  # these depend on each other
 
-    updates = []
-    indices = []
     # 0. ------------------------------------
     # Get target cell
     grid_y, grid_x = grid_pos[0, 0], grid_pos[1, 0]
@@ -77,6 +75,7 @@ def scaled_out(
     pos_update = tf.concat([local_pos[:, 0], cls[:, 0]], axis=0)
 
     # Get update indices
+    indices = []
     indices.append([grid_y, grid_x, 0, cell_col])
     indices.append([grid_y, grid_x, 1, cell_col])
     indices.append([grid_y, grid_x, 2, cell_col])
@@ -85,6 +84,7 @@ def scaled_out(
     indices.append([grid_y, grid_x, 5, cell_col])
     indices.append([grid_y, grid_x, 6, cell_col])
     indices.append([grid_y, grid_x, 7, cell_col])
+    updates = []
     updates.append(pos_update[0])
     updates.append(pos_update[1])
     updates.append(pos_update[2])
@@ -93,6 +93,11 @@ def scaled_out(
     updates.append(pos_update[5])
     updates.append(pos_update[6])
     updates.append(pos_update[7])
+
+    # Apply updates
+    indices = tf.convert_to_tensor(indices, dtype=tf.int32)
+    updates = tf.convert_to_tensor(updates, dtype=tf.float32)
+    out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
 
     # 1. ------------------------------------
     # Get target cell
@@ -102,13 +107,12 @@ def scaled_out(
     # Get next available cell column
     cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
     cell_col = tf.cast(cell_col, tf.int32)
-    # tf.print("cell_col:")
-    # tf.print(cell_col)
 
     # Update position and class data
     pos_update = tf.concat([local_pos[:, 1], cls[:, 1]], axis=0)
 
     # Get update indices
+    indices = []
     indices.append([grid_y, grid_x, 0, cell_col])
     indices.append([grid_y, grid_x, 1, cell_col])
     indices.append([grid_y, grid_x, 2, cell_col])
@@ -117,6 +121,7 @@ def scaled_out(
     indices.append([grid_y, grid_x, 5, cell_col])
     indices.append([grid_y, grid_x, 6, cell_col])
     indices.append([grid_y, grid_x, 7, cell_col])
+    updates = []
     updates.append(pos_update[0])
     updates.append(pos_update[1])
     updates.append(pos_update[2])
@@ -125,9 +130,11 @@ def scaled_out(
     updates.append(pos_update[5])
     updates.append(pos_update[6])
     updates.append(pos_update[7])
-    # for cell_row in tf.range(tf.shape(pos_update)[0], dtype=tf.int32):
-    #     indices.append([grid_y, grid_x, cell_row, cell_col])
-    #     updates.append(pos_update[cell_row])
+
+    # Apply updates
+    indices = tf.convert_to_tensor(indices, dtype=tf.int32)
+    updates = tf.convert_to_tensor(updates, dtype=tf.float32)
+    out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
 
     # 2. ------------------------------------
     # Get target cell
@@ -137,13 +144,12 @@ def scaled_out(
     # Get next available cell column
     cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
     cell_col = tf.cast(cell_col, tf.int32)
-    # tf.print("cell_col:")
-    # tf.print(cell_col)
 
     # Update position and class data
     pos_update = tf.concat([local_pos[:, 2], cls[:, 2]], axis=0)
 
     # Get update indices
+    indices = []
     indices.append([grid_y, grid_x, 0, cell_col])
     indices.append([grid_y, grid_x, 1, cell_col])
     indices.append([grid_y, grid_x, 2, cell_col])
@@ -152,6 +158,7 @@ def scaled_out(
     indices.append([grid_y, grid_x, 5, cell_col])
     indices.append([grid_y, grid_x, 6, cell_col])
     indices.append([grid_y, grid_x, 7, cell_col])
+    updates = []
     updates.append(pos_update[0])
     updates.append(pos_update[1])
     updates.append(pos_update[2])
@@ -164,13 +171,9 @@ def scaled_out(
     #     indices.append([grid_y, grid_x, cell_row, cell_col])
     #     updates.append(pos_update[cell_row])
 
-    # ---------------------------------------
     # Apply updates
-
     indices = tf.convert_to_tensor(indices, dtype=tf.int32)
     updates = tf.convert_to_tensor(updates, dtype=tf.float32)
-
-    # Apply updates
     out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
 
     return out_grid
