@@ -55,12 +55,9 @@ def Concat(
     return concat(xs)
 
 
-def Split(
-    x: tf.Tensor,
-    name: str | None = None,
-) -> tuple[tf.Tensor, tf.Tensor]:
-    split = layers.Lambda(lambda t: tf.split(t, num_or_size_splits=2, axis=-1))
-    return split(x)
+class Split(layers.Layer):
+    def call(self, inputs):
+        return tf.split(inputs, num_or_size_splits=2, axis=-1)
 
 
 def Add(
@@ -191,7 +188,7 @@ def C2f(
 ) -> tf.Tensor:
 
     x = Conv(x, k=1, s=1, p=False, c=c, dropout=dropout)
-    x_0, x_1 = Split(x)
+    x_0, x_1 = Split()(x)
 
     concat_tensors = [x_0, x_1]
     for i in range(n):
