@@ -357,39 +357,40 @@ train_ds = dataloader_ma(
 )
 # Utils.check_dataset(train_ds)
 if "GPU_SERVER" not in os.environ.keys():
-    train_ds = dummy_ds(n_samples=32)
+    train_ds = dummy_ds(n_samples=8)
 
 val_ds_paper = dataloader_paper(
     base_dir="data/paper/",
     dataset="d1",
-    split="val",
+    split="test",
     img_size=img_size,
     shuffle=False,
     augment=False,
     batch_size=BATCH_SIZE,
-    cache=False,
+    cache=True,
     clear_cache=args.clear_cache,
-).take(256)
+).take(64)
 val_ds_ma = dataloader_ma(
     "data/generation/out_val/",
     batch_size=BATCH_SIZE,
     shuffle=False,
     augment=False,
-    cache=False,
-).take(256)
+    cache=True,
+).take(64)
 val_ds_real = dataloader_ma(
     "data/darts_references/strongbows_out/",
     batch_size=BATCH_SIZE,
     shuffle=False,
     augment=False,
-    cache=False,
-    prefetch=1,
-).take(256)
-# Utils.check_dataset(val_ds_paper)
-val_ds = val_ds_real.concatenate(val_ds_paper).concatenate(val_ds_ma)
-Utils.check_dataset(val_ds)
+    cache=True,
+)
+# Utils.check_dataset(val_ds_real)
+
+val_ds = val_ds_paper.concatenate(val_ds_ma).concatenate(val_ds_real)
+
+# Utils.check_dataset(val_ds)
 if "GPU_SERVER" not in os.environ.keys():
-    val_ds = dummy_ds(n_samples=8)
+    val_ds = dummy_ds(n_samples=4)
 
 train_ds = train_ds.map(lambda X, y: (X, y[0]))
 val_ds = val_ds.map(lambda X, y: (X, y[0]))
