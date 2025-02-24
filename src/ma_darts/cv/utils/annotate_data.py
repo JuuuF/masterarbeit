@@ -19,7 +19,7 @@ class Annotation:
         self.img_files = sorted(os.listdir(src_dir))
 
         self.current_marks = self.default_marks()
-        self.current_scores = ["0" for _ in range(3)]
+        self.current_scores = [None for _ in range(3)]
         self.current_orientation_points = []
 
         self.colors = dict(b="black", w="white", r="red", g="green", o="out")
@@ -393,14 +393,8 @@ class Annotation:
                     quit = True
                     break
                 if key == ord("x"):
-                    self.current_marks["positions"][self.current_score_idx] = (
-                        "0",
-                        "0",
-                    )
-                    self.current_marks["scores"][self.current_score_idx] = (
-                        "0",
-                        "HIDDEN",
-                    )
+                    self.current_marks["positions"][self.current_score_idx] = (0.0, 0.0)
+                    self.current_marks["scores"][self.current_score_idx] = (0, "HIDDEN")
                     print("Position: Hidden", end="\r")
                     self.draw_marks()
                     continue
@@ -445,14 +439,8 @@ class Annotation:
                     quit = True
                     break
                 if key == ord("x"):
-                    self.current_marks["positions"][self.current_score_idx] = (
-                        "0",
-                        "0",
-                    )
-                    self.current_marks["scores"][self.current_score_idx] = (
-                        "0",
-                        "HIDDEN",
-                    )
+                    self.current_marks["positions"][self.current_score_idx] = (0.0, 0.0)
+                    self.current_marks["scores"][self.current_score_idx] = (0, "HIDDEN")
                     print("Position: Hidden", end="\r")
                     self.draw_marks()
                     continue
@@ -497,14 +485,8 @@ class Annotation:
                     quit = True
                     break
                 if key == ord("x"):
-                    self.current_marks["positions"][self.current_score_idx] = (
-                        "0",
-                        "0",
-                    )
-                    self.current_marks["scores"][self.current_score_idx] = (
-                        "0",
-                        "HIDDEN",
-                    )
+                    self.current_marks["positions"][self.current_score_idx] = (0.0, 0.0)
+                    self.current_marks["scores"][self.current_score_idx] = (0, "HIDDEN")
                     print("Position: Hidden", end="\r")
                     self.draw_marks()
                     continue
