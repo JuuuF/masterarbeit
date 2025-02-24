@@ -133,6 +133,11 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
         if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
 
+        # Save latest weights
+        filepath_parts = filepath.split("/")
+        filepath_parts[-1] = "latest.weights.h5"
+        self.model.save_weights("/".join(filepath_parts), overwrite=True)
+
         try:
             if self.save_best_only:
                 current = logs.get(self.monitor)
