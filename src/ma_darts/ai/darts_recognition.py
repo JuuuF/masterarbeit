@@ -51,7 +51,6 @@ class Utils:
             filepath="dump/training_history.png",
             update_on="batches",
             update_frequency=1024,
-            ease_curves=True,
             smooth_curves=True,
             dark_mode=True,
             log_scale=True,

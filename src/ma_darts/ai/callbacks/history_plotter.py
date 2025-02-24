@@ -1,5 +1,5 @@
 import os
-import numpy as np
+import pandas as pd
 from tensorflow.keras.callbacks import Callback  # type: ignore
 
 import matplotlib
@@ -7,7 +7,6 @@ import matplotlib
 matplotlib.use("agg")
 from matplotlib import pyplot as plt, ticker
 from time import time
-from scipy.ndimage import gaussian_filter1d
 
 
 class HistoryPlotter(Callback):
@@ -16,7 +15,6 @@ class HistoryPlotter(Callback):
         filepath,
         update_on: str = "batches",
         update_frequency: int | float = 10,
-        ease_curves: bool = False,
         smooth_curves: bool = True,
         dark_mode: bool = True,
         log_scale: bool = False,
@@ -48,7 +46,6 @@ class HistoryPlotter(Callback):
         )
 
         # Drawing functions
-        self.ease_curves = ease_curves
         self.smooth_curves = smooth_curves
 
         # Utils
@@ -77,6 +74,14 @@ class HistoryPlotter(Callback):
                 self.train_logs[log_key].append(log_val)
 
     def smooth(self, y, window_size=5):
+        def gaussian_window(size, sigma):
+            """Create a Gaussian window."""
+            # Create an array of points
+            x = np.linspace(-size // 2, size // 2, size)
+            # Calculate the Gaussian weights
+            weights = np.exp(-0.5 * (x / sigma) ** 2)
+            # Normalize the weights to sum to 1
+            return weights / weights.sum()
 
         if window_size <= 1:
             return y
@@ -84,14 +89,27 @@ class HistoryPlotter(Callback):
         if window_size % 2 == 0:
             window_size += 1
 
-        y_smooth = gaussian_filter1d(1, sigma=2, mode="nearest")
+        y_smooth = []
+        n = len(y)
+        for i in range(n):
+            dist_l = i
+            dist_r = n - i - 1
+            w = min(dist_l, dist_r)
+            w = min(w, window_size)
+            window = y[i - w : i + w + 1]
 
-        # fade start and end
-        if self.ease_curves:
-            for i in range(min(window_size, len(y))):
-                fac = (window_size - i) / window_size
-                y_smooth[i] = fac * y[i] + (1 - fac) * y_smooth[i]
-                y_smooth[-i - 1] = fac * y[-i - 1] + (1 - fac) * y_smooth[-i - 1]
+            gaussian_weights = gaussian_window(2 * w + 1, sigma=2)
+
+            # Handle log scale
+            if self.log_scale:
+                # Take the log of the values
+                window_log = np.log10(
+                    np.clip(window, 1e-10, None)
+                )  # Clip to avoid log(0)
+                smoothed_value = np.dot(gaussian_weights, window_log)
+                y_smooth.append(10**smoothed_value)  # Exponentiate back
+            else:
+                y_smooth.append(np.dot(gaussian_weights, window))
 
         return y_smooth
 
@@ -176,7 +194,7 @@ class HistoryPlotter(Callback):
             axs[i].set_xlabel("epoch")
             axs[i].legend()
 
-        fig.savefig(self.filepath)
+        fig.savefig(self.filepath, dpi=200)
         plt.close()
 
     def _update_on_batches(self, batch, *args, **kwargs):
