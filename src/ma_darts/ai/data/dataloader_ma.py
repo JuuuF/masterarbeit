@@ -30,12 +30,13 @@ def get_class_table():
 def parse_positions_and_scores(json_str: tf.string):
     sample_info = json.loads(json_str.numpy().decode("utf-8"))
     positions = tf.convert_to_tensor(
-        sample_info["dart_positions_undistort"], dtype=tf.float32
+        sample_info.get("dart_positions_undistort", [(0, 0)]), dtype=tf.float32
     )  # (3, 2)
     positions = tf.transpose(positions)  # (2, 3)
+    positions = tf.cast(positions, tf.float32)
 
     scores = tf.convert_to_tensor(
-        [s[1] for s in sample_info["scores"]], dtype=tf.string
+        [str(s[1]) for s in sample_info.get("scores", [_, "HIDDEN"])], dtype=tf.string
     )  # (3,)
 
     # Sort by descending y value
