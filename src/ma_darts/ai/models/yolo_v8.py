@@ -396,8 +396,8 @@ def yolo_v8_model(
 
     outputs = [
         detect_s,
-        detect_m,
-        detect_l,
+        # detect_m,
+        # detect_l,
     ]
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
@@ -957,7 +957,7 @@ if __name__ == "__main__":
         optimizer="adam",
     )
 
-    model.load_weights("data/ai/darts/yolov8_train4.weights.h5")
+    model.load_weights("data/ai/darts/yolov8_train5.weights.h5")
     data_dir_paper = "data/paper/imgs/d1_02_04_2020/"
     data_dir_ma = "data/generation/out_val/"
     import os

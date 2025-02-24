@@ -21,7 +21,7 @@ for gpu in gpus:
 
 from ma_darts.ai import callbacks as ma_callbacks
 from ma_darts.ai.utils import get_dart_scores, get_absolute_score_error
-from ma_darts.cv.utils import show_imgs, matrices
+from ma_darts.cv.utils import show_imgs
 from ma_darts.ai.models import (
     yolo_v8_model,
     yolo_to_positions_and_class,
@@ -35,7 +35,7 @@ from datetime import datetime
 
 from ma_darts import img_size, classes
 
-BATCH_SIZE = 32 if "GPU_SERVER" in os.environ.keys() else 4
+BATCH_SIZE = 16 if "GPU_SERVER" in os.environ.keys() else 4
 
 
 class Utils:
@@ -196,7 +196,7 @@ class Utils:
             "--model_type",
             type=str,
             default="n",
-            help="Model architecture size. Avaulable: n, s, m, l, x",
+            help="Model architecture size. Available: n, s, m, l, x",
         )
 
         args = parser.parse_args()
@@ -329,14 +329,15 @@ metrics = [
     ClassesLoss(),
     PositionsLoss(),
 ]
+# metrics = [metrics for _ in range(3)]
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
     loss=YOLOv8Loss(
         square_size=50,
-        class_introduction_threshold=0.25,
-        position_introduction_threshold=0.25,
+        class_introduction_threshold=0.1,
+        position_introduction_threshold=0.1,
     ),
-    metrics=[metrics for _ in range(3)],
+    metrics=metrics,
 )
 # model.summary(160)
 # print(model.input_shape)
@@ -390,6 +391,8 @@ Utils.check_dataset(val_ds)
 if "GPU_SERVER" not in os.environ.keys():
     val_ds = dummy_ds(n_samples=8)
 
+train_ds = train_ds.map(lambda X, y: (X, y[0]))
+val_ds = val_ds.map(lambda X, y: (X, y[0]))
 
 # -----------------------------------------------
 # Fit Model
