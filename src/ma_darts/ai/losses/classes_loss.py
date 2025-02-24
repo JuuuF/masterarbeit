@@ -3,6 +3,74 @@ from ma_darts import img_size
 
 
 class ClassesLoss(tf.keras.losses.Loss):
+    def __init__(self, *args, **kwargs):
+        super(ClassesLoss, self).__init__(*args, **kwargs)
+        self.kernel = tf.constant(self.get_kernel(3, 1) * 3, tf.float32)
+
+    def get_config(self):
+        config = super(ClassesLoss, self).get_config()
+        return config
+
+    # @tf.function
+    def get_kernel(
+        self,
+        size: tf.Tensor,  # ()
+        sigma: int = 2,
+    ):
+        x = tf.range(-size // 2 + 1, size // 2 + 1, dtype=tf.float32)
+        x = tf.exp(-tf.square(x) / (2 * sigma**2))
+        kernel = tf.tensordot(x, x, axes=0)  # (size, size)
+        kernel = kernel / tf.reduce_sum(kernel)
+
+        # Reshape for big convolution
+        kernel = tf.expand_dims(tf.expand_dims(kernel, -1), -1)  # (size, size, 1, 1)
+        kernel = tf.tile(kernel, [1, 1, 6, 1])  # (size, size, 6, 1)
+        return kernel
+
+    # @tf.function
+    def apply_filter(
+        self,
+        y: tf.Tensor,  # (bs, s, s, 18)
+        kernel: tf.Tensor,  # (k, k, 18, 1)
+    ) -> tf.Tensor:  # (bs, s, s, 18)
+
+        y_conv = tf.nn.depthwise_conv2d(
+            y,
+            kernel,
+            strides=[1, 1, 1, 1],
+            padding="SAME",
+        )
+
+        # IDEA: apply normalization to each filter map as values may become very small
+
+        return y_conv
+
+    # @tf.function
+    def call(
+        self,
+        y_true,  # (bs, s, s, 8, 3)
+        y_pred,
+    ):
+
+        # Reshape for convolution
+        cls_true = tf.reduce_sum(y_true[..., 2:, :], axis=-1)  # (bs, s, s, 6)
+        cls_pred = tf.reduce_sum(y_pred[..., 2:, :], axis=-1)
+
+        # Filter images
+        # cls_true_f = self.apply_filter(cls_true, self.kernel)  # (bs, s, s, 6)
+        # cls_pred_f = self.apply_filter(cls_pred, self.kernel)
+
+        mae = tf.reduce_mean(tf.square(cls_true - cls_pred))
+        # mae = mae * 6
+        return mae
+
+        # Take difference
+        ae = tf.abs(cls_true_f - cls_pred_f)  # (bs, n, 6)
+        mae = tf.reduce_mean(ae)  # ()
+        return mae
+
+
+class ClassesLoss_(tf.keras.losses.Loss):
     def __init__(self):
         super().__init__()
         self.loss_fn = tf.keras.losses.CategoricalCrossentropy()
@@ -30,10 +98,12 @@ class ClassesLoss(tf.keras.losses.Loss):
         s = tf.shape(y_true)[1]
         cls_true = self.extract_classes(y_true)  # (bs, n, 6)
         cls_pred = self.extract_classes(y_pred)
-        loss = self.loss_fn(cls_true, cls_pred)
+        loss = self.loss_fn(cls_true, cls_pred) * 10
+        # loss = tf.reduce_mean(tf.square(cls_true - cls_pred))
 
-        err = tf.square(cls_true - cls_pred)
-        loss = tf.reduce_sum(err) / tf.cast(s, tf.float32) * 10
+        # err = tf.square(cls_true - cls_pred)
+        # err = self.loss_fn(cls_true, cls_pred)
+        # loss = tf.reduce_sum(err) * self.img_size / 10
         return loss
 
 
@@ -43,7 +113,7 @@ if __name__ == "__main__":
     X, y_true = pickle.load(open("dump/sample.pkl", "rb"))
     y_pred = [tf.gather(y, [3, 2, 1, 0], axis=0) for y in y_true]
     y_pred = [
-        tf.clip_by_value(y + tf.random.normal(y.shape, stddev=0.02), 0, 1)
+        tf.clip_by_value(y + tf.random.normal(y.shape, stddev=0.1), 0, 1)
         for y in y_pred
     ]
 
@@ -53,8 +123,9 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        error = 0.9
+        error = 0.1
         y_p = error * y_p + (1 - error) * y_t
 
         loss = l(y_t, y_p)
         print("loss =", loss.numpy())
+        exit()

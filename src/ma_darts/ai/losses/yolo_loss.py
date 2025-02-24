@@ -8,30 +8,36 @@ from ma_darts.ai.losses import ExistenceLoss, ClassesLoss, PositionsLoss
 class YOLOv8Loss(tf.keras.losses.Loss):
     def __init__(
         self,
-        square_size: int = 50,
+        square_size: float = 0.02,
         class_introduction_threshold: float = np.inf,
         position_introduction_threshold: float = np.inf,
+        *args,
+        **kwargs
     ):
-        super().__init__()
+        super(YOLOv8Loss, self).__init__(*args, **kwargs)
+        self.square_size = square_size
+        self.class_introduction_threshold = class_introduction_threshold
+        self.position_introduction_threshold = position_introduction_threshold
+
         self.xst_loss = ExistenceLoss()
         self.cls_loss = ClassesLoss()
-        self.pos_loss = PositionsLoss()
+        self.pos_loss = PositionsLoss(self.square_size)
 
         self.cls_introduction_end = tf.constant(
             class_introduction_threshold, tf.float32
         )
         self.cls_introduction_start = tf.constant(
-            1.5 * class_introduction_threshold, tf.float32
+            2 * class_introduction_threshold, tf.float32
         )
-        self.base_cls_loss = tf.constant(10, tf.float32)
+        self.base_cls_loss = tf.constant(2, tf.float32)
 
         self.pos_introduction_end = tf.constant(
             position_introduction_threshold, tf.float32
         )
         self.pos_introduction_start = tf.constant(
-            1.5 * position_introduction_threshold, tf.float32
+            2 * position_introduction_threshold, tf.float32
         )
-        self.base_pos_loss = tf.constant(10, tf.float32)
+        self.base_pos_loss = tf.constant(2, tf.float32)
 
     def get_factor(
         self,
@@ -48,7 +54,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
 
         fac = tf.clip_by_value(fac, 0, 1)
 
-        return tf.where(is_inf, tf.zeros_like(fac), fac)
+        return tf.where(is_inf, tf.ones_like(fac), fac)
 
     def get_cls_loss(
         self,
@@ -114,6 +120,16 @@ class YOLOv8Loss(tf.keras.losses.Loss):
 
         return total_loss
 
+    def get_config(self):
+        config = super(YOLOv8Loss, self).get_config()
+        config.update(
+            {
+                "class_introduction_threshold": self.class_introduction_threshold,
+                "position_introduction_threshold": self.position_introduction_threshold,
+            }
+        )
+        return config
+
 
 if __name__ == "__main__":
     import pickle
@@ -134,7 +150,7 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        error = 0.99
+        error = 0.9
         y_p = error * y_p + (1 - error) * y_t
 
         loss = l(y_t, y_p)

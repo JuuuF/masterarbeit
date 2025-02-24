@@ -1,12 +1,103 @@
 import tensorflow as tf
 from ma_darts import img_size
+from ma_darts.ai.utils import get_grid_existences
 
 
 class ExistenceLoss(tf.keras.losses.Loss):
+    def __init__(self, *args, **kwargs):
+        super(ExistenceLoss, self).__init__(*args, **kwargs)
+        self.kernel = tf.constant(self.get_kernel(3, 1) * 3, tf.float32)
+        # self.loss_fn = tf.keras.losses.BinaryFocalCrossentropy(
+        #     apply_class_balancing=True,
+        #     alpha=0.25,
+        #     gamma=1.0,
+        #     # label_smoothing=0.5,
+        # )
+
+    def get_config(self):
+        config = super(ExistenceLoss, self).get_config()
+        return config
+
+    # @tf.function
+    def get_kernel(
+        self,
+        size: tf.Tensor,  # ()
+        sigma: int = 2,
+    ):
+        x = tf.range(-size // 2 + 1, size // 2 + 1, dtype=tf.float32)
+        x = tf.exp(-tf.square(x) / (2 * sigma**2))
+        kernel = tf.tensordot(x, x, axes=0)  # (size, size)
+        kernel = kernel / tf.reduce_sum(kernel)
+
+        # Reshape for big convolution
+        kernel = tf.expand_dims(tf.expand_dims(kernel, -1), -1)  # (size, size, 1, 1)
+        return kernel
+
+    @tf.function
+    def apply_filter(
+        self,
+        y: tf.Tensor,  # (bs, s, s, 1)
+        kernel: tf.Tensor,  # (k, k, 1, 1)
+    ) -> tf.Tensor:  # (bs, s, s, 1)
+        # return y
+        y_conv = tf.nn.depthwise_conv2d(
+            y,
+            kernel,
+            strides=[1, 1, 1, 1],
+            padding="SAME",
+        )
+
+        # IDEA: apply normalization to each filter map as values may become very small
+        # y_conv = y_conv / (tf.reduce_max(y_conv) + 1e-6)
+
+        return y_conv
+
+    # @tf.function
+    def call(
+        self,
+        y_true,  # (bs, s, s, 8, 3)
+        y_pred,
+    ):
+        # Remove positions
+        cls_true = y_true[..., 2:, :]  # (bs, s, s, 6, 3)
+        cls_pred = y_pred[..., 2:, :]
+
+        # Get existences
+        xst_true = get_grid_existences(y_true)  # (bs, s, s, 1, 3)
+        xst_pred = get_grid_existences(y_pred)
+        # xst_true = tf.expand_dims(xst_true, -1)  # (bs, s, s, 1)
+        # xst_pred = tf.expand_dims(xst_pred, -1)
+
+        # Filter images
+        # xst_true_f = self.apply_filter(xst_true, self.kernel)[..., 0]  # (bs, s, s)
+        # xst_pred_f = self.apply_filter(xst_pred, self.kernel)[..., 0]
+        mse = tf.reduce_mean(tf.square(xst_true - xst_pred))
+        # import numpy as np
+        # import cv2
+
+        # img = np.zeros((25, 25, 3), np.uint8)
+        # img[..., 1] = np.uint8(xst_true_f[0] * 255)
+        # img[..., 2] = np.uint8(xst_true[0, ..., 0] * 255 * 2)
+        # img[..., 0] = np.uint8(xst_pred_f[0] * 255)
+        # img = np.kron(img, np.ones((16, 16, 1), np.uint8))
+        # cv2.imshow("", img)
+        return mse
+
+        # Flatten tensors
+        xst_true_f = tf.reshape(xst_true_f, (-1,))  # (m,)
+        xst_pred_f = tf.reshape(xst_pred_f, (-1,))
+
+        # Take difference
+        loss = self.loss_fn(xst_true_f, xst_pred_f)
+        return loss
+
+
+class ExistenceLoss_(tf.keras.losses.Loss):
     def __init__(self):
         super().__init__()
         self.loss_fn = tf.keras.losses.BinaryCrossentropy()
         self.img_size = tf.cast(img_size, tf.float32)
+        self.k = tf.constant(10, tf.float32)
 
     def get_existence(
         self,
@@ -37,11 +128,23 @@ class ExistenceLoss(tf.keras.losses.Loss):
         s = tf.shape(y_true)[1]
         xst_true = self.get_existence(y_true)  # (bs, n)
         xst_pred = self.get_existence(y_pred)  # (bs, n)
-        # loss = self.loss_fn(xst_true, xst_pred)
+        loss = self.loss_fn(xst_true, xst_pred)
         # loss = tf.pow(loss, 0.8)
         # loss *= 10
-        err = tf.square(xst_true - xst_pred)
-        loss = tf.reduce_sum(err) / tf.cast(s*s, tf.float32) * self.img_size / 2
+
+        # err = self.loss_fn(xst_true, xst_pred)  # (bs,)
+
+        # n_cells = tf.cast(s * s, tf.float32)
+        # err_per_cell = tf.abs(xst_true - xst_pred)  # (bs, n) 0..1
+        # squared_err_per_cell = tf.square(err_per_cell)  # (bs, n)
+        # loss = tf.reduce_sum(err) * self.img_size / 10
+        # loss = tf.reduce_mean(tf.square(xst_true - xst_pred))
+
+        # Get error per cell
+        # err = tf.abs(xst_true - xst_pred)  # (bs, n)
+        # Apply a log scaling to error
+        # log_err = tf.math.log(1 + self.k * err) / tf.math.log(1 + self.k)  # (bs, n)
+        # loss = tf.reduce_mean(log_err)
         return loss
 
 
@@ -51,7 +154,7 @@ if __name__ == "__main__":
     X, y_true = pickle.load(open("dump/sample.pkl", "rb"))
     y_pred = [tf.gather(y, [3, 2, 1, 0], axis=0) for y in y_true]
     y_pred = [
-        tf.clip_by_value(y + tf.random.normal(y.shape, stddev=0.02), 0, 1)
+        tf.clip_by_value(y + tf.random.normal(y.shape, stddev=0.1, seed=0), 0, 1)
         for y in y_pred
     ]
 
@@ -61,8 +164,13 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        fac = 0.1
+        fac = 0.5
         y_p = fac * y_p + (1 - fac) * y_t
 
         loss = l(y_t, y_p)
         print("loss =", loss.numpy())
+        import cv2
+
+        cv2.waitKey()
+
+        exit()
