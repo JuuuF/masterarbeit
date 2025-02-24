@@ -414,6 +414,7 @@ if args.train:
         model.load_weights(best_weights)
 
     model_path = "data/ai/darts_model.keras"
+    model.compile()
     model.save(model_path)
     print(f"Model saved to {model_path}.")
 
