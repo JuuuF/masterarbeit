@@ -1832,7 +1832,7 @@ def extract_center(img: np.ndarray):
     return cy, cx
 
 
-def undistort_img(img: np.ndarray):
+def undistort_img(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     # -----------------------------
     # Preprocess Image
@@ -1880,7 +1880,7 @@ def undistort_img(img: np.ndarray):
         print("ERROR: Could not find all lines!")
         if create_debug_img:
             Utils.show_debug_img(failed=True)
-        return
+        return None, None
 
     # -----------------------------
     # ORIENTATION
@@ -1915,7 +1915,7 @@ def undistort_img(img: np.ndarray):
     if orientation_point_candidates is None:
         if create_debug_img:
             Utils.show_debug_img(failed=True)
-        return
+        return None, None
 
     # Filter out bad orientation points
     src_pts, dst_pts = Orientation.structure_orientation_candidates(
