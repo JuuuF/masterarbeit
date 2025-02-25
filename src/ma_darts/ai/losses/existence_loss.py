@@ -6,24 +6,20 @@ from ma_darts.ai.utils import get_grid_existences
 class ExistenceLoss(tf.keras.losses.Loss):
     def __init__(self, *args, **kwargs):
         super(ExistenceLoss, self).__init__(*args, **kwargs)
-        self.kernel = tf.constant(self.get_kernel(3, 1) * 3, tf.float32)
-        # self.loss_fn = tf.keras.losses.BinaryFocalCrossentropy(
-        #     apply_class_balancing=True,
-        #     alpha=0.25,
-        #     gamma=1.0,
-        #     # label_smoothing=0.5,
-        # )
+
+        self.kernel = tf.constant(self.get_kernel(3, 0.55), tf.float32)
+        self.loss_fn = tf.keras.losses.BinaryFocalCrossentropy(
+            # apply_class_balancing=True,
+            # alpha=0.25,
+            # gamma=2.0,
+        )
 
     def get_config(self):
         config = super(ExistenceLoss, self).get_config()
         return config
 
     # @tf.function
-    def get_kernel(
-        self,
-        size: tf.Tensor,  # ()
-        sigma: int = 2,
-    ):
+    def get_kernel(self, size: tf.Tensor, sigma: int = 2):  # ()
         x = tf.range(-size // 2 + 1, size // 2 + 1, dtype=tf.float32)
         x = tf.exp(-tf.square(x) / (2 * sigma**2))
         kernel = tf.tensordot(x, x, axes=0)  # (size, size)
@@ -31,24 +27,21 @@ class ExistenceLoss(tf.keras.losses.Loss):
 
         # Reshape for big convolution
         kernel = tf.expand_dims(tf.expand_dims(kernel, -1), -1)  # (size, size, 1, 1)
+        kernel = tf.tile(kernel, [1, 1, 3, 1])  # (size, size, 3, 1)
         return kernel
 
-    @tf.function
+    # @tf.function
     def apply_filter(
         self,
-        y: tf.Tensor,  # (bs, s, s, 1)
-        kernel: tf.Tensor,  # (k, k, 1, 1)
+        y: tf.Tensor,  # (bs, s, s, 3)
     ) -> tf.Tensor:  # (bs, s, s, 1)
-        # return y
+
         y_conv = tf.nn.depthwise_conv2d(
             y,
-            kernel,
+            self.kernel,
             strides=[1, 1, 1, 1],
             padding="SAME",
         )
-
-        # IDEA: apply normalization to each filter map as values may become very small
-        # y_conv = y_conv / (tf.reduce_max(y_conv) + 1e-6)
 
         return y_conv
 
@@ -58,19 +51,18 @@ class ExistenceLoss(tf.keras.losses.Loss):
         y_true,  # (bs, s, s, 8, 3)
         y_pred,
     ):
-        # Remove positions
-        cls_true = y_true[..., 2:, :]  # (bs, s, s, 6, 3)
-        cls_pred = y_pred[..., 2:, :]
 
         # Get existences
-        xst_true = get_grid_existences(y_true)  # (bs, s, s, 1, 3)
-        xst_pred = get_grid_existences(y_pred)
-        # xst_true = tf.expand_dims(xst_true, -1)  # (bs, s, s, 1)
-        # xst_pred = tf.expand_dims(xst_pred, -1)
+        xst_true = get_grid_existences(y_true)[..., 0, :]  # (bs, s, s, 3)
+        xst_pred = get_grid_existences(y_pred)[..., 0, :]
 
         # Filter images
-        # xst_true_f = self.apply_filter(xst_true, self.kernel)[..., 0]  # (bs, s, s)
-        # xst_pred_f = self.apply_filter(xst_pred, self.kernel)[..., 0]
+        xst_true_f = self.apply_filter(xst_true)[..., 0]  # (bs, s, s)
+        xst_pred_f = self.apply_filter(xst_pred)[..., 0]
+
+        loss = self.loss_fn(xst_true_f, xst_pred_f)
+        return loss
+
         mse = tf.reduce_mean(tf.square(xst_true - xst_pred))
         # import numpy as np
         # import cv2
@@ -164,7 +156,7 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        fac = 0.5
+        fac = 0.1
         y_p = fac * y_p + (1 - fac) * y_t
 
         loss = l(y_t, y_p)

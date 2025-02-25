@@ -5,7 +5,8 @@ from ma_darts import img_size
 class ClassesLoss(tf.keras.losses.Loss):
     def __init__(self, *args, **kwargs):
         super(ClassesLoss, self).__init__(*args, **kwargs)
-        self.kernel = tf.constant(self.get_kernel(3, 1) * 3, tf.float32)
+        self.kernel = tf.constant(self.get_kernel(3, 0.55), tf.float32)
+        self.loss_fn = tf.keras.losses.CategoricalFocalCrossentropy()
 
     def get_config(self):
         config = super(ClassesLoss, self).get_config()
@@ -31,17 +32,14 @@ class ClassesLoss(tf.keras.losses.Loss):
     def apply_filter(
         self,
         y: tf.Tensor,  # (bs, s, s, 18)
-        kernel: tf.Tensor,  # (k, k, 18, 1)
     ) -> tf.Tensor:  # (bs, s, s, 18)
 
         y_conv = tf.nn.depthwise_conv2d(
             y,
-            kernel,
+            self.kernel,
             strides=[1, 1, 1, 1],
             padding="SAME",
         )
-
-        # IDEA: apply normalization to each filter map as values may become very small
 
         return y_conv
 
@@ -57,8 +55,11 @@ class ClassesLoss(tf.keras.losses.Loss):
         cls_pred = tf.reduce_sum(y_pred[..., 2:, :], axis=-1)
 
         # Filter images
-        # cls_true_f = self.apply_filter(cls_true, self.kernel)  # (bs, s, s, 6)
-        # cls_pred_f = self.apply_filter(cls_pred, self.kernel)
+        cls_true_f = self.apply_filter(cls_true)  # (bs, s, s, 6)
+        cls_pred_f = self.apply_filter(cls_pred)
+
+        loss = self.loss_fn(cls_true_f, cls_pred_f)
+        return loss
 
         mae = tf.reduce_mean(tf.square(cls_true - cls_pred))
         # mae = mae * 6
