@@ -36,6 +36,6 @@ def get_grid_existences(
     denom = tf.maximum(something + nothing, 1e-6)
     xst_prob = something / denom
 
-    xst_prob = tf.expand_dims(xst_prob, axis=-1)  # (bs, s, s, 1, 3)
+    xst_prob = tf.expand_dims(xst_prob, axis=-2)  # (bs, s, s, 1, 3)
 
     return xst_prob  # (bs, s, s, 1, 3)
