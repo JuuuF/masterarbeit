@@ -75,13 +75,12 @@ class HistoryPlotter(Callback):
                 self.train_logs[log_key].append(log_val)
 
     def smooth(self, y, window_size=5):
-        def gaussian_window(size, sigma):
+        def gaussian_window(size, sigma=None):
+            if sigma is None:
+                sigma = size / 3
             """Create a Gaussian window."""
-            # Create an array of points
             x = np.linspace(-size // 2, size // 2, size)
-            # Calculate the Gaussian weights
             weights = np.exp(-0.5 * (x / sigma) ** 2)
-            # Normalize the weights to sum to 1
             return weights / weights.sum()
 
         if window_size <= 1:
@@ -99,7 +98,7 @@ class HistoryPlotter(Callback):
             w = min(w, window_size)
             window = y[i - w : i + w + 1]
 
-            gaussian_weights = gaussian_window(2 * w + 1, sigma=2)
+            gaussian_weights = gaussian_window(2 * w + 1)
 
             # Handle log scale
             if self.log_scale:
