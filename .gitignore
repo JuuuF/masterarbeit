@@ -22,6 +22,7 @@ dump/*
 writing/notes/
 private/
 notes/
+*.pkl
 
 # Cache files
 data/cache/
