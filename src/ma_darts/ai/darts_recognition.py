@@ -16,7 +16,11 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
     tf.config.experimental.set_virtual_device_configuration(
         gpu,
-        [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2**14)],  # 16GB
+        [
+            tf.config.experimental.VirtualDeviceConfiguration(
+                memory_limit=2**14 + 2**12
+            )
+        ],  # 16GB + 4GB = 20GB
     )
 
 from ma_darts.ai import callbacks as ma_callbacks
@@ -80,9 +84,9 @@ class Utils:
         lr = tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss",
             factor=0.5,
-            patience=10,
+            patience=25,
             verbose=1,
-            min_lr=1e-6,
+            min_lr=1e-4,
         )
         callbacks.append(lr)
 
@@ -195,7 +199,7 @@ class Utils:
         parser.add_argument(
             "--model_type",
             type=str,
-            default="n",
+            default="s",
             help="Model architecture size. Available: n, s, m, l, x",
         )
 
@@ -328,6 +332,7 @@ metrics = [
     ExistenceLoss(),
     ClassesLoss(),
     PositionsLoss(),
+    # DIoULoss(),
 ]
 # metrics = [metrics for _ in range(3)]
 model.compile(

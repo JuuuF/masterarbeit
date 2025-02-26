@@ -61,9 +61,6 @@ class ExistenceLoss(tf.keras.losses.Loss):
         xst_pred_f = self.apply_filter(xst_pred)[..., 0]
 
         loss = self.loss_fn(xst_true_f, xst_pred_f)
-        return loss
-
-        mse = tf.reduce_mean(tf.square(xst_true - xst_pred))
         # import numpy as np
         # import cv2
 
@@ -73,7 +70,7 @@ class ExistenceLoss(tf.keras.losses.Loss):
         # img[..., 0] = np.uint8(xst_pred_f[0] * 255)
         # img = np.kron(img, np.ones((16, 16, 1), np.uint8))
         # cv2.imshow("", img)
-        return mse
+        return loss
 
         # Flatten tensors
         xst_true_f = tf.reshape(xst_true_f, (-1,))  # (m,)
@@ -156,7 +153,7 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        fac = 0.1
+        fac = 0.5
         y_p = fac * y_p + (1 - fac) * y_t
 
         loss = l(y_t, y_p)
