@@ -7,7 +7,7 @@ from tqdm import tqdm
 from ma_darts import r_do, r_di, r_to, r_ti, r_bo, r_bi
 from ma_darts.cv.cv import undistort_img
 from ma_darts.cv.utils import show_imgs
-from ma_darts.ai.models import yolo_v8_predict
+from ma_darts.ai.utils import yolo_v8_predict
 
 wrong_img = None
 
@@ -68,7 +68,7 @@ def inference_ma(
         )
     if model is None:
         model = tf.keras.models.load_model(model_path)
- 
+
     for img_path in iter_fn(img_paths):
         # -------------------------------------------
         # Load Image
@@ -91,9 +91,13 @@ def inference_ma(
         print("Locating darts...")
         img_input = np.expand_dims(img_aligned, 0)  # (1, 800, 800, 3)
         img_input = np.float32(img_aligned) / 255
-        pred = yolo_v8_predict(model, img_input)  # (800, 800, 3)
+        pred, img = yolo_v8_predict(
+            model, img_input, confidence_threshold=0.0, output_img=True
+        )  # (800, 800, 3)
 
-    return pred
+        print("Done.")
+        show_imgs(img)
+    return img
 
 
 if __name__ == "__main__":
@@ -113,9 +117,11 @@ if __name__ == "__main__":
         if x is not None
     ]
 
-    model = tf.keras.models.load_model("data/ai/darts_model.keras", compile=False)
-    model.load_weights("data/ai/darts/yolov8_train6.weights.h5")
+    # model = tf.keras.models.load_model("data/ai/darts_model.keras", compile=False)
+    from ma_darts.ai.models import yolo_v8_model
+
+    model = yolo_v8_model(variant="s")
+    model.load_weights("data/ai/darts/yolov8_train7.weights.h5")
 
     for img_path in img_paths:
         res = inference_ma(img_path, model=model)
-        show_imgs(res)

@@ -1,8 +1,5 @@
 import numpy as np
-
-board_numbers = [
-    20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5,  # fmt: skip
-]
+from ma_darts import dart_order, r_bi, r_bo, r_ti, r_to, r_di, r_do
 
 
 def get_board_radii() -> tuple[float, float, float, float, float, float]:
@@ -38,6 +35,69 @@ def cartesian_to_polar(y: float, x: float) -> tuple[float, float]:
     theta %= 2 * np.pi
 
     return r, theta
+
+
+def calculate_scores_ma(
+    pos: np.ndarray,  # (n, 2)
+    cls: np.ndarray,  # (n,)
+):
+    # Positions to origin
+    pos_norm = pos - 400
+
+    r_1 = r_bo + (r_ti - r_bo) / 3  # bull-triple
+    r_2 = r_to + (r_di - r_to) / 2  # triple-double
+    r_3 = 400  # outside
+
+    scores = []
+    for i, (p, c) in enumerate(zip(pos_norm, cls)):
+        # Convert positions to polar
+        r, theta = cartesian_to_polar(*p)  # 0 = up
+
+        # Check for hidden
+        if c == 0:
+            scores.append((0, "HIDDEN"))
+            continue
+        # Check for Double Bull
+        if c == 3 and r < r_1:  # red and inside
+            scores.append((50, "DB"))
+            continue
+        # Check for Bull
+        if r == 4 and r < r_1:  # green and inside
+            scores.append((25, "B"))
+        # Check for outside
+        if c == 5 or r > r_3:
+            scores.append((0, "OUT"))
+            continue
+
+        # Extract most likely field based on position and class
+        theta_norm = (theta + np.deg2rad(9)) % (2 * np.pi)
+        idx, offset = divmod(theta_norm, np.deg2rad(18))
+        idx = int(idx)
+        offset /= np.deg2rad(18)
+        offset -= 0.5
+        black_or_red_position = idx % 2 == 0
+        black_or_red_class = c in [1, 3]
+
+        # If there's something off, we correct it
+        if black_or_red_position != black_or_red_class:
+            idx += int(1 * np.sign(offset))
+        idx %= 20
+
+        field_num = dart_order[idx]
+
+        # Single field
+        if c not in [3, 4]:
+            scores.append((field_num, str(field_num)))
+            continue
+
+        # Double field
+        if r > r_2:
+            scores.append((2 * field_num, f"D{field_num}"))
+            continue
+
+        # Triple field
+        scores.append((3 * field_num, f"T{field_num}"))
+    return scores
 
 
 def get_dart_scores(
@@ -83,12 +143,13 @@ def get_dart_scores(
 
         # Determine Field
         field_idx, _ = divmod(theta + np.pi / 20, np.pi / 10)
-        field = board_numbers[int(field_idx) % 20]
+        field = dart_order[int(field_idx) % 20]
 
         # Calculate Score
         scores.append(multiplier * field)
 
     return scores + [0 for _ in range(3 - len(scores))]
+
 
 def get_absolute_score_error(scores_true: list[int], scores_pred: list[int]):
     return abs(np.sum(scores_true) - np.sum(scores_pred))
