@@ -62,7 +62,7 @@ def calculate_scores_ma(
             scores.append((50, "DB"))
             continue
         # Check for Bull
-        if r == 4 and r < r_1:  # green and inside
+        if c == 4 and r < r_1:  # green and inside
             scores.append((25, "B"))
         # Check for outside
         if c == 5 or r > r_3:
