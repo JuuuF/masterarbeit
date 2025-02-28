@@ -219,7 +219,18 @@ def get_surrounding(
     return surrounding
 
 
-def extract_surroundings(logpolar, corner_positions, white, black):
+def extract_surroundings(
+    logpolar: np.ndarray,
+    corner_positions: list[list[int]],
+    white: np.ndarray,
+    black: np.ndarray,
+) -> tuple[
+    list[tuple[int, int, np.ndarray]],
+    list[tuple[int, int, np.ndarray]],
+    list[tuple[int, int, np.ndarray]],
+    list[tuple[int, int, np.ndarray]],
+    np.ndarray,
+]:
     surrounding_width = 14
     middle_deadspace = 2
     color_threshold = 100
@@ -421,8 +432,102 @@ def is_correct_surrounding(
     return is_orientation_point, surrounding
 
 
+def filter_surroundings(
+    inner_ring_a: list[tuple[int, int, np.ndarray]],
+    inner_ring_b: list[tuple[int, int, np.ndarray]],
+    outer_ring_a: list[tuple[int, int, np.ndarray]],
+    outer_ring_b: list[tuple[int, int, np.ndarray]],
+    mean_surrounding: np.ndarray,
+    debug_img: np.ndarray | None = None,
+) -> list[tuple[int, int, str]]:
+
+    show = debug_img is not None
+
+    keeps: list[tuple[int, int, str]] = []
+
+    for y, x, surrounding in inner_ring_a:
+        # Check if valid surrounding
+        is_orientation_point, surrounding_ = is_correct_surrounding(
+            mean_surrounding, surrounding, show=show
+        )
+        if is_orientation_point:
+            keeps.append((y, x, "inner"))
+
+        if show:
+            # Draw point visualization
+            cv2.circle(debug_img, (x, y), 5, (255, 255, 255))
+            cv2.circle(debug_img, (x, y), 2, (0, 0, 255), -1)
+            # Place surrounding on image: top left
+            if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
+                debug_img[
+                    y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
+                ] = surrounding_
+
+    for y, x, surrounding in inner_ring_b:
+        # Check if valid surrounding
+        is_orientation_point, surrounding_ = is_correct_surrounding(
+            mean_surrounding, surrounding, show=show
+        )
+        if is_orientation_point:
+            keeps.append((y, x, "inner"))
+
+        if show:
+            # Draw point visualization
+            cv2.circle(debug_img, (x, y), 5, (255, 255, 255))
+            cv2.circle(debug_img, (x, y), 2, (0, 255, 0), -1)
+            # Place surrounding on image: top left
+            if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
+                debug_img[
+                    y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
+                ] = surrounding_
+
+    for y, x, surrounding in outer_ring_a:
+        # Check if valid surrounding
+        is_orientation_point, surrounding_ = is_correct_surrounding(
+            mean_surrounding, surrounding, show=show
+        )
+        if is_orientation_point:
+            keeps.append((y, x, "outer"))
+
+        if show:
+            # Draw point visualization
+            cv2.circle(debug_img, (x, y), 5, (0, 0, 0))
+            cv2.circle(debug_img, (x, y), 2, (0, 0, 255), -1)
+            # Place surrounding on image: top right
+            if (
+                y - surrounding.shape[0] >= 0
+                and x + surrounding.shape[1] < debug_img.shape[1]
+            ):
+                debug_img[
+                    y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
+                ] = surrounding_
+
+    for y, x, surrounding in outer_ring_b:
+        # Check if valid surrounding
+        is_orientation_point, surrounding_ = is_correct_surrounding(
+            mean_surrounding, surrounding, show=show
+        )
+        if is_orientation_point:
+            keeps.append((y, x, "outer"))
+
+        if show:
+            # Draw point visualization
+            cv2.circle(debug_img, (x, y), 5, (0, 0, 0))
+            cv2.circle(debug_img, (x, y), 2, (0, 255, 0), -1)
+            # Place surrounding on image: top right
+            if (
+                y - surrounding.shape[0] >= 0
+                and x + surrounding.shape[1] < debug_img.shape[1]
+            ):
+                debug_img[
+                    y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
+                ] = surrounding_
+
+    return keeps, debug_img
+
+
 # -------------------------------------------------------------------------------------------------
-# ?
+# I don't know what to categorize this into
 
 
 def y_to_angle_bin(keeps: list[tuple[int, int, str]]) -> list[list[tuple[int, str]]]:
@@ -528,87 +633,15 @@ def find_orientation_points(
     # -----------------------------
     # Classify surroundings
     prepare_show_img = show  # or create_debug_img  # TODO: debug img
-    if prepare_show_img:
-        logpolar_ = logpolar.copy()
 
-    keeps: list[tuple[int, int, str]] = []
-    for y, x, surrounding in inner_ring_a:
-        # Check if valid surrounding
-        is_orientation_point, surrounding_ = is_correct_surrounding(
-            mean_surrounding, surrounding, show=prepare_show_img
-        )
-        if is_orientation_point:
-            keeps.append((y, x, "inner"))
-
-        if show:
-            # Draw point visualization
-            cv2.circle(logpolar_, (x, y), 5, (255, 255, 255))
-            cv2.circle(logpolar_, (x, y), 2, (0, 0, 255), -1)
-            # Place surrounding on image: top left
-            if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
-                logpolar_[
-                    y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
-                ] = surrounding_
-
-    for y, x, surrounding in inner_ring_b:
-        # Check if valid surrounding
-        is_orientation_point, surrounding_ = is_correct_surrounding(
-            mean_surrounding, surrounding, show=show
-        )
-        if is_orientation_point:
-            keeps.append((y, x, "inner"))
-
-        if prepare_show_img:
-            # Draw point visualization
-            cv2.circle(logpolar_, (x, y), 5, (255, 255, 255))
-            cv2.circle(logpolar_, (x, y), 2, (0, 255, 0), -1)
-            # Place surrounding on image: top left
-            if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
-                logpolar_[
-                    y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
-                ] = surrounding_
-
-    for y, x, surrounding in outer_ring_a:
-        # Check if valid surrounding
-        is_orientation_point, surrounding_ = is_correct_surrounding(
-            mean_surrounding, surrounding, show=prepare_show_img
-        )
-        if is_orientation_point:
-            keeps.append((y, x, "outer"))
-
-        if prepare_show_img:
-            # Draw point visualization
-            cv2.circle(logpolar_, (x, y), 5, (0, 0, 0))
-            cv2.circle(logpolar_, (x, y), 2, (0, 0, 255), -1)
-            # Place surrounding on image: top right
-            if (
-                y - surrounding.shape[0] >= 0
-                and x + surrounding.shape[1] < logpolar_.shape[1]
-            ):
-                logpolar_[
-                    y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
-                ] = surrounding_
-
-    for y, x, surrounding in outer_ring_b:
-        # Check if valid surrounding
-        is_orientation_point, surrounding_ = is_correct_surrounding(
-            mean_surrounding, surrounding, show=prepare_show_img
-        )
-        if is_orientation_point:
-            keeps.append((y, x, "outer"))
-
-        if prepare_show_img:
-            # Draw point visualization
-            cv2.circle(logpolar_, (x, y), 5, (0, 0, 0))
-            cv2.circle(logpolar_, (x, y), 2, (0, 255, 0), -1)
-            # Place surrounding on image: top right
-            if (
-                y - surrounding.shape[0] >= 0
-                and x + surrounding.shape[1] < logpolar_.shape[1]
-            ):
-                logpolar_[
-                    y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
-                ] = surrounding_
+    keeps, logpolar_ = filter_surroundings(
+        inner_ring_a,
+        inner_ring_b,
+        outer_ring_a,
+        outer_ring_b,
+        mean_surrounding,
+        debug_img=logpolar.copy() if prepare_show_img else None,
+    )
 
     if sum(1 for p in keeps if p[-1] == "outer") < 2:
         print("ERROR: Too few orientation points!")
