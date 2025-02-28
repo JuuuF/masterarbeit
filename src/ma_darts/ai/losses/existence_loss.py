@@ -45,6 +45,13 @@ class ExistenceLoss(tf.keras.losses.Loss):
 
         return y_conv
 
+    def accentuate(
+        self,
+        y: tf.Tensor,  # (bs, s, s, 3)
+    ):
+        y2 = tf.square(y)
+        return y2 / (y2 + tf.square(1 - y))
+
     # @tf.function
     def call(
         self,
@@ -61,24 +68,31 @@ class ExistenceLoss(tf.keras.losses.Loss):
         xst_pred_f = self.apply_filter(xst_pred)[..., 0]
 
         loss = self.loss_fn(xst_true_f, xst_pred_f)
+
+        # Calculate weighing factor
+        # factor ~1:      good guess -> little penalty
+        # 1 < factor < 2: a bit off, -> a bit penalty
+        # factor ~2:      far off    -> big penalty
+
+        n_trues = tf.reduce_sum(xst_true)
+        n_preds = tf.reduce_sum(self.accentuate(xst_pred))
+        n_diff = tf.abs(n_preds - n_trues)
+        factor = 2 * tf.math.sigmoid(n_diff / 10)  # scaled 1..2
+
+        loss_adj = tf.pow(loss, 1 / factor)  # scale from x^0.5 to x^1
+        return loss_adj
+
         # import numpy as np
         # import cv2
 
+        # batch = 0
         # img = np.zeros((25, 25, 3), np.uint8)
-        # img[..., 1] = np.uint8(xst_true_f[0] * 255)
-        # img[..., 2] = np.uint8(xst_true[0, ..., 0] * 255 * 2)
-        # img[..., 0] = np.uint8(xst_pred_f[0] * 255)
+        # img[..., 0] = np.uint8(xst_pred[batch, ..., 0] * 255)
+        # img[..., 2] = np.uint8(self.accentuate(xst_pred)[batch, ..., 0] * 255)
+        # # img[..., 0] = np.uint8(xst_pred_f[batch] * 255)
         # img = np.kron(img, np.ones((16, 16, 1), np.uint8))
         # cv2.imshow("", img)
-        return loss
-
-        # Flatten tensors
-        xst_true_f = tf.reshape(xst_true_f, (-1,))  # (m,)
-        xst_pred_f = tf.reshape(xst_pred_f, (-1,))
-
-        # Take difference
-        loss = self.loss_fn(xst_true_f, xst_pred_f)
-        return loss
+        return loss_adj
 
 
 class ExistenceLoss_(tf.keras.losses.Loss):
@@ -153,7 +167,7 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        fac = 0.5
+        fac = 0.15
         y_p = fac * y_p + (1 - fac) * y_t
 
         loss = l(y_t, y_p)

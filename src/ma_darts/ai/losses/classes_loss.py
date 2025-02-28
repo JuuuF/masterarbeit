@@ -28,6 +28,13 @@ class ClassesLoss(tf.keras.losses.Loss):
         kernel = tf.tile(kernel, [1, 1, 6, 1])  # (size, size, 6, 1)
         return kernel
 
+    def accentuate(
+        self,
+        y: tf.Tensor,  # (bs, s, s, 3)
+    ):
+        y2 = tf.square(y)
+        return y2 / (y2 + tf.square(1 - y))
+
     # @tf.function
     def apply_filter(
         self,
@@ -59,16 +66,19 @@ class ClassesLoss(tf.keras.losses.Loss):
         cls_pred_f = self.apply_filter(cls_pred)
 
         loss = self.loss_fn(cls_true_f, cls_pred_f)
-        return loss
 
-        mae = tf.reduce_mean(tf.square(cls_true - cls_pred))
-        # mae = mae * 6
-        return mae
+        # Calculate weighing factor
+        # factor ~1:      good guess -> little penalty
+        # 1 < factor < 2: a bit off, -> a bit penalty
+        # factor ~2:      far off    -> big penalty
+        n_trues = tf.reduce_sum(cls_true, axis=[1, 2])  # (bs, 6)
+        n_preds = tf.reduce_sum(self.accentuate(cls_pred), axis=[1, 2])  # (bs, 6)
+        n_diff = tf.abs(n_trues - n_preds)
+        factor = 2 * tf.math.sigmoid(n_diff / 10)
+        factor = tf.reduce_mean(factor)  # ()
 
-        # Take difference
-        ae = tf.abs(cls_true_f - cls_pred_f)  # (bs, n, 6)
-        mae = tf.reduce_mean(ae)  # ()
-        return mae
+        loss_adj = tf.pow(loss, 1 / factor)
+        return loss_adj
 
 
 class ClassesLoss_(tf.keras.losses.Loss):
@@ -124,7 +134,7 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        error = 0.1
+        error = 0.9
         y_p = error * y_p + (1 - error) * y_t
 
         loss = l(y_t, y_p)

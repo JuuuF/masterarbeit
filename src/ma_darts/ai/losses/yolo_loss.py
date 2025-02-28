@@ -23,7 +23,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
 
         # Classes Loss
         self.cls_loss = ClassesLoss()
-        self.base_cls_loss = tf.constant(2, tf.float32)
+        self.base_cls_loss = tf.constant(1, tf.float32)
         self.class_introduction_threshold = class_introduction_threshold
         self.cls_introduction_end = tf.constant(
             class_introduction_threshold, tf.float32
@@ -34,7 +34,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
 
         # Positions Loss
         self.pos_loss = PositionsLoss()
-        self.base_pos_loss = tf.constant(2, tf.float32)
+        self.base_pos_loss = tf.constant(1, tf.float32)
         self.position_introduction_threshold = position_introduction_threshold
         self.pos_introduction_end = tf.constant(
             position_introduction_threshold, tf.float32
@@ -44,16 +44,16 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         )
 
         # DIoU Loss
-        self.diou_loss = DIoULoss(self.square_size)
-        self.base_diou_loss = tf.constant(0.1, tf.float32)
-        self.diou_introduction_threshold = diou_introduction_threshold
-        self.diou_introduction_end = tf.constant(
-            diou_introduction_threshold, tf.float32
-        )
-        self.diou_introduction_start = tf.constant(
-            2 * diou_introduction_threshold, tf.float32
-        )
-        self.diou_multiplier = tf.constant(0.2)
+        # self.diou_loss = DIoULoss(self.square_size)
+        # self.base_diou_loss = tf.constant(0.1, tf.float32)
+        # self.diou_introduction_threshold = diou_introduction_threshold
+        # self.diou_introduction_end = tf.constant(
+        #     diou_introduction_threshold, tf.float32
+        # )
+        # self.diou_introduction_start = tf.constant(
+        #     2 * diou_introduction_threshold, tf.float32
+        # )
+        # self.diou_multiplier = tf.constant(0.2)
 
     def get_factor(
         self,
