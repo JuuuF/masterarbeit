@@ -418,15 +418,15 @@ def find_orientation_points(
             surrounding = get_surrounding(logpolar, y, x, surrounding_width)
             surrounding_cryw = get_surrounding(logpolar_cryv, y, x, surrounding_width)
             # Find partial fields in surrounding area
-            top_left = surrounding_cryv[:intrude, :intrude]
+            top_left = surrounding_cryv[:intrude, :intrude]  # (i, i, 3)
             top_right = surrounding_cryv[:intrude, -intrude:]
             bottom_left = surrounding_cryv[-intrude:, :intrude]
             bottom_right = surrounding_cryv[-intrude:, -intrude:]
             # Extract mean colors from fields
-            color_top_left = top_left.mean(axis=0).mean(axis=0)
-            color_top_right = top_right.mean(axis=0).mean(axis=0)
-            color_bottom_left = bottom_left.mean(axis=0).mean(axis=0)
-            color_bottom_right = bottom_right.mean(axis=0).mean(axis=0)
+            color_top_left = top_left.mean(axis=(0, 1))  # (3,)
+            color_top_right = top_right.mean(axis=(0, 1))
+            color_bottom_left = bottom_left.mean(axis=(0, 1))
+            color_bottom_right = bottom_right.mean(axis=(0, 1))
             # Determine field colors
             top_left_black = is_black(color_top_left, black_cryv) < color_threshold
             top_left_white = is_white(color_top_left, white_cryv) < color_threshold
