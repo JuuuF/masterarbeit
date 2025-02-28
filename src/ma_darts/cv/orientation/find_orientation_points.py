@@ -219,6 +219,132 @@ def get_surrounding(
     return surrounding
 
 
+def extract_surroundings(logpolar, corner_positions, white, black):
+    surrounding_width = 14
+    middle_deadspace = 2
+    color_threshold = 100
+    intrude = (surrounding_width - middle_deadspace) // 2
+    inner_ring_a = []
+    inner_ring_b = []
+    outer_ring_a = []
+    outer_ring_b = []
+
+    # Convert colors into a format that emphasizes the differences
+    white_cryv = to_cryv(white[None, None])[0, 0]
+    black_cryv = to_cryv(black[None, None])[0, 0]
+
+    logpolar_cryv = to_cryv(logpolar)
+    # show_cryv(logpolar_cryv, name="logpolar_cryv")
+
+    for i, points in enumerate(corner_positions):
+        y = 25 + 50 * i
+        for x in points:
+            surrounding = get_surrounding(logpolar, y, x, surrounding_width)
+            surrounding_cryv = get_surrounding(logpolar_cryv, y, x, surrounding_width)
+            # Find partial fields in surrounding area
+            top_left = surrounding_cryv[:intrude, :intrude]  # (i, i, 3)
+            top_right = surrounding_cryv[:intrude, -intrude:]
+            bottom_left = surrounding_cryv[-intrude:, :intrude]
+            bottom_right = surrounding_cryv[-intrude:, -intrude:]
+            # Extract mean colors from fields
+            color_top_left = top_left.mean(axis=(0, 1))  # (3,)
+            color_top_right = top_right.mean(axis=(0, 1))
+            color_bottom_left = bottom_left.mean(axis=(0, 1))
+            color_bottom_right = bottom_right.mean(axis=(0, 1))
+            # Determine field colors
+            top_left_black = is_black(color_top_left, black_cryv) < color_threshold
+            top_left_white = is_white(color_top_left, white_cryv) < color_threshold
+            top_left_color = is_color(color_top_left) < color_threshold
+            top_right_black = is_black(color_top_right, black_cryv) < color_threshold
+            top_right_white = is_white(color_top_right, white_cryv) < color_threshold
+            top_right_color = is_color(color_top_right) < color_threshold
+            bottom_left_black = (
+                is_black(color_bottom_left, black_cryv) < color_threshold
+            )
+            bottom_left_white = (
+                is_white(color_bottom_left, white_cryv) < color_threshold
+            )
+            bottom_left_color = is_color(color_bottom_left) < color_threshold
+            bottom_right_black = (
+                is_black(color_bottom_right, black_cryv) < color_threshold
+            )
+            bottom_right_white = (
+                is_white(color_bottom_right, white_cryv) < color_threshold
+            )
+            bottom_right_color = is_color(color_bottom_right) < color_threshold
+
+            # --------------------- #
+            # DEBUGGING
+            # print()
+            # print("top_left:", f"black: {is_black(color_top_left, black_cryv)}", f"white: {is_white(color_top_left, white_cryv)}", f"color: {is_color(color_top_left)}", sep="\n\t")  # fmt: skip
+            # print("top_right:", f"black: {is_black(color_top_right, black_cryv)}", f"white: {is_white(color_top_right, white_cryv)}", f"color: {is_color(color_top_right)}", sep="\n\t")  # fmt: skip
+            # print("bottom_left:", f"black: {is_black(color_bottom_left, black_cryv)}", f"white: {is_white(color_bottom_left, white_cryv)}", f"color: {is_color(color_bottom_left)}", sep="\n\t")  # fmt: skip
+            # print("bottom_right:", f"black: {is_black(color_bottom_right, black_cryv)}", f"white: {is_white(color_bottom_right, white_cryv)}", f"color: {is_color(color_bottom_right)}", sep="\n\t")  # fmt: skip
+            # show_cryv(
+            #     cv2.resize(
+            #         surrounding_cryv,
+            #         (
+            #             surrounding_cryv.shape[1] * 4,
+            #             surrounding_cryv.shape[0] * 4,
+            #         ),
+            #         interpolation=cv2.INTER_NEAREST,
+            #     ),
+            #     name="surrounding_cryv",
+            # )
+            # in-depth debugging
+            # show_imgs(surrounding=surrounding, block=False)
+            # show_imgs()
+
+            left_color = top_left_color and bottom_left_color
+            right_color = top_right_color and bottom_right_color
+
+            if top_left_black and bottom_left_white and right_color:
+                surrounding_normalized = surrounding
+                inner_ring_a.append((y, x, surrounding_normalized))
+
+            if top_left_white and bottom_left_black and right_color:
+                surrounding_normalized = surrounding[::-1]  # flip vertical
+                inner_ring_b.append((y, x, surrounding_normalized))
+
+            if top_right_black and bottom_right_white and left_color:
+                surrounding_normalized = surrounding[:, ::-1]  # flip horizontal
+                outer_ring_a.append((y, x, surrounding_normalized))
+
+            if top_right_white and bottom_right_black and left_color:
+                surrounding_normalized = surrounding[::-1, ::-1]  # flip both
+                outer_ring_b.append((y, x, surrounding_normalized))
+
+    # -----------------------------
+    # Get mean surrounding
+    surroundings = (
+        [x[2] for x in inner_ring_a]
+        + [x[2] for x in inner_ring_b]
+        + [x[2] for x in outer_ring_a]
+        + [x[2] for x in outer_ring_b]
+    )
+    if len(outer_ring_a + outer_ring_b) < 2:
+        print(
+            "ERROR: Not enough valid orientation points found (possibly too many outliers)."
+        )
+        # if create_debug_img:
+        #     logpolar[corners != 0] = 255
+        #     Utils.append_debug_img(
+        #         logpolar, "FAILED: Not enough orientation points found."
+        #     )  # TODO: debug_img
+        return None
+    if len(surroundings) == 0:
+        print("ERROR: No valid surroundings found.")
+        # if create_debug_img:
+        #     logpolar[corners != 0] = 255
+        #     Utils.append_debug_img(
+        #         logpolar, "FAILED: No orientation point surroundings found."
+        #     )  # TODO: debug_img
+        return None
+    mean_surrounding = np.median(surroundings, axis=0).astype(np.uint8)
+
+    return inner_ring_a, inner_ring_b, outer_ring_a, outer_ring_b, mean_surrounding
+
+
 def ssim_score(patch_1, patch_2):
 
     patch_1 = cv2.cvtColor(patch_1, cv2.COLOR_BGR2HSV)
@@ -391,134 +517,11 @@ def find_orientation_points(
         )
         show_imgs(recognized_corners=corners_, block=False)
 
-    search_distance = 2
-    search_width = 8
-
     # -----------------------------
-    # Check points for surrounding color
-    surrounding_width = 14
-    middle_deadspace = 2
-    color_threshold = 100
-    intrude = (surrounding_width - middle_deadspace) // 2
-    inner_ring_a = []
-    inner_ring_b = []
-    outer_ring_a = []
-    outer_ring_b = []
-
-    # Convert colors into a format that emphasizes the differences
-    white_cryv = to_cryv(white[None, None])[0, 0]
-    black_cryv = to_cryv(black[None, None])[0, 0]
-
-    logpolar_cryv = to_cryv(logpolar)
-    # show_cryv(logpolar_cryv, name="logpolar_cryv")
-
-    for i, points in enumerate(corner_positions):
-        y = 25 + 50 * i
-        for x in points:
-            surrounding = get_surrounding(logpolar, y, x, surrounding_width)
-            surrounding_cryv = get_surrounding(logpolar_cryv, y, x, surrounding_width)
-            # Find partial fields in surrounding area
-            top_left = surrounding_cryv[:intrude, :intrude]  # (i, i, 3)
-            top_right = surrounding_cryv[:intrude, -intrude:]
-            bottom_left = surrounding_cryv[-intrude:, :intrude]
-            bottom_right = surrounding_cryv[-intrude:, -intrude:]
-            # Extract mean colors from fields
-            color_top_left = top_left.mean(axis=(0, 1))  # (3,)
-            color_top_right = top_right.mean(axis=(0, 1))
-            color_bottom_left = bottom_left.mean(axis=(0, 1))
-            color_bottom_right = bottom_right.mean(axis=(0, 1))
-            # Determine field colors
-            top_left_black = is_black(color_top_left, black_cryv) < color_threshold
-            top_left_white = is_white(color_top_left, white_cryv) < color_threshold
-            top_left_color = is_color(color_top_left) < color_threshold
-            top_right_black = is_black(color_top_right, black_cryv) < color_threshold
-            top_right_white = is_white(color_top_right, white_cryv) < color_threshold
-            top_right_color = is_color(color_top_right) < color_threshold
-            bottom_left_black = (
-                is_black(color_bottom_left, black_cryv) < color_threshold
-            )
-            bottom_left_white = (
-                is_white(color_bottom_left, white_cryv) < color_threshold
-            )
-            bottom_left_color = is_color(color_bottom_left) < color_threshold
-            bottom_right_black = (
-                is_black(color_bottom_right, black_cryv) < color_threshold
-            )
-            bottom_right_white = (
-                is_white(color_bottom_right, white_cryv) < color_threshold
-            )
-            bottom_right_color = is_color(color_bottom_right) < color_threshold
-
-            # --------------------- #
-            # DEBUGGING
-            # print()
-            # print("top_left:", f"black: {is_black(color_top_left, black_cryv)}", f"white: {is_white(color_top_left, white_cryv)}", f"color: {is_color(color_top_left)}", sep="\n\t")  # fmt: skip
-            # print("top_right:", f"black: {is_black(color_top_right, black_cryv)}", f"white: {is_white(color_top_right, white_cryv)}", f"color: {is_color(color_top_right)}", sep="\n\t")  # fmt: skip
-            # print("bottom_left:", f"black: {is_black(color_bottom_left, black_cryv)}", f"white: {is_white(color_bottom_left, white_cryv)}", f"color: {is_color(color_bottom_left)}", sep="\n\t")  # fmt: skip
-            # print("bottom_right:", f"black: {is_black(color_bottom_right, black_cryv)}", f"white: {is_white(color_bottom_right, white_cryv)}", f"color: {is_color(color_bottom_right)}", sep="\n\t")  # fmt: skip
-            # show_cryv(
-            #     cv2.resize(
-            #         surrounding_cryv,
-            #         (
-            #             surrounding_cryv.shape[1] * 4,
-            #             surrounding_cryv.shape[0] * 4,
-            #         ),
-            #         interpolation=cv2.INTER_NEAREST,
-            #     ),
-            #     name="surrounding_cryv",
-            # )
-            # in-depth debugging
-            # show_imgs(surrounding=surrounding, block=False)
-            # show_imgs()
-
-            left_color = top_left_color and bottom_left_color
-            right_color = top_right_color and bottom_right_color
-
-            if top_left_black and bottom_left_white and right_color:
-                surrounding_normalized = surrounding
-                inner_ring_a.append((y, x, surrounding_normalized))
-
-            if top_left_white and bottom_left_black and right_color:
-                surrounding_normalized = surrounding[::-1]  # flip vertical
-                inner_ring_b.append((y, x, surrounding_normalized))
-
-            if top_right_black and bottom_right_white and left_color:
-                surrounding_normalized = surrounding[:, ::-1]  # flip horizontal
-                outer_ring_a.append((y, x, surrounding_normalized))
-
-            if top_right_white and bottom_right_black and left_color:
-                surrounding_normalized = surrounding[::-1, ::-1]  # flip both
-                outer_ring_b.append((y, x, surrounding_normalized))
-
-    # -----------------------------
-    # Get common surrounding
-    surroundings = (
-        [x[2] for x in inner_ring_a]
-        + [x[2] for x in inner_ring_b]
-        + [x[2] for x in outer_ring_a]
-        + [x[2] for x in outer_ring_b]
+    # Get surroundings
+    inner_ring_a, inner_ring_b, outer_ring_a, outer_ring_b, mean_surrounding = (
+        extract_surroundings(logpolar, corner_positions, white, black)
     )
-    if len(outer_ring_a + outer_ring_b) < 2:
-        print(
-            "ERROR: Not enough valid orientation points found (possibly too many outliers)."
-        )
-        # if create_debug_img:
-        #     logpolar[corners != 0] = 255
-        #     Utils.append_debug_img(
-        #         logpolar, "FAILED: Not enough orientation points found."
-        #     )  # TODO: debug_img
-        return None
-    if len(surroundings) == 0:
-        print("ERROR: No valid surroundings found.")
-        # if create_debug_img:
-        #     logpolar[corners != 0] = 255
-        #     Utils.append_debug_img(
-        #         logpolar, "FAILED: No orientation point surroundings found."
-        #     )  # TODO: debug_img
-        return None
-    mean_surrounding = np.median(surroundings, axis=0).astype(
-        np.uint8
-    )  # TODO: ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 2 dimensions. The detected shape was (225, 28) + inhomogeneous part.
     if show:
         show_imgs(mean_surrounding=mean_surrounding, block=False)
 
@@ -622,7 +625,7 @@ def find_orientation_points(
         )
         if show:
             show_imgs(positions=logpolar_, block=False)
-        Utils.append_debug_img(logpolar_, "Logpolar Orientation Points")
+        # Utils.append_debug_img(logpolar_, "Logpolar Orientation Points")  # TODO: debug img
 
     # -----------------------------
     # Sort keeps into bins
