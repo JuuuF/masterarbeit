@@ -416,7 +416,7 @@ def find_orientation_points(
         y = 25 + 50 * i
         for x in points:
             surrounding = get_surrounding(logpolar, y, x, surrounding_width)
-            surrounding_cryw = get_surrounding(logpolar_cryv, y, x, surrounding_width)
+            surrounding_cryv = get_surrounding(logpolar_cryv, y, x, surrounding_width)
             # Find partial fields in surrounding area
             top_left = surrounding_cryv[:intrude, :intrude]  # (i, i, 3)
             top_right = surrounding_cryv[:intrude, -intrude:]
