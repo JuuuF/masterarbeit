@@ -197,7 +197,11 @@ class DeepDartsCode:
             c, r = DeepDartsCode.get_circle(xy)  # not necessarily a circle
             # c is center of 4 calibration points, r is mean distance from center to calibration points
 
-            src_pts = xy[:4].astype(np.float32)
+            # Yeah, let's fix that real quick:
+            c = (0.5, 0.5)
+            r = 300 / 800
+
+            src_pts = xy[:4].astype(np.float32)  # top, bottom, left, right
             dst_pts = np.array(
                 [
                     [
