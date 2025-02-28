@@ -11,6 +11,9 @@ from .matrices import shearing_matrix
 from .matrices import scaling_matrix
 from .matrices import apply_matrix
 
+from .transformations import homography_similarity
+from .transformations import points_transformation
+
 __all__.append("show_imgs")
 
 __all__.append("draw_polar_line")
@@ -21,3 +24,6 @@ __all__.append("translation_matrix")
 __all__.append("shearing_matrix")
 __all__.append("scaling_matrix")
 __all__.append("apply_matrix")
+
+__all__.append("homography_similarity")
+__all__.append("points_transformation")

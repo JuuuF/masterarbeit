@@ -137,10 +137,12 @@ class Annotation:
             self.draw_marks()
 
     def undistort_img_using_cv(self):
-        res = undistort_img(self.img)
-        if res is None:
+        homography = undistort_img(self.img)
+        if homography is None:
             return
-        self.img_undistort, self.H = res
+        self.H = homography
+        self.img_undistort = apply_matrix(self.img, self.H)
+
         img_show = self.img_undistort.copy()
         cv2.circle(img_show, (400, 400), 300, (255, 255, 255), 2, cv2.LINE_AA)
         cv2.imshow("Undistorted Image - automatic", img_show)

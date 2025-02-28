@@ -56,6 +56,7 @@ def apply_matrix(
     img: np.ndarray,
     M: np.ndarray,
     adapt_frame: bool = False,
+    output_size: tuple[int, int] | None = None,
 ) -> np.ndarray:
     if adapt_frame:
         p0 = np.array([0, 0, 1])
@@ -84,4 +85,15 @@ def apply_matrix(
         w, h = img.shape[:2][::-1]
 
     img = cv2.warpPerspective(img, M, (w, h))
+
+    if output_size is not None:
+        img = img[: output_size[0], : output_size[1]]
+        if img.shape[:2] != output_size:
+            y_pad = output_size[0] - img.shape[0]
+            x_pad = output_size[1] - img.shape[1]
+            pads = (
+                (y_pad // 2, output_size[0] - img.shape[0] - y_pad // 2),
+                (x_pad // 2, output_size[1] - img.shape[1] - x_pad // 2),
+            ) + tuple((0, 0) for _ in range(len(img.shape) - 2))
+            img = np.pad(img, pads)
     return img
