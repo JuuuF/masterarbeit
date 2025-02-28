@@ -184,6 +184,41 @@ def show_cryv(img, name=None):
 # Point surroundings
 
 
+def get_surrounding(
+    img: np.ndarray,
+    y: int,
+    x: int,
+    w: int,
+) -> np.ndarray:
+    # Clip position
+    y = np.clip(y, 0, img.shape[0] - 1)
+    x = np.clip(x, 0, img.shape[1] - 1)
+
+    # Extract clipped surrounding
+    surrounding = img[
+        max(y - w, 0) : min(y + w, img.shape[0]),
+        max(x - w, 0) : min(x + w, img.shape[1]),
+    ]
+    if surrounding.shape[0] == surrounding.shape[1] == 2 * w:
+        return surrounding
+
+    # Pad surrounding if it's on the edge
+    if (pad := w - y) > 0:
+        expand = np.repeat(surrounding[:1], pad, axis=0)
+        surrounding = np.vstack([expand, surrounding])
+    if (pad := w - img.shape[0] + y) > 0:
+        expand = np.repeat(surrounding[-1:], pad, axis=0)
+        surrounding = np.vstack([surrounding, expand])
+    if (pad := w - x) > 0:
+        expand = np.repeat(surrounding[:, :1], pad, axis=1)
+        surrounding = np.hstack([expand, surrounding])
+    if (pad := w - img.shape[1] + x) > 0:
+        expand = np.repeat(surrounding[:, -1:], pad, axis=1)
+        surrounding = np.hstack([surrounding, expand])
+
+    return surrounding
+
+
 def ssim_score(patch_1, patch_2):
 
     patch_1 = cv2.cvtColor(patch_1, cv2.COLOR_BGR2HSV)
@@ -380,14 +415,8 @@ def find_orientation_points(
     for i, points in enumerate(corner_positions):
         y = 25 + 50 * i
         for x in points:
-            surrounding = logpolar[
-                y - surrounding_width : y + surrounding_width,
-                x - surrounding_width : x + surrounding_width,
-            ]
-            surrounding_cryv = logpolar_cryv[
-                y - surrounding_width : y + surrounding_width,
-                x - surrounding_width : x + surrounding_width,
-            ]
+            surrounding = get_surrounding(logpolar, y, x, surrounding_width)
+            surrounding_cryw = get_surrounding(logpolar_cryv, y, x, surrounding_width)
             # Find partial fields in surrounding area
             top_left = surrounding_cryv[:intrude, :intrude]
             top_right = surrounding_cryv[:intrude, -intrude:]
