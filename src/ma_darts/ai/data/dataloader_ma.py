@@ -36,7 +36,7 @@ def parse_positions_and_scores(json_str: tf.string):
     positions = tf.cast(positions, tf.float32)
 
     scores = tf.convert_to_tensor(
-        [str(s[1]) for s in sample_info.get("scores", [_, "HIDDEN"])], dtype=tf.string
+        [str(s[1]) for s in sample_info.get("scores", [0, "HIDDEN"])], dtype=tf.string
     )  # (3,)
 
     # Sort by descending y value

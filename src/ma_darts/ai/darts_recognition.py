@@ -339,8 +339,8 @@ model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
     loss=YOLOv8Loss(
         square_size=50,
-        class_introduction_threshold=0.1,
-        position_introduction_threshold=0.1,
+        class_introduction_threshold=0.01,
+        position_introduction_threshold=0.01,
     ),
     metrics=metrics,
 )
@@ -396,9 +396,6 @@ val_ds = val_ds_paper.concatenate(val_ds_ma).concatenate(val_ds_real)
 # Utils.check_dataset(val_ds)
 if "GPU_SERVER" not in os.environ.keys():
     val_ds = dummy_ds(n_samples=4)
-
-train_ds = train_ds.map(lambda X, y: (X, y[0]))
-val_ds = val_ds.map(lambda X, y: (X, y[0]))
 
 # -----------------------------------------------
 # Fit Model

@@ -36,16 +36,8 @@ def scaled_out(
     pos_abs = pos * img_size  # (2, 3)
     pos_abs = tf.clip_by_value(pos_abs, 0, img_size - 1)
 
-    # Get cell positions
-    # tf.print("pos abs:")
-    # tf.print(pos_abs)
     grid_pos = tf.cast(pos_abs // cell_size, tf.int32)  # (2, 3)
     local_pos = (pos_abs % cell_size) / cell_size  # (2, 3)
-    # tf.print("grid_pos:")
-    # tf.print(grid_pos)
-    # tf.print("local_pos:")
-    # tf.print(local_pos)
-
     # --------------------------------------
 
     # grid_y, grid_x = grid_pos[0], grid_pos[1]  # (3,), (3,)
@@ -222,9 +214,9 @@ def positions_to_yolo(
 ):
     cls = tf.cast(cls, tf.float32)
     out_s = scaled_out(pos, cls, 800, 25)
-    out_m = scaled_out(pos, cls, 800, 50)
-    out_l = scaled_out(pos, cls, 800, 100)
-    return img, out_s, out_m, out_l
+    # out_m = scaled_out(pos, cls, 800, 50)
+    # out_l = scaled_out(pos, cls, 800, 100)
+    return img, out_s  # , out_m, out_l
 
 
 def cache_ds(
@@ -288,22 +280,14 @@ def finalize_base_ds(
     ds = ds.map(
         positions_to_yolo,
         num_parallel_calls=tf.data.AUTOTUNE,
-    )  # (800, 800, 3), (25, 25, 8, 3), (50, 50, 8, 3), (100, 100, 8, 3)
+    )  # (800, 800, 3), (25, 25, 8, 3)
 
     # Set shapes
     ds = ds.map(
-        lambda img, out_s, out_m, out_l: (
+        lambda img, out_s: (
             tf.ensure_shape(img, [img_size, img_size, 3]),
             tf.ensure_shape(out_s, [img_size // 32, img_size // 32, 2 + 6, 3]),
-            tf.ensure_shape(out_m, [img_size // 16, img_size // 16, 2 + 6, 3]),
-            tf.ensure_shape(out_l, [img_size // 8, img_size // 8, 2 + 6, 3]),
         ),
-        num_parallel_calls=tf.data.AUTOTUNE,
-    )
-
-    # Map to input and output
-    ds = ds.map(
-        lambda img, out_s, out_m, out_l: (img, (out_s, out_m, out_l)),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 
