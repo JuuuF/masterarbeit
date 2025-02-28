@@ -5,15 +5,6 @@ import tensorflow as tf
 from ma_darts import classes, dart_order
 from ma_darts.ai.utils import calculate_scores_ma
 
-colors = [
-    (50, 50, 50),  # nothing
-    (0, 0, 0),  # black
-    (127, 127, 127),  # white
-    (0, 0, 255),  # red
-    (0, 255, 0),  # green
-    (127, 127, 127),  # out
-]
-
 
 def convert_to_absolute_coordinates(
     pos: np.ndarray,  # (bs, s, s, 2, 3)
@@ -29,121 +20,76 @@ def convert_to_absolute_coordinates(
     return pos_abs  # (bs, s, s, 2, 3)
 
 
-def draw_prediction(
-    img: np.ndarray,  # (800, 800, 3)
-    pos: np.ndarray,  # (2,)
-    cls_id: int,
-    score: str,
-    cnf: float,
-):
-    y, x = pos
-    y, x = int(y), int(x)
-    # Draw circle at position
-    color = tuple(c * cnf for c in colors[cls_id])
-    cv2.circle(img, (x, y), 2, color, -1, lineType=cv2.LINE_AA)
-    cv2.circle(img, (x, y), 3, (255, 255, 255), 1, lineType=cv2.LINE_AA)
-    cv2.circle(img, (x, y), 4, (0, 0, 0), 1, lineType=cv2.LINE_AA)
-
-    def add_text(txt, pos):
-        txt_params = dict(
-            img=img,
-            text=txt,
-            org=pos,
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=0.25,
-            lineType=cv2.LINE_AA,
-        )
-        cv2.putText(
-            **txt_params,
-            thickness=2,
-            color=(255, 255, 255),
-        )
-        cv2.putText(
-            **txt_params,
-            thickness=1,
-            color=color,
-        )
-
-    add_text(str(score), pos=(x + 5, y - 2))
-    add_text(f"({round(cnf * 100)}%)", pos=(x + 5, y + 8))
-
-    # Draw text label
-
-    return img
-
-
 def yolo_v8_predict(
     model: tf.keras.Model,
     imgs: np.array,  # (bs, 800, 800, 3)
     confidence_threshold: float = 0.5,
-    output_img: bool = False,
-):
+) -> list[
+    list[tuple[tuple[float, float], tuple[int, str], float]]
+]:  # [((y, x), (score_val, score_str), confidence)]
 
     # Add batch dimension
+    added_batch = False
     if len(imgs.shape) == 3:
+        added_batch = True
         imgs = np.expand_dims(imgs, 0)
 
     # Predict images
-    pred = model.predict(imgs, verbose=0)
+    pred = model.predict(imgs, verbose=0)  # (bs, s, s, 8, 3)
 
     # Convert to absolute coordinates
-    pos_pred = convert_to_absolute_coordinates(pred[..., :2, :])
+    pos_pred = convert_to_absolute_coordinates(pred[..., :2, :])  # (bs, s, s, 8, 3)
 
     # Extract best classes
     cls_pred = np.argmax(pred[..., 2:, :], axis=-2)  # (bs, s, s, 3)
     cnf_pred = np.max(pred[..., 2:, :], axis=-2)  # (bs, s, s, 3)
 
     # Flatten grid dimensions
-    n_samples = imgs.shape[0]
+    batch_size = imgs.shape[0]
     pos_pred = np.transpose(pos_pred, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 2)
-    pos_pred = np.reshape(pos_pred, (n_samples, -1, 2))  # (bs, s*s*3, 2)
-    cls_pred = np.reshape(cls_pred, (n_samples, -1))  # (bs, s*s*3)
-    cnf_pred = np.reshape(cnf_pred, (n_samples, -1))  # (bs, s*s*3)
+    pos_pred = np.reshape(pos_pred, (batch_size, -1, 2))  # (bs, s*s*3, 2)
+    cls_pred = np.reshape(cls_pred, (batch_size, -1))  # (bs, s*s*3)
+    cnf_pred = np.reshape(cnf_pred, (batch_size, -1))  # (bs, s*s*3)
 
     # Filter out unsure predictions
-    out_ids = np.where(cnf_pred > confidence_threshold)[1]
-    pos_pred = pos_pred[:, out_ids]
-    cls_pred = cls_pred[:, out_ids]
-    cnf_pred = cnf_pred[:, out_ids]
+    # fmt: off
+    out_ids = [np.where(cnf_batch > confidence_threshold)[0] for cnf_batch in cnf_pred]  # bs * (m*,)
+    pos_pred = [pos_batch[ids] for pos_batch, ids in zip(pos_pred, out_ids)]  # bs * (m*, 2): (y, x)
+    cls_pred = [cls_batch[ids] for cls_batch, ids in zip(cls_pred, out_ids)]  # bs * (m*,)
+    cnf_pred = [cnf_batch[ids] for cnf_batch, ids in zip(cnf_pred, out_ids)]  # bs * (m*,)
 
     # Filter out nothing predictions
-    out_ids = np.where(cls_pred != 0)[1]
-    pos_pred = pos_pred[:, out_ids]
-    cls_pred = cls_pred[:, out_ids]
-    cnf_pred = cnf_pred[:, out_ids]
+    out_ids = [np.where(cls_batch != 0)[0] for cls_batch in cls_pred]  # bs * (n*,)
+    pos_pred = [pos_batch[ids] for pos_batch, ids in zip(pos_pred, out_ids)]  # bs * (n*, 2): (y, x)
+    cls_pred = [cls_batch[ids] for cls_batch, ids in zip(cls_pred, out_ids)]  # bs * (n*,)
+    cnf_pred = [cnf_batch[ids] for cnf_batch, ids in zip(cnf_pred, out_ids)]  # bs * (n*,)
 
-    scores_pred = [
-        calculate_scores_ma(pos, cls) for pos, cls in zip(pos_pred, cls_pred)
-    ]
+    # Sort by confidences
+    sort_ids = [np.argsort(cnf_batch)[::-1] for cnf_batch in cnf_pred]  # bs * (n*,)
+    pos_pred = [pos_batch[sort_ids][0] for pos_batch in pos_pred]
+    cls_pred = [cls_batch[sort_ids][0] for cls_batch in cls_pred]
+    cnf_pred = [cnf_batch[sort_ids][0] for cnf_batch in cnf_pred]
+    # fmt: on
 
-    ma_outputs = [
+    # Get scores
+    scr_pred = [
+        calculate_scores_ma(pos_batch, cls_batch)
+        for pos_batch, cls_batch in zip(pos_pred, cls_pred)
+    ]  # bs * (n*, 2): (int, str)
+
+    # out = [
+    #     list(zip(pos_batch, scores_batch, cnf_batch))
+    #     for pos_batch, scores_batch, cnf_batch in zip(pos_pred, scr_pred, cnf_pred)
+    # ]  # bs * n * [(y, x), (score_val, score_str), confidence]
+    out = [
         {
-            "dart_positions": pos,
-            "scores": scores,
+            "dart_positions": pos_batch,
+            "scores": scr_batch,
+            "confidences": cnf_batch,
         }
-        for scores, pos in zip(pos_pred, scores_pred)
+        for pos_batch, scr_batch, cnf_batch in zip(pos_pred, scr_pred, cnf_pred)
     ]
-    if not output_img:
-        return ma_outputs
+    if added_batch:
+        out = out[0]
 
-    # Start drawing
-    imgs_out = np.uint8(imgs * 255)  # (bs, 800, 800, 3)
-
-    for sample_idx, (poss, cnfs, clss, scores) in enumerate(
-        zip(pos_pred, cnf_pred, cls_pred, scores_pred)
-    ):
-        overlay = imgs_out[sample_idx].copy()
-        for pos, cnf, cls_id, (score_val, score_str) in zip(poss, cnfs, clss, scores):
-            overlay = draw_prediction(overlay, pos, cls_id, score_str, cnf)
-        blend = 0.6
-        imgs_out[sample_idx] = cv2.addWeighted(
-            imgs_out[sample_idx], (1 - blend), overlay, blend, 0.0
-        )
-
-    out_img = np.hstack(imgs_out)
-    return ma_outputs, out_img
-
-    from ma_darts.cv.utils import show_imgs
-
-    show_imgs(*imgs_out)
-    return imgs_out
+    return out
