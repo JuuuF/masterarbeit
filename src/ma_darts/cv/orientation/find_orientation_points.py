@@ -473,19 +473,19 @@ def find_orientation_points(
         print(
             "ERROR: Not enough valid orientation points found (possibly too many outliers)."
         )
-        if create_debug_img:
-            logpolar[corners != 0] = 255
-            Utils.append_debug_img(
-                logpolar, "FAILED: Not enough orientation points found."
-            )
+        # if create_debug_img:
+        #     logpolar[corners != 0] = 255
+        #     Utils.append_debug_img(
+        #         logpolar, "FAILED: Not enough orientation points found."
+        #     )  # TODO: debug_img
         return None
     if len(surroundings) == 0:
         print("ERROR: No valid surroundings found.")
-        if create_debug_img:
-            logpolar[corners != 0] = 255
-            Utils.append_debug_img(
-                logpolar, "FAILED: No orientation point surroundings found."
-            )
+        # if create_debug_img:
+        #     logpolar[corners != 0] = 255
+        #     Utils.append_debug_img(
+        #         logpolar, "FAILED: No orientation point surroundings found."
+        #     )  # TODO: debug_img
         return None
     mean_surrounding = np.median(surroundings, axis=0).astype(
         np.uint8
