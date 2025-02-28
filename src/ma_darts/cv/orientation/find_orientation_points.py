@@ -544,6 +544,10 @@ def y_to_angle_bin(keeps: list[tuple[int, int, str]]) -> list[list[tuple[int, st
     return out
 
 
+# -------------------------------------------------------------------------------------------------
+# Main function
+
+
 def find_orientation_points(
     img: np.ndarray,
     cy: int,
@@ -675,3 +679,14 @@ def find_orientation_points(
         for i, pos_bin in enumerate(positions):
             positions[i] = [(int(p[0] / width_scaling), p[1]) for p in pos_bin]
     return positions  # (x, inner/outer)
+
+
+if __name__ == "__main__":
+    import cv2
+
+    cy, cx = 499.7773071074453, 402.014832119117
+    img = cv2.imread("dump/test.png")
+
+    res = find_orientation_points(img, cy, cx)
+    print(*res, sep="\n")
+    show_imgs()
