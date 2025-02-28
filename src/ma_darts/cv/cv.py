@@ -1832,7 +1832,7 @@ def extract_center(img: np.ndarray):
     return cy, cx
 
 
-def undistort_img(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def undistort_img(img: np.ndarray) -> np.ndarray:
 
     # -----------------------------
     # Preprocess Image
@@ -1880,7 +1880,7 @@ def undistort_img(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         print("ERROR: Could not find all lines!")
         if create_debug_img:
             Utils.show_debug_img(failed=True)
-        return None, None
+        return None
 
     # -----------------------------
     # ORIENTATION
@@ -1915,7 +1915,7 @@ def undistort_img(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     if orientation_point_candidates is None:
         if create_debug_img:
             Utils.show_debug_img(failed=True)
-        return None, None
+        return None
 
     # Filter out bad orientation points
     src_pts, dst_pts = Orientation.structure_orientation_candidates(
@@ -1939,17 +1939,16 @@ def undistort_img(img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     M_full = M_undistort @ M_full  # undistort
     M_full = M_align @ M_full  # align to correct scale and orientation
 
-    res = apply_matrix(img_full, M_full)
-    res = res[:800, :800]
-    return res, M_full
+    return M_full
 
-    res_show = res.copy()
-    cv2.circle(res_show, (400, 400), 10, (255, 255, 255), 2)
-    cv2.circle(res_show, (400, 400), 3, (255, 0, 0), -1)
+    res = apply_matrix(img_full, M_full, output_size=(800, 800))
+    cv2.circle(res, (400, 400), 10, (255, 255, 255), 2)
+    cv2.circle(res, (400, 400), 3, (255, 0, 0), -1)
 
-    Utils.append_debug_img(res_show, "Aligned Image")
+    Utils.append_debug_img(res, "Aligned Image")
     Utils.show_debug_img()
     Utils.clear_debug_img()
+    return M_full
 
 
 # -----------------------------------------------

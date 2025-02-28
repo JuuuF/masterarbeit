@@ -77,10 +77,11 @@ def inference_ma(
 
         # -------------------------------------------
         # Undistortion
-        print("Aligning image...")
-        img_aligned, homography = undistort_img(img)  # (800, 800, 3)
-        if img_aligned is None:
-            # TODO: handle error case
+        # print("Aligning image...")
+        homography = undistort_img(img)  # (800, 800, 3)
+
+        if homography is None:
+            ma_outputs[img_path]["success"] = False
             print("Could not undistort image.")
             while max(*img.shape[:2]) > 1600:
                 img = cv2.pyrDown(img)
