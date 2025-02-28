@@ -6,53 +6,32 @@ from tqdm import tqdm
 
 from ma_darts import r_do, r_di, r_to, r_ti, r_bo, r_bi
 from ma_darts.cv.cv import undistort_img
-from ma_darts.cv.utils import show_imgs
+from ma_darts.cv.utils import show_imgs, apply_matrix
 from ma_darts.ai.utils import yolo_v8_predict
-
-wrong_img = None
-
-
-def get_wrong_image() -> np.ndarray:
-    global wrong_img
-    if wrong_img is not None:
-        return wrong_img
-
-    # Red base image
-    img = np.zeros((800, 800, 3), np.uint8)
-    img[:, :, 2] = 255
-    for i, r in enumerate([r_do, r_di, r_to, r_ti, r_bo, r_bi]):
-        col = (255, 255, 255) if i % 2 != 0 else (0, 0, 0)
-        cv2.circle(img, (400, 400), int(r), col, 2, cv2.LINE_AA)
-
-    cv2.putText(
-        img,
-        "Could not undistort the image.",
-        (0, 24),
-        fontFace=cv2.FONT_HERSHEY_PLAIN,
-        fontScale=2.0,
-        color=(255, 255, 255),
-        thickness=1,
-    )
-    wrong_img = img
-    return wrong_img
+from ma_darts.inference import visualize_prediction
 
 
 def inference_ma(
     img_paths: str | list[str],
     model_path: str | None = None,
     model: tf.keras.Model | None = None,
+    confidence_threshold: float = 0.5,
+    max_outputs: int = 3,
 ) -> list[np.ndarray]:
 
+    added_batch = False
     iter_fn = tqdm
     if type(img_paths) != list:
         img_paths = [img_paths]
         iter_fn = lambda x: x
+        added_batch = True
 
     ma_outputs = {
         f: {
             "undistortion_homography": np.eye(3),
-            "dart_positions": np.zeros((3, 2)),
-            "scores": [0 for _ in range(3)],
+            "dart_positions": [],
+            "confidences": [],
+            "scores": [],
             "success": False,
         }
         for f in img_paths
@@ -60,7 +39,7 @@ def inference_ma(
 
     # -------------------------------------------
     # Load Model
-    print("Loading model...")
+    # print("Loading model...")
     if model_path is None and model is None:
         raise ValueError(
             "Both 'model_path' and 'model' are None. "
@@ -72,7 +51,7 @@ def inference_ma(
     for img_path in iter_fn(img_paths):
         # -------------------------------------------
         # Load Image
-        print("Loading image...")
+        # print("Loading image...")
         img = cv2.imread(img_path)
 
         # -------------------------------------------
@@ -85,20 +64,40 @@ def inference_ma(
             print("Could not undistort image.")
             while max(*img.shape[:2]) > 1600:
                 img = cv2.pyrDown(img)
-            return img
+            continue
+        ma_outputs[img_path]["undistortion_homography"] = homography
+        img_aligned = apply_matrix(img, homography, output_size=(800, 800))
 
         # -------------------------------------------
         # Locate Darts
-        print("Locating darts...")
+        # print("Locating darts...")
         img_input = np.expand_dims(img_aligned, 0)  # (1, 800, 800, 3)
         img_input = np.float32(img_aligned) / 255
-        pred, img = yolo_v8_predict(
-            model, img_input, confidence_threshold=0.0, output_img=True
-        )  # (800, 800, 3)
+        outputs = yolo_v8_predict(
+            model, img_input, confidence_threshold=0.0
+        )  # [((y, x), (score_int, score_str), conf)] * n_preds
 
-        print("Done.")
-        show_imgs(img)
-    return img
+        # Write up to 3 outputs
+        n_outputs = len(outputs["dart_positions"])
+        if max_outputs is not None and max_outputs > 0:
+            n_outputs = min(max_outputs, n_outputs)
+        for i in range(n_outputs):
+            pos = outputs["dart_positions"][i]
+            scr = outputs["scores"][i]
+            cnf = outputs["confidences"][i]
+            ma_outputs[img_path]["dart_positions"].append(pos)
+            if cnf >= confidence_threshold:
+                ma_outputs[img_path]["scores"].append(scr)
+                ma_outputs[img_path]["confidences"].append(cnf)
+            else:
+                ma_outputs[img_path]["scores"].append((0, "HIDDEN"))
+                ma_outputs[img_path]["confidences"].append(1 - cnf)
+
+        ma_outputs[img_path]["success"] = True
+
+    if added_batch:
+        return ma_outputs[img_paths[0]]
+    return ma_outputs
 
 
 if __name__ == "__main__":
@@ -111,9 +110,12 @@ if __name__ == "__main__":
     img_paths_gen = [
         os.path.join(img_dir, f, "render.png") for f in os.listdir(img_dir)
     ]
+    img_dir = "data/paper/imgs/d2_03_03_2020"
+    img_paths_dd = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
+
     img_paths = [
         x
-        for pair in zip_longest(img_paths_jess, img_paths_gen)
+        for pair in zip_longest(img_paths_jess, img_paths_gen, img_paths_dd)
         for x in pair
         if x is not None
     ]
@@ -122,7 +124,26 @@ if __name__ == "__main__":
     from ma_darts.ai.models import yolo_v8_model
 
     model = yolo_v8_model(variant="s")
-    model.load_weights("data/ai/darts/yolov8_train7.weights.h5")
+    model.load_weights("data/ai/darts/yolov8_train8.weights.h5")
+
+    # img_paths = img_paths[:10]
+    # ma_outputs = inference_ma(
+    #     img_paths, model=model, max_outputs=None, confidence_threshold=0.0
+    # )
+    # for file, res in ma_outputs.items():
+    #     print()
+    #     print(file)
+    #     if not res["success"]:
+    #         print("\tNo result.")
+    #         continue
+    #     for k, v in res.items():
+    #         print(f"\t{k}: {v}")
+    # exit()
 
     for img_path in img_paths:
-        res = inference_ma(img_path, model=model)
+        ma_outputs = inference_ma(
+            img_path, model=model, max_outputs=None, confidence_threshold=0.0
+        )
+        img = visualize_prediction(img_path, ma_outputs)
+        img = cv2.resize(img, (1200, 1200))
+        show_imgs(img)

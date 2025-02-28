@@ -219,6 +219,7 @@ class DeepDartsCode:
                 ]
             ).astype(np.float32)
             M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+            M_full_size = cv2.getPerspectiveTransform(src_pts * 800, dst_pts * 800)
 
         xyz = np.concatenate((xy, np.ones((xy.shape[0], 1))), axis=-1).astype(
             np.float32
@@ -233,7 +234,7 @@ class DeepDartsCode:
         if has_vis:
             xy_dst = np.concatenate([xy_dst, vis], axis=-1)
 
-        return xy_dst, img, M
+        return xy_dst, img, M_full_size
 
     def get_dart_scores(
         xy,  # (7, 3): 4x orientation + <= 3x dart; (x, y, visible)
@@ -248,7 +249,7 @@ class DeepDartsCode:
             return [s[1] for s in scores]
 
         scores = [(0, "HIDDEN") for _ in range(3)]
-        positions = [np.zeros((2,), np.float32) for _ in range(3)]
+        positions = np.zeros((3, 2), np.float32)
         M_undistort = np.eye(3)
 
         valid_cal_pts = xy[:4][(xy[:4, 0] > 0) & (xy[:4, 1] > 0)]
@@ -256,7 +257,7 @@ class DeepDartsCode:
             return False, output_score(scores), positions, M_undistort
 
         # Undistort positions based on orientation points
-        xy_undist, _, M_undistort = DeepDartsCode.transform(xy.copy(), angle=0)
+        xy_undist, _, M_undistort = DeepDartsCode.transform(xy.copy())
 
         # Get board radii from orientation points
         c, r_d = DeepDartsCode.get_circle(xy)
@@ -289,23 +290,6 @@ class DeepDartsCode:
                 scores[i] = (3 * number, f"T{number}")
                 continue
             scores[i] = (number, str(number))
-
-        # numeric_scores = [None for _ in scores]
-        # if numeric or combined:
-        #     for i, s in enumerate(scores):
-        #         if "B" in s:
-        #             if "D" in s:
-        #                 numeric_scores[i] = 50
-        #                 continue
-        #             numeric_scores[i] = 25
-        #             continue
-        #         if "D" in s or "T" in s:
-        #             numeric_scores[i] = int(s[1:])
-        #             numeric_scores[i] = (
-        #                 numeric_scores[i] * 2 if "D" in s else numeric_scores[i] * 3
-        #             )
-        #             continue
-        #         numeric_scores[i] = int(s)
 
         return True, output_score(scores), xy_undist, M_undistort
 
@@ -369,6 +353,13 @@ class DeepDartsCode:
         from yolov4.tf import YOLOv4
         from yolov4.model.yolov4 import YOLOv4Tiny
 
+        known_configs = ["deepdarts_d1", "deepdarts_d2"]
+        if config not in known_configs:
+            raise ValueError(
+                f"Invalid DeepDarts config: {config}. "
+                f"Has to be one of {known_configs}."
+            )
+
         # Prepare config
         cfg = CfgNode(new_allowed=True)
         cfg.merge_from_file(
@@ -415,6 +406,7 @@ class DeepDartsCode:
             f: {
                 "undistortion_homography": np.eye(3),
                 "dart_positions": np.zeros((3, 2)),
+                "confidences": [0 for _ in range(3)],
                 "scores": [0 for _ in range(3)],
                 "success": False,
             }
@@ -490,9 +482,10 @@ class DeepDartsCode:
                 y_pred[:, :2], combined=True
             )
             ma_outputs[path]["undistortion_homography"] = M_pred
-            ma_outputs[path]["dart_positions"] = 800 * pos_pred[4:]
+            ma_outputs[path]["dart_positions"] = 800 * pos_pred[4:, ::-1]
             ma_outputs[path]["scores"] = pred_scores
             ma_outputs[path]["success"] = success
+            ma_outputs[path]["confidences"] = list(y_pred[4:, -1])
 
             score = abs(
                 sum([s[0] for s in pred_scores]) - sum([s[0] for s in true_scores])
@@ -530,56 +523,96 @@ class DeepDartsCode:
         print(f"Percent Correct Score (PCS): {PCS:.1f}%")
         print(f"Mean Absolute Score Error (MASE): {MASE:.2f}")
         print(f"Mean Squared Error (MSE): {MSE}")
-        with open(output_file, "wb") as f:
-            pickle.dump(ma_outputs, f)
+        return ma_outputs
 
 
-def _dd_inference(img_paths: list) -> np.ndarray:
+def _dd_inference(config: str, img_paths: list) -> np.ndarray:
 
     # Load model
-    print("Loading model...")
-    yolo = DeepDartsCode.load_model(config="deepdarts_d1")
-    print("Predicting...")
-    DeepDartsCode.predict(yolo, img_paths=img_paths)
+    yolo = DeepDartsCode.load_model(config=config)
 
-    for img_path in img_paths:
-        pass
-    return "resulting things"
+    # Predict all
+    ma_outputs = DeepDartsCode.predict(yolo, img_paths=img_paths)
+
+    # Save outputs to disk
+    with open(output_file, "wb") as f:
+        pickle.dump(ma_outputs, f)
 
 
 def inference_deepdarts(
     img_paths: str,  # or list[str]
+    model_config: str = "deepdarts_d1",
     interpreter_path: str = None,
-) -> np.ndarray:
-
+) -> dict:
+    """
+    {
+        img_path: {
+            "undistortion_homography": np.array(2,)
+            "dart_positions": list[tuple[float, float]],
+            "scores": list[tuple[int, str]],
+            "success": bool,
+        }
+    }
+    """
     if type(img_paths) == str:
         img_paths = [img_paths]
 
-    img_paths = img_paths[:10]
-
+    # Get deepdarts interpreter
     if interpreter_path is None:
         interpreter_path = _base_interpreter
 
+    # Run this script with the deepdarts interpreter
     res = subprocess.run(
-        [interpreter_path, __file__, *img_paths],
+        [interpreter_path, __file__, model_config, *img_paths],
         stdout=sys.stdout,
         stderr=sys.stderr,
     )
     if res.returncode != 0:
         raise RuntimeError(res)
 
+    # Load outputs from disk
     with open(output_file, "rb") as f:
         ma_outputs = pickle.load(f)
     return ma_outputs
 
 
 if __name__ == "__main__":
+    from itertools import zip_longest
+
     if running_as_dd:
-        img_paths = sys.argv[1:]
-        _dd_inference(img_paths)
+        config = sys.argv[1]
+        # If the config parameter is an existing file, we assume it's not a config.
+        if os.path.isfile(config) and os.path.exists(config):
+            config = "deepdarts_d1"
+            img_paths = sys.argv[1:]
+        else:
+            img_paths = sys.argv[2:]
+        _dd_inference(config, img_paths)
         exit()
 
     img_dir = "data/darts_references/jess"
-    img_paths = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
+    img_paths_jess = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
+    img_dir = "data/generation/out_val"
+    img_paths_gen = [
+        os.path.join(img_dir, f, "render.png") for f in os.listdir(img_dir)
+    ]
+    img_dir = "data/paper/imgs/d1_02_04_2020"
+    img_paths_dd = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
+
+    img_paths = [
+        x
+        for pair in zip_longest(img_paths_jess, img_paths_gen, img_paths_dd)
+        for x in pair
+        if x is not None
+    ]
+
+    img_paths = img_paths[:10]
     ma_outputs = inference_deepdarts(img_paths)
-    print(ma_outputs)
+    for file, res in ma_outputs.items():
+        print()
+        print(file)
+        if not res["success"]:
+            print("\tNo result.")
+            continue
+        for k, v in res.items():
+            print(f"\t{k}: {v}")
