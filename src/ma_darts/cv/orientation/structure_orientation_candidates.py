@@ -2,14 +2,16 @@ import cv2
 import numpy as np
 from ma_darts import r_ti, r_to, r_di
 
+from ma_darts.cv.utils import show_imgs
+
 
 def structure_orientation_candidates(
-    img: np.ndarray,
     orientation_point_candidates: list[list[tuple[int, str]]],
     cy: int,
     cx: int,
-    show: bool = False,
+    img_undistort: np.ndarray | None = None,
 ):
+
     # Find outer distances
     outer_dists = []
     for angle_positions in orientation_point_candidates:
@@ -70,9 +72,11 @@ def structure_orientation_candidates(
     src = []
     dst = []
 
-    prepare_show_img = show  # or create_debug_img  # TODO: debug_img
+    prepare_show_img = (
+        img_undistort is not None
+    )  # or create_debug_img  # TODO: debug_img
     if prepare_show_img:
-        img = img_undistort.copy()
+        img = img_undistort.copy() // 2
 
     for i, angle_positions in enumerate(orientation_point_candidates):
         theta = np.pi / 20 + i * np.pi / 10
@@ -96,24 +100,34 @@ def structure_orientation_candidates(
 
             if prepare_show_img:
                 if abs(abs(dst_r) - r_to) < 1e-3:
-                    c = (255, 0, 0)
+                    c = (255, 160, 160)
                 elif abs(abs(dst_r) - r_di) < 1e-3:
-                    c = (0, 255, 0)
+                    c = (160, 255, 160)
                 else:
-                    c = (0, 0, 255)
-                cv2.circle(img, (int(src_x), int(src_y)), 5, c, thickness=2)
+                    c = (160, 160, 255)
+                cv2.circle(
+                    img,
+                    (int(src_x), int(src_y)),
+                    3,
+                    c,
+                    thickness=1,
+                    lineType=cv2.LINE_AA,
+                )
                 cv2.circle(
                     img,
                     (int(dst_x), int(dst_y)),
-                    5,
-                    [int(i * 0.75) for i in c],
-                    thickness=2,
+                    3,
+                    [i//1.5 for i in c],
+                    thickness=1,
+                    lineType=cv2.LINE_AA,
                 )
-                cv2.line(
+                cv2.arrowedLine(
                     img,
                     (int(src_x), int(src_y)),
                     (int(dst_x), int(dst_y)),
-                    (255, 0, 0),
+                    (255, 255, 255),
+                    line_type=cv2.LINE_AA,
+                    tipLength=0.5,
                 )
 
     if prepare_show_img:
@@ -125,9 +139,17 @@ def structure_orientation_candidates(
         ]
         for i, p in enumerate(threshold_points):
             p2 = threshold_points[(i + 1) % len(threshold_points)]
-            cv2.line(img, p, p2, color=(127, 127, 127))
-    if show:
+            cv2.line(
+                img,
+                p,
+                p2,
+                color=(200, 200, 200),
+                thickness=1,
+                lineType=cv2.LINE_AA,
+            )
+        # if show:
         show_imgs(projection_mapping=img, block=False)
+        # show_imgs()
     # Utils.append_debug_img(img, "Orientation Point Projections")  # TODO: debug img
 
     return src, dst  # (x, y), (x, y)
