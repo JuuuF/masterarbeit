@@ -339,8 +339,8 @@ model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
     loss=YOLOv8Loss(
         square_size=50,
-        class_introduction_threshold=0.01,
-        position_introduction_threshold=0.01,
+        class_introduction_threshold=0.02,
+        position_introduction_threshold=0.02,
     ),
     metrics=metrics,
 )

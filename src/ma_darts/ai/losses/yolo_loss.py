@@ -137,8 +137,10 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         return loss
 
     def call(self, y_true, y_pred):
+        total_loss = tf.constant(0, tf.float32)
+
         xst_loss = self.xst_loss(y_true, y_pred)
-        total_loss = xst_loss
+        total_loss = total_loss + xst_loss
         # print("xst_loss", xst_loss.numpy())
         # print("total_loss", total_loss.numpy())
         # print()

@@ -72,7 +72,7 @@ class ClassesLoss(tf.keras.losses.Loss):
         # 1 < factor < 2: a bit off, -> a bit penalty
         # factor ~2:      far off    -> big penalty
         n_trues = tf.reduce_sum(cls_true, axis=[1, 2])  # (bs, 6)
-        n_preds = tf.reduce_sum(self.accentuate(cls_pred), axis=[1, 2])  # (bs, 6)
+        n_preds = tf.reduce_sum(cls_pred, axis=[1, 2])  # (bs, 6)
         n_diff = tf.abs(n_trues - n_preds)
         factor = 2 * tf.math.sigmoid(n_diff / 10)
         factor = tf.reduce_mean(factor)  # ()

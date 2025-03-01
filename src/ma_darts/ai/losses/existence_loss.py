@@ -75,7 +75,7 @@ class ExistenceLoss(tf.keras.losses.Loss):
         # factor ~2:      far off    -> big penalty
 
         n_trues = tf.reduce_sum(xst_true)
-        n_preds = tf.reduce_sum(self.accentuate(xst_pred))
+        n_preds = tf.reduce_sum(xst_pred)
         n_diff = tf.abs(n_preds - n_trues)
         factor = 2 * tf.math.sigmoid(n_diff / 10)  # scaled 1..2
 
