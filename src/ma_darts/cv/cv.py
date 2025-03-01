@@ -280,11 +280,10 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
 
     # Filter out bad orientation points
     src_pts, dst_pts = orientation.structure_orientation_candidates(
-        img,
         orientation_point_candidates,
         int(cy_undistort),
         int(cx_undistort),
-        show=False,
+        # img_undistort=img_undistort,
     )
 
     # Convert orientation points to transformation matrix
@@ -303,8 +302,37 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
     return M_full
 
     res = apply_matrix(img_full, M_full, output_size=(800, 800))
-    cv2.circle(res, (400, 400), 10, (255, 255, 255), 2)
-    cv2.circle(res, (400, 400), 3, (255, 0, 0), -1)
+    img = res.copy()
+    res = np.uint8(res * 0.67)
+    # cv2.circle(res, (400, 400), 10, (255, 255, 255), 1, cv2.LINE_AA)
+    # cv2.circle(res, (400, 400), 3, (255, 0, 0), -1, cv2.LINE_AA)
+    from ma_darts.cv.utils import (
+        point_theta_to_polar_line,
+        draw_polar_line_through_point,
+    )
+    from ma_darts import r_bi, r_bo, r_di, r_do, r_ti, r_to
+
+    for i in range(10):
+        a = np.deg2rad(18) * i + np.deg2rad(9)
+        x0 = int(400 - np.sin(a) * 320)
+        y0 = int(400 + np.cos(a) * 320)
+        x1 = int(400 + np.sin(a) * 320)
+        y1 = int(400 - np.cos(a) * 320)
+        cv2.line(res, (x0, y0), (x1, y1), (255, 255, 255), 3, cv2.LINE_AA)
+    for r in [r_bi, r_bi, r_ti, r_to, r_di, r_do]:
+        cv2.circle(res, (400, 400), int(r), (255, 255, 255), 3, cv2.LINE_AA)
+    for i in range(10):
+        a = np.deg2rad(18) * i + np.deg2rad(9)
+        x0 = int(400 - np.sin(a) * 320)
+        y0 = int(400 + np.cos(a) * 320)
+        x1 = int(400 + np.sin(a) * 320)
+        y1 = int(400 - np.cos(a) * 320)
+        cv2.line(res, (x0, y0), (x1, y1), (0, 0, 0), 1, cv2.LINE_AA)
+    for r in [r_bi, r_bi, r_ti, r_to, r_di, r_do]:
+        cv2.circle(res, (400, 400), int(r), (0, 0, 0), 1, cv2.LINE_AA)
+
+    res = cv2.addWeighted(img, 0.5, res, 0.5, 1.0)
+    show_imgs(res)
 
     Utils.append_debug_img(res, "Aligned Image")
     Utils.show_debug_img()
@@ -319,11 +347,22 @@ if __name__ == "__main__":
     from ma_darts.cv.utils import show_imgs
 
     img_dir = "data/darts_references/home/"
+    img_dir = "data/darts_references/jess/"
     img_paths = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
     img_paths = sorted(img_paths, key=lambda x: int(x.split("/")[-1].split("-")[0]))
+
+    img_dir = "data/generation/out/"
+    img_paths = [os.path.join(img_dir, f, "render.png") for f in os.listdir(img_dir)]
+    img_paths = sorted(img_paths)
+
+    img_dir = "data/paper/imgs/d2_03_03_2020"
+    img_paths = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
+    img_paths = sorted(img_paths)[2:]
 
     for img_path in img_paths:
         img = cv2.imread(img_path)
         M = undistort_img(img)
+        if M is None:
+            continue
         res = apply_matrix(img, M, output_size=(800, 800))
         show_imgs(res)
