@@ -310,7 +310,7 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
         point_theta_to_polar_line,
         draw_polar_line_through_point,
     )
-    from ma_darts import r_bi, r_bo, r_di, r_do, r_ti, r_to
+    from ma_darts import radii
 
     for i in range(10):
         a = np.deg2rad(18) * i + np.deg2rad(9)
@@ -319,7 +319,7 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
         x1 = int(400 + np.sin(a) * 320)
         y1 = int(400 - np.cos(a) * 320)
         cv2.line(res, (x0, y0), (x1, y1), (255, 255, 255), 3, cv2.LINE_AA)
-    for r in [r_bi, r_bi, r_ti, r_to, r_di, r_do]:
+    for r in [radii[i] for i in range(6)]:
         cv2.circle(res, (400, 400), int(r), (255, 255, 255), 3, cv2.LINE_AA)
     for i in range(10):
         a = np.deg2rad(18) * i + np.deg2rad(9)
@@ -328,7 +328,7 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
         x1 = int(400 + np.sin(a) * 320)
         y1 = int(400 - np.cos(a) * 320)
         cv2.line(res, (x0, y0), (x1, y1), (0, 0, 0), 1, cv2.LINE_AA)
-    for r in [r_bi, r_bi, r_ti, r_to, r_di, r_do]:
+    for r in [radii[i] for i in range(6)]:
         cv2.circle(res, (400, 400), int(r), (0, 0, 0), 1, cv2.LINE_AA)
 
     res = cv2.addWeighted(img, 0.5, res, 0.5, 1.0)

@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from tqdm import tqdm
 
-from ma_darts import r_do, r_di, r_to, r_ti, r_bo, r_bi
+from ma_darts import radii
 from ma_darts.cv.cv import undistort_img
 from ma_darts.cv.utils import show_imgs, apply_matrix
 from ma_darts.ai.utils import yolo_v8_predict

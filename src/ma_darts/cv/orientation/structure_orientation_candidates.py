@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from ma_darts import r_ti, r_to, r_di
+from ma_darts import radii
 
 from ma_darts.cv.utils import show_imgs
 
@@ -86,22 +86,22 @@ def structure_orientation_candidates(
             src_x = cx + np.sin(theta) * r
             if pos == "outer":
                 # triple ring - outside
-                dst_r = r_to * (1 if r > 0 else -1)
+                dst_r = radii["r_to"] * (1 if r > 0 else -1)
             elif abs(r) > double_threshold:
                 # double ring
-                dst_r = r_di * (1 if r > 0 else -1)
+                dst_r = radii["r_di"] * (1 if r > 0 else -1)
             else:
                 # triple ring - inside
-                dst_r = r_ti * (1 if r > 0 else -1)
+                dst_r = radii["r_ti"] * (1 if r > 0 else -1)
             dst_y = 400 - np.cos(theta) * dst_r
             dst_x = 400 + np.sin(theta) * dst_r
             src.append((src_x, src_y))
             dst.append((dst_x, dst_y))
 
             if prepare_show_img:
-                if abs(abs(dst_r) - r_to) < 1e-3:
+                if abs(abs(dst_r) - radii["r_to"]) < 1e-3:
                     c = (255, 160, 160)
-                elif abs(abs(dst_r) - r_di) < 1e-3:
+                elif abs(abs(dst_r) - radii["r_di"]) < 1e-3:
                     c = (160, 255, 160)
                 else:
                     c = (160, 160, 255)

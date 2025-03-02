@@ -1,5 +1,5 @@
 import numpy as np
-from ma_darts import dart_order, r_bi, r_bo, r_ti, r_to, r_di, r_do
+from ma_darts import dart_order, radii
 
 
 def get_board_radii() -> tuple[float, float, float, float, float, float]:
@@ -44,8 +44,8 @@ def calculate_scores_ma(
     # Positions to origin
     pos_norm = pos - 400
 
-    r_1 = r_bo + (r_ti - r_bo) / 3  # bull-triple
-    r_2 = r_to + (r_di - r_to) / 2  # triple-double
+    r_1 = radii["r_bo"] + (radii["r_ti"] - radii["r_bo"]) / 3  # bull-triple
+    r_2 = radii["r_to"] + (radii["r_di"] - radii["r_to"]) / 2  # triple-double
     r_3 = 400  # outside
 
     scores = []
