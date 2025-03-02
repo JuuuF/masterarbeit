@@ -1,10 +1,51 @@
 import numpy as np
 
+from scipy.optimize import minimize
+
 from ma_darts.cv.utils import (
     point_line_distance,
     point_theta_to_polar_line,
     point_point_dist,
 )
+
+
+def fit_polar_line_to_points(
+    cy, cx, theta, points, weights, initial_theta, bounds
+) -> tuple[float, float]:
+    def objective(params):
+        rho, theta = params
+        res = (
+            sum(
+                w * point_line_distance(*pt, rho, theta) ** 2
+                for pt, w in zip(points, weights)
+            )
+            + 1e-5
+        )
+        return res
+
+    initial_guess = point_theta_to_polar_line((cy, cx), theta)
+
+    # for p in points:
+    #     print(Utils.point_line_distance(*p, *initial_guess))
+    #     img[p[0], p[1]] = 255
+
+    # draw_polar_line(img, *initial_guess)
+    # show_imgs(img)
+    # return initial_guess
+
+    result = minimize(
+        objective,
+        initial_guess,
+        bounds=bounds,
+        method="L-BFGS-B",
+        options={"gtol": 1e-5, "ftol": 1e-6},
+    )
+
+    if result.success:
+        return result.x  # rho, theta
+
+    print("WARNING: Could not terminate line fitting:", result.message)
+    return result.x
 
 
 def align_angles(
@@ -16,46 +57,7 @@ def align_angles(
     show: bool = False,
 ) -> list[tuple[float, float]]:
     rho_guess = np.sqrt(img_shape[0] ** 2 + img_shape[1] ** 2) / 2
-
-    def fit_polar_line_to_points(points, weights, initial_theta) -> tuple[float, float]:
-        def objective(params):
-            rho, theta = params
-            res = (
-                sum(
-                    w * point_line_distance(*pt, rho, theta) ** 2
-                    for pt, w in zip(points, weights)
-                )
-                + 1e-5
-            )
-            return res
-
-        initial_guess = point_theta_to_polar_line((cy, cx), theta)
-
-        # for p in points:
-        #     print(Utils.point_line_distance(*p, *initial_guess))
-        #     img[p[0], p[1]] = 255
-
-        # draw_polar_line(img, *initial_guess)
-        # show_imgs(img)
-        # return initial_guess
-
-        bounds = [(-rho_guess * 2, rho_guess * 2), (0, np.pi)]
-
-        from scipy.optimize import minimize
-
-        result = minimize(
-            objective,
-            initial_guess,
-            bounds=bounds,
-            method="L-BFGS-B",
-            options={"gtol": 1e-5, "ftol": 1e-6},
-        )
-
-        if result.success:
-            return result.x  # rho, theta
-
-        print("WARNING: Could not terminate line fitting:", result.message)
-        return result.x
+    bounds = [(-rho_guess * 2, rho_guess * 2), (0, np.pi)]
 
     # Filter lines
     line_bins = [[] for _ in range(len(thetas))]
@@ -101,7 +103,9 @@ def align_angles(
         weights = [w / max(weights) for w in weights]
 
         # print(points, weights, theta)
-        rho_, theta_ = fit_polar_line_to_points(points, weights, theta)
+        rho_, theta_ = fit_polar_line_to_points(
+            cy, cx, theta, points, weights, theta, bounds
+        )
         # print("--")
         # print(theta, theta_)
         out_lines.append((rho_, theta_))
