@@ -51,3 +51,4 @@ def show_imgs(
     if key in quit_keys:
         cv2.destroyAllWindows()
         exit()
+    return chr(key)
