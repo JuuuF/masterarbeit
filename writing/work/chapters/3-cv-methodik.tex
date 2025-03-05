@@ -9,29 +9,53 @@ Methodik hier.
 \subsection{Warum Computer Vision?}
 \label{sec:warum_cv}
 
-.
+Normalisierung von Daten für ein neuronales Netz kann auf unterschiedliche Arten umgesetzt werden. Bei der Herangehensweise von \citeauthor{deepdarts} für DeepDarts werden Normalisierung von Dartscheibe und Lokalisierung von Dartpfeilen in einem Durchlauf von einem neuronalen Netz ausgeführt. Dazu werden Orientierungspunkte auf der Dartscheibe identifiziert, deren Positionen in der entzerrten Darstellung der Dartscheibe bekannt sind. Auf diese Weise konnte eine Homographie zur Normalisierung abgeleitet werden. In dieser Arbeit wird auf herkömmliche Techniken der Computer Vision zurückgegriffen, um etwaige Nachteile eines neuronalen Netzes gezielt anzugehen. Der wichtigste Aspekt der algorithmischen Normalisierung ist die Nachvollziehbarkeit der Arbeitsweise und Wartung bzw. Anpassung des Systems an neue Gegebenheiten. Wohingegen ein neuronales Netz eine Black-Box ist, deren Arbeitsweise nicht bekannt ist, und die lediglich durch aufwändiges Training neu eingestellt werden kann, kann bei einem Algorithmus nachvollzogen werden, wo er scheitert und er kann gezielt erweitert oder adaptiert werden.
+
+Ebenfalls war die Verwendung von Computer Vision aufgrund der auffälligen Geometrie einer Dartscheibe naheliegend, da sie Ähnlichkeiten mit Schachbrettern aufweist, welche in der Computer Vision zur Identifizierung von Kameraparametern verwendet werden. Da die Nutzung bekannter Geometrien eine zentrale Arbeitsweise der Computer Vision darstellt, war die Intuition gegeben, dass auch eine Erkennung eines ähnlich markanten Objektes in einem Bild möglich ist. Aus dieser Intuition heraus wurde der in diesem Abschnitt beschriebene Algorithmus entwickelt.
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Vorverarbeitung}
 \label{sec:vorverarbeitung}
 
-.
+Die Algorithmen der Computer Vision arbeiten auf Bildern beliebiger Größe. Da die Dauer der Verarbeitung mit der Größe der Eingabebilder skaliert, ist eine angemessene Skalierung der Eingaben ein relevanter Bestandteil der Laufzeitoptimierung. Damit einher geht jedoch der Verlust von Informationen im Bild, was für eine Abwägung zwischen Geschwindigkeit und Genauigkeit sorgt. In dieser Arbeit wurde sich für eine schrittweise Verkleinerung der Eingabebilder mit Abmessungen $(w, h)$, entsprechend Breite und Höhe, entschieden, bis $\max (w, h) < d_{max} = 1600\text{px}$. Dabei werden Eingabebilder jeweils um den Faktor 2 verkleinert, um Artefakte durch Interpolierung zu minimieren. Der Wert von $d_{max}$ wurde heuristisch ermittelt als geeignetes Mittel zwischen Geschwindigkeit und Genauigkeit.
+
+Der Schritt der Vorverarbeitung kann übersprungen werden, indem $d_{max} = \infty$ gesetzt wird. Die Laufzeit der Normalisierung kann dadurch jedoch stark beeinträchtigt werden, da die Anzahl der Pixel quadratisch mit der Größe des Bildes skaliert.
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Kantenverarbeitung}
 \label{sec:kanten}
 
-.
+Nachdem die Eingabebilder vorverarbeitet sind, werden die wichtigen Kanten im Bild extrahiert. Eingabebilder enthalten neben den für die Normalisierung relevanten Informationen der Dartscheibe sehr viel Rauschen, das nicht für die Normalisierung benötigt wird. Mit der Kantenverarbeitung wird der Umfang an Informationen stark reduziert auf die wichtigen Charakteristiken des Bildes.
 
 \subsubsection{Filterung}
 \label{sec:filterung}
 
-.
+Für eine universelle Extraktion von Kanten in Bildern existieren Algorithmen und Filter, wie sie bereits in \autoref{sec:kantenerkennung} beschrieben wurden. Diese Filter sind für allgemeine Fälle geeignet, in denen das Ziel eine generelle Kantenerkennung ist oder wenig Annahmen über die Kanteninformationen in Eingabebildern getroffen werden können. In dem hier betrachteten Fall liegt der Fokus der Kantenerkennung nicht auf generischen Kanten im Bild, sondern spezifisch auf den Kanten zwischen den Flächen der Dartscheibe. Diese sind charakteristisch für die Dartscheibe und durch ihr festgelegtes Design vorgegeben. Durch die Erkennung dieser Kanten wird darauf abgezielt, den Mittelpunkt und die grobe Orientierung der Dartscheibe zu ermitteln. 
+
+Geometrie und Farbgebung der Felder einer Dartscheibe sorgen für starke Gradienten der Pixelintensitäten entlang der Kanten zwischen benachbarten Feldern. Zudem ist bekannt, dass diese Kanten geradlinig verlaufen und weitgehend uniforme Bereiche im Bild voneinander trennen, in denen zudem wenig Kanten erwartet werden. Auf Grundlage dieser Beobachtungen wurde sich für einen untypisch großen Sobel-Kernel mit einer Größe von $15 \times 15$ Pixeln entschieden, dargestellt in \autoref{img:kernel}. Dieser Kernel sorgt für eine gezielte Erkennung der geschriebenen Eigenschaften in Bildern.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.3\textwidth]{imgs/cv/methodik/edges_kernel.png}
+    \caption{Vertikaler Sobel-Kernel der Größe $15\times15$ zur Identifizierung großer und uniformer Kanten in einem Bild. Helle Pixel stehen für positive, dunkle Pixel für negative Werte.}
+    \label{img:kernel}
+\end{figure}
+
+Um die gewünschten Charakteristiken hervorzuheben, wird das Eingabebild vor der Kantenerkennung in Graustufen umgewandelt und der Kontrast wird erhöht, um den Unterschied zwischen hellen und dunklen Bereichen zu betonen. Um Rauschen vor der Filterung zu entfernen, wird das Bild weichgezeichnet. Hochfrequente Informationen werden dadurch verworfen und etwaige Unterbrechungen oder Störungen der Kanten zwischen den Feldern verringert. Auf dieses Bild wird der beschriebe Sobel-Kernel in vertikaler und horizontaler Richtung angewendet, um Filterreaktionen von Intensitätsänderungen entlang beider Richtungen zu erlangen. Diese werden miteinander kombiniert und durch Thresholding binarisiert. Die Ausgabe ist eine binäre Maske, in denen Pixel des Wertes 1 Kanten im Eingabebild darstellen.
 
 \subsubsection{Skelettierung}
 \label{sec:skelettierung}
 
-.
+Das gefilterte Kantenbild der Dartscheibe enthält aufgrund der Verwendung eines großen Kernels redundante Kanteninformationen durch mehrere Pixel breite Kanten. Diese breiten Kanten werden mittels Skelettierung auf ihre zentrale Kante reduziert \cite{skeletonization}. Bei der Skelettierung werden die existierenden Kanten iterativ verringert, bis eine zentrale Kante erzielt wurde. Dazu wird das Konzept der Erosion verwendet, bei Cluster von Pixeln in Binärbildern entlang ihrer Kontur verkleinert werden. Bildlich lässt sich das veranschaulichen mit einer in Wasser liegenden Insel, die durch Erosion an Höhe über dem Meeresspiegel verliert und sich dadurch von außen nach innen verkleinert. Nach der Skelettierung des Kantenbildes verbleibt eine minimale Darstellung der extrahierten Kanten, in der diese auf ihre wesentlichen Züge heruntergebrochen wurden. Der verbliebene Informationsgehalt des Bildes wurde dadurch auf das für die kommenden Schritte wesentliche reduziert.
+
+Der geschlossene Prozess der Kantenerkennung ist in \autoref{img:kantenerkennung} dargestellt. Das verwendete Bild stammt aus dem für DeepDarts verwendeten Datensatz und wurde ebenfalls im Paper des Systems zur Veranschaulichung von dessen Arbeitsweise genutzt. Im Sinne der Vergleichbarkeit der Systeme wurde sich daher dazu entschieden, die Arbeitsweise dieses Algorithmus anhand des selben Bildes zu veranschaulichen.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{imgs/cv/methodik/edges.pdf}
+    \caption{Schritte der Kantenverarbeitung anhand eines Bildes des DeepDarts-Datensatzes \cite{deepdarts-data}.}
+    \label{img:kantenerkennung}
+\end{figure}
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Linienverarbeitung}
