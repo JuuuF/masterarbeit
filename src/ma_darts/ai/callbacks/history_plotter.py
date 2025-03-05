@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import pickle
 from tensorflow.keras.callbacks import Callback  # type: ignore
 
 import matplotlib
@@ -196,6 +197,10 @@ class HistoryPlotter(Callback):
 
         fig.savefig(self.filepath, dpi=200)
         plt.close()
+
+        # Save logs as pickle
+        with open(self.filepath.replace(".png", ".pkl"), "wb") as f:
+            pickle.dump({"train_logs": self.train_logs, "val_logs": self.val_logs}, f)
 
     def _update_on_batches(self, batch, *args, **kwargs):
         return batch % self.update_frequency == 0
