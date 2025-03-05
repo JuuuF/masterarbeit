@@ -3,22 +3,26 @@ import numpy as np
 
 from ma_darts.cv.utils import show_imgs
 
-def get_sobel(k: int, theta: float = np.pi / 2):
+
+def get_sobel(k: int, sigma: float = None):
+    if sigma is None:
+        sigma = k
+
     # Create coordinate grid
-    x, y = np.meshgrid(np.arange(-k, k + 1), np.arange(-k, k + 1))
+    ax = np.arange(-k, k + 1)
+    xx, yy = np.meshgrid(ax, ax)
 
-    # Rotate coordinates
-    x_rot = x * np.cos(theta) + y * np.sin(theta)
-    y_rot = -x * np.sin(theta) + y * np.cos(theta)
+    # Calculate the Gaussian function
+    kernel = np.exp(-(xx**2 + yy**2) / (2 * sigma**2))
 
-    # Sobel filter formula: x * exp(-x^2 - y^2)
-    sobel = x_rot / ((x_rot**2 + y_rot**2) + 1e-5)
+    # Optionally include the normalization constant 1/(2*pi*sigma^2)
+    # Comment out the next line if you prefer to omit the constant.
+    kernel /= 2 * np.pi * sigma**2
 
-    # Normalize
-    sobel -= sobel.mean()
-    sobel /= np.sum(np.abs(sobel))
+    kernel[k] = 0
+    kernel[k:] *= -1
 
-    return sobel
+    return kernel
 
 
 def edge_detect(
