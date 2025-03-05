@@ -6,6 +6,7 @@
 \usepackage[german]{babel}
 \usepackage{csquotes}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{multirow}
@@ -20,6 +21,7 @@
 
 % Tiefe der Nummerierung der Kapitel
 \setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
 
 % Kapitelbeginn
 % \newcommand{\pagediff}{\clearpage}
@@ -57,6 +59,7 @@
 % Grad °
 \newcommand{\degree}{^{\circ}}
 \DeclareMathOperator{\arctan2}{arctan2}
+\DeclareMathOperator{\atan}{arctan}
 
 % Abstände in Enumerations und Item lists
 \usepackage{enumitem}
@@ -70,6 +73,7 @@
 
 % Tikz
 \usepackage{tikz}
+\usetikzlibrary{matrix}
 \usetikzlibrary{positioning, shapes.geometric, arrows, fit}
 
 \tikzstyle{io} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
@@ -78,6 +82,17 @@
 \tikzstyle{lines} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!20]
 \tikzstyle{orientation} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!20]
 \tikzstyle{arrow} = [thick,->,>=stealth]
+
+% TODO-Notes
+\usepackage[textsize=small]{todonotes}
+\presetkeys{todonotes}{inline,backgroundcolor=yellow!50!white}{}
+
+\AtBeginDocument{%
+%   \renewcommand*{\subsectionautorefname}{\sectionautorefname}%
+  \renewcommand*{\subsubsectionautorefname}{\subsectionautorefname}%
+%   \renewcommand*{\paragraphautorefname}{\subsubsectionautorefname}%
+  \renewcommand*{\subparagraphautorefname}{\paragraphautorefname}%
+}
 
 % -----------------------------------------------
 % Acronyms
@@ -89,3 +104,7 @@
     long = World Dart Federation ,
 }
 
+\DeclareAcronym{CV}{
+    short=CV ,
+    long=Computer Vision ,
+}

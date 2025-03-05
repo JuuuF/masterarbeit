@@ -1,0 +1,207 @@
+% !TEX root = ../main.tex
+
+\section{Grundlagen}
+\label{sec:cv:grundlagen}
+
+Bevor in the Thematik der Normalisierung eingegangen wird, ist die Klärung von Grundbegriffen und -konzepten relevant. Diese legen den Grundbaustein für die Nachvollziehbarkeit der Algorithmen und Techniken, die für die Verarbeitung der Bilddaten wichtig sind.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Polarlinien}
+\label{sec:polarlinien}
+
+Die polare Darstellung von Linien ist für die Identifizierung der Dartscheibe dahingehend relevant, dass sie es ermöglicht, einer Linie einen Winkel zuzuordnen, in dem diese liegt. Eine polare Linie ist beschrieben mit einem Tupel $(\rho, \theta)$, in dem $\rho$ der minimale Abstand der Linie zum Koordinatenursprung ist und $\theta$ der Winkel der Liniennormalen zur x-Achse. Die Charakterisierung einer Linie durch einen Winkel in \autoref{sec:linien} verwendet.
+
+Zur Umrechnung einer Linie, gegeben durch zwei Punkte $P_1 = (x_1, y_1)$ und $P_2 = (x_2, y_2)$, in Polarform werden folgende Gleichungen genutzt \cite{polar_linien}:
+
+\[ \rho = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2} \]
+\[ \theta = \atan \frac{y_2 - y_1}{x_2 - x_1} \]
+
+Festzuhalten ist, dass Start- und Endpunkte der Linie durch diese Art der polaren Beschreibung verloren gehen. Dies beruht auf der Annahme, dass mathematische Beschreibungen von Linien infinite Längen haben. Dieses Artefakt der Umrechnung ist bei der Methodik dieser Arbeit zur Identifizierung von Charakteristiken von Vorteil und wird gezielt in \autoref{sec:mittelpunktextraktion} genutzt.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Thresholding}
+\label{sec:thresholding}
+
+Als Thresholding wird in der Datenverarbeitung die Einteilung von Werten eines Definitionsbereichs $D$ in zwei Kategorien verstanden. Dabei wird ein Grenzwert $t \in D$, der Threshold, definiert, anhand dessen die Kategorie eines Wertes festgelegt wird. Üblich sind in der Bildverarbeitung Definitionsbereiche $D \in \{\mathbb{R}, \mathbb{N}\}$ und die Einteilung $v \leq t$ bzw. $v > t$ mit $v \in D$.
+\todo{Kombination + Nutzung in Farbräumen}
+
+In dieser Thesis wird Thresholding in vielerlei Hinsicht verwendet, unter anderem in \autoref{sec:filterung} zur Unterscheidung zwischen Kante und Hintergrund oder in \autoref{sec:linienfilterung} zur Filterung von Linien anhand einer Abstandsmetrik.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Binning}
+\label{sec:binning}
+
+Als Erweiterung von Thresholding lässt sich Binning verstehen. Unter Binning versteht man die Diskretisierung von Werten in definierte Intervalle, sogenannte Bins oder Buckets. Binning ermöglicht es, Spannen von Werten in definierte Bereiche zu unterteilen und somit in diskrete Kategorien einzuordnen. Dabei wird zwischen Hard Binning und Soft Binning unterschieden.
+
+Beim Hard Binning werden Intervallgrenzen $I = \{i_0, i_1, ..., i_n\} \subseteq D$ definiert, die einen Definitionsbereich $D$ von Daten in halboffene Intervalle $I_{k \in [0, n-1]} = [i_k, i_{k+1})$ unterteilen. Diese Intervalle korrespondieren mit Bins $B_{i \in [0, n]}$, in welche diejenigen Werte akkumuliert werden, die in das dementsprechende Intervall fallen. Es existieren harte Grenzen der Bins, die unter anderem dafür sorgen, dass nahe beieinander liegende Werte $v_0 \in D$ und $v_1 = v_0 - \epsilon_{>0}$ in unterschiedlichen Bins zugeordnet werden, sofern $x_0 \in I$.
+
+Um dieses Artefakt zu umgehen, gibt es das Soft Binning, in dem Werte anteilig in Bins eingeordnet werden, sodass Werte im Umkreis um Intervallgrenzen in beide Bins einsortiert werden, gewichtet mit der Distanz zu der Intervallgrenze.
+
+Binning wird in dieser Thesis unter anderem in \autoref{sec:mittelpunktextraktion} genutzt, um Polarlinien anhand ihrer Winkel zu kategorisieren.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Faltung}
+\label{sec:was_filterung}
+
+Die Faltung, auch Convolution genannt, ist eine mathematische Operation, die ihren Ursprung in der Signalverarbeitung hat. Die Faltung nimmt zwei Funktionen $f$ und $g$ und berechnet eine resultierende Funktion $h = (f * g)$. Die Definition einer Faltung ist \cite{convolution}:
+
+\[ (f*g)(x) = \int_{-\infty}^{-\infty} f(t) g(x-t) dt\]
+
+In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die Extraktion von Merkmalen aus Bildern ermöglicht. Die diskrete 2D-Faltung funktioniert, indem ein Kernel auf jede Position eines Bildes angewandt wird. Mathematisch ist sie wie folgt beschrieben:
+
+\[ I[x, y] = \sum_{i=0}^{x_k} \sum_{j=0}^{y_k} k[i, j] * I[x-i, y-j] \]
+
+\todo{Quelle für Formel}
+\todo{Visualisierung?}
+
+Dabei ist $I \in \mathbb{N}^2$ ein Eingabebild mit einem Kanal, $x$ und $y$ sind Positionen im Bild in $k \in \mathbb{N}^2$ ein Kernel der Größe $x_k \times y_k$.
+
+Diese allgemeine Formel lässt sich auf die Verwendung unter mehrerer Kanäle anwenden. Für eine Faltung eines Bildes mit $c_0$ Kanälen, einer Kernel-Größe von $k_x \times k_y$ und einer Ausgabe in $c_1$ Kanälen wird ein Kernel der Größe $ c_0 \times k_x \times k_y \times c_1$ erstellt. Dabei werden für jeden Pixel in jedem Kanal alle Eingabekanäle betrachtet und gefiltert.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Kantenerkennung}
+\label{sec:kantenerkennung}
+
+Nachdem die Prinzipien der Faltung bekannt sind, wird in diesem Abschnitt auf die konkrete Anwendung der Faltung in der Bildverarbeitung eingegangen.
+
+Anhängig von den Werten eines Kernels werden unterschiedliche Charakteristiken eines Bildes hervorgehoben. So können mit einem Kantenerkennungsfilter hochfrequente Bestandteile in einem Bild hervorgehoben werden während ein Bild mit mit einem Glättungsfilter weichgezeichnet wird und hochfrequente Anteile herausgefiltert werden. Der Sobel-Filter ist ein in der Computer Vision etablierter Filter zur robusten Kantenerkennung\cite{sobel}. Der Sobel-Filter kombiniert die Prinzipien der Glättung und Kantenerkennung, indem das Bild in einer Richtung geglättet wird und in der anderen eine Kantenerkennung durchgeführt wird. Die Kantenerkennung ist durch diesen Filter robust hinsichtlich Rauschen im Bild. Exemplarische Filter für Kantenerkennung und Weichzeichnung sowie ein Sobel-Filter sind in \autoref{fig:filter} dargestellt.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \matrix[every node/.style={draw, minimum size=0.75cm, anchor=center}, draw, matrix of nodes, nodes in empty cells]{
+                1 & 0 & -1 \\
+                1 & 0 & -1 \\
+                1 & 0 & -1 \\
+            };
+        \end{tikzpicture}
+        \caption{Horizontaler Kantenfilter}
+        \label{fig:kantenfilter}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \matrix[every node/.style={draw, minimum size=0.75cm, anchor=center}, draw, matrix of nodes, nodes in empty cells]{
+                1 & 2 & 1 \\
+                2 & 4 & 2 \\
+                1 & 2 & 1 \\
+            };
+        \end{tikzpicture}
+        \caption{Gaußscher Glättungsfilter}
+        \label{fig:glättungsfilter}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \matrix[every node/.style={draw, minimum size=0.75cm, anchor=center}, draw, matrix of nodes, nodes in empty cells]{
+                1 & 0 & -1 \\
+                2 & 0 & -2 \\
+                1 & 0 & -1 \\
+            };
+        \end{tikzpicture}
+        \caption{Horizontaler Sobel-Filter}
+        \label{fig:sobel}
+    \end{subfigure}
+    \caption{Unterschiedliche 2D-Kernel der Größe $3 \times 3$.}
+    \label{fig:filter}
+\end{figure}
+
+Filterung und Kantenerkennung werden in dieser Thesis ausgiebig genutzt. So wird in \autoref{sec:kanten} Kantenerkennung als erster Schritt der Normalisierung angewandt und Filterung generell in \autoref{cha:ki} als wichtiger Bestandteil von Schichten neuronaler Netze.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Harris Corner Detection}
+\label{sec:harris_corners}
+
+Die Harris Corner Detection ist ein Algorithmus, der 1988 von C. Harris und M. Stephens vorgestellt wurde, und ist ein etablierter Algorithmus in der Computer Vision \cite{harris_corners}. Ziel des Algorithmus ist es, Ecken in einem Eingabebild zu identifizieren und auszugeben. In dieser Sektion wird auf die grundlegende Arbeitsweise des Algorithmus eingegangen, um ein Verständnis seiner Arbeitsweise zu erlangen.
+
+Der Kerngedanke hinter der Harris Corner Detection basiert auf der Beobachtung, dass eine Ecke dadurch spezifiziert ist, dass sie der Endpunkt zweier aufeinandertreffender Kanten ist. Durch Kombination von Kanteninformationen und Thresholding werden Ecken in einem Bild identifiziert.
+
+Als erster Schritt der Harris Corner Detection wird das Bild mit Kantenerkennungsfiltern verarbeitet, die, wie in \autoref{sec:kantenerkennung} beschrieben, Kanten im Bild hervorheben. Diese Kantenerkennung erfolgt in horizontaler und vertikaler Richtung, woraus zwei Kantenreaktionen hervorgehen. Diese werden in ein Koordinatensystem übertragen, in dem die Magnitude der Reaktion festgehalten wird. Die Richtungen und Ausprägungen der Kanten bestimmen die Positionen in dem Koordinatensystem. Cluster an Punkten in diesem Koordinatensystem deuten auf eine Häufung ähnlicher Kanten hin.
+
+Bei einem Bildausschnitt ohne Kanten ist ein Cluster um den Ursprung zu erwarten, bei einem Bildausschnitt mit einer Kante ist ein weiterer Cluster zu erwarten. Sind mehrere Kanten in einem Bildausschnitt vorhanden, existieren mehrere Cluster, bei dem jeder Cluster durch eine Kante in einer bestimmten Richtung hervorgerufen wird. In dem Fall einer Ecke sind mehrere Cluster zu erwarten, die es zu identifizieren gilt. Die Identifikation basiert auf Flächenmomenten und dem Einpassen einer Ellipse an Daten. Die Details dieser Implementierung sind für einen Überblick nicht relevant; was in diesem Schritt wichtig ist, ist die Form und Größe der Ellipse, spezifisch ihre Hauptachse $\lambda_1$ und Nebenachse $\lambda_2$. Existieren keine Kanten in dem betrachteten Bildausschnitt, ist ein zentraler Cluster mit geringer Größe im Koordinatenursprung zu erwarten, $\lambda_1$ und $\lambda_2$ sind klein. Bei einer Kante sind zwei Cluster zu erwarten, die von einer Ellipse mit langer Haupt- und kurzer Nebenachse umfasst werden: $\lambda_1 \gg \lambda_2$ bzw. $\lambda_2 \gg \lambda_1$. Sind mehrere Kanten in unterschiedlichen Winkeln vorhanden, existieren mehrere Cluster, die sich durch eine große Ellipse umfassen lassen. Die Haupt- und Nebenachsen sind daher groß. Kantenreaktionen und resultierende Ellipsen sind in \autoref{fig:harris} visualisiert.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{imgs/cv/grundlagen/harris_flat.pdf}
+        \caption{Reaktion auf einen Bildausschnitt ohne Gradienten.}
+        \label{fig:harris_flat}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{imgs/cv/grundlagen/harris_edge.pdf}
+        \caption{Reaktion auf einen Bildausschnitt mit einer Kante.}
+        \label{fig:harris_edge}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{imgs/cv/grundlagen/harris_corner.pdf}
+        \caption{Reaktion auf einen Bildausschnitt mit einer Ecke.}
+        \label{fig:harris_corner}
+    \end{subfigure}
+    \caption{Visualisierung der Reaktionen von Kantenfiltern auf unterschiedliche Bildstrukturen und die Repräsentation ihrer Gradienten \cite{harris_visualization}. Die Haupt- und Nebenachsen sind in \autoref{fig:harris_flat} jeweils kurz, in \autoref{fig:harris_edge} ist die Hauptachse lang während die Nebenachse kurz ist und in \autoref{fig:harris_edge} sind sowohl Haupt- als auch Nebenachse lang.}
+    \label{fig:harris}
+\end{figure}
+
+$\lambda_1$ und $\lambda_2$ werden mit der folgenden Formel zu einem Wert $R$ zusammengefasst:
+\[ R = \lambda_1 \lambda_2 - k_{\in[0.04, 0.06]}(\lambda_1 + \lambda_2)^2 \]
+$k$ ist dabei ein empirisch bestimmter Wert zur Regulierung der Funktion. $R$ wird in Kombination mit Thresholding genutzt, um einen Punkt in einem Bild als Ecke zu klassifizieren.
+
+Bei der Klassifizierung von Bildpixeln kommt es dazu, dass Cluster von Pixeln als Ecken erkannt werden. Aus diesen Clustern wird mittels Non-Maximum-Suppression derjenige Pixel hervorgehoben, der die größte Antwort auf die Eckenerkennung liefert. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf Null gesetzt.
+
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Hough-Transformation}
+\label{sec:hough_transformation}
+
+Die Hough-Transformation, veröffentlicht 1962 von Paul Hough, ist ein Algorithmus zur Identifizierung von simplen Strukturen in Kantenbildern \cite{hough_transform}. In diesem Abschnitt wird die Erkennung von Linien mit der Hough-Transformation beschrieben, wie sie in \autoref{sec:linienerkennung} verwendet wird.
+
+Hauptaspekt des Algorithmus ist die Transformation von Punkten im Image-Space zu Linien im Parameter-Space. Der Image-Space ist das Koordinatensystem des Bildes mit den Achsen $x$ und $y$; der Parameter-Space ist ein Koordinatensystem mit den Achsen $\rho$ und $\theta$. Linien im Image-Space sind mathematisch beschrieben als Geraden der polaren Form:
+\[ 0 = x \sin{\theta} - y \cos{\theta} + \rho \]
+
+Dabei sind $\rho$ und $\theta$ Winkel und Abstand einer Linie zum Koordinatenursprung, wie in \autoref{sec:polarlinien} eingeführt. Ein Punkt $(x, y)$ im Image-Space ist im Parameter-Space als Sinuswelle dargestellt, die alle Linien beschreibt, die durch den Punkt $(x, y)$ im Image-Space verlaufen. Ein Punkt $(\rho, \theta)$ im Parameter-Space beschreibt eine Linie in Image-Space.
+
+Input der Hough-Transformation ist ein durch Thresholding vorverarbeitetes Bild, in dem typischerweise Kanten oder Ecken extrahiert wurden. Die extrahierten Pixel werden im Parameter-Space akkumuliert, in dem sie sich in Form von Sinuswellen überschneiden. Liegen demnach mehrere Punkte im Image-Space in einer Linie, so überschneiden sich ihre korrespondieren Sinus-Darstellungen im Parameter-Space in einem Punkt. Dieser Punkt liegt an den Koordinaten $(\rho, \theta)$ und beschreibt die Parameter der Geraden, die durch die Punkte verläuft. Das Identifizieren von Peaks im Parameter-Space führt analog zur Identifizierung von Linien im Image-Space.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Transformations-Matrizen}
+\label{sec:transformations_matrizen}
+
+.
+
+\subsubsection{Affine Transformations-Matrizen}
+\label{sec:affine_transformations_matrizen}
+
+.
+
+\subsubsection{Projektive Transformations-Matrizen}
+\label{sec:projektive_transformations_matrizen}
+
+.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Logpolare Entzerrung}
+\label{sec:logpolare_entzerrung}
+
+.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Farbräume}
+\label{sec:farbräume}
+
+.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Structural Similarity (SSIM)}
+\label{sec:ssim}
+
+.
+
+

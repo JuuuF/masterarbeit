@@ -54,14 +54,15 @@ Die Verwendung der Parameter ist je nach Objekt unterschiedlich; während sie in
 \subsubsection{Hauptobjekte}
 \label{sec:impl:daten:blender:hauptobjekte}
 
-Als \textit{Hauptobjekte} werden diejenigen Objekte in der Szene beschrieben, die zentral für die Datenerstellung sind. Namentlich sind dies die Dartscheibe, die Dartpfeile und die Kamera, gepaart mit der Komposition.
+% Als \textit{Hauptobjekte} werden diejenigen Objekte in der Szene beschrieben, die zentral für die Datenerstellung sind. Namentlich sind dies die Dartscheibe, die Dartpfeile und die Kamera, gepaart mit der Komposition.
 
 \paragraph{Dartscheibe}
 \label{sec:impl:daten:blender:hauptobjekte:dartscheibe}
 
-Die Dartscheibe ist das komplexeste Objekt der Szene, da ihr Erscheinungsbild als zentrales Element der Bilder ausschlaggebend für die Komplexität und Variabilität der Daten ist. Aus diesem Grund ist sie mit einer Vielzahl an Parametern und Eigenschaften versehen. Sie ist gemäß der Richtlinien \quotes{Playing and Tournament Rules} der \ac{WDF} \cite{wdf-rules} erstellt. Dieses Regelwerk legt die Dimensionen und Abstände der Felder sowie etwaige Toleranzen fest. Auf dieses Regelwerk wurde sich in dieser Thesis bei der Arbeit mit Dartscheiben orientiert, Abweichungen durch esoterische Maße und Erscheinungsbilder von Dartscheiben, die nicht durch dieses Regelwerk gestützt sind, werden für diese Arbeit nicht in Betracht gezogen. Die Parametrisierung der Scheibe ist in zwei Bereiche einzuteilen: Geometrie und Textur.
+% Die Dartscheibe ist das komplexeste Objekt der Szene, da ihr Erscheinungsbild als zentrales Element der Bilder ausschlaggebend für die Komplexität und Variabilität der Daten ist. Aus diesem Grund ist sie mit einer Vielzahl an Parametern und Eigenschaften versehen. Sie ist gemäß der Richtlinien \quotes{Playing and Tournament Rules} der \ac{WDF} \cite{wdf-rules} erstellt. Dieses Regelwerk legt die Dimensionen und Abstände der Felder sowie etwaige Toleranzen fest. Auf dieses Regelwerk wurde sich in dieser Thesis bei der Arbeit mit Dartscheiben orientiert, Abweichungen durch esoterische Maße und Erscheinungsbilder von Dartscheiben, die nicht durch dieses Regelwerk gestützt sind, werden für diese Arbeit nicht in Betracht gezogen. Die Parametrisierung der Scheibe ist in zwei Bereiche einzuteilen: Geometrie und Textur.
 
-Die Geometrie der Dartscheibe ist durch die Regeln der \ac{WDF} zu großen Teilen vorgegeben. Um Alter und Abnutzung der Dartscheibe zu simulieren, wird der Deformationsgrad der Spinne\footnote{Als Spinne werden die Abgrenzungen zwischen den Feldern bezeichnet.} beeinflusst. Dazu wird der Parameter $t_S$ als Seed für eine 2D-Verschiebung der Mesh-Vertices anhand einer zusammenhängenden Noise-Textur verwendet und diese wird mit dem Parameter $a$ in ihrer Stärke moduliert. Dadurch weisen Dartscheiben mit einem hohen Altersfaktor $a$ eine größere Deformierung der Spinne auf während Dartscheiben mit einem geringen Wert von $a$ geringe bis keine Deformierung aufweisen. Ebenfalls von dem Altersfaktor beeinflusst wird die Art der Spinne: Während Spinnen neuer Dartscheiben aus dünnen Drähten bestehen, ist der Durchmesser dieser bei alten Dartscheiben größer und die Wahrscheinlichkeit steigt, dass die Spinne mit weiteren Drähten zur Befestigung der Spinne auf der Scheibe versehen ist.
+% Die Geometrie der Dartscheibe ist durch die Regeln der \ac{WDF} zu großen Teilen vorgegeben. Um Alter und Abnutzung der Dartscheibe zu simulieren, wird der Deformationsgrad der Spinne\footnote{Als Spinne werden die Abgrenzungen zwischen den Feldern bezeichnet.} beeinflusst.
+Dazu wird der Parameter $t_S$ als Seed für eine 2D-Verschiebung der Mesh-Vertices anhand einer zusammenhängenden Noise-Textur verwendet und diese wird mit dem Parameter $a$ in ihrer Stärke moduliert. Dadurch weisen Dartscheiben mit einem hohen Altersfaktor $a$ eine größere Deformierung der Spinne auf während Dartscheiben mit einem geringen Wert von $a$ geringe bis keine Deformierung aufweisen. Ebenfalls von dem Altersfaktor beeinflusst wird die Art der Spinne: Während Spinnen neuer Dartscheiben aus dünnen Drähten bestehen, ist der Durchmesser dieser bei alten Dartscheiben größer und die Wahrscheinlichkeit steigt, dass die Spinne mit weiteren Drähten zur Befestigung der Spinne auf der Scheibe versehen ist.
 
 Der Großteil der variablen Parameter der Dartscheibe liegt jedoch nicht in der Geometrie, sondern in dem Material der Dartscheibe. Anhand unterschiedlicher Zufallsverteilungen, gestützt durch $t_S$ als Seed, werden die Farben der Felder, Abnutzung der Scheibe und Anzahl der Einstichlöcher im Sisal bestimmt.
 Um realistische Materialien zu simulieren, werden unterschiedliche Imperfektionen in das Material eingearbeitet. Diese lassen sich in zwei Kategorien einteilen: Reine Farbänderungen und Farbänderungen, die eine Änderung der Normalen mit sich ziehen.
@@ -71,33 +72,7 @@ Die zweite Kategorie der Imperfektionen sind Risse und Einstichstellen im Sisal.
 
 Mit zunehmendem Altersfaktor $a$ nimmt weiterhin die Farbsättigung der schwarzen und weißen Felder zu, wohingegen rote und grüne Felder an Sättigung verlieren und dunkler werden. Diese Anpassung der Feldfarben simuliert das Altern des Sisals der Dartscheiben, basiert auf Beobachtungen neuer und alter Dartscheiben. Darüber hinaus weisen alte Dartscheiben häufiger abgenutzte Zahlenringe auf, die sich durch Rost und Verfärbungen auszeichnen.
 
-Alle diese Variabilitäten in den Dartscheiben sorgen für unterschiedliche Beschaffenheiten von Dartscheiben, die zufällig anhand eines Seeds generiert werden. Beispiele für simulierte Dartscheiben sind in \autoref{img:dartscheiben} gegeben. In der Abbildung sind drei Dartscheiben mit unterschiedlichen Altersfaktoren $a$ gegeben: \autoref{img:dartscheibe_neu} als neue Dartscheibe mit $a=0$, \autoref{img:dartscheibe_mittel} als Dartscheibe mit mittlerem Alter $a\approx0.5$ und \autoref{img:dartscheibe_alt} mit $a=1$.
 
-\begin{figure}
-    \centering
-    \begin{subfigure}{0.3\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{imgs/dartscheibe_a=0.png}
-        \caption{$a=0$}
-        \label{img:dartscheibe_neu}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.3\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{imgs/dartscheibe_a=0.5.png}
-        \caption{$a\approx0.5$}
-        \label{img:dartscheibe_mittel}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.3\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{imgs/dartscheibe_a=1.png}
-        \caption{$a=1.0$}
-        \label{img:dartscheibe_alt}
-    \end{subfigure}
-    \caption{Dartscheiben mit unterschiedlichen Altersfaktoren.}
-    \label{img:dartscheiben}
-\end{figure}
 
 \paragraph{Dartpfeile}
 \label{sec:impl:daten:blender:hauptobjekte:dartpfeile}
