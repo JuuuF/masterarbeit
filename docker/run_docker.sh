@@ -16,7 +16,7 @@ DOCKER_ARGS+=("--gpus=device=1")
 
 # Volumes
 DOCKER_ARGS+=("-v" "$HOME/masterarbeit:/masterarbeit")
-DOCKER_ARGS+=("-v" "/data1/sreichhuber/justin/:/masterarbeit/data/cache/")
+DOCKER_ARGS+=("-v" "/datahome/jfuerstenwerth/:/masterarbeit/data/cache/")
 
 docker run "${DOCKER_ARGS[@]}" jf/masterarbeit
 
