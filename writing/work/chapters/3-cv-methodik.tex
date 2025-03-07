@@ -48,7 +48,7 @@ Um die gewünschten Charakteristiken hervorzuheben, wird das Eingabebild vor der
 
 Das gefilterte Kantenbild der Dartscheibe enthält aufgrund der Verwendung eines großen Kernels redundante Kanteninformationen durch mehrere Pixel breite Kanten. Diese breiten Kanten werden mittels Skelettierung auf ihre zentrale Kante reduziert \cite{skeletonization}. Bei der Skelettierung werden die existierenden Kanten iterativ verringert, bis eine zentrale Kante erzielt wurde. Dazu wird das Konzept der Erosion verwendet, bei Cluster von Pixeln in Binärbildern entlang ihrer Kontur verkleinert werden. Bildlich lässt sich das veranschaulichen mit einer in Wasser liegenden Insel, die durch Erosion an Höhe über dem Meeresspiegel verliert und sich dadurch von außen nach innen verkleinert. Nach der Skelettierung des Kantenbildes verbleibt eine minimale Darstellung der extrahierten Kanten, in der diese auf ihre wesentlichen Züge heruntergebrochen wurden. Der verbliebene Informationsgehalt des Bildes wurde dadurch auf das für die kommenden Schritte wesentliche reduziert.
 
-Der geschlossene Prozess der Kantenerkennung ist in \autoref{img:kantenerkennung} dargestellt. Das verwendete Bild stammt aus dem für DeepDarts verwendeten Datensatz und wurde ebenfalls im Paper des Systems zur Veranschaulichung von dessen Arbeitsweise genutzt. Im Sinne der Vergleichbarkeit der Systeme wurde sich daher dazu entschieden, die Arbeitsweise dieses Algorithmus anhand des selben Bildes zu veranschaulichen.
+Der Prozess der Kantenerkennung ist in \autoref{img:kantenerkennung} dargestellt. Das verwendete Bild stammt aus dem für DeepDarts verwendeten Datensatz und wurde ebenfalls im Paper des Systems zur Veranschaulichung von dessen Arbeitsweise genutzt. Im Sinne der Vergleichbarkeit der Systeme wurde sich daher dazu entschieden, die Arbeitsweise dieses Algorithmus anhand des selben Bildes zu veranschaulichen.
 
 \begin{figure}
     \centering
@@ -61,31 +61,77 @@ Der geschlossene Prozess der Kantenerkennung ist in \autoref{img:kantenerkennung
 \subsection{Linienverarbeitung}
 \label{sec:linien}
 
-.
+An diesem Punkt in der CV-Pipeline sind relevante Kanteninformationen aus dem Bild extrahiert und als minimale binäre Maske vorhanden. Der nächste Schritt zur Normalisierung der Dartscheibe ist das Identifizieren von Linien in der Kantenmaske. Ziel der Linienverarbeitung ist es, eine mathematische Darstellung der radial angeordneten Kanten zu erlangen, die die Felder der Dartscheibe voneinander trennen. Über diese Darstellung wird mittels Transformationen eine erste Stufe der Entzerrung vorgenommen, indem die Winkel dieser Linien aneinander angeglichen werden.
+
+Die Schritte der Linienverarbeitung sind in \autoref{img:linienverarbeitung} dargestellt und auf die jeweiligen Schritte wird in den folgenden Unterabschnitten genauer eingegangen.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{imgs/cv/methodik/lines.pdf}
+    \caption{Veranschaulichung der Schritte der Linienverarbeitung.}
+    \label{img:linienverarbeitung}
+\end{figure}
 
 \subsubsection{Linienerkennung}
 \label{sec:linienerkennung}
 
-.
+Um die Dartscheibe anhand von Linien zu Entzerren, müssen im ersten Schritt Linien identifiziert werden. Für diesen Prozess wird die Hough-Transformation genutzt. Diese ermöglicht die Identifizierung von Liniensegmenten in Bildern und gibt diese als Liste von Start- und Endpunkten zurück: $L_\text{points} = \{(p_{i, 0}, p_{i, 1})\ |\ i \in [0, n]\}$, wobei $n$ die Anzahl der gefundenen Liniensegmente ist. In \autoref{img:linienverarbeitung} (1) werden erkannte Linien anhand eines Beispielbildes dargestellt. Jeder Linie wurde zur Visualisierung eine zufällige Farbe zugeordnet. Zu erkennen ist, dass neben den zu erwartenden langen Linien auch viele sehr kurze Linien erkannt werden. Der Grund für eine Häufung vieler kurzer Linien liegt in der diskretisierten Darstellung von Pixeln und Ungenauigkeiten durch Verwackelungen, ungerade Feldgrenzen oder Verzerrungen der Kameralinse. Bei dem Prozess der Linienerkennung kann jedenfalls nicht davon ausgegangen werden, dass Linien exakt erkannt werden. Trotz dessen tragen zu kurze Linien mit hoher Wahrscheinlichkeit wenig relevante Informationen, sodass Linien, die kürzer als 5 Pixel sind, herausgefiltert werden.
+
+Aus den Start- und Endpunkten der Liniensegmente lassen sich unter Verwendung der in \autoref{sec:polarlinien} eingeführten Gleichungen die polaren Darstellungen $L_\text{polar} = \{(\rho_i, \theta_i)\ |\ i \in [0, n]\}$ errechnen mit $\rho_i \in [0,\ \text{diag}(w, h)]$ und $\theta \in [0\degree, 180\degree]$. Wie bereits bei der Einführung der Gleichung erwähnt, sind in dieser Darstellungsform keine Informationen zu der Länge der Linie enthalten. Dieser Aspekt wird in dem kommenden Unterabschnitt zum Vorteil genutzt.
 
 \subsubsection{Mittelpunktextraktion}
 \label{sec:mittelpunktextraktion}
 
-.
+Anhand der polaren Gleichungen $L_\text{polar}$ wird in diesem Schritt der Mittelpunkt der Dartscheibe ermittelt. Der Mittelpunkt zeichnet sich dadurch aus, dass alle Linien, die zwischen Dartfeldern liegen, folgend als Feldlinien bezeichnet, auf diesen gerichtet sind. Unter der Annahme, dass alle Feldlinien in den erkannten Gleichungen vorhanden sind, überschneidet sich eine Vielzahl von Linien im Mittelpunkt der Dartscheibe. Insbesondere ist bekannt, dass diese Linien in jeweils unterschiedlichen Winkeln auftreten, da die Felder uniform radial um den Mittelpunkt angeordnet sind.
+
+Unter Berücksichtigung dieser Beobachtung werden die Linien $L_\text{polar}$ anhand ihrer Winkel $\theta_i$ in 10 uniforme Bins der Größe $18\degree$ einsortiert. Für jeden dieser Bins wird eine binäre Maske erstellt, auf der die jeweiligen Polarlinien gezeichnet werden. Diese Masken werden anschließend überlagert und weichgezeichnet, um den Einfluss von Ungenauigkeiten zu minimieren. In diesem resultierenden Bild zeichnet sich der Punkt mit dem höchsten Wert dadurch aus, dass durch ihn die meisten Linien verschiedener Richtungen verlaufen. Diese Eigenschaft ist durch die Art der Filterung dadurch verfeinert, dass keine beliebigen Kanten, sondern gezielt Kanten mit bestimmten Eigenschaften als Grundlage für die Linien dienten. Durch diese Wahl an Eigenschaften ist mit hoher Wahrscheinlichkeit davon auszugehen, dass der Punkt mit dem größten Wert in resultierenden Bild der Mittelpunkt der Dartscheibe $(c_x, c_y)$ gefunden wurde.
+
+Anzumerken ist an dieser Stelle, dass die Winkel der Feldlinien nicht sicher auf 10 uniforme Bins verteilt werden können. Hervorgerufen werden kann dies beispielsweise durch starke perspektivische Verzerrungen, sodass die Winkel der Feldlinien von den zu erwartenden Winkeln abweichen und unterschiedliche Feldlinien in gleiche Bins sortiert werden können. Da bei der Ermittlung des Mittelpunktes jedoch nach einem globalen Maximum statt einem bestimmten Zahlenwert gesucht wird, ist ein gewisser Grad an Robustheit gegen nicht oder nicht korrekt gefüllte Bins gegeben.
 
 \subsubsection{Linienfilterung}
 \label{sec:linienfilterung}
 
-.
+Die Mengen der Linien $L_\text{points}$ und $L_\text{polar}$ beinhalten neben den relevanten Feldlinien noch immer Linien enthalten, die nicht relevant für die Geometrie der Dartscheibe in dem Bild sind. Diese werden in diesem Schritt unter Verwendung des Mittelpunktes der Dartscheibe herausgefiltert. Wie bereits erwähnt verlaufen die polaren Darstellungen der Feldlinien durch den Mittelpunkt der Dartscheibe bzw. aufgrund zu erwartender Ungenauigkeiten nahe an diesem vorbei.
+\todo{Das ist kein schöner Satz.}
+
+Die minimale Lotfuß-Distanz zwischen einem Punkt $(\hat{x}, \hat{y})$ und einer Linie in impliziter Form kann bestimmt werden durch folgende Gleichung \cite{point_line_distance}:
+\begin{align*}
+    \text{dist}(lx + my + n = 0, (\hat{x}, \hat{y})) & = \frac{| l \hat{x} + m \hat{y} + n|}{\sqrt{l^2+n^2}}
+\end{align*}
+
+Die implizite Form der Geraden lässt sich mit folgenden Gleichungen aus der Polarform berechnen:
+\begin{align*}
+    \rho          & = x \cos{\theta} + y \sin{\theta}        \\
+    \iff 0             & = x \cos{\theta} + y \sin{\theta} - \rho \\
+    \Rightarrow l & = \cos{\theta}                           \\
+    \Rightarrow m & = \sin{\theta}                           \\
+    \Rightarrow n & = -\rho
+\end{align*}
+
+Durch Einsetzen dieser ermittelten Variablen in die Distanzberechnung folgt:
+\begin{align*}
+    \text{dist}(lx + my + n = 0, (\hat{x}, \hat{y})) & = \frac{| l \hat{x} + m \hat{y} + n|}{\sqrt{l^2+n^2}}                                                   \\
+                                             & = \frac{| \cos{\theta} \hat{x} + \sin{\theta} \hat{y} - \rho |}{\sqrt{\cos^2{\theta} + \sin^2{\theta}}} \\
+                                             & = | \cos{\theta} \hat{x} + \sin{\theta} \hat{y} - \rho |
+\end{align*}
+
+Mit dieser Gleichung lässt sich für jede ermittelte Polarlinie $(\rho_i, \theta_i) \in L_\text{polar}$ der Abstand zum Mittelpunkt der Dartscheibe $(c_x, c_y)$ ermitteln. Anhand dieses Abstands werden die Linien gefiltert, sodass Linien, die mehr als 10 Pixel von dem Mittelpunkt entfernt verlaufen, herausgefiltert werden.
+
+Auf diese Weise werden diejenigen Linien ermittelt, die auf den Mittelpunkt der Dartscheibe gerichtet sind und voraussichtlich Teil von Feldlinien sind. Es kann an diesem Punkt jedoch nicht sicher ausgeschlossen werden, dass sich keine Outlier in den gefilterten Linien befinden.
+
+\subsubsection{Feldlinien-Brechnung}
+\label{sec:feldlinien_berechnung}
+
+\todo{Fancy Graph hier erklären.}
+
+\subsubsection{Winkelentzerrung}
+\label{sec:winkelentzerrung}
+
+\todo{Entzerrung hier erklären.}
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Orientierung}
 \label{sec:orientierung}
-
-.
-
-\subsubsection{Winkelentzerrung}
-\label{sec:winkelentzerrung}
 
 .
 
