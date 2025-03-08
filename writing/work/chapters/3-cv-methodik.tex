@@ -30,7 +30,7 @@ Nachdem die Eingabebilder vorverarbeitet sind, werden die wichtigen Kanten im Bi
 \subsubsection{Filterung}
 \label{sec:filterung}
 
-Für eine universelle Extraktion von Kanten in Bildern existieren Algorithmen und Filter, wie sie bereits in \autoref{sec:kantenerkennung} beschrieben wurden. Diese Filter sind für allgemeine Fälle geeignet, in denen das Ziel eine generelle Kantenerkennung ist oder wenig Annahmen über die Kanteninformationen in Eingabebildern getroffen werden können. In dem hier betrachteten Fall liegt der Fokus der Kantenerkennung nicht auf generischen Kanten im Bild, sondern spezifisch auf den Kanten zwischen den Flächen der Dartscheibe. Diese sind charakteristisch für die Dartscheibe und durch ihr festgelegtes Design vorgegeben. Durch die Erkennung dieser Kanten wird darauf abgezielt, den Mittelpunkt und die grobe Orientierung der Dartscheibe zu ermitteln. 
+Für eine universelle Extraktion von Kanten in Bildern existieren Algorithmen und Filter, wie sie bereits in \autoref{sec:kantenerkennung} beschrieben wurden. Diese Filter sind für allgemeine Fälle geeignet, in denen das Ziel eine generelle Kantenerkennung ist oder wenig Annahmen über die Kanteninformationen in Eingabebildern getroffen werden können. In dem hier betrachteten Fall liegt der Fokus der Kantenerkennung nicht auf generischen Kanten im Bild, sondern spezifisch auf den Kanten zwischen den Flächen der Dartscheibe. Diese sind charakteristisch für die Dartscheibe und durch ihr festgelegtes Design vorgegeben. Durch die Erkennung dieser Kanten wird darauf abgezielt, den Mittelpunkt und die grobe Orientierung der Dartscheibe zu ermitteln.
 
 Geometrie und Farbgebung der Felder einer Dartscheibe sorgen für starke Gradienten der Pixelintensitäten entlang der Kanten zwischen benachbarten Feldern. Zudem ist bekannt, dass diese Kanten geradlinig verlaufen und weitgehend uniforme Bereiche im Bild voneinander trennen, in denen zudem wenig Kanten erwartet werden. Auf Grundlage dieser Beobachtungen wurde sich für einen untypisch großen Sobel-Kernel mit einer Größe von $15 \times 15$ Pixeln entschieden, dargestellt in \autoref{img:kernel}. Dieser Kernel sorgt für eine gezielte Erkennung der geschriebenen Eigenschaften in Bildern.
 
@@ -53,7 +53,7 @@ Der Prozess der Kantenerkennung ist in \autoref{img:kantenerkennung} dargestellt
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/cv/methodik/edges.pdf}
-    \caption{Schritte der Kantenverarbeitung anhand eines Bildes des DeepDarts-Datensatzes \cite{deepdarts-data}.}
+    \caption{Schritte der Kantenverarbeitung. (1) Input-Bild aus dem DeepDarts-Datensatz \cite{deepdarts-data}. (2) Umwandlung des Bildes in Graustufen. (3) Kontrasterhöhung des Bildes zur Hervorhebung der Unterschiede schwarzer und weißer Felder. (4) Weichzeichnung zur Verminderung von Störungen. (5) Filterung durch Sobel-Filter, gefolgt von Thresholding. (6) Skelettiertes Kantenbild.}
     \label{img:kantenerkennung}
 \end{figure}
 
@@ -68,7 +68,7 @@ Die Schritte der Linienverarbeitung sind in \autoref{img:linienverarbeitung} dar
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/cv/methodik/lines.pdf}
-    \caption{Veranschaulichung der Schritte der Linienverarbeitung.}
+    \caption{Veranschaulichung der Schritte der Linienverarbeitung. (1) Identifizierung von Linien im Kantenbild. Jede Linie ist zur Visualisierung in einer zufälligen Farbe dargestellt. (2) Extraktion des Mittelpunktes anhand unterschiedlicher Linienwinkel. Jede Klasse von Winkeln ist in einer zufälligen Farbe dargestellt. (3) Filterung der Linien anhand des Mittelpunktes. Verbleibende Linien sind grün hervorgehoben; Feldlinienwinkel $\phi_i$ in blau. (4) Akkumulation der Winkel von Pixeln in gefilterten Linien. Braune Balken sind ungefilterte, blaue Balken gefilterte Werte. (5) Entzerrte Feldlinien. Alle Winkel $\phi_i=18\degree$ sind weiß hervorgehoben.}
     \label{img:linienverarbeitung}
 \end{figure}
 
@@ -82,52 +82,66 @@ Aus den Start- und Endpunkten der Liniensegmente lassen sich unter Verwendung de
 \subsubsection{Mittelpunktextraktion}
 \label{sec:mittelpunktextraktion}
 
-Anhand der polaren Gleichungen $L_\text{polar}$ wird in diesem Schritt der Mittelpunkt der Dartscheibe ermittelt. Der Mittelpunkt zeichnet sich dadurch aus, dass alle Linien, die zwischen Dartfeldern liegen, folgend als Feldlinien bezeichnet, auf diesen gerichtet sind. Unter der Annahme, dass alle Feldlinien in den erkannten Gleichungen vorhanden sind, überschneidet sich eine Vielzahl von Linien im Mittelpunkt der Dartscheibe. Insbesondere ist bekannt, dass diese Linien in jeweils unterschiedlichen Winkeln auftreten, da die Felder uniform radial um den Mittelpunkt angeordnet sind.
+Anhand der polaren Gleichungen $L_\text{polar}$ wird in diesem Schritt der Mittelpunkt der Dartscheibe ermittelt. Der Mittelpunkt zeichnet sich dadurch aus, dass alle Linien, die zwischen Dartfeldern liegen, folgend als Feldlinien bezeichnet, auf diesen gerichtet sind. Unter der Annahme, dass alle Feldlinien in $L_\text{polar}$ vorhanden sind, überschneiden sich eine Vielzahl dieser Linien im Mittelpunkt der Dartscheibe. Insbesondere ist bekannt, dass diese Linien in jeweils unterschiedlichen Winkeln auftreten, deren grobe Werte bekannt sind.
 
-Unter Berücksichtigung dieser Beobachtung werden die Linien $L_\text{polar}$ anhand ihrer Winkel $\theta_i$ in 10 uniforme Bins der Größe $18\degree$ einsortiert. Für jeden dieser Bins wird eine binäre Maske erstellt, auf der die jeweiligen Polarlinien gezeichnet werden. Diese Masken werden anschließend überlagert und weichgezeichnet, um den Einfluss von Ungenauigkeiten zu minimieren. In diesem resultierenden Bild zeichnet sich der Punkt mit dem höchsten Wert dadurch aus, dass durch ihn die meisten Linien verschiedener Richtungen verlaufen. Diese Eigenschaft ist durch die Art der Filterung dadurch verfeinert, dass keine beliebigen Kanten, sondern gezielt Kanten mit bestimmten Eigenschaften als Grundlage für die Linien dienten. Durch diese Wahl an Eigenschaften ist mit hoher Wahrscheinlichkeit davon auszugehen, dass der Punkt mit dem größten Wert in resultierenden Bild der Mittelpunkt der Dartscheibe $(c_x, c_y)$ gefunden wurde.
+Unter Berücksichtigung dieser Beobachtung geschieht ein Billing der Linien $L_\text{polar}$ anhand ihrer Winkel $\theta_i$ in $b=10$ uniforme Bins $B$ der Größe $\frac{180\degree}{b}=18\degree$ mit den Intervallen $ B_i = [i \times \frac{180\degree}{b}, (i+1) \times \frac{180\degree}{b})$. Für jeden dieser Bins wird eine binäre Maske erstellt, auf der die jeweiligen Polarlinien mit einheitlicher Intensität gezeichnet werden. Diese Masken werden anschließend überlagert und weichgezeichnet, um den Einfluss von Ungenauigkeiten zu minimieren. In dem resultierenden Bild zeichnet sich der Punkt $P_\text{max} = (x_\text{max}, y_\text{max})$ mit dem höchsten Wert dadurch aus, dass durch ihn die meisten Linien verschiedener Richtungen verlaufen. Diese Eigenschaft ist durch die Art der Filterung dadurch verfeinert, dass statt beliebiger Kanten gezielt Kanten mit bestimmten Eigenschaften als Grundlage für die Linien dienen. Durch diese Wahl an Eigenschaften ist mit hoher Wahrscheinlichkeit davon auszugehen, dass mit dem Punkt $P_\text{max}$ der Mittelpunkt der Dartscheibe $M=(m_x, m_y)$ identifiziert wurde.
 
-Anzumerken ist an dieser Stelle, dass die Winkel der Feldlinien nicht sicher auf 10 uniforme Bins verteilt werden können. Hervorgerufen werden kann dies beispielsweise durch starke perspektivische Verzerrungen, sodass die Winkel der Feldlinien von den zu erwartenden Winkeln abweichen und unterschiedliche Feldlinien in gleiche Bins sortiert werden können. Da bei der Ermittlung des Mittelpunktes jedoch nach einem globalen Maximum statt einem bestimmten Zahlenwert gesucht wird, ist ein gewisser Grad an Robustheit gegen nicht oder nicht korrekt gefüllte Bins gegeben.
+Hinsichtlich der Robustheit dieses Algorithmus ist der Fall hervorzuheben, dass Feldlinien durch u.\,a. perspektivische Verzerrungen oder fehlerhafte Kanten- und Linienerkennung möglicherweise von den zu erwartenden Winkelintervallen abweichen können und nicht in den ihnen zugewiesenen Bins eingeordnet werden. Es kann dadurch zur Einordnung mehrerer Feldlinien in gleiche Bins und folglich dem Auslassen von Bins führen. Da bei der Ermittlung des Mittelpunktes jedoch nach einem globalen Maximum statt einem bestimmten Zahlenwert gesucht wird, ist ein gewisser Grad an Robustheit gegen nicht oder nicht korrekt gefüllte Bins gegeben.
+
+Visualisiert ist die Extraktion des Mittelpunkts in \autoref{img:linienverarbeitung} (2). Linien gleicher Bins wurden in der Visualisierung mit gleichen Farben dargestellt. Zu erkennen ist ein Highlight im Bulls Eye der Dartscheibe, in der sich die Linien der unterschiedlichen Bins überschneiden. Dieses Highlight ist der Mittelpunkt der Dartscheibe.
+
+Eine Untersuchung zur Änderung der Robustheit durch Variation der Anzahl an Bins bleibt aus, da die Identifizierung des Mittelpunktes mit 10 Bins in den durchgeführten Tests auf Bildern unterschiedlicher Quellen zuverlässig und erfolgreich war.
+\todo{Den Teil evtl. in Diskussion}
 
 \subsubsection{Linienfilterung}
 \label{sec:linienfilterung}
 
-Die Mengen der Linien $L_\text{points}$ und $L_\text{polar}$ beinhalten neben den relevanten Feldlinien noch immer Linien enthalten, die nicht relevant für die Geometrie der Dartscheibe in dem Bild sind. Diese werden in diesem Schritt unter Verwendung des Mittelpunktes der Dartscheibe herausgefiltert. Wie bereits erwähnt verlaufen die polaren Darstellungen der Feldlinien durch den Mittelpunkt der Dartscheibe bzw. aufgrund zu erwartender Ungenauigkeiten nahe an diesem vorbei.
-\todo{Das ist kein schöner Satz.}
+Die Mengen der Linien $L_\text{points}$ und $L_\text{polar}$ umfassen neben den für die Entzerrung relevanten Feldlinien weitere Linien, die nicht relevant für die Geometrie der Dartscheibe in dem Bild sind. Diese werden in diesem Schritt unter Verwendung des Mittelpunktes der Dartscheibe herausgefiltert. Zur Differenzierung zwischen möglichen Feldlinien und Linien, die mit Sicherheit keine Feldlinien sind, wird die Lotfuß-Distanz der Polarlinien zum Mittelpunkt genutzt. Ist eine Linie nicht auf den Mittelpunkt gerichtet, ist sie mit Sicherheit keine Feldlinie.
 
-Die minimale Lotfuß-Distanz zwischen einem Punkt $(\hat{x}, \hat{y})$ und einer Linie in impliziter Form kann bestimmt werden durch folgende Gleichung \cite{point_line_distance}:
+Die minimale Lotfuß-Distanz zwischen einem Punkt $(\hat{x}, \hat{y})$ und einer Linie in impliziter Form ist definiert durch \cite{point_line_distance}:
 \begin{align*}
-    \text{dist}(lx + my + n = 0, (\hat{x}, \hat{y})) & = \frac{| l \hat{x} + m \hat{y} + n|}{\sqrt{l^2+n^2}}
+    \text{dist}(ax + by + c = 0, (\hat{x}, \hat{y})) & = \frac{| a \hat{x} + b \hat{y} + c|}{\sqrt{a^2+c^2}}
 \end{align*}
 
 Die implizite Form der Geraden lässt sich mit folgenden Gleichungen aus der Polarform berechnen:
 \begin{align*}
     \rho          & = x \cos{\theta} + y \sin{\theta}        \\
-    \iff 0             & = x \cos{\theta} + y \sin{\theta} - \rho \\
-    \Rightarrow l & = \cos{\theta}                           \\
-    \Rightarrow m & = \sin{\theta}                           \\
-    \Rightarrow n & = -\rho
+    \iff 0        & = x \cos{\theta} + y \sin{\theta} - \rho \\
+    \Rightarrow a & = \cos{\theta}                           \\
+    \Rightarrow b & = \sin{\theta}                           \\
+    \Rightarrow c & = -\rho
 \end{align*}
 
 Durch Einsetzen dieser ermittelten Variablen in die Distanzberechnung folgt:
 \begin{align*}
-    \text{dist}(lx + my + n = 0, (\hat{x}, \hat{y})) & = \frac{| l \hat{x} + m \hat{y} + n|}{\sqrt{l^2+n^2}}                                                   \\
-                                             & = \frac{| \cos{\theta} \hat{x} + \sin{\theta} \hat{y} - \rho |}{\sqrt{\cos^2{\theta} + \sin^2{\theta}}} \\
-                                             & = | \cos{\theta} \hat{x} + \sin{\theta} \hat{y} - \rho |
+    \text{dist}(ax + by + c = 0, (\hat{x}, \hat{y})) & = \frac{| a \hat{x} + b \hat{y} + c|}{\sqrt{a^2+c^2}}                                                   \\
+                                                     & = \frac{| \cos{\theta} \hat{x} + \sin{\theta} \hat{y} - \rho |}{\sqrt{\cos^2{\theta} + \sin^2{\theta}}} \\
+                                                     & = | \cos{\theta} \hat{x} + \sin{\theta} \hat{y} - \rho |
 \end{align*}
 
-Mit dieser Gleichung lässt sich für jede ermittelte Polarlinie $(\rho_i, \theta_i) \in L_\text{polar}$ der Abstand zum Mittelpunkt der Dartscheibe $(c_x, c_y)$ ermitteln. Anhand dieses Abstands werden die Linien gefiltert, sodass Linien, die mehr als 10 Pixel von dem Mittelpunkt entfernt verlaufen, herausgefiltert werden.
+Mit dieser Gleichung lässt sich für jede ermittelte Polarlinie $(\rho_i, \theta_i) \in L_\text{polar}$ der Abstand zum Mittelpunkt der Dartscheibe $M$ ermitteln. Anhand dieses Abstands werden die Linien gefiltert, sodass Linien, die mehr als 10 Pixel von dem Mittelpunkt entfernt verlaufen, herausgefiltert werden.
 
-Auf diese Weise werden diejenigen Linien ermittelt, die auf den Mittelpunkt der Dartscheibe gerichtet sind und voraussichtlich Teil von Feldlinien sind. Es kann an diesem Punkt jedoch nicht sicher ausgeschlossen werden, dass sich keine Outlier in den gefilterten Linien befinden.
+Auf diese Weise werden diejenigen Linien $\widetilde{L}_\text{polar}$ und $\widetilde{L}_\text{points}$ ermittelt, die auf den Mittelpunkt der Dartscheibe gerichtet sind und voraussichtlich Teile der Feldlinien sind. Es kann an diesem Punkt jedoch nicht sicher ausgeschlossen werden, dass sich keine Outlier unter den gefilterten Linien befinden. Zu erkennen ist die Existenz von Outliern in den gefilterten Linien in \autoref{img:linienverarbeitung} (3). In dem Beispiel liegen Liniensegmente in den Schriftzügen auf der Dartscheibe, die auf den Mittelpunkt gerichtet sind und kein Teil von Feldlinien sind.
 
 \subsubsection{Feldlinien-Brechnung}
 \label{sec:feldlinien_berechnung}
 
-\todo{Fancy Graph hier erklären.}
+Zur Identifizierung der Winkel $\phi_i$ der Feldlinien wird eine adaptierte Hough-Transformation auf die gefilterten Linien $\widetilde{L}_\text{polar}$ und $\widetilde{L}_\text{points}$ verwendet. In dieser wird für jeden Pixel $p$ aller Linien je Winkel $\theta_{i, p}$ und Abstand $d_{i, p}$ zum Mittelpunkt ermittelt. In einem Akkumulator-Array $A^{360}$ werden die Winkel in 360 Bins mit einer Granularität von $0.5\degree$ aufsummiert, gewichtet invers proportional zu $d_{i, p}$. Dadurch wird Pixeln, die weit von dem Mittelpunkt entfernt liegen, ein geringes Gewicht zugeordnet, da diese einer größeren Wahrscheinlichkeit unterliegen, kein Bestandteil einer Feldlinie zu sein. Ziel der Verwendung von $A^{360}$ ist das Identifizieren von Clustern der Winkel.
+
+Zur Minderung von Outliern und zur Festigung der mittleren Winkel wird $A^{360}$ zweifach radial mit einem Fenster von $5\degree$ -- entsprechend 10 Bins -- geglättet. In dem resultierenden Akkumulator werden die 10 größten Peaks $\phi_i$ durch Non-Maximum-Suppression identifiziert; diese Peaks sind die häufigsten Winkel von Liniensegmenten zum Mittelpunkt der Dartscheibe. Durch die getroffenen Annahmen ist davon auszugehen, dass diese Werte die Winkel der Feldlinien angeben.
+
+Eine Darstellung eines Akkumulators $A^{360}$ ist mit \autoref{img:linienverarbeitung} (4) gegeben.
 
 \subsubsection{Winkelentzerrung}
 \label{sec:winkelentzerrung}
 
-\todo{Entzerrung hier erklären.}
+An dieser Stelle sind Mittelpunkt und Winkel der Feldlinien der Dartscheibe bekannt. Ziel dieses Schrittes ist es, die Winkel der Feldlinien zu normalisieren, sodass die Lage der Feldlinien bekannt und entzerrt ist.
+
+Um diese Entzerrung vorzunehmen, wird eine Minimierung vorgenommen, in der eine affine Transformation gesucht wird, die diese Winkel bestmöglich aneinander anpasst und auf einen Winkelabstand von $18\degree$ angleicht. Diese Optimierung beginnt bei einer Startlinie und entzerrt alle restlichen Linien iterativ und wird für jede der 10 Linien als Startlinie ausgeführt. Als finale Transformation wird der Mittelwert aller optimierten Transformationen verwendet. Im folgenden wird die allgemeine Transformationssequenz angegeben.
+
+Die erste Teiltransformation ist die Translation des Mittelpunktes $M$ in den Koordinatenursprung $O =(0, 0)$. Dieser Schritt ist relevant, da atomare affine Transformationen um $O$ zentriert sind. Darauf folgt die vertikale Ausrichtung der Startlinie $L_s$ durch eine Rotation um $-\phi_s$, sodass $\phi'_s = 0\degree$ erzielt wird. Gefolgt wird diese Rotation von der horizontalen Ausrichtung der Orthogonalen $L_o = L_{(i+5) \mod 10}$ durch eine Scherung entlang der Vertikalen. Wichtig bei diesem Schritt ist, dass die vertikale Scherung den Winkel von $\phi'_s$ nicht beeinflusst während eine Ausrichtung $\phi'_o = 90\degree$ erreicht wird. An diesem Punkt sind 2/10 Winkel entzerrt; die restlichen Winkel werden mit einer vertikalen Skalierung derart ausgerichtet, dass ein minimaler Abstand zwischen Zielwinkeln und Feldlinienwinkeln resultiert. Sind alle Feldlinienwinkel perfekt erkannt, ist eine optimale Skalierung möglich, sodass dieser Fehler gleich Null ist. Jedoch ist dies durch u.\ a. Diskretisierung und Artefakte in Linienerkennungen nicht gegeben und ein mittleres Minimum aller Winkeldifferenzen zu ihren Zielpositionen muss gebildet werden. Im Anschluss wird die vertikale Ausrichtung der Startlinie $L_s$ rückgängig gemacht, sodass die $\phi'_s$ seinen Zielwinkel besitzt. Zuletzt wird eine Translation des Koordinatenursprungs auf $M$ durchgeführt und die Transformationssequenz ist abgeschlossen.
+
+Diese Schritte werden für alle Startindizes $s \in [0, 9]$ ausgeführt und die finale Transformation wird durch Mittelwertbildung errechnet. Dadurch wird eine optimale Entzerrung aller Winkel $\phi_i$ erlangt, die nicht durch die Wahl der Startlinie beeinflusst ist. In \autoref{img:linienverarbeitung} (5) ist eine Dartscheibe nach der Entzerrung der Feldlinienwinkel dargestellt. Zu erkennen ist dabei, dass trotz Angleichung der Winkel $\phi_i$ keine Normalisierung der Dartscheibe erreicht ist. Um die Normalisierung zu vollenden, muss die Dartscheibe von einer elliptischen in eine runde Form gebracht und korrekt skaliert werden. Diese Schritte geschehen in dem Verarbeitungsabschnitt der Orientierung.
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Orientierung}
