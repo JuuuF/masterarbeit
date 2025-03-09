@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from tqdm import tqdm
+from time import time
 
 from ma_darts import radii
 from ma_darts.cv.cv import undistort_img
@@ -47,16 +48,19 @@ def inference_ma(
         )
     if model is None:
         model = tf.keras.models.load_model(model_path)
+    model.predict(np.zeros((1, 800, 800, 3)), verbose=0)
 
+    start = time()
+    cv_times = []
+    ai_times = []
     for img_path in iter_fn(img_paths):
+        cv_start = time()
         # -------------------------------------------
         # Load Image
-        # print("Loading image...")
         img = cv2.imread(img_path)
 
         # -------------------------------------------
         # Undistortion
-        # print("Aligning image...")
         homography = undistort_img(img)  # (800, 800, 3)
 
         if homography is None:
@@ -64,13 +68,16 @@ def inference_ma(
             print("Could not undistort image.")
             while max(*img.shape[:2]) > 1600:
                 img = cv2.pyrDown(img)
+            cv_times.append(time() - cv_start)
             continue
+
         ma_outputs[img_path]["undistortion_homography"] = homography
         img_aligned = apply_matrix(img, homography, output_size=(800, 800))
+        cv_times.append(time() - cv_start)
 
         # -------------------------------------------
         # Locate Darts
-        # print("Locating darts...")
+        ai_start = time()
         img_input = np.expand_dims(img_aligned, 0)  # (1, 800, 800, 3)
         img_input = np.float32(img_aligned) / 255
         outputs = yolo_v8_predict(
@@ -94,7 +101,16 @@ def inference_ma(
                 ma_outputs[img_path]["confidences"].append(1 - cnf)
 
         ma_outputs[img_path]["success"] = True
+        ai_times.append(time() - ai_start)
 
+    # Timing
+    dt = time() - start
+    sample_time = dt / len(img_paths)
+    print("-" * 50)
+    print(f"MA inference: {dt:.03f}s -> {sample_time:.03f}s/sample")
+    print(f"\tCV time: {np.sum(cv_times):.03f}s -> {np.mean(cv_times):.03f}s/sample")
+    print(f"\tAI time: {np.sum(ai_times):.03f}s -> {np.mean(ai_times):.03f}s/sample")
+    print("-" * 50)
     if added_batch:
         return ma_outputs[img_paths[0]]
     return ma_outputs
@@ -112,10 +128,14 @@ if __name__ == "__main__":
     ]
     img_dir = "data/paper/imgs/d2_03_03_2020"
     img_paths_dd = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
+    img_dir = "data/darts_references/home"
+    img_paths_home = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
 
     img_paths = [
         x
-        for pair in zip_longest(img_paths_jess, img_paths_gen, img_paths_dd)
+        for pair in zip_longest(
+            img_paths_jess, img_paths_gen, img_paths_dd, img_paths_home
+        )
         for x in pair
         if x is not None
     ]
@@ -124,7 +144,7 @@ if __name__ == "__main__":
     from ma_darts.ai.models import yolo_v8_model
 
     model = yolo_v8_model(variant="s")
-    model.load_weights("data/ai/darts/yolov8_train8.weights.h5")
+    model.load_weights("data/ai/darts/yolov8_train10.weights.h5")
 
     # img_paths = img_paths[:10]
     # ma_outputs = inference_ma(
@@ -145,5 +165,5 @@ if __name__ == "__main__":
             img_path, model=model, max_outputs=None, confidence_threshold=0.0
         )
         img = visualize_prediction(img_path, ma_outputs)
-        img = cv2.resize(img, (1200, 1200))
+        img = cv2.resize(img, (1000, 1000))
         show_imgs(img)

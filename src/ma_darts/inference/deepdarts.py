@@ -6,6 +6,8 @@ import subprocess
 import numpy as np
 import tensorflow as tf
 
+from tqdm import tqdm
+from time import time
 
 _base_interpreter = os.path.join(
     os.path.expanduser("~"),
@@ -404,7 +406,6 @@ class DeepDartsCode:
         return yolo
 
     def predict(model, img_paths: list = None):
-        from time import time
 
         ma_outputs = {
             f: {
@@ -452,8 +453,7 @@ class DeepDartsCode:
 
         # Predict images
         preds = np.zeros((len(img_paths), 4 + 3, 3))
-        for i, p in enumerate(img_paths):
-            print(f"{i+1}/{len(img_paths)}", end="\r")
+        for i, p in tqdm(list(enumerate(img_paths))):
             # Start timer at image 2, probably to skip initialization
             if i == 1:
                 ti = time()
@@ -524,9 +524,9 @@ class DeepDartsCode:
 
         MSE = np.mean(mses)
 
-        print(f"Percent Correct Score (PCS): {PCS:.1f}%")
-        print(f"Mean Absolute Score Error (MASE): {MASE:.2f}")
-        print(f"Mean Squared Error (MSE): {MSE}")
+        # print(f"Percent Correct Score (PCS): {PCS:.1f}%")
+        # print(f"Mean Absolute Score Error (MASE): {MASE:.2f}")
+        # print(f"Mean Squared Error (MSE): {MSE}")
         return ma_outputs
 
 
@@ -534,9 +534,16 @@ def _dd_inference(config: str, img_paths: list) -> np.ndarray:
 
     # Load model
     yolo = DeepDartsCode.load_model(config=config)
+    yolo.predict(np.zeros((800, 800, 3)))
 
     # Predict all
+    start = time()
     ma_outputs = DeepDartsCode.predict(yolo, img_paths=img_paths)
+    dt = time() - start
+    sample_time = dt / len(img_paths)
+    print("-" * 50)
+    print(f"DeepDarts inference: {dt:.03f}s -> {sample_time:.03f}s/sample")
+    print("-" * 50)
 
     # Save outputs to disk
     with open(output_file, "wb") as f:
