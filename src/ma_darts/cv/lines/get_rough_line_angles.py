@@ -110,6 +110,7 @@ def get_rough_line_angles(
         peak_thetas = peak_thetas[cutoff_indices]
     elif len(peaks) < 10:
         # Interpolate peaks
+        return []
         step_size = int(np.median(np.diff(peaks)))
 
         extended = []

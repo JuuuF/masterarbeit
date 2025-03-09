@@ -55,7 +55,7 @@ def extract_lines(
     )
     lines = list(lines)
 
-    if show: #or create_debug_img:  # TODO: debug image
+    if show:  # or create_debug_img:  # TODO: debug image
         if len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         line_img = np.zeros_like(img)

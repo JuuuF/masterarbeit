@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from time import time
 
 from ma_darts.cv.utils import apply_matrix, scaling_matrix
 
@@ -195,7 +196,30 @@ class Utils:
         debug_out_images = []
 
 
-def undistort_img(img: np.ndarray) -> np.ndarray:
+class Profiler:
+    def __init__(self, profiling: bool = False):
+        self.profiling = profiling
+        self.start_time = time()
+        self.profiles = {}
+
+    def profile(self, name: str):
+        if not self.profiling:
+            return
+        self.profiles[name] = time() - self.start_time
+        self.start_time = time()
+
+    def get_result(self):
+        if not self.profiling:
+            return
+        execution_time = sum(self.profiles.values())
+        max_w = max([len(l) for l in self.profiles.keys()])
+        print()
+        for name, t in self.profiles.items():
+            print(name.center(max_w + 4), f"{t:.03f}s")
+        print(f"Total time: {execution_time:.03f}s")
+
+
+def undistort_img(img: np.ndarray, profile: bool = False) -> np.ndarray:
 
     # -----------------------------
     # Preprocess Image
@@ -204,37 +228,46 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
     img = Utils.downsample_img(img_full)
 
     # show_imgs(input=img, block=False)
-    Utils.append_debug_img(img, "Input")
+    # Utils.append_debug_img(img, "Input")
+
+    profiler = Profiler(profile)
 
     # -----------------------------
     # EDGES
 
     # Detect Edges
     edge_img = edges.edge_detect(img, show=False)
+    profiler.profile("edges.edge_detect")
     # Skeletonize
     skeleton_img = edges.skeletonize(edge_img, show=False)
+    profiler.profile("edges.skeletonize")
 
     # -----------------------------
     # LINES
 
     # Extract lines
     img_lines = lines.extract_lines(skeleton_img, show=False)
+    profiler.profile("lines.extract_lines")
 
     # Bin lines by angle
     img_lines_binned = lines.bin_lines_by_angle(img_lines)
+    profiler.profile("lines.bin_lines_by_angle")
 
     # Find Board Center
     cy, cx = lines.get_center_point(img.shape, img_lines_binned, show=False)
+    profiler.profile("lines.get_center_point")
 
     # Filter Lines by Center Distance
     img_lines_filtered = lines.filter_lines_by_center_dist(
         img_lines, cy, cx
     )  # p1, p2, length (normalized), center distance [px], rho, theta
+    profiler.profile("lines.filter_lines_by_center_dist")
 
     # Estimate line angles
     thetas = lines.get_rough_line_angles(
         img.shape[:2], img_lines_filtered, cy, cx, show=False
     )
+    profiler.profile("lines.get_rough_line_angles")
 
     if len(thetas) != 10:
         print("ERROR: Could not find all lines!")
@@ -249,12 +282,15 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
     img_lines = orientation.align_angles(
         img_lines_filtered, thetas, img.shape[:2], cy, cx, show=False
     )
+    profiler.profile("orientation.align_angles")
 
     # Calculate better center coordinates
     cy, cx = orientation.center_point_from_lines(img_lines)
+    profiler.profile("orientation.center_point_from_lines")
 
     # Get undistortion matrix
     M_undistort = orientation.undistort_by_lines(cy, cx, img_lines, show=False)
+    profiler.profile("orientation.undistort_by_lines")
 
     # Undistort image
     img_undistort = apply_matrix(img, M_undistort)
@@ -272,6 +308,7 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
     orientation_point_candidates = orientation.find_orientation_points(
         img_undistort, int(cy_undistort), int(cx_undistort), show=False
     )
+    profiler.profile("orientation.find_orientation_points")
 
     if orientation_point_candidates is None:
         if create_debug_img:
@@ -285,11 +322,13 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
         int(cx_undistort),
         # img_undistort=img_undistort,
     )
+    profiler.profile("orientation.structure_orientation_candidates")
 
     # Convert orientation points to transformation matrix
     M_align = orientation.get_alignment_matrix(
         src_pts, dst_pts, int(cy_undistort), int(cx_undistort)
     )
+    profiler.profile("orientation.get_alignment_matrix")
 
     # Combine all matrices
     scale = img.shape[0] / img_full.shape[0]
@@ -298,6 +337,8 @@ def undistort_img(img: np.ndarray) -> np.ndarray:
     M_full = scaling_matrix(scale) @ M_full  # downscale to calculation size
     M_full = M_undistort @ M_full  # undistort
     M_full = M_align @ M_full  # align to correct scale and orientation
+
+    profiler.get_result()
 
     return M_full
 

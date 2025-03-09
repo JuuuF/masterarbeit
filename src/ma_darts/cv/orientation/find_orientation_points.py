@@ -342,7 +342,7 @@ def extract_surroundings(
         #     Utils.append_debug_img(
         #         logpolar, "FAILED: Not enough orientation points found."
         #     )  # TODO: debug_img
-        return None
+        return [None] * 5
     if len(surroundings) == 0:
         print("ERROR: No valid surroundings found.")
         # if create_debug_img:
@@ -350,7 +350,7 @@ def extract_surroundings(
         #     Utils.append_debug_img(
         #         logpolar, "FAILED: No orientation point surroundings found."
         #     )  # TODO: debug_img
-        return None
+        return [None] * 5
     mean_surrounding = np.median(surroundings, axis=0).astype(np.uint8)
 
     return inner_ring_a, inner_ring_b, outer_ring_a, outer_ring_b, mean_surrounding
@@ -631,6 +631,8 @@ def find_orientation_points(
     inner_ring_a, inner_ring_b, outer_ring_a, outer_ring_b, mean_surrounding = (
         extract_surroundings(logpolar, corner_positions, white, black)
     )
+    if mean_surrounding is None:
+        return None
     if show:
         show_imgs(mean_surrounding=mean_surrounding, block=False)
 
