@@ -3,10 +3,11 @@ import numpy as np
 
 from ma_darts.cv.utils import show_imgs, points_to_polar_line
 
+
 def extract_lines(
     img: np.ndarray,
     rho: int = 1,
-    theta: float = np.pi / 180 / 10,
+    theta: float = np.deg2rad(1),
     threshold: int = 25,
     show: bool = False,
 ) -> list[tuple[float, float, float, float, float]]:
