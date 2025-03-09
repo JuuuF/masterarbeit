@@ -216,9 +216,8 @@ class Utils:
 
         for Xs, ys in ds:
             imgs = np.uint8(Xs * 255)
-            y_ss, y_ms, y_ls = ys
-            for img, y_s, y_m, y_l in zip(imgs, y_ss, y_ms, y_ls):
-                pos, cls = yolo_to_positions_and_class(y_s)
+            for img, y in zip(imgs, ys):
+                pos, cls = yolo_to_positions_and_class(y)
                 for (y, x), cls_idx in zip(pos, cls):
                     y, x = round(y.numpy()), round(x.numpy())
                     cv2.circle(img, (x, y), 4, (255, 255, 255), 2, cv2.LINE_AA)

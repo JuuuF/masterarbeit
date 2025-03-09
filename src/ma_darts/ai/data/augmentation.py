@@ -19,6 +19,13 @@ class Augmentation:
     ):
         seed = tf.random.uniform((2,), 0, 2**15, dtype=tf.int32)
 
+        # Adapt red and green channels
+        channel_weights = tf.random.uniform((3,), 0.5, 1.0)  # * 0 + 0.5
+        channel_b = img[..., 0:1] * channel_weights[0]
+        channel_g = img[..., 1:2] * channel_weights[1]
+        channel_r = img[..., 2:3] * channel_weights[2]
+        img = tf.concat([channel_b, channel_g, channel_r], axis=-1)
+
         # Brightness
         img = tf.image.stateless_random_brightness(
             img,
@@ -49,7 +56,7 @@ class Augmentation:
         # Saturation
         img = tf.image.stateless_random_saturation(
             img,
-            lower=1 - self.saturation_amount,
+            lower=1 - self.saturation_amount * 3,
             upper=1 + self.saturation_amount,
             seed=seed + 2,
         )
@@ -183,7 +190,8 @@ class Augmentation:
         pos: tf.Tensor,  # (2, 3)
         cls: tf.Tensor,  # (6, 3)
     ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-        img = self.pixel_augmentation(img)
+        pixel_factor = tf.pow(tf.random.uniform((), 0, 1), 5)
+        img = self.pixel_augmentation(img) * (1 - pixel_factor) + img * pixel_factor
 
         img, pos = self.transformation_augmentation(img, pos)
         return img, pos, cls
