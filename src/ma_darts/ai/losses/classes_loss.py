@@ -1,54 +1,48 @@
 import tensorflow as tf
-from ma_darts import img_size
+from ma_darts import img_size, radii
 
 
 class ClassesLoss(tf.keras.losses.Loss):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, multiplier: float = 1, *args, **kwargs):
         super(ClassesLoss, self).__init__(*args, **kwargs)
-        self.kernel = tf.constant(self.get_kernel(3, 0.55), tf.float32)
-        self.loss_fn = tf.keras.losses.CategoricalFocalCrossentropy()
+
+        self.loss_fn = tf.keras.losses.CategoricalCrossentropy()
+        self.multiplier = multiplier
+
+        # Get weighing factors based on dart field areas
+        total_area = self.get_ring_area(0, radii["r_do"])
+        inner_bull = self.get_ring_area(0, radii["r_bi"])
+        outer_bull = self.get_ring_area(radii["r_bi"], radii["r_bo"])
+        inner_singles = self.get_ring_area(radii["r_bo"], radii["r_ti"])
+        triple_ring = self.get_ring_area(radii["r_ti"], radii["r_to"])
+        outer_singles = self.get_ring_area(radii["r_to"], radii["r_di"])
+        double_ring = self.get_ring_area(radii["r_di"], radii["r_do"])
+        red_area = inner_bull + triple_ring / 2 + double_ring / 2
+        green_area = outer_bull + triple_ring / 2 + double_ring / 2
+        black_area = inner_singles / 2 + outer_singles / 2
+        white_area = inner_singles / 2 + outer_singles / 2
+        out_area = self.get_ring_area(radii["r_do"], 400)
+
+        self.hidden_factor = tf.constant(1, tf.float32)
+        self.black_factor = tf.constant(total_area / black_area, tf.float32)
+        self.white_factor = tf.constant(total_area / white_area, tf.float32)
+        self.red_factor = tf.constant(total_area / red_area, tf.float32)
+        self.green_factor = tf.constant(total_area / green_area, tf.float32)
+        self.out_factor = tf.constant(total_area / out_area, tf.float32)
 
     def get_config(self):
         config = super(ClassesLoss, self).get_config()
+        config.update(
+            {
+                "multiplier": self.multiplier,
+            }
+        )
         return config
 
-    # @tf.function
-    def get_kernel(
-        self,
-        size: tf.Tensor,  # ()
-        sigma: int = 2,
-    ):
-        x = tf.range(-size // 2 + 1, size // 2 + 1, dtype=tf.float32)
-        x = tf.exp(-tf.square(x) / (2 * sigma**2))
-        kernel = tf.tensordot(x, x, axes=0)  # (size, size)
-        kernel = kernel / tf.reduce_sum(kernel)
-
-        # Reshape for big convolution
-        kernel = tf.expand_dims(tf.expand_dims(kernel, -1), -1)  # (size, size, 1, 1)
-        kernel = tf.tile(kernel, [1, 1, 6, 1])  # (size, size, 6, 1)
-        return kernel
-
-    def accentuate(
-        self,
-        y: tf.Tensor,  # (bs, s, s, 3)
-    ):
-        y2 = tf.square(y)
-        return y2 / (y2 + tf.square(1 - y))
-
-    # @tf.function
-    def apply_filter(
-        self,
-        y: tf.Tensor,  # (bs, s, s, 18)
-    ) -> tf.Tensor:  # (bs, s, s, 18)
-
-        y_conv = tf.nn.depthwise_conv2d(
-            y,
-            self.kernel,
-            strides=[1, 1, 1, 1],
-            padding="SAME",
-        )
-
-        return y_conv
+    def get_ring_area(self, r_inner, r_outer):
+        a_inner = 3.14159 * r_inner**2
+        a_outer = 3.14159 * r_outer**2
+        return a_outer - a_inner
 
     # @tf.function
     def call(
@@ -57,65 +51,49 @@ class ClassesLoss(tf.keras.losses.Loss):
         y_pred,
     ):
 
-        # Reshape for convolution
-        cls_true = tf.reduce_sum(y_true[..., 2:, :], axis=-1)  # (bs, s, s, 6)
-        cls_pred = tf.reduce_sum(y_pred[..., 2:, :], axis=-1)
+        # Classes
+        cls_true = y_true[..., 2:, :]  # (bs, s, s, 6, 3)
+        cls_pred = y_pred[..., 2:, :]
+        cls_true = tf.transpose(cls_true, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 6)
+        cls_pred = tf.transpose(cls_pred, (0, 1, 2, 4, 3))
+        batch_size = tf.shape(cls_true)[0]
+        n_classes = tf.shape(cls_true)[-1]
+        cls_true = tf.reshape(cls_true, (batch_size, -1, n_classes))
+        cls_pred = tf.reshape(cls_pred, (batch_size, -1, n_classes))
 
-        # Filter images
-        cls_true_f = self.apply_filter(cls_true)  # (bs, s, s, 6)
-        cls_pred_f = self.apply_filter(cls_pred)
+        # Get class counts per batch
+        n_hidden = 1875 - tf.reduce_sum(cls_true[..., 0], axis=1)  # (bs,)
+        n_black = tf.reduce_sum(cls_true[..., 1], axis=1)
+        n_white = tf.reduce_sum(cls_true[..., 2], axis=1)
+        n_red = tf.reduce_sum(cls_true[..., 3], axis=1)
+        n_green = tf.reduce_sum(cls_true[..., 4], axis=1)
+        n_out = tf.reduce_sum(cls_true[..., 5], axis=1)
+        # Get weights per batch
+        weight_hidden = n_hidden * self.hidden_factor  # (bs,)
+        weight_black = n_black * self.black_factor
+        weight_white = n_white * self.white_factor
+        weight_red = n_red * self.red_factor
+        weight_green = n_green * self.green_factor
+        weight_out = n_out * self.out_factor
+        # Combine batch weights
+        batch_weights = (
+            weight_hidden
+            + weight_black
+            + weight_white
+            + weight_red
+            + weight_green
+            + weight_out
+        )  # (bs,)
+        batch_weights = tf.expand_dims(batch_weights, -1)
 
-        loss = self.loss_fn(cls_true_f, cls_pred_f)
+        batch_weights = (
+            tf.cast(batch_size, tf.float32)
+            * batch_weights
+            / tf.reduce_sum(batch_weights)
+        )
 
-        # Calculate weighing factor
-        # factor ~1:      good guess -> little penalty
-        # 1 < factor < 2: a bit off, -> a bit penalty
-        # factor ~2:      far off    -> big penalty
-        n_trues = tf.reduce_sum(cls_true, axis=[1, 2])  # (bs, 6)
-        n_preds = tf.reduce_sum(cls_pred, axis=[1, 2])  # (bs, 6)
-        n_diff = tf.abs(n_trues - n_preds)
-        factor = 2 * tf.math.sigmoid(n_diff / 10)
-        factor = tf.reduce_mean(factor)  # ()
-
-        loss_adj = tf.pow(loss, 1 / factor)
-        return loss_adj
-
-
-class ClassesLoss_(tf.keras.losses.Loss):
-    def __init__(self):
-        super().__init__()
-        self.loss_fn = tf.keras.losses.CategoricalCrossentropy()
-        self.img_size = img_size
-
-    def extract_classes(
-        self,
-        y: tf.Tensor,  # (bs, s, s, 8, 3)
-    ):
-        # Remove positions
-        y = y[..., 2:, :]  # (bs, s, s, 6, 3)
-
-        # Flatten
-        y = tf.transpose(y, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 6)
-        shape = tf.shape(y)
-        y = tf.reshape(y, (shape[0], -1, shape[-1]))  # (bs, n, 6)
-
-        return y
-
-    def call(
-        self,
-        y_true: tf.Tensor,  # (bs, s, s, 8, 3)
-        y_pred: tf.Tensor,
-    ):
-        s = tf.shape(y_true)[1]
-        cls_true = self.extract_classes(y_true)  # (bs, n, 6)
-        cls_pred = self.extract_classes(y_pred)
-        loss = self.loss_fn(cls_true, cls_pred) * 10
-        # loss = tf.reduce_mean(tf.square(cls_true - cls_pred))
-
-        # err = tf.square(cls_true - cls_pred)
-        # err = self.loss_fn(cls_true, cls_pred)
-        # loss = tf.reduce_sum(err) * self.img_size / 10
-        return loss
+        loss = self.loss_fn(cls_true, cls_pred, sample_weight=batch_weights)
+        return loss * tf.constant(self.multiplier, tf.float32)
 
 
 if __name__ == "__main__":
@@ -134,9 +112,16 @@ if __name__ == "__main__":
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        error = 0.9
-        y_p = error * y_p + (1 - error) * y_t
+        losses = []
+        import numpy as np
 
-        loss = l(y_t, y_p)
-        print("loss =", loss.numpy())
+        xs = np.arange(101) / 100
+        for fac in xs:
+            y_p_ = fac * y_p + (1 - fac) * y_t
+            loss = l(y_t, y_p_)
+            losses.append(loss)
+        from matplotlib import pyplot as plt
+
+        plt.plot(xs, losses)
+        plt.show()
         exit()

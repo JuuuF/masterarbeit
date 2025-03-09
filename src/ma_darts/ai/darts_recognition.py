@@ -1,6 +1,6 @@
 import os
 
-# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "0"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 # os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=0"
 # os.environ["TF_XLA_FLAGS"] = "--tf_xla_disable_constant_folding=true"
 # os.environ["XLA_FLAGS"] = "--xla_dump_to=/masterarbeit/dump/logs"
@@ -31,7 +31,13 @@ from ma_darts.ai.models import (
     yolo_to_positions_and_class,
 )
 from ma_darts.ai.data import dataloader_paper, dataloader_ma, dummy_ds
-from ma_darts.ai.losses import YOLOv8Loss, ExistenceLoss, ClassesLoss, PositionsLoss
+from ma_darts.ai.losses import (
+    YOLOv8Loss,
+    ExistenceLoss,
+    ClassesLoss,
+    PositionsLoss,
+    DIoULoss,
+)
 
 from tqdm import tqdm
 from argparse import ArgumentParser
@@ -83,8 +89,8 @@ class Utils:
         # callbacks.append(pc)
         lr = tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss",
-            factor=0.5,
-            patience=25,
+            factor=np.power(0.1, 1 / 3),
+            patience=50,
             verbose=1,
             min_lr=1e-4,
         )
@@ -329,18 +335,22 @@ else:
 
 # Compile model
 metrics = [
-    ExistenceLoss(),
-    ClassesLoss(),
-    PositionsLoss(),
-    # DIoULoss(),
+    ExistenceLoss(name="01_xst_loss"),
+    ClassesLoss(name="02_cls_loss"),
+    PositionsLoss(name="03_pos_loss"),
+    DIoULoss(name="04_diou_loss"),
 ]
 # metrics = [metrics for _ in range(3)]
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
     loss=YOLOv8Loss(
-        square_size=50,
-        class_introduction_threshold=0.02,
-        position_introduction_threshold=0.02,
+        square_size=0.05,
+        cls_threshold=1,  # 0.003,
+        cls_width=0.002,
+        pos_threshold=1,  # 0.004,
+        pos_width=0.002,
+        diou_threshold=1,  # 0.003,
+        diou_width=0.001,
     ),
     metrics=metrics,
 )

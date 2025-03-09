@@ -4,99 +4,66 @@ from ma_darts.ai.utils import get_grid_existences
 
 
 class DIoULoss(tf.keras.losses.Loss):
-    def __init__(self, square_size: float = 0.1, *args, **kwargs):
+    def __init__(
+        self, square_size: float = 0.05, multiplier: float = 1, *args, **kwargs
+    ):
         super(DIoULoss, self).__init__(*args, **kwargs)
+        if square_size > 1:
+            raise ValueError(
+                "A square size greater than 1 is not supported. Keep in mind that values are relative!"
+            )
         self._square_size = square_size
         self.square_size = tf.constant(square_size, tf.float32)
         self.base_union = tf.constant(square_size * square_size * 2, tf.float32)
-        self.epsilon = tf.constant(1e-6, tf.float32)
+        self.epsilon = tf.constant(1e-8, tf.float32)
+        self.v_4_pi_squared = tf.constant(4 / (3.14159**2), tf.float32)
+        self.multiplier = multiplier
 
     def get_config(self):
         config = super(DIoULoss, self).get_config()
-        config.update({"square_size": self._square_size})
+        config.update(
+            {
+                "square_size": self._square_size,
+                "multiplier": self.multiplier,
+            }
+        )
         return config
 
-    def diou_per_position(
+    # @tf.function
+    def get_diou_losses_per_cell(
         self,
-        p: tf.Tensor,  # (2,)
-        ps: tf.Tensor,  # (n, 2)
-        xst_p: tf.Tensor,  # ()
-        xst_ps: tf.Tensor,  # (n,)
-    ) -> tf.Tensor:  # ()
-        bother_computing = tf.cast(tf.greater(xst_p, 1e-6), tf.float32)
-
-        # Get differences
-        diffs = tf.abs(p[None, :] - ps)  # (n, 2)
+        pos_true,  # (bs, n, 2)
+        pos_pred,
+    ):
+        diffs = tf.abs(pos_true - pos_pred)  # (bs, n, 2)
         side_lengths = tf.maximum(
             tf.constant(0, tf.float32), self.square_size - diffs
-        )  # (n, 2)
-        intersections = side_lengths[:, 0] * side_lengths[:, 1]  # (n,)
-        unions = self.base_union - intersections
-        ious = intersections / (unions + self.epsilon)  # (n,)
+        )  # (bs, n, 2)
 
-        # Get distances for
-        dists_squared = tf.square(diffs[:, 0]) + tf.square(diffs[:, 1])  # (n,)
-        diags_squared = tf.square(diffs[:, 0] + self.square_size) + tf.square(
-            diffs[:, 1] + self.square_size
-        )  # (n,)
-        dist_addition = dists_squared / (diags_squared + self.epsilon)
+        # Compute IoU
+        intersection_areas = side_lengths[..., 0] * side_lengths[..., 1]
+        union_areas = self.base_union - intersection_areas
+        ious = intersection_areas / (union_areas + 1e-8)
 
-        # IoU -> DIoU
-        dious = ious + dist_addition
+        # Get distances
+        # 1. Squared middle point dists
+        d2 = tf.square(diffs[..., 0]) + tf.square(diffs[..., 1])
 
-        # Scale DIoUs by existences
-        dious = dious * xst_ps * xst_p  # (n,)
-
-        best_diou = tf.reduce_max(dious)  # ()
-        return bother_computing * best_diou
-
-    def batch_diou(
-        self,
-        pos_true: tf.Tensor,  # (n, 2)
-        pos_pred: tf.Tensor,
-        xst_true: tf.Tensor,  # (n,)
-        xst_pred: tf.Tensor,
-    ) -> tf.Tensor:  # ()
-        pos_true_expanded = tf.expand_dims(pos_true, 1)  # (n, 1, 2)
-        pos_pred_expanded = tf.expand_dims(pos_pred, 0)  # (1, n, 2)
-        xst_true_expanded = tf.expand_dims(xst_true, 1)  # (n, 1)
-        xst_pred_expanded = tf.expand_dims(xst_pred, 0)  # (1, n)
-
-        # Get diffs
-        diffs = tf.abs(pos_true_expanded - pos_pred_expanded)  # (n, n, 2)
-
-        side_lengths = tf.maximum(
-            tf.constant(0, tf.float32), self.square_size - diffs
-        )  # (n, n, 2)
-
-        intersections = side_lengths[..., 0] * side_lengths[..., 1]  # (n, n)
-        unions = self.base_union - intersections  # (n, n)
-        ious = intersections / (unions + self.epsilon)  # (n, n)
-
-        # Get distances for DIoU
-        dists_squared = tf.square(diffs[..., 0]) + tf.square(diffs[..., 1])
-        diags_squared = tf.square(diffs[..., 0] + self.square_size) + tf.square(
+        # 2. enclosing bounding box diagonal
+        c2 = tf.square(diffs[..., 0] + self.square_size) + tf.square(
             diffs[..., 1] + self.square_size
-        )  # (n, n)
-        dists_addition = dists_squared / (diags_squared + self.epsilon)
+        )
+        distance_factors = d2 / (c2 + 1e-8)
 
         # IoU -> DIoU
-        dious = ious + dists_addition  # (n, n)
+        diou_losses = 1 - ious + distance_factors  # (bs, n)
 
-        # Scale by existences
-        dious = dious * xst_true * xst_pred  # (n, n)
+        # NOTE: Conversion to CIoU is not necessary since the bboxes are
+        # equal and that would just yield the same as DIoU does already.
 
-        # Get best DIoU per true sample
-        best_dious = tf.reduce_max(dious, axis=0)  # (n,)
+        return diou_losses
 
-        # Average over existing true samples
-        n_trues = tf.maximum(
-            tf.cast(tf.math.count_nonzero(xst_true), tf.float32),
-            tf.constant(1, tf.float32),
-        )
-        mean_diou = tf.reduce_sum(best_dious) / n_trues  # ()
-        return mean_diou
-
+    # @tf.function
     def call(
         self,
         y_true: tf.Tensor,  # (bs, s, s, 8, 3)
@@ -114,8 +81,8 @@ class DIoULoss(tf.keras.losses.Loss):
             axis=-1,
         )  # (s, s, 2)
 
-        # Convert to absolute coordinates
-        pos_true = grid_pos[None, ..., None] + pos_true / s  # (bs, s, s, 2, 3)
+        # Convert to absolute normalized coordinates
+        pos_true = grid_pos[None, ..., None] + pos_true / s  # (bs, s, s, 2, 3) 0..1
         pos_pred = grid_pos[None, ..., None] + pos_pred / s
 
         # Get existences
@@ -133,16 +100,14 @@ class DIoULoss(tf.keras.losses.Loss):
         xst_true = tf.reshape(xst_true, (batch_size, -1))  # (bs, n)
         xst_pred = tf.reshape(xst_pred, (batch_size, -1))
 
-        dious_per_batch = tf.map_fn(
-            lambda b: self.batch_diou(
-                pos_true[b], pos_pred[b], xst_true[b], xst_pred[b]
-            ),
-            elems=tf.range(batch_size),
-            fn_output_signature=tf.float32,
-        )  # (bs,)
-        diou = tf.reduce_mean(dious_per_batch)
-        loss = 1 - diou
-        return loss
+        # Get DIoU loss per cell
+        diou_losses = self.get_diou_losses_per_cell(pos_true, pos_pred)  # (bs, n)
+
+        # Apply true existence mask
+        diou_losses = xst_true * diou_losses
+        diou_loss = tf.reduce_sum(diou_losses, axis=1)  # (bs,)
+        diou_loss = tf.reduce_mean(diou_loss)  # ()
+        return diou_loss * tf.constant(self.multiplier, tf.float32)
 
 
 if __name__ == "__main__":
@@ -155,15 +120,24 @@ if __name__ == "__main__":
         for y in y_pred
     ]
 
-    l = DIoULoss(square_size=50)
+    l = DIoULoss(square_size=0.05)
     for y_t, y_p in zip(y_true, y_pred):
         print("#" * 120)
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        error = 0.1
-        y_p = error * y_p + (1 - error) * y_t
+        losses = []
+        import numpy as np
 
-        loss = l(y_t, y_p)
-        print("loss =", loss.numpy())
+        n_steps = 25
+        xs = np.arange(n_steps + 1) / n_steps
+        for fac in xs:
+            y_p_ = fac * y_p + (1 - fac) * y_t
+            loss = l(y_t, y_p_).numpy()
+            losses.append(loss)
+            print(fac, loss, sep="\t")
+        from matplotlib import pyplot as plt
+
+        plt.plot(xs, losses)
+        plt.show()
         exit()

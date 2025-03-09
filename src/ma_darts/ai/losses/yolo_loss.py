@@ -8,158 +8,92 @@ from ma_darts.ai.losses import ExistenceLoss, ClassesLoss, PositionsLoss, DIoULo
 class YOLOv8Loss(tf.keras.losses.Loss):
     def __init__(
         self,
-        square_size: float = 0.02,
-        class_introduction_threshold: float = np.inf,
-        position_introduction_threshold: float = np.inf,
-        diou_introduction_threshold: float = np.inf,
+        square_size: float = 0.05,
+        cls_threshold: float = 0.003,
+        cls_width: float = 0.002,
+        pos_threshold: float = 0.004,
+        pos_width: float = 0.002,
+        diou_threshold: float = 0.003,
+        diou_width: float = 0.001,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super(YOLOv8Loss, self).__init__(*args, **kwargs)
         self.square_size = square_size
 
-        # Existence Loss
         self.xst_loss = ExistenceLoss()
+        self.xst_mult = tf.constant(10, tf.float32)
 
         # Classes Loss
         self.cls_loss = ClassesLoss()
         self.base_cls_loss = tf.constant(1, tf.float32)
-        self.class_introduction_threshold = class_introduction_threshold
-        self.cls_introduction_end = tf.constant(
-            class_introduction_threshold, tf.float32
-        )
-        self.cls_introduction_start = tf.constant(
-            2 * class_introduction_threshold, tf.float32
-        )
+        self.cls_mult = tf.constant(10, tf.float32)
+
+        self._cls_width = cls_width
+        self.cls_width = cls_width if cls_width is not None else cls_threshold
+        self.cls_threshold = cls_threshold
 
         # Positions Loss
         self.pos_loss = PositionsLoss()
         self.base_pos_loss = tf.constant(1, tf.float32)
-        self.position_introduction_threshold = position_introduction_threshold
-        self.pos_introduction_end = tf.constant(
-            position_introduction_threshold, tf.float32
-        )
-        self.pos_introduction_start = tf.constant(
-            2 * position_introduction_threshold, tf.float32
-        )
+        self.pos_mult = tf.constant(1.5, tf.float32)
+
+        self._pos_width = pos_width
+        self.pos_width = pos_width if pos_width is not None else pos_threshold
+        self.pos_threshold = pos_threshold
 
         # DIoU Loss
-        # self.diou_loss = DIoULoss(self.square_size)
-        # self.base_diou_loss = tf.constant(0.1, tf.float32)
-        # self.diou_introduction_threshold = diou_introduction_threshold
-        # self.diou_introduction_end = tf.constant(
-        #     diou_introduction_threshold, tf.float32
-        # )
-        # self.diou_introduction_start = tf.constant(
-        #     2 * diou_introduction_threshold, tf.float32
-        # )
-        # self.diou_multiplier = tf.constant(0.2)
+        self.diou_loss = DIoULoss(self.square_size)
+        self.base_diou_loss = tf.constant(2, tf.float32)
+        self.diou_mult = tf.constant(1.0, tf.float32)
 
-    def get_factor(
-        self,
-        start,
-        end,
-        value,
-    ):
-        # Check if infinite value
-        is_inf = tf.math.is_inf(start)
+        self._diou_width = diou_width
+        self.diou_width = diou_width if diou_width is not None else diou_threshold
+        self.diou_threshold = diou_threshold
 
-        # Compute factor
-        diff = end - start
-        fac = (value - start) / tf.where(is_inf, tf.ones_like(diff), diff)
+    def get_activation(self, loss, threshold, width):
+        full_sigmoid = tf.constant(3, tf.float32)
+        return 1 - tf.sigmoid(full_sigmoid * (loss - threshold) / (width * 0.5))
 
-        fac = tf.clip_by_value(fac, 0, 1)
-
-        return tf.where(is_inf, tf.ones_like(fac), fac)
-
-    def get_cls_loss(
-        self,
-        y_true: tf.Tensor,  # (bs, s, s, 8, 3)
-        y_pred: tf.Tensor,
-        total_loss: tf.Tensor,  # ()
-    ) -> tf.Tensor:  # ()
-
-        cls_fac = self.get_factor(
-            self.cls_introduction_start,
-            self.cls_introduction_end,
-            total_loss,
-        )
-
-        loss = tf.where(
-            tf.equal(cls_fac, 0.0),
-            self.base_cls_loss,
-            cls_fac * self.cls_loss(y_true, y_pred)
-            + (1 - cls_fac) * self.base_cls_loss,
-        )
-
-        return loss
-
-    def get_pos_loss(
-        self,
-        y_true: tf.Tensor,  # (bs, s, s, 8, 3)
-        y_pred: tf.Tensor,
-        total_loss: tf.Tensor,  # ()
-    ) -> tf.Tensor:  # ()
-
-        pos_fac = self.get_factor(
-            self.pos_introduction_start,
-            self.pos_introduction_end,
-            total_loss,
-        )
-
-        loss = tf.where(
-            tf.equal(pos_fac, 0.0),
-            self.base_pos_loss,
-            pos_fac * self.pos_loss(y_true, y_pred)
-            + (1 - pos_fac) * self.base_pos_loss,
-        )
-        return loss
-
-    def get_diou_loss(
-        self,
-        y_true: tf.Tensor,  # (bs, s, s, 8, 3)
-        y_pred: tf.Tensor,
-        total_loss: tf.Tensor,  # ()
-    ) -> tf.Tensor:  # ()
-
-        diou_fac = self.get_factor(
-            self.diou_introduction_start,
-            self.diou_introduction_end,
-            total_loss,
-        )
-
-        loss = tf.where(
-            tf.equal(diou_fac, 0.0),
-            self.base_diou_loss,
-            pos_fac * self.diou_loss(y_true, y_pred)
-            + (1 - pos_fac) * self.base_diou_loss,
-        )
-        return loss
-
+    # @tf.function
     def call(self, y_true, y_pred):
-        total_loss = tf.constant(0, tf.float32)
 
-        xst_loss = self.xst_loss(y_true, y_pred)
-        total_loss = total_loss + xst_loss
-        # print("xst_loss", xst_loss.numpy())
-        # print("total_loss", total_loss.numpy())
-        # print()
+        # Compute XST loss
+        raw_xst_loss = self.xst_loss(y_true, y_pred)
+        xst_loss = raw_xst_loss * self.xst_mult
 
-        cls_loss = self.get_cls_loss(y_true, y_pred, total_loss)
-        total_loss = total_loss + cls_loss
-        # print("cls_loss", cls_loss.numpy())
-        # print("total_loss", total_loss.numpy())
-        # print()
+        # Compute CLS loss
+        raw_cls_loss = self.cls_loss(y_true, y_pred)
+        cls_activation = self.get_activation(
+            raw_xst_loss, self.cls_threshold, self.cls_width
+        )
+        cls_loss = (
+            cls_activation * raw_cls_loss * self.cls_mult
+            + (1 - cls_activation) * self.base_cls_loss
+        )
 
-        pos_loss = self.get_pos_loss(y_true, y_pred, total_loss)
-        total_loss = total_loss + pos_loss
-        # print("pos_loss", pos_loss.numpy())
-        # print("total_loss", total_loss.numpy())
-        # print()
+        # Compute POS loss
+        raw_pos_loss = self.pos_loss(y_true, y_pred)
+        pos_activation = self.get_activation(
+            raw_cls_loss, self.pos_threshold, self.pos_width
+        )
+        pos_loss = (
+            pos_activation * raw_pos_loss * self.pos_mult
+            + (1 - pos_activation) * self.base_pos_loss
+        )
 
-        # diou_loss = self.get_diou_loss(y_true, y_pred, total_loss)
-        # diou_loss = diou_loss * self.diou_multiplier
-        # total_loss = total_loss + diou_loss
+        # Compute DIoU loss
+        raw_diou_loss = self.diou_loss(y_true, y_pred)
+        diou_activation = self.get_activation(
+            raw_pos_loss, self.diou_threshold, self.diou_width
+        )
+        diou_loss = (
+            diou_activation * raw_diou_loss * self.diou_mult
+            + (1 - diou_activation) * self.base_diou_loss
+        )
+
+        # Combine all losses
+        total_loss = xst_loss + cls_loss + pos_loss + diou_loss
 
         return total_loss
 
@@ -167,8 +101,14 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         config = super(YOLOv8Loss, self).get_config()
         config.update(
             {
-                "class_introduction_threshold": self.class_introduction_threshold,
-                "position_introduction_threshold": self.position_introduction_threshold,
+                "square_size": self.square_size,
+                "cls_threshold": self.cls_threshold,
+                "pos_threshold": self.pos_threshold,
+                "diou_threshold": self.diou_threshold,
+                "cls_width": self._cls_width,
+                "pos_width": self._pos_width,
+                "diou_width": self._diou_width,
+                "transition_width": self.transition_width,
             }
         )
         return config
@@ -184,17 +124,24 @@ if __name__ == "__main__":
         for y in y_pred
     ]
 
-    l = YOLOv8Loss(
-        class_introduction_threshold=0.25,
-        position_introduction_threshold=0.25,
-    )
+    l = YOLOv8Loss()
     for y_t, y_p in zip(y_true, y_pred):
         print("#" * 120)
         print(str(y_t.shape).center(120))
         print("#" * 120)
 
-        error = 0.9
-        y_p = error * y_p + (1 - error) * y_t
+        losses = []
+        import numpy as np
 
-        loss = l(y_t, y_p)
-        print("loss =", loss.numpy())
+        n_steps = 25
+        xs = np.arange(n_steps + 1) / n_steps
+        for fac in xs:
+            y_p_ = fac * y_p + (1 - fac) * y_t
+            loss = l(y_t, y_p_).numpy()
+            losses.append(loss)
+            print(fac, loss, sep="\t")
+        from matplotlib import pyplot as plt
+
+        plt.plot(xs, losses)
+        plt.show()
+        exit()
