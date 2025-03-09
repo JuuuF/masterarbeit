@@ -6,6 +6,7 @@
 \usepackage[german]{babel}
 \usepackage{csquotes}
 \usepackage{amsmath}
+\usepackage{array}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -42,14 +43,14 @@
 \usepackage{pagecolor}
 
 \newcommand{\darkmode}{
-    \pagecolor{black} % Set background to black
-    \color{white} % Set text color to white
-    \hypersetup{
-        colorlinks=true,
-        linkcolor=cyan,  % Adjust hyperlink colors for dark mode
-        citecolor=lightgray,
-        urlcolor=yellow
-    }
+  \pagecolor{black} % Set background to black
+  \color{white} % Set text color to white
+  \hypersetup{
+    colorlinks=true,
+    linkcolor=cyan,  % Adjust hyperlink colors for dark mode
+    citecolor=lightgray,
+    urlcolor=yellow
+  }
 }
 % \darkmode
 
@@ -88,10 +89,19 @@
 \presetkeys{todonotes}{inline,backgroundcolor=yellow!50!white}{}
 
 \AtBeginDocument{%
-%   \renewcommand*{\subsectionautorefname}{\sectionautorefname}%
+  %   \renewcommand*{\subsectionautorefname}{\sectionautorefname}%
   \renewcommand*{\subsubsectionautorefname}{\subsectionautorefname}%
-%   \renewcommand*{\paragraphautorefname}{\subsubsectionautorefname}%
+  %   \renewcommand*{\paragraphautorefname}{\subsubsectionautorefname}%
   \renewcommand*{\subparagraphautorefname}{\paragraphautorefname}%
+}
+
+% Vectors
+\newcommand{\threedvec}[3]{
+  \begin{bmatrix}
+    #1 \\
+    #2 \\
+    #3  \\
+  \end{bmatrix}
 }
 
 % -----------------------------------------------
@@ -100,11 +110,11 @@
 \usepackage{acro}
 
 \DeclareAcronym{WDF}{
-    short = WDF ,
-    long = World Dart Federation ,
+  short = WDF ,
+  long = World Dart Federation ,
 }
 
 \DeclareAcronym{CV}{
-    short=CV ,
-    long=Computer Vision ,
+  short=CV ,
+  long=Computer Vision ,
 }
