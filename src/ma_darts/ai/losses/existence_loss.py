@@ -1,6 +1,6 @@
 import tensorflow as tf
 from ma_darts import img_size
-from ma_darts.ai.utils import get_grid_existences
+from ma_darts.ai.utils import split_outputs_to_xst_cls_pos
 
 
 class ExistenceLoss(tf.keras.losses.Loss):
@@ -27,14 +27,15 @@ class ExistenceLoss(tf.keras.losses.Loss):
     ):
 
         # Get existences
-        xst_true = get_grid_existences(y_true)[..., 0, :]  # (bs, s, s, 3)
-        xst_pred = get_grid_existences(y_pred)[..., 0, :]
+        xst_true, _, _ = split_outputs_to_xst_cls_pos(y_true)  # (bs, s, s, 1, 3)
+        xst_pred, _, _ = split_outputs_to_xst_cls_pos(y_pred)
 
+        # Flatten grid
         xst_true = tf.reshape(xst_true, (tf.shape(xst_true)[0], -1))  # (bs, s * s * 3)
         xst_pred = tf.reshape(xst_pred, (tf.shape(xst_pred)[0], -1))
 
         loss = self.loss_fn(xst_true, xst_pred)
-        return loss * tf.constant(self.multiplier, tf.float32)
+        return loss  # * tf.constant(self.multiplier, tf.float32)
 
 
 if __name__ == "__main__":

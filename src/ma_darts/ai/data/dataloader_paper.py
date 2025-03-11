@@ -372,7 +372,9 @@ def paper_base_ds(
     Ms = df["undistortion_homography"]  # (n, 3, 3)
 
     filepaths = list(filepaths)
-    classes = np.array(list(classes.values))
+    classes = np.array(list(classes.values))  # (n, 6, 3)
+    existences = 1 - classes[:, :1]  # (n, 1, 3)
+    classes = classes[:, 1:]  # (n, 5, 3)
     positions = np.array(list(positions.values))
     Ms = np.array(list(Ms.values))
 
@@ -387,6 +389,7 @@ def paper_base_ds(
 
     # Convert all to dataset slices
     ds_filepaths = tf.data.Dataset.from_tensor_slices(filepaths)
+    ds_xst = tf.data.Dataset.from_tensor_slices(existences)
     ds_cls = tf.data.Dataset.from_tensor_slices(classes)
     ds_pos = tf.data.Dataset.from_tensor_slices(positions)
     ds_Ms = tf.data.Dataset.from_tensor_slices(Ms)
@@ -407,7 +410,7 @@ def paper_base_ds(
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 
-    ds = tf.data.Dataset.zip(ds_imgs, ds_pos, ds_cls)
+    ds = tf.data.Dataset.zip(ds_imgs, ds_xst, ds_pos, ds_cls)
     return ds
 
 

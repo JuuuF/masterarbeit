@@ -244,8 +244,8 @@ def ClampReLU(
 
 
 def OutputTransformation(
-    x_pos: tf.Tensor,
-    x_cls: tf.Tensor,
+    x_pos: tf.Tensor,  # (None, n, n, reg_max * 2)
+    x_cls: tf.Tensor,  # (None, n, n, reg_max * n_classes)
     reg_max: int,
     n_classes: int,
     out_name: str | None = None,
@@ -256,17 +256,23 @@ def OutputTransformation(
         x_pos,
         shape=x_pos.shape[1:3] + (2, reg_max),
     )  # (y, x, 2, 3)
+
+    # Extract existence
     x_cls = Reshape(
         x_cls,
         shape=x_cls.shape[1:3] + (n_classes, reg_max),
-    )  # (y, x, n, 3)
+    )  # (y, x, n_classes, 3)
+
+    x_xst = x_cls[..., :1, :]  # (None, n, n, 1, 3)
+    x_cls = x_cls[..., 1:, :]  # (None, n, n, 5, 3)
 
     # Activations
+    x_xst = Sigmoid(x_xst)
     x_pos = ClampReLU(x_pos)  # clamp between 0 and 1
-    x_cls = Softmax(x_cls, axis=-2)  # determine class percentage-wise
+    # x_cls = Softmax(x_cls, axis=-2)  # determine class percentage-wise
 
     # Combining
-    x = Concat([x_pos, x_cls], axis=-2, name=out_name)  # (s, s, 8, 3)
+    x = Concat([x_xst, x_pos, x_cls], axis=-2, name=out_name)  # (s, s, 8, 3)
 
     return x
 
@@ -363,13 +369,13 @@ def yolo_v8_model(
     # (n, n, 2)
     detect_s_pos, detect_s_cls = Detect(
         x_21, reg_max=reg_max, nc=n_classes, dropout=0.2
-    )
-    detect_m_pos, detect_m_cls = Detect(
-        x_18, reg_max=reg_max, nc=n_classes, dropout=0.2
-    )
-    detect_l_pos, detect_l_cls = Detect(
-        x_15, reg_max=reg_max, nc=n_classes, dropout=0.2
-    )
+    )  # (None, 25, 25, 3*2), (None, 25, 25, 3*6)
+    # detect_m_pos, detect_m_cls = Detect(
+    #     x_18, reg_max=reg_max, nc=n_classes, dropout=0.2
+    # )
+    # detect_l_pos, detect_l_cls = Detect(
+    #     x_15, reg_max=reg_max, nc=n_classes, dropout=0.2
+    # )
 
     # Output Transformation
     detect_s = OutputTransformation(
@@ -379,20 +385,20 @@ def yolo_v8_model(
         n_classes=n_classes,
         out_name="out_s",
     )  # (s, s, 2 + n_classes, reg_max)
-    detect_m = OutputTransformation(
-        detect_m_pos,
-        detect_m_cls,
-        reg_max=reg_max,
-        n_classes=n_classes,
-        out_name="out_m",
-    )  # (m, m, 2 + n_classes, reg_max)
-    detect_l = OutputTransformation(
-        detect_l_pos,
-        detect_l_cls,
-        reg_max=reg_max,
-        n_classes=n_classes,
-        out_name="out_l",
-    )  # (l, l, 2 + n_classes, reg_max)
+    # detect_m = OutputTransformation(
+    #     detect_m_pos,
+    #     detect_m_cls,
+    #     reg_max=reg_max,
+    #     n_classes=n_classes,
+    #     out_name="out_m",
+    # )  # (m, m, 2 + n_classes, reg_max)
+    # detect_l = OutputTransformation(
+    #     detect_l_pos,
+    #     detect_l_cls,
+    #     reg_max=reg_max,
+    #     n_classes=n_classes,
+    #     out_name="out_l",
+    # )  # (l, l, 2 + n_classes, reg_max)
 
     outputs = [
         detect_s,
@@ -752,9 +758,9 @@ def yolo_to_positions_and_class(
     global_grid_pos = cell_indices * 800 / s  # (s, s, 2)
     global_grid_pos = tf.cast(global_grid_pos, tf.float32)
 
-    xst = 1 - y[:, :, 2:3, :]  # (y, x, 1, 3)
-    pos = y[:, :, :2, :]  # (y, x, 2, 3)
-    cls = y[:, :, 2:, :]  # (y, x, 6, 3)
+    xst = y[:, :, :1, :]  # (y, x, 1, 3)
+    pos = y[:, :, 1:3, :]  # (y, x, 2, 3)
+    cls = y[:, :, 3:, :]  # (y, x, 5, 3)
 
     pos_abs = (
         pos * tf.cast(800 / s, tf.float32) + global_grid_pos[:, :, :, None]
@@ -763,8 +769,8 @@ def yolo_to_positions_and_class(
     pos_abs = tf.transpose(pos_abs, [0, 1, 3, 2])  # (y, x, 3, 2)
     pos_abs = tf.reshape(pos_abs, [-1, 2])  # (m, 2)
 
-    cls = tf.transpose(cls, [0, 1, 3, 2])  # (y, x, 3, 6)
-    cls = tf.reshape(cls, [-1, len(classes)])  # (m, 6)
+    cls = tf.transpose(cls, [0, 1, 3, 2])  # (y, x, 3, 3)
+    cls = tf.reshape(cls, [-1, len(classes) - 1])  # (m, 5)
 
     xst = tf.transpose(xst, [0, 1, 3, 2])  # (y, x, 3, 1)
     xst = tf.reshape(xst, [-1, 1])  # (m, 1)
@@ -811,10 +817,15 @@ if __name__ == "__main__":
     model = yolo_v8_model(
         variant="n",
     )
-    model.compile(
-        loss=lambda x, y: yolo_v8_loss(x, y, 50),
-        optimizer="adam",
-    )
+    model.compile(loss="mse", optimizer="adam")
+    model.build(input_shape=(None, 800, 800, 3))
+    model.summary()
+    tf.keras.utils.plot_model(model, "dump/model.png", show_shapes=True)
+    exit()
+    # model.compile(
+    #     loss=lambda x, y: yolo_v8_loss(x, y, 50),
+    #     optimizer="adam",
+    # )
 
     model.load_weights("data/ai/darts/yolov8_train5.weights.h5")
     data_dir_paper = "data/paper/imgs/d1_02_04_2020/"

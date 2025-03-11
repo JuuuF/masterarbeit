@@ -39,3 +39,12 @@ def get_grid_existences(
     xst_prob = tf.expand_dims(xst_prob, axis=-2)  # (bs, s, s, 1, 3)
 
     return xst_prob  # (bs, s, s, 1, 3)
+
+
+def split_outputs_to_xst_cls_pos(
+    t: tf.Tensor,  # (bs, s, s, 8, 3)
+) -> tf.Tensor:
+    y_xst = t[..., :1, :]
+    y_pos = t[..., 1:3, :]
+    y_cls = t[..., 3:, :]
+    return y_xst, y_pos, y_cls

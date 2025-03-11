@@ -187,11 +187,12 @@ class Augmentation:
     def __call__(
         self,
         img: tf.Tensor,  # (800, 800, 3)
+        xst: tf.Tensor,  # (1, 3)
         pos: tf.Tensor,  # (2, 3)
-        cls: tf.Tensor,  # (6, 3)
+        cls: tf.Tensor,  # (5, 3)
     ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         pixel_factor = tf.pow(tf.random.uniform((), 0, 1), 5)
         img = self.pixel_augmentation(img) * (1 - pixel_factor) + img * pixel_factor
 
         img, pos = self.transformation_augmentation(img, pos)
-        return img, pos, cls
+        return img, xst, pos, cls

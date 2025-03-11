@@ -3,9 +3,9 @@ import tensorflow as tf
 from ma_darts.ai.data import Augmentation
 
 
-def get_out_grid(out_size, n_pos, n_cls):
+def get_out_grid(out_size, n_cols):
     # Start with a blank cell
-    cell_col = tf.zeros((n_pos + n_cls), tf.float32)  # (n,)
+    cell_col = tf.zeros((n_cols), tf.float32)  # (n,)
     # Add a nothing-entry
     cell_col = tf.tensor_scatter_nd_update(
         cell_col, [[2]], [1]  # Update index 2 with value 1
@@ -21,6 +21,7 @@ def get_out_grid(out_size, n_pos, n_cls):
 
 
 def scaled_out(
+    xst: tf.Tensor,  # (1, 3)
     pos: tf.Tensor,  # (2, 3)
     cls: tf.Tensor,  # (6, 3)
     img_size: int,
@@ -28,8 +29,7 @@ def scaled_out(
 ):
     out_grid = get_out_grid(
         out_size,
-        tf.shape(pos)[0],
-        tf.shape(cls)[0],
+        tf.shape(xst)[0] + tf.shape(pos)[0] + tf.shape(cls)[0],
     )  # (y, x, 8, 3)
 
     cell_size = img_size // out_size
@@ -64,7 +64,7 @@ def scaled_out(
     cell_col = tf.cast(cell_col, tf.int32)
 
     # Update position and class data
-    pos_update = tf.concat([local_pos[:, 0], cls[:, 0]], axis=0)
+    pos_update = tf.concat([xst[:, 0], local_pos[:, 0], cls[:, 0]], axis=0)
 
     # Get update indices
     indices = []
@@ -101,7 +101,7 @@ def scaled_out(
     cell_col = tf.cast(cell_col, tf.int32)
 
     # Update position and class data
-    pos_update = tf.concat([local_pos[:, 1], cls[:, 1]], axis=0)
+    pos_update = tf.concat([xst[:, 1], local_pos[:, 1], cls[:, 1]], axis=0)
 
     # Get update indices
     indices = []
@@ -138,7 +138,7 @@ def scaled_out(
     cell_col = tf.cast(cell_col, tf.int32)
 
     # Update position and class data
-    pos_update = tf.concat([local_pos[:, 2], cls[:, 2]], axis=0)
+    pos_update = tf.concat([xst[:, 2], local_pos[:, 2], cls[:, 2]], axis=0)
 
     # Get update indices
     indices = []
@@ -159,9 +159,6 @@ def scaled_out(
     updates.append(pos_update[5])
     updates.append(pos_update[6])
     updates.append(pos_update[7])
-    # for cell_row in tf.range(tf.shape(pos_update)[0], dtype=tf.int32):
-    #     indices.append([grid_y, grid_x, cell_row, cell_col])
-    #     updates.append(pos_update[cell_row])
 
     # Apply updates
     indices = tf.convert_to_tensor(indices, dtype=tf.int32)
@@ -209,11 +206,13 @@ def scaled_out(
 @tf.function
 def positions_to_yolo(
     img: tf.Tensor,  # (800, 800, 3)
+    xst: tf.Tensor,  # (1, 3)
     pos: tf.Tensor,  # (2, 3)
     cls: tf.Tensor,  # (6, 3)
 ):
+    xst = tf.cast(xst, tf.float32)
     cls = tf.cast(cls, tf.float32)
-    out_s = scaled_out(pos, cls, 800, 25)
+    out_s = scaled_out(xst, pos, cls, 800, 25)
     # out_m = scaled_out(pos, cls, 800, 50)
     # out_l = scaled_out(pos, cls, 800, 100)
     return img, out_s  # , out_m, out_l
@@ -255,10 +254,11 @@ def finalize_base_ds(
 
     # Set shapes
     ds = ds.map(
-        lambda img, pos, cls: (
+        lambda img, xst, pos, cls: (
             tf.ensure_shape(img, [img_size, img_size, 3]),
+            tf.ensure_shape(xst, [1, 3]),
             tf.ensure_shape(pos, [2, 3]),
-            tf.ensure_shape(cls, [6, 3]),
+            tf.ensure_shape(cls, [5, 3]),
         ),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
@@ -286,7 +286,7 @@ def finalize_base_ds(
     ds = ds.map(
         lambda img, out_s: (
             tf.ensure_shape(img, [img_size, img_size, 3]),
-            tf.ensure_shape(out_s, [img_size // 32, img_size // 32, 2 + 6, 3]),
+            tf.ensure_shape(out_s, [img_size // 32, img_size // 32, 1 + 2 + 5, 3]),
         ),
         num_parallel_calls=tf.data.AUTOTUNE,
     )

@@ -1,6 +1,6 @@
 import tensorflow as tf
 from ma_darts import img_size
-from ma_darts.ai.utils import get_grid_existences
+from ma_darts.ai.utils import split_outputs_to_xst_cls_pos
 
 
 class DIoULoss(tf.keras.losses.Loss):
@@ -69,9 +69,10 @@ class DIoULoss(tf.keras.losses.Loss):
         y_true: tf.Tensor,  # (bs, s, s, 8, 3)
         y_pred: tf.Tensor,
     ):
-        # Remove classes
-        pos_true = y_true[..., :2, :]  # (bs, s, s, 2, 3)
-        pos_pred = y_pred[..., :2, :]
+        # Split into components
+        # (bs, s, s, 1, 3), (bs, s, s, 2, 3)
+        xst_true, pos_true, _ = split_outputs_to_xst_cls_pos(y_true)
+        xst_pred, pos_pred, _ = split_outputs_to_xst_cls_pos(y_pred)
 
         # Create grid for absolute coordinates
         s = tf.cast(tf.shape(pos_true)[1], tf.float32)
@@ -84,10 +85,6 @@ class DIoULoss(tf.keras.losses.Loss):
         # Convert to absolute normalized coordinates
         pos_true = grid_pos[None, ..., None] + pos_true / s  # (bs, s, s, 2, 3) 0..1
         pos_pred = grid_pos[None, ..., None] + pos_pred / s
-
-        # Get existences
-        xst_true = get_grid_existences(y_true)  # (bs, s, s, 1, 3)
-        xst_pred = get_grid_existences(y_pred)
 
         # Flatten tensors
         batch_size = tf.shape(pos_true)[0]

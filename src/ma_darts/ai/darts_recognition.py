@@ -224,7 +224,7 @@ class Utils:
                     for i, c in enumerate([0, 255]):
                         cv2.putText(
                             img,
-                            classes[cls_idx.numpy()],
+                            classes[cls_idx.numpy() + 1],
                             org=(x + 10, y),
                             fontFace=cv2.FONT_HERSHEY_PLAIN,
                             fontScale=1,
@@ -341,14 +341,14 @@ metrics = [
 ]
 # metrics = [metrics for _ in range(3)]
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
+    optimizer=tf.keras.optimizers.AdamW(learning_rate=0.001),
     loss=YOLOv8Loss(
         square_size=0.05,
-        cls_threshold=1,  # 0.003,
+        cls_threshold=0.003,
         cls_width=0.002,
-        pos_threshold=1,  # 0.004,
+        pos_threshold=0.004,
         pos_width=0.002,
-        diou_threshold=1,  # 0.003,
+        diou_threshold=0.003,
         diou_width=0.001,
     ),
     metrics=metrics,

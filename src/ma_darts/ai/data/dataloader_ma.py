@@ -27,19 +27,89 @@ def get_class_table():
     return class_table
 
 
+def _parse_json(json_str):
+    # If json_str is a NumPy array (which happens when tf.py_function converts it),
+    # extract the underlying Python object.
+    if isinstance(json_str, np.ndarray):
+        json_str = json_str.item()
+    # If it's still a Tensor (e.g. in eager mode), convert it to a numpy array.
+    if isinstance(json_str, tf.Tensor):
+        json_str = json_str.numpy()
+    # If the resulting object is bytes, decode it.
+    if isinstance(json_str, bytes):
+        json_str = json_str.decode("utf-8")
+    # Decode the byte string and load JSON data
+    sample_info = json.loads(json_str)
+
+    # Process positions
+    positions = tf.convert_to_tensor(
+        sample_info.get("dart_positions_undistort", [(0, 0)]), dtype=tf.float32
+    )
+
+    positions = positions[:3]
+    add_cols = tf.clip_by_value(tf.constant(3, tf.int32) - tf.shape(positions)[0], 0, 3)
+    positions = tf.concat(
+        [positions, tf.zeros((add_cols, 2), dtype=tf.float32)], axis=0
+    )
+    positions = tf.ensure_shape(positions, (3, 2))
+    positions = tf.transpose(positions)  # (2, 3)
+
+    # Process scores
+    # (Assuming each score entry is a pair like [score, label])
+    scores = tf.convert_to_tensor(
+        [
+            str(s[1])
+            for s in sample_info.get("scores", [[0, "HIDDEN"] for _ in range(3)])
+        ],
+        dtype=tf.string,
+    )
+    scores = tf.ensure_shape(scores, (3,))
+
+    # Sort by descending y value
+    order = tf.argsort(positions[0], direction="DESCENDING")
+    positions = tf.gather(positions, order, axis=1)
+    scores = tf.gather(scores, order)
+
+    return positions, scores
+
+
 def parse_positions_and_scores(json_str: tf.string):
+    positions, scores = tf.py_function(
+        func=_parse_json, inp=[json_str], Tout=[tf.float32, tf.string]
+    )
+    return positions, scores
+
     sample_info = json.loads(json_str.numpy().decode("utf-8"))
     positions = tf.convert_to_tensor(
         sample_info.get("dart_positions_undistort", [(0, 0)]), dtype=tf.float32
     )  # (3, 2)
+    positions = tf.ensure_shape(positions, (3, 2))
+
+    # Make sure there are exactly 3 positions
+    positions = positions[:3]
+    add_cols = tf.clip_by_value(tf.constant(3, tf.int32) - tf.shape(positions)[0], 0, 3)
+    tf.print("prev", tf.shape(positions))
+    positions = tf.concat(
+        [positions, tf.zeros((add_cols, 2), dtype=tf.float32)], axis=0
+    )[:3]
+    positions = tf.ensure_shape(positions, (3, 2))
+    tf.print("post", tf.shape(positions))
+
+    # Convert positions into correct shape
     positions = tf.transpose(positions)  # (2, 3)
-    positions = tf.cast(positions, tf.float32)
 
     scores = tf.convert_to_tensor(
-        [str(s[1]) for s in sample_info.get("scores", [0, "HIDDEN"])], dtype=tf.string
+        [
+            str(s[1])
+            for s in sample_info.get("scores", [[0, "HIDDEN"] for _ in range(3)])
+        ],
+        dtype=tf.string,
     )  # (3,)
+    scores = tf.ensure_shape(scores, (3,))
 
     # Sort by descending y value
+    # tf.print(sample_info.get("scores", [0, "HIDDEN"]))
+    # tf.print(positions[0])
     order = tf.argsort(positions[0], direction="DESCENDING")
     positions = tf.gather(positions, order, axis=1)
     scores = tf.gather(scores, order)
@@ -79,10 +149,15 @@ def read_positions_and_classes(filepath: tf.Tensor):
     scores_onehot = tf.one_hot(class_ids, depth=6, dtype=tf.int32)  # (3, 6)
     classes = tf.transpose(scores_onehot)  # (6, 3)
 
-    positions.set_shape((2, 3))
-    classes.set_shape((6, 3))
+    # Get existences
+    existences = 1 - classes[:1]  # (1, 3)
+    classes = classes[1:]  # (5, 3)
 
-    return positions, classes
+    existences.set_shape((1, 3))
+    positions.set_shape((2, 3))
+    classes.set_shape((5, 3))
+
+    return existences, positions, classes
 
 
 def read_sample_img(filepath: tf.Tensor, img_size: int = 800):
@@ -101,9 +176,9 @@ def load_sample(img_path: tf.Tensor, info_path: tf.Tensor):
     # Load data
     img = read_sample_img(img_path)  # (800, 800, 3)
 
-    positions, classes = read_positions_and_classes(info_path)  # (2, 3), (6, 3)
+    existences, positions, classes = read_positions_and_classes(info_path)  # (1, 3), (2, 3), (5, 3)
 
-    return img, positions, classes
+    return img, existences, positions, classes
 
     """ assure correct position placement: """
     # img = (img.numpy() * 255).astype(np.uint8)
@@ -149,7 +224,7 @@ def dataloader_ma(
     ds = ds.map(
         load_sample,
         num_parallel_calls=tf.data.AUTOTUNE,
-    )  # (800, 800, 3), (2, 3), (6, 3)
+    )  # (800, 800, 3), (1, 3), (2, 3), (5, 3)
 
     ds = finalize_base_ds(
         ds,
