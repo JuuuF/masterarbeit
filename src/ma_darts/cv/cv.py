@@ -219,6 +219,28 @@ class Profiler:
         print(f"Total time: {execution_time:.03f}s")
 
 
+def extract_center(img):
+
+    img_full = img.copy()
+    img = Utils.downsample_img(img_full)
+
+
+    # -----------------------------
+    # EDGES
+
+    # Detect Edges
+    edge_img = edges.edge_detect(img, show=False)
+    # Skeletonize
+    skeleton_img = edges.skeletonize(edge_img, show=False)
+    # Extract lines
+    img_lines = lines.extract_lines(skeleton_img, show=False)
+    # Bin lines by angle
+    img_lines_binned = lines.bin_lines_by_angle(img_lines)
+    # Find Board Center
+    cy, cx = lines.get_center_point(img.shape, img_lines_binned, show=False)
+    return cy, cx
+
+
 def undistort_img(img: np.ndarray, profile: bool = False) -> np.ndarray:
 
     # -----------------------------
