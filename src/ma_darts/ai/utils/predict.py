@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from ma_darts import classes, dart_order
-from ma_darts.ai.utils import calculate_scores_ma
+from ma_darts.ai.utils import calculate_scores_ma, split_outputs_to_xst_pos_cls
 
 
 def convert_to_absolute_coordinates(
@@ -37,44 +37,48 @@ def yolo_v8_predict(
     # Predict images
     pred = model.predict(imgs, verbose=0)  # (bs, s, s, 8, 3)
 
+    # Split into components
+    xst = pred[..., :1, :]  # (bs, s, s, 1, 3)
+    pos = pred[..., 1:3, :]  # (bs, s, s, 2, 3)
+    cls = pred[..., 3:, :]  # (bs, s, s, 5, 3)
+
+    # Apply softmax activation
+    cls = np.array(tf.keras.activations.softmax(cls, axis=-2))
+
     # Convert to absolute coordinates
-    pos_pred = convert_to_absolute_coordinates(pred[..., :2, :])  # (bs, s, s, 8, 3)
+    pos = convert_to_absolute_coordinates(pos)  # (bs, s, s, 2, 3)
 
     # Extract best classes
-    cls_pred = np.argmax(pred[..., 2:, :], axis=-2)  # (bs, s, s, 3)
-    cnf_pred = np.max(pred[..., 2:, :], axis=-2)  # (bs, s, s, 3)
+    cnf = np.max(cls, axis=-2) * xst[..., 0, :]  # (bs, s, s, 3)
+    cls = np.argmax(cls, axis=-2)  # (bs, s, s, 3)
 
     # Flatten grid dimensions
     batch_size = imgs.shape[0]
-    pos_pred = np.transpose(pos_pred, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 2)
-    pos_pred = np.reshape(pos_pred, (batch_size, -1, 2))  # (bs, s*s*3, 2)
-    cls_pred = np.reshape(cls_pred, (batch_size, -1))  # (bs, s*s*3)
-    cnf_pred = np.reshape(cnf_pred, (batch_size, -1))  # (bs, s*s*3)
+    pos = np.transpose(pos, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 2)
+    pos = np.reshape(pos, (batch_size, -1, 2))  # (bs, s*s*3, 2)
+    cls = np.reshape(cls, (batch_size, -1))  # (bs, s*s*3)
+    cnf = np.reshape(cnf, (batch_size, -1))  # (bs, s*s*3)
+    xst = np.reshape(xst, (batch_size, -1))  # (bs, s*s*3)
 
     # Filter out unsure predictions
     # fmt: off
-    out_ids = [np.where(cnf_batch > confidence_threshold)[0] for cnf_batch in cnf_pred]  # bs * (m*,)
-    pos_pred = [pos_batch[ids] for pos_batch, ids in zip(pos_pred, out_ids)]  # bs * (m*, 2): (y, x)
-    cls_pred = [cls_batch[ids] for cls_batch, ids in zip(cls_pred, out_ids)]  # bs * (m*,)
-    cnf_pred = [cnf_batch[ids] for cnf_batch, ids in zip(cnf_pred, out_ids)]  # bs * (m*,)
-
-    # Filter out nothing predictions
-    out_ids = [np.where(cls_batch != 0)[0] for cls_batch in cls_pred]  # bs * (n*,)
-    pos_pred = [pos_batch[ids] for pos_batch, ids in zip(pos_pred, out_ids)]  # bs * (n*, 2): (y, x)
-    cls_pred = [cls_batch[ids] for cls_batch, ids in zip(cls_pred, out_ids)]  # bs * (n*,)
-    cnf_pred = [cnf_batch[ids] for cnf_batch, ids in zip(cnf_pred, out_ids)]  # bs * (n*,)
-
-    # Sort by confidences
-    sort_ids = [np.argsort(cnf_batch)[::-1] for cnf_batch in cnf_pred]  # bs * (n*,)
-    pos_pred = [pos_batch[sort_ids][0] for pos_batch in pos_pred]
-    cls_pred = [cls_batch[sort_ids][0] for cls_batch in cls_pred]
-    cnf_pred = [cnf_batch[sort_ids][0] for cnf_batch in cnf_pred]
+    out_ids = [np.where(xst_batch > confidence_threshold)[0] for xst_batch in xst]  # bs * (m*,)
+    pos = [pos_batch[ids] for pos_batch, ids in zip(pos, out_ids)]  # bs * (m*, 2): (y, x)
+    cls = [cls_batch[ids] for cls_batch, ids in zip(cls, out_ids)]  # bs * (m*,)
+    cnf = [cnf_batch[ids] for cnf_batch, ids in zip(cnf, out_ids)]  # bs * (m*,)
     # fmt: on
 
+    # Sort by confidences
+    sort_ids = [np.argsort(cnf_batch)[::-1] for cnf_batch in cnf]  # bs * (n*,)
+    pos = [pos_batch[sort_ids][0] for pos_batch in pos]
+    cls = [cls_batch[sort_ids][0] for cls_batch in cls]
+    cnf = [cnf_batch[sort_ids][0] for cnf_batch in cnf]
+    print(np.max(cnf))
+
     # Get scores
-    scr_pred = [
-        calculate_scores_ma(pos_batch, cls_batch)
-        for pos_batch, cls_batch in zip(pos_pred, cls_pred)
+    scr = [
+        calculate_scores_ma(pos_batch, cls_batch + 1)
+        for pos_batch, cls_batch in zip(pos, cls)
     ]  # bs * (n*, 2): (int, str)
 
     # out = [
@@ -87,7 +91,7 @@ def yolo_v8_predict(
             "scores": scr_batch,
             "confidences": cnf_batch,
         }
-        for pos_batch, scr_batch, cnf_batch in zip(pos_pred, scr_pred, cnf_pred)
+        for pos_batch, scr_batch, cnf_batch in zip(pos, scr, cnf)
     ]
     if added_batch:
         out = out[0]

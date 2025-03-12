@@ -7,6 +7,7 @@ while true; do
 
     if [ "$prev_hash" != "$new_hash" ]; then
         scp ma_kiel:/home/jfuerstenwerth/masterarbeit/dump/training_history.png dump/training_history.png
+        scp ma_kiel:/home/jfuerstenwerth/masterarbeit/dump/prediction.png dump/prediction.png
         scp ma_kiel:/home/jfuerstenwerth/masterarbeit/dump/training_history.pkl dump/training_history.pkl
 
         # Find latest checkpoint
