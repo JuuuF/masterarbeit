@@ -73,7 +73,6 @@ def yolo_v8_predict(
     pos = [pos_batch[sort_ids][0] for pos_batch in pos]
     cls = [cls_batch[sort_ids][0] for cls_batch in cls]
     cnf = [cnf_batch[sort_ids][0] for cnf_batch in cnf]
-    print(np.max(cnf))
 
     # Get scores
     scr = [
