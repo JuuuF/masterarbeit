@@ -181,7 +181,7 @@ class Augmentation:
         )[0]
 
         # Clip ranges
-        pos = tf.clip_by_value(pos, 0, 1)
+        pos = tf.cast(tf.clip_by_value(pos, 0, 1), tf.float32)
         return img, pos
 
     def __call__(

@@ -6,10 +6,6 @@ from ma_darts.ai.data import Augmentation
 def get_out_grid(out_size, n_cols):
     # Start with a blank cell
     cell_col = tf.zeros((n_cols), tf.float32)  # (n,)
-    # Add a nothing-entry
-    cell_col = tf.tensor_scatter_nd_update(
-        cell_col, [[2]], [1]  # Update index 2 with value 1
-    )
     # Extend to cell
     cell_col = tf.expand_dims(cell_col, -1)  # (n, 1)
     cell = tf.repeat(cell_col, repeats=3, axis=-1)  # (n, 3)
@@ -27,17 +23,18 @@ def scaled_out(
     img_size: int,
     out_size: int,
 ):
+    cls = tf.cast(cls, tf.float32)
     out_grid = get_out_grid(
         out_size,
         tf.shape(xst)[0] + tf.shape(pos)[0] + tf.shape(cls)[0],
     )  # (y, x, 8, 3)
 
-    cell_size = img_size // out_size
-    pos_abs = pos * img_size  # (2, 3)
-    pos_abs = tf.clip_by_value(pos_abs, 0, img_size - 1)
+    cell_size = tf.constant(img_size // out_size, tf.float32)
+    pos_abs = tf.cast(pos * img_size, tf.float32)  # (2, 3)
+    pos_abs = tf.clip_by_value(pos_abs, 0.0, tf.cast(img_size - 1, tf.float32))
 
-    grid_pos = tf.cast(pos_abs // cell_size, tf.int32)  # (2, 3)
-    local_pos = (pos_abs % cell_size) / cell_size  # (2, 3)
+    grid_pos = tf.cast(pos_abs / cell_size, tf.int32)  # (2, 3)
+    local_pos = tf.math.floormod(pos_abs, cell_size) / cell_size  # (2, 3)
     # --------------------------------------
 
     # grid_y, grid_x = grid_pos[0], grid_pos[1]  # (3,), (3,)
@@ -203,7 +200,7 @@ def scaled_out(
     # return out_grid
 
 
-@tf.function
+# @tf.function
 def positions_to_yolo(
     img: tf.Tensor,  # (800, 800, 3)
     xst: tf.Tensor,  # (1, 3)
@@ -211,6 +208,7 @@ def positions_to_yolo(
     cls: tf.Tensor,  # (6, 3)
 ):
     xst = tf.cast(xst, tf.float32)
+    pos = tf.cast(pos, tf.float32)
     cls = tf.cast(cls, tf.float32)
     out_s = scaled_out(xst, pos, cls, 800, 25)
     # out_m = scaled_out(pos, cls, 800, 50)
@@ -228,13 +226,15 @@ def cache_ds(
     cache_base = "data/cache/datasets"
     cache_id = data_dir.replace("/", "-").rstrip("-")
     cache_file = os.path.join(cache_base, cache_id + ".tfdata")
+    print("caching to", cache_file, flush=True)
 
     # Remove existing cache files
     if clear_cache and os.path.exists(cache_file):
         os.remove(cache_file)
 
     # Create clean cache directory
-    os.makedirs(cache_base, exist_ok=True)
+    if not os.path.exists(cache_base):
+        os.makedirs(cache_base, exist_ok=True)
 
     # Cache to directory
     return ds.cache(cache_file)
@@ -252,6 +252,16 @@ def finalize_base_ds(
     clear_cache: bool = False,
 ) -> tf.data.Dataset:
 
+    # Assure data types
+    ds = ds.map(
+        lambda img, xst, pos, cls: (
+            tf.cast(img, tf.float32),
+            tf.cast(xst, tf.float32),
+            tf.cast(pos, tf.float32),
+            tf.cast(cls, tf.float32),
+        ),
+        num_parallel_calls=tf.data.AUTOTUNE,
+    )
     # Set shapes
     ds = ds.map(
         lambda img, xst, pos, cls: (

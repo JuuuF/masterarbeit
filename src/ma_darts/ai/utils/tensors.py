@@ -41,7 +41,7 @@ def get_grid_existences(
     return xst_prob  # (bs, s, s, 1, 3)
 
 
-def split_outputs_to_xst_cls_pos(
+def split_outputs_to_xst_pos_cls(
     t: tf.Tensor,  # (bs, s, s, 8, 3)
 ) -> tf.Tensor:
     y_xst = t[..., :1, :]

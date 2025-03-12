@@ -371,12 +371,12 @@ def paper_base_ds(
     positions = df["darts_positions_undistorted"]  # (n, 3, 2): x, y; center-relative
     Ms = df["undistortion_homography"]  # (n, 3, 3)
 
-    filepaths = list(filepaths)
-    classes = np.array(list(classes.values))  # (n, 6, 3)
-    existences = 1 - classes[:, :1]  # (n, 1, 3)
+    filepaths = np.array(filepaths, str)
+    classes = np.array(list(classes.values), np.float32)  # (n, 6, 3)
+    existences = np.array(1 - classes[:, :1], np.float32)  # (n, 1, 3)
     classes = classes[:, 1:]  # (n, 5, 3)
-    positions = np.array(list(positions.values))
-    Ms = np.array(list(Ms.values))
+    positions = np.array(list(positions.values), np.float32)
+    Ms = np.array(list(Ms.values), np.float32)
 
     # Transfer positions to standard-form
     positions = positions[..., ::-1]  # xy -> yx
@@ -385,13 +385,12 @@ def paper_base_ds(
         (positions[:, :1] != 0) & (positions[:, 1:] != 0), positions + 0.5, positions
     )
     positions = np.float32(positions)
-    # positions += 0.5  # top-left normalized
 
     # Convert all to dataset slices
     ds_filepaths = tf.data.Dataset.from_tensor_slices(filepaths)
     ds_xst = tf.data.Dataset.from_tensor_slices(existences)
-    ds_cls = tf.data.Dataset.from_tensor_slices(classes)
     ds_pos = tf.data.Dataset.from_tensor_slices(positions)
+    ds_cls = tf.data.Dataset.from_tensor_slices(classes)
     ds_Ms = tf.data.Dataset.from_tensor_slices(Ms)
 
     # Read images
@@ -411,7 +410,7 @@ def paper_base_ds(
     )
 
     ds = tf.data.Dataset.zip(ds_imgs, ds_xst, ds_pos, ds_cls)
-    return ds
+    return ds  # (800, 800, 3), (1, 3), (2, 3), (5, 3) -> all tf.float32, except cls (int32)
 
 
 def dataloader_paper(
