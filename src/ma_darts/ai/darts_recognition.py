@@ -334,12 +334,15 @@ if args.model_path is None:
 else:
     model = tf.keras.models.load_model(args.model_path, compile=False)
 
+if "GPU_SERVER" not in os.environ.keys():
+    model.load_weights("data/ai/darts/latest.weights.h5")
+
 # Compile model
 metrics = [
-    ExistenceLoss(name="01_xst_loss"),
-    ClassesLoss(name="02_cls_loss"),
-    PositionsLoss(name="03_pos_loss"),
-    DIoULoss(name="04_diou_loss"),
+    ExistenceLoss(name="01_xst_loss", multiplier=200),
+    ClassesLoss(name="02_cls_loss", multiplier=100),
+    PositionsLoss(name="03_pos_loss", multiplier=0.5),
+    DIoULoss(name="04_diou_loss", multiplier=0.5),
 ]
 # metrics = [metrics for _ in range(3)]
 model.compile(
@@ -366,14 +369,15 @@ model.compile(
 train_ds = dataloader_ma(
     "data/generation/out/",
     batch_size=BATCH_SIZE,
-    shuffle=False,
+    shuffle=True,
     augment=True,
     cache=True,
     clear_cache=args.clear_cache,
 )
 # Utils.check_dataset(train_ds)
-if "GPU_SERVER" not in os.environ.keys():
-    train_ds = dummy_ds(n_samples=8)
+# if "GPU_SERVER" not in os.environ.keys():
+#     train_ds = dummy_ds(n_samples=8)
+
 
 val_ds_paper = dataloader_paper(
     base_dir="data/paper/",
@@ -385,28 +389,31 @@ val_ds_paper = dataloader_paper(
     batch_size=BATCH_SIZE,
     cache=True,
     clear_cache=args.clear_cache,
-).take(64)
+).take(10)
 val_ds_ma = dataloader_ma(
     "data/generation/out_val/",
     batch_size=BATCH_SIZE,
     shuffle=False,
     augment=False,
     cache=True,
-).take(64)
+    clear_cache=args.clear_cache,
+).take(10)
 val_ds_real = dataloader_ma(
     "data/darts_references/strongbows_out/",
     batch_size=BATCH_SIZE,
     shuffle=False,
     augment=False,
     cache=True,
-)
+    clear_cache=args.clear_cache,
+).take(10)
 # Utils.check_dataset(val_ds_real)
 
 val_ds = val_ds_paper.concatenate(val_ds_ma).concatenate(val_ds_real)
 
+
 # Utils.check_dataset(val_ds)
-if "GPU_SERVER" not in os.environ.keys():
-    val_ds = dummy_ds(n_samples=4)
+# if "GPU_SERVER" not in os.environ.keys():
+#     val_ds = dummy_ds(n_samples=4)
 
 # -----------------------------------------------
 # Fit Model

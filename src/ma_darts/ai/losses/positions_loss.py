@@ -1,6 +1,6 @@
 import tensorflow as tf
 from ma_darts import img_size
-from ma_darts.ai.utils import split_outputs_to_xst_cls_pos
+from ma_darts.ai.utils import split_outputs_to_xst_pos_cls
 
 
 class PositionsLoss(tf.keras.losses.Loss):
@@ -25,13 +25,15 @@ class PositionsLoss(tf.keras.losses.Loss):
     ):
 
         # (bs, s, s, 1, 3), (bs, s, s, 2, 3)
-        xst_true, pos_true, _ = split_outputs_to_xst_cls_pos(y_true)
-        xst_pred, pos_pred, _ = split_outputs_to_xst_cls_pos(y_pred)
+        xst_true, pos_true, _ = split_outputs_to_xst_pos_cls(y_true)
+        xst_pred, pos_pred, _ = split_outputs_to_xst_pos_cls(y_pred)
 
         # Get existences
         batch_size = tf.shape(y_true)[0]
         positive_mask = tf.cast(xst_true > 0.5, tf.float32)  # (bs, s, s, 1, 3)
-        positive_mask = tf.reshape(positive_mask, (batch_size, -1, 1))  # (bs, s * s * 3, 1)
+        positive_mask = tf.reshape(
+            positive_mask, (batch_size, -1, 1)
+        )  # (bs, s * s * 3, 1)
 
         # Flatten positions
         pos_true = tf.transpose(pos_true, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 2)
@@ -44,14 +46,12 @@ class PositionsLoss(tf.keras.losses.Loss):
         pos_pred = pos_pred * positive_mask
 
         # Calculate loss
-        mse = tf.reduce_mean(tf.square(pos_true - pos_pred))
-        return mse
         diffs = tf.abs(pos_true - pos_pred)  # (bs, s * s * 3, 2)
         total_dists = tf.reduce_sum(diffs, axis=[1, 2])  # (bs,)
         n_trues = tf.reduce_sum(positive_mask, axis=[1, 2])  # (bs,)
         final_dists = total_dists / tf.maximum(n_trues, 1)
         loss = tf.reduce_mean(final_dists)
-        return loss
+        return loss * tf.constant(self.multiplier, tf.float32)
 
         # Get existences
         xst_true = get_grid_existences(y_true)  # (bs, s, s, 1, 3)

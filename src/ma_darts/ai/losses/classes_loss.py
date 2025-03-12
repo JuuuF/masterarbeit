@@ -1,13 +1,16 @@
 import tensorflow as tf
 from ma_darts import img_size, radii
-from ma_darts.ai.utils import split_outputs_to_xst_cls_pos
+from ma_darts.ai.utils import split_outputs_to_xst_pos_cls
 
 
 class ClassesLoss(tf.keras.losses.Loss):
     def __init__(self, multiplier: float = 1, *args, **kwargs):
         super(ClassesLoss, self).__init__(*args, **kwargs)
 
-        self.loss_fn = tf.keras.losses.CategoricalCrossentropy()
+        self.loss_fn = tf.keras.losses.CategoricalFocalCrossentropy(
+            alpha=0.5,
+            gamma=2.0,
+        )
         self.multiplier = multiplier
 
     def get_config(self):
@@ -27,8 +30,8 @@ class ClassesLoss(tf.keras.losses.Loss):
     ):
 
         # (bs, s, s, 1, 3), (bs, s, s, 5, 3)
-        xst_true, _, cls_true = split_outputs_to_xst_cls_pos(y_true)
-        xst_pred, _, cls_pred = split_outputs_to_xst_cls_pos(y_pred)
+        xst_true, _, cls_true = split_outputs_to_xst_pos_cls(y_true)
+        xst_pred, _, cls_pred = split_outputs_to_xst_pos_cls(y_pred)
 
         batch_size = tf.shape(cls_true)[0]
         n_classes = tf.shape(cls_true)[-2]
@@ -38,25 +41,17 @@ class ClassesLoss(tf.keras.losses.Loss):
         cls_true = tf.reshape(cls_true, (batch_size, -1, n_classes))  # (bs, s*s*3, 5)
         cls_pred = tf.reshape(cls_pred, (batch_size, -1, n_classes))
 
+        # Apply softmax activation (only to predicted logits)
+        cls_pred = tf.keras.activations.softmax(cls_pred, axis=-1)
+
+        # Label Smoothing
+        cls_true = 0.998 * cls_true + 0.001
+
         # Extract true class masks
         positive_mask = tf.cast(xst_true > 0.5, tf.float32)  # (bs, s, s, 3, 1)
-        positive_mask = tf.reshape(positive_mask, (batch_size, -1))
+        positive_mask = tf.reshape(positive_mask, (batch_size, -1))  # (bs, s*s*3)
         cls_loss = self.loss_fn(cls_true, cls_pred, sample_weight=positive_mask)
-        return cls_loss
-
-        # Classes
-        cls_true = y_true[..., 2:, :]  # (bs, s, s, 6, 3)
-        cls_pred = y_pred[..., 2:, :]
-        cls_true = tf.transpose(cls_true, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 6)
-        cls_pred = tf.transpose(cls_pred, (0, 1, 2, 4, 3))
-
-        batch_size = tf.shape(cls_true)[0]
-        n_classes = tf.shape(cls_true)[-1]
-        cls_true = tf.reshape(cls_true, (batch_size, -1, n_classes))  # (bs, n, 6)
-        cls_pred = tf.reshape(cls_pred, (batch_size, -1, n_classes))
-
-        loss = self.loss_fn(cls_true, cls_pred)
-        return loss * tf.constant(self.multiplier, tf.float32)
+        return cls_loss * tf.constant(self.multiplier, tf.float32)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import tensorflow as tf
 from ma_darts import img_size
-from ma_darts.ai.utils import split_outputs_to_xst_cls_pos
+from ma_darts.ai.utils import split_outputs_to_xst_pos_cls
 
 
 class DIoULoss(tf.keras.losses.Loss):
@@ -71,8 +71,8 @@ class DIoULoss(tf.keras.losses.Loss):
     ):
         # Split into components
         # (bs, s, s, 1, 3), (bs, s, s, 2, 3)
-        xst_true, pos_true, _ = split_outputs_to_xst_cls_pos(y_true)
-        xst_pred, pos_pred, _ = split_outputs_to_xst_cls_pos(y_pred)
+        xst_true, pos_true, _ = split_outputs_to_xst_pos_cls(y_true)
+        xst_pred, pos_pred, _ = split_outputs_to_xst_pos_cls(y_pred)
 
         # Create grid for absolute coordinates
         s = tf.cast(tf.shape(pos_true)[1], tf.float32)

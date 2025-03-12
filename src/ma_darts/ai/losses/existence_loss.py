@@ -1,13 +1,17 @@
 import tensorflow as tf
 from ma_darts import img_size
-from ma_darts.ai.utils import split_outputs_to_xst_cls_pos
+from ma_darts.ai.utils import split_outputs_to_xst_pos_cls
 
 
 class ExistenceLoss(tf.keras.losses.Loss):
     def __init__(self, multiplier: float = 1, *args, **kwargs):
         super(ExistenceLoss, self).__init__(*args, **kwargs)
 
-        self.loss_fn = tf.keras.losses.BinaryCrossentropy()
+        self.loss_fn = tf.keras.losses.BinaryFocalCrossentropy(
+            apply_class_balancing=True,
+            alpha=0.5,
+            gamma=2.0,
+        )
         self.multiplier = multiplier
 
     def get_config(self):
@@ -27,15 +31,24 @@ class ExistenceLoss(tf.keras.losses.Loss):
     ):
 
         # Get existences
-        xst_true, _, _ = split_outputs_to_xst_cls_pos(y_true)  # (bs, s, s, 1, 3)
-        xst_pred, _, _ = split_outputs_to_xst_cls_pos(y_pred)
+        xst_true, _, _ = split_outputs_to_xst_pos_cls(y_true)  # (bs, s, s, 1, 3)
+        xst_pred, _, _ = split_outputs_to_xst_pos_cls(y_pred)
+
+        # Label smoothing
+        xst_true = 0.998 * xst_true + 0.001
 
         # Flatten grid
-        xst_true = tf.reshape(xst_true, (tf.shape(xst_true)[0], -1))  # (bs, s * s * 3)
-        xst_pred = tf.reshape(xst_pred, (tf.shape(xst_pred)[0], -1))
+        batch_size = tf.shape(y_true)[0]
+        xst_true = tf.reshape(xst_true, (batch_size, -1))  # (bs, s * s * 3)
+        xst_pred = tf.reshape(xst_pred, (batch_size, -1))
+
+        # Hard Negative Sampling
+        # false_positives = tf.logical_and(xst_true < 0.5, xst_pred > 0.5)
+        # false_negatives = tf.logical_and(xst_true > 0.5, xst_pred < 0.5)
+        # weights = tf.where(false_positives, 0.2, 1.0)  # reduce false positives
 
         loss = self.loss_fn(xst_true, xst_pred)
-        return loss  # * tf.constant(self.multiplier, tf.float32)
+        return loss * tf.constant(self.multiplier, tf.float32)
 
 
 if __name__ == "__main__":

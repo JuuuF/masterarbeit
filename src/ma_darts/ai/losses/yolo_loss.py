@@ -22,7 +22,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         self.square_size = square_size
 
         self.xst_loss = ExistenceLoss()
-        self.xst_mult = tf.constant(100, tf.float32)  # 100
+        self.xst_mult = tf.constant(200, tf.float32)  # 100
 
         # Classes Loss
         self.cls_loss = ClassesLoss()
@@ -36,7 +36,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         # Positions Loss
         self.pos_loss = PositionsLoss()
         self.base_pos_loss = tf.constant(1, tf.float32)
-        self.pos_mult = tf.constant(1.5, tf.float32)  # 1.5
+        self.pos_mult = tf.constant(0.5, tf.float32)  # 1.5
 
         self._pos_width = pos_width
         self.pos_width = pos_width if pos_width is not None else pos_threshold
@@ -45,7 +45,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         # DIoU Loss
         self.diou_loss = DIoULoss(self.square_size)
         self.base_diou_loss = tf.constant(2, tf.float32)
-        self.diou_mult = tf.constant(1.0, tf.float32)
+        self.diou_mult = tf.constant(0.5, tf.float32)
 
         self._diou_width = diou_width
         self.diou_width = diou_width if diou_width is not None else diou_threshold
@@ -59,11 +59,11 @@ class YOLOv8Loss(tf.keras.losses.Loss):
     def call(self, y_true, y_pred):
 
         # Compute XST loss
-        raw_xst_loss = self.xst_loss(y_true, y_pred)  # * self.xst_mult
+        raw_xst_loss = self.xst_loss(y_true, y_pred) * self.xst_mult
         # xst_loss = raw_xst_loss * self.xst_mult
 
         # Compute CLS loss
-        raw_cls_loss = self.cls_loss(y_true, y_pred)  # * self.cls_mult
+        raw_cls_loss = self.cls_loss(y_true, y_pred) * self.cls_mult
         # cls_activation = self.get_activation(
         #     raw_xst_loss, self.cls_threshold, self.cls_width
         # )
@@ -74,7 +74,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         # )
 
         # Compute POS loss
-        raw_pos_loss = self.pos_loss(y_true, y_pred)  # * self.pos_mult
+        raw_pos_loss = self.pos_loss(y_true, y_pred) * self.pos_mult
         # pos_activation = self.get_activation(
         #     raw_cls_loss, self.pos_threshold, self.pos_width
         # )
@@ -85,7 +85,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         # )
 
         # Compute DIoU loss
-        raw_diou_loss = self.diou_loss(y_true, y_pred)  # * self.diou_mult
+        raw_diou_loss = self.diou_loss(y_true, y_pred) * self.diou_mult
         # diou_activation = self.get_activation(
         #     raw_pos_loss, self.diou_threshold, self.diou_width
         # )
