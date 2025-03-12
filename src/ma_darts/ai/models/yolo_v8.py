@@ -625,8 +625,6 @@ class YOLOv8Loss(tf.keras.Loss):
 
         def iou_computation(pos_true, pos_pred, square_size):
             # Extending dimensions
-            # return tf.constant(10, tf.float32)  # XXX
-
             pos_true = tf.expand_dims(pos_true, 1)  # (m, 1, 2)
             pos_pred = tf.expand_dims(pos_pred, 0)  # (1, n, 2)
 

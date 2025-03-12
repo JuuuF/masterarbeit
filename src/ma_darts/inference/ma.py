@@ -82,7 +82,7 @@ def inference_ma(
         img_input = np.expand_dims(img_aligned, 0)  # (1, 800, 800, 3)
         img_input = np.float32(img_aligned) / 255
         outputs = yolo_v8_predict(
-            model, img_input, confidence_threshold=0.0
+            model, img_input, confidence_threshold=0.1
         )  # [((y, x), (score_int, score_str), conf)] * n_preds
 
         # Write up to 3 outputs

@@ -78,21 +78,26 @@ class Utils:
         callbacks.append(mc)
 
         # Prediction callback
-        if "GPU_SERVER" not in os.environ.keys():
-            X, y = next(iter(train_ds.take(1)))
-            pc = ma_callbacks.PredictionCallback(
-                X=X,
-                y=y,
-                output_file="dump/pred.png",
-                update_on="batches",
-                update_frequency=2,
-            )
-            callbacks.append(pc)
+        Xs, ys = [], []
+        for ds in [train_ds, val_ds_ma, val_ds_paper, val_ds_real]:
+            X, y = next(iter(ds.unbatch().batch(4).take(1)))
+            Xs.append(X)
+            ys.append(y)
+        Xs = np.concatenate(Xs, axis=0)
+        ys = np.concatenate(ys, axis=0)
+        pc = ma_callbacks.PredictionCallback(
+            X=Xs,
+            y=ys,
+            output_file="dump/prediction.png",
+            update_on="batches",
+            update_frequency=2,
+        )
+        callbacks.append(pc)
 
         lr = tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss",
             factor=np.power(0.1, 1 / 3),
-            patience=50,
+            patience=25,
             verbose=1,
             min_lr=1e-5,
         )
@@ -340,9 +345,9 @@ if "GPU_SERVER" not in os.environ.keys():
 # Compile model
 metrics = [
     ExistenceLoss(name="01_xst_loss", multiplier=200),
-    ClassesLoss(name="02_cls_loss", multiplier=100),
+    ClassesLoss(name="02_cls_loss", multiplier=150),
     PositionsLoss(name="03_pos_loss", multiplier=0.5),
-    DIoULoss(name="04_diou_loss", multiplier=0.5),
+    DIoULoss(name="04_diou_loss", multiplier=0.2),
 ]
 # metrics = [metrics for _ in range(3)]
 model.compile(

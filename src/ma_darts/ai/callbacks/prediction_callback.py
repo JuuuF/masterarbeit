@@ -273,9 +273,9 @@ class PredictionCallback(Callback):
         out_img = np.concatenate(batch_imgs, axis=1)
         cv2.imwrite(self.output_file, out_img)
 
-    def on_train_batch_end(self, batch, logs={}):
-        if self.update_fn(batch):
-            self.plot_prediction()
+    # def on_train_batch_end(self, batch, logs={}):
+    #     if self.update_fn(batch):
+    #         self.plot_prediction()
 
     def on_epoch_end(self, epoch, logs=None):
         self.plot_prediction()
