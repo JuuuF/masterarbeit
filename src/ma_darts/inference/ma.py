@@ -18,6 +18,7 @@ def inference_ma(
     model: tf.keras.Model | None = None,
     confidence_threshold: float = 0.5,
     max_outputs: int = 3,
+    verbose: bool = False,
 ) -> list[np.ndarray]:
 
     added_batch = False
@@ -106,11 +107,12 @@ def inference_ma(
     # Timing
     dt = time() - start
     sample_time = dt / len(img_paths)
-    print("-" * 50)
-    print(f"MA inference: {dt:.03f}s -> {sample_time:.03f}s/sample")
-    print(f"\tCV time: {np.sum(cv_times):.03f}s -> {np.mean(cv_times):.03f}s/sample")
-    print(f"\tAI time: {np.sum(ai_times):.03f}s -> {np.mean(ai_times):.03f}s/sample")
-    print("-" * 50)
+    if verbose:
+        print("-" * 50)
+        print(f"MA inference: {dt:.03f}s -> {sample_time:.03f}s/sample")
+        print(f"\tCV time: {np.sum(cv_times):.03f}s -> {np.mean(cv_times):.03f}s/sample")
+        print(f"\tAI time: {np.sum(ai_times):.03f}s -> {np.mean(ai_times):.03f}s/sample")
+        print("-" * 50)
     if added_batch:
         return ma_outputs[img_paths[0]]
     return ma_outputs
@@ -144,7 +146,7 @@ if __name__ == "__main__":
     from ma_darts.ai.models import yolo_v8_model
 
     model = yolo_v8_model(variant="s")
-    model.load_weights("data/ai/darts/yolov8_train10.weights.h5")
+    model.load_weights("data/ai/darts/latest.weights.h5")
 
     # img_paths = img_paths[:10]
     # ma_outputs = inference_ma(
@@ -162,7 +164,11 @@ if __name__ == "__main__":
 
     for img_path in img_paths:
         ma_outputs = inference_ma(
-            img_path, model=model, max_outputs=None, confidence_threshold=0.0
+            img_path,
+            model=model,
+            max_outputs=None,
+            confidence_threshold=0.0,
+            verbose=False,
         )
         img = visualize_prediction(img_path, ma_outputs)
         img = cv2.resize(img, (1000, 1000))
