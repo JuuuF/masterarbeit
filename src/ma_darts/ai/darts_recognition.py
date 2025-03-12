@@ -60,7 +60,7 @@ class Utils:
         hp = ma_callbacks.HistoryPlotter(
             filepath="dump/training_history.png",
             update_on="batches",
-            update_frequency=1024,
+            update_frequency=9999,
             smooth_curves=True,
             dark_mode=True,
             log_scale=True,
@@ -78,21 +78,23 @@ class Utils:
         callbacks.append(mc)
 
         # Prediction callback
-        # X, y = next(iter(val_ds.take(1)))
-        # pc = ma_callbacks.PredictionCallback(
-        #     X=X,
-        #     y=y,
-        #     output_file="dump/pred.png",
-        #     update_on="seconds",
-        #     update_frequency=60,
-        # )
-        # callbacks.append(pc)
+        if "GPU_SERVER" not in os.environ.keys():
+            X, y = next(iter(train_ds.take(1)))
+            pc = ma_callbacks.PredictionCallback(
+                X=X,
+                y=y,
+                output_file="dump/pred.png",
+                update_on="batches",
+                update_frequency=2,
+            )
+            callbacks.append(pc)
+
         lr = tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss",
             factor=np.power(0.1, 1 / 3),
             patience=50,
             verbose=1,
-            min_lr=1e-4,
+            min_lr=1e-5,
         )
         callbacks.append(lr)
 
