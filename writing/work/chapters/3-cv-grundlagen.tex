@@ -272,6 +272,7 @@ Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch p
     \threedvec{\cos(\alpha) \cdot x - \sin(\alpha) \cdot y}{\sin(\alpha) \cdot x + \cos(\alpha) \cdot y}{1} \\
 \end{align*}
 
+\todo{Matrizen ggf. besser beschreiben}
 
 \subsubsection{Homographien}
 \label{sec:homographien}
@@ -289,7 +290,8 @@ Im Gegensatz zu affinen Transformationen können Matrixeinträge in Homographien
         \right]
 \end{align*}
 
-Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je 2 Koordinaten gegeben sein. Dadurch ist eine Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier beliebige Punkte eines Zielbildes gemappt werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:homographie} genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten und entzerrten Bildern zu mappen.
+
+Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je 2 Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:homographie} genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten und entzerrten Bildern zu mappen.
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Logpolare Entzerrung}
