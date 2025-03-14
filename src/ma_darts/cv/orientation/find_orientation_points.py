@@ -649,7 +649,8 @@ def find_orientation_points(
         debug_img=logpolar.copy() if prepare_show_img else None,
     )
 
-    if sum(1 for p in keeps if p[-1] == "outer") < 2:
+    n_points = sum([1 for p in keeps if p[-1] == "outer"])
+    if n_points < 2:
         print("ERROR: Too few orientation points!")
         return None
 

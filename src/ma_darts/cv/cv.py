@@ -10,78 +10,6 @@ from ma_darts.cv import edges, lines, orientation, utils
 create_debug_img = False
 debug_out_images = []
 
-if __name__ == "__main__":
-    img_paths_custom = [
-        "dump/thomas.png",
-        "data/darts_references/jess/001_0-0-1.jpg",
-        "data/darts_references/jess/018_1-DB-DB.jpg",
-        "data/darts_references/jess/022_2-2-18.jpg",
-        "data/darts_references/jess/061_6-7-T4.jpg",
-        "data/darts_references/jess/084_10-6-4.jpg",
-        "data/darts_references/jess/129_19-2-6.jpg",
-        "dump/test/double.png",
-        # "data/generation/out/0/render.png",
-        # "data/generation/out/6/render.png",
-        # "data/generation/out/7/render.png",
-        # "data/generation/out/8/render.png",
-        # "dump/test/x_90.png",
-        # "dump/test/x_67_5.png",
-        # "dump/test/x_45.png",
-        # "dump/test/x_22_5.png",
-        # "dump/test/y_90.png",
-        # "dump/test/y_67_5.png",
-        # "dump/test/y_45.png",
-        # "dump/test/y_22_5.png",
-        "dump/test/0001.jpg",
-        # "dump/test/0002.jpg",
-        # "dump/test/0003.jpg",
-        # "data/paper/imgs/d1_02_16_2020/IMG_2858.JPG",
-        "dump/test/test_img.png",
-        "dump/test/test.png",
-        # "data/paper/imgs//d2_02_23_2021_3/DSC_0003.JPG",
-        "/home/justin/Downloads/test2.jpg",
-        "/home/justin/Downloads/test.jpg",
-    ]
-
-    # Generated images
-    img_paths_gen = [
-        os.path.join("data/generation/out", i, "render.png")
-        for i in sorted(os.listdir("data/generation/out"), key=lambda x: int(x))
-    ]
-    # img_paths = img_paths[46:]
-
-    # Paper images
-    img_paths_paper = [
-        os.path.join("data/paper/imgs", d, f)
-        for d in os.listdir("data/paper/imgs")
-        for f in os.listdir(os.path.join("data/paper/imgs", d))
-    ]
-    np.random.shuffle(img_paths_paper)
-    img_paths_paper = img_paths_paper[:200]
-
-    # Own References
-    img_paths_jess = [
-        os.path.join("data/darts_references/jess", f)
-        for f in os.listdir("data/darts_references/jess")
-    ]
-    # Own References
-    img_paths_sb = [
-        os.path.join("data/darts_references/strongbows", f)
-        for f in os.listdir("data/darts_references/strongbows")
-    ]
-
-    img_paths = (
-        []
-        # add paths
-        # + img_paths_gen
-        # + img_paths_paper
-        # + img_paths_jess
-        + img_paths_sb
-    )
-    np.random.shuffle(img_paths)
-
-    # img_paths[0] = "data/generation/out/75/render.png"
-
 
 class Utils:
 
@@ -223,7 +151,6 @@ def extract_center(img):
 
     img_full = img.copy()
     img = Utils.downsample_img(img_full)
-
 
     # -----------------------------
     # EDGES
@@ -414,9 +341,9 @@ if __name__ == "__main__":
     img_paths = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
     img_paths = sorted(img_paths, key=lambda x: int(x.split("/")[-1].split("-")[0]))
 
-    img_dir = "data/generation/out/"
-    img_paths = [os.path.join(img_dir, f, "render.png") for f in os.listdir(img_dir)]
-    img_paths = sorted(img_paths)
+    # img_dir = "data/generation/out/"
+    # img_paths = [os.path.join(img_dir, f, "render.png") for f in os.listdir(img_dir)]
+    # img_paths = sorted(img_paths)
 
     img_dir = "data/paper/imgs/d2_03_03_2020"
     img_paths = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
@@ -424,7 +351,7 @@ if __name__ == "__main__":
 
     for img_path in img_paths:
         img = cv2.imread(img_path)
-        M = undistort_img(img)
+        M = undistort_img(img, profile=True)
         if M is None:
             continue
         res = apply_matrix(img, M, output_size=(800, 800))
