@@ -344,10 +344,10 @@ if "GPU_SERVER" not in os.environ.keys():
 
 # Compile model
 metrics = [
-    ExistenceLoss(name="01_xst_loss", multiplier=200),
-    ClassesLoss(name="02_cls_loss", multiplier=150),
+    ExistenceLoss(name="01_xst_loss", multiplier=400),
+    ClassesLoss(name="02_cls_loss", multiplier=850),
     PositionsLoss(name="03_pos_loss", multiplier=0.5),
-    DIoULoss(name="04_diou_loss", multiplier=0.2),
+    DIoULoss(name="04_diou_loss", multiplier=0.1),
 ]
 # metrics = [metrics for _ in range(3)]
 model.compile(

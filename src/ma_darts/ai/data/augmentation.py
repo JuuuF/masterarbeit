@@ -7,11 +7,11 @@ class Augmentation:
         self.img_size = tf.constant(img_size, tf.int32)
 
         # Image Augmentation Parameters
-        self.brightness_adjust = 0.02
-        self.contrast_adjust = 0.25
-        self.noise_amount = 0.05
-        self.saturation_amount = 0.15
-        self.min_jpeg_quality = 25
+        self.brightness_adjust = 0.03
+        self.contrast_adjust = 0.3
+        self.noise_amount = 0.1
+        self.saturation_amount = 0.2
+        self.min_jpeg_quality = 20
 
     def pixel_augmentation(
         self,
