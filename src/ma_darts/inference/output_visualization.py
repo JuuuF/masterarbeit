@@ -39,6 +39,8 @@ def visualize_prediction(
     scr = res["scores"]
     cnf = res["confidences"]
     for (y, x), (scr_val, scr_str), c in zip(pos, scr, cnf):
+        if scr_str == "HIDDEN":
+            continue
         y, x = int(y), int(x)
 
         # Draw circle at position

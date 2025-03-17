@@ -145,8 +145,9 @@ if __name__ == "__main__":
     # model = tf.keras.models.load_model("data/ai/darts_model.keras", compile=False)
     from ma_darts.ai.models import yolo_v8_model
 
-    model = yolo_v8_model(variant="s")
+    model = yolo_v8_model(variant="n")
     model.load_weights("data/ai/darts/latest.weights.h5")
+    # model = tf.keras.models.load_model("dump/trains/run_1/darts_model.keras")
 
     # img_paths = img_paths[:10]
     # ma_outputs = inference_ma(
@@ -167,7 +168,7 @@ if __name__ == "__main__":
             img_path,
             model=model,
             max_outputs=None,
-            confidence_threshold=0.0,
+            confidence_threshold=0.35,
             verbose=False,
         )
         img = visualize_prediction(img_path, ma_outputs)
