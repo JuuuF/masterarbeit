@@ -53,40 +53,6 @@ class PositionsLoss(tf.keras.losses.Loss):
         loss = tf.reduce_mean(final_dists)
         return loss * tf.constant(self.multiplier, tf.float32)
 
-        # Get existences
-        xst_true = get_grid_existences(y_true)  # (bs, s, s, 1, 3)
-        xst_true = tf.transpose(xst_true, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 1)
-        xst_true = tf.reshape(
-            xst_true, (tf.shape(xst_true)[0], -1, 1)
-        )  # (bs, s * s * 3, 1)
-
-        # Get positions
-        pos_true = y_true[..., :2, :]  # (bs, s, s, 2, 3)
-        pos_pred = y_pred[..., :2, :]
-        pos_true = tf.transpose(pos_true, (0, 1, 2, 4, 3))  # (bs, s, s, 3, 2)
-        pos_pred = tf.transpose(pos_pred, (0, 1, 2, 4, 3))
-        pos_true = tf.reshape(
-            pos_true, (tf.shape(pos_true)[0], -1, 2)
-        )  # (bs, s * s * 3, 2)
-        pos_pred = tf.reshape(pos_pred, (tf.shape(pos_pred)[0], -1, 2))
-
-        # Clear non-existing predictions
-        pos_pred = pos_pred * xst_true
-        pos_true = pos_true * xst_true
-
-        # Get distances
-        diffs = tf.abs(pos_true - pos_pred)  # (bs, s * s * 3, 2)
-        total_dists = tf.reduce_sum(diffs, axis=[1, 2])  # (bs,)
-
-        # Compensate with abount of existing points
-        n_trues = tf.reduce_sum(xst_true, axis=[1, 2])  # (bs,)
-        final_dists = total_dists / tf.maximum(n_trues, 1)
-
-        # Convert to loss
-        loss = tf.reduce_mean(final_dists)
-
-        return loss * tf.constant(self.multiplier, tf.float32)
-
 
 if __name__ == "__main__":
     import pickle
