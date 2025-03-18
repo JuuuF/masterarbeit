@@ -3,7 +3,14 @@
 \chapter{Einleitung}
 \label{cha:einleitung}
 
-Hier steht die Einleitung.
+Hier steht die Einleitung. \autoref{img:projektstruktur}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{imgs/ma_project_structure.pdf}
+    \caption{Überblick über die Projektstruktur. (1) Datenerstellungs-Pipeline Aus der Datengenerierung werden Bilder und Masken erstellt und automatisch normalisiert. (2) Inferenz-Pipeline. Beliebige Bilder werden mittels CV-Algorithmen normalisiert. (3) Dartpfeil-Erkennung und Scoring. Die Erkennung geschieht durch ein neuronales Netz und das Scoring verläuft durch Nachverarbeitung der Outputs.}
+    \label{img:projektstruktur}
+\end{figure}
 
 % Datenquellen
 % Die Datengrundlage für dieses Projekt setzt sich aus drei verschiedenen Quellen zusammen. Die erste Quelle sind die bereits annotierten Daten von \citeauthor{deepdarts} \cite{deepdarts-data}, die für das Training des DeepDarts-Systems verwendet wurden. Zur Aufnahme dieser Daten wurden zum einen ein fest montiertes und konstant ausgerichtetes iPhone verwendet, zum anderen eine auf einem Stativ aufgestellte DSLR-Kamera. Diese Daten zeigen zwei unterschiedliche Dartscheiben in wenig variierten Umgebungen und unterliegen daher einer Starken Einseitigkeit (Bias). Aus diesem Grund wurde sich dazu entschieden, für diese Arbeit weitere Daten aufzunehmen.

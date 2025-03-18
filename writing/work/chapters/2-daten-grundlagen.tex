@@ -6,6 +6,7 @@
 Grundlagen hier.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Rendering}
 \label{sec:rendering}
 
@@ -16,51 +17,47 @@ Grundlagen hier.
 
 .
 
-\subsubsection{GPU-Nutzung}
-\label{sec:gpu_nutzung}
-
-.
-
 \todo{Rendering erklären.}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Binärbilder und Masken}
 \label{sec:masken}
 
 \todo{Masken und Binärbilder beschreiben}
 
 % -------------------------------------------------------------------------------------------------
-\subsection{Kameramodelle}
+
+\subsection{Kameraparameter}
 \label{sec:kameras}
+
+Bei der Datenerstellung mittels 3D-Software und Ray-Tracing ist die Präsenz einer Kamera unabdingbar. Ursprüngliche Kameramodelle begonnen mit einer Pinhole-Kamera, die als Projektion eines 3D-Raumes in einen 2D-Raum vornimmt \cite{pinhole_camera}. Auf diesem Modell aufbauend wurden weitere Kameraparameter modelliert, bis die Simulation echter Kameras ermöglicht wurde. In aktuellen 3D-Softwares zum Rendern von Szenen sind eine Vielzahl an Kameraparametern implementiert und modifizierbar, sodass fotorealistische Aufnahmen simuliert werden können. Die Unterschiede zwischen der Verwendung einer simulierten und einer Echten Kamera sind daher für das ungeschulte Auge verschwindend gering und für das Erstellen von Trainingsdaten für ein neuronales Netz ideal geeignet. Die wichtigsten Parameter einer Kameraaufnahme werden in diesem Unterabschnitt grob erläutert, um ein oberflächliches Verständnis der Arbeitsweise einer Kamera zu erlangen.
 
 \paragraph{Brennweite}
 
-.
+Die Brennweite einer Kamera -- bzw. eines Objektives -- bestimmt die Lichtbrechung bei der Aufnahme eines Bildes. Diese Lichtbrechung resultiert in einem unterschiedlich großen Bereich, der von der Kamera eingefangen wird. Optisch ist die Brennweite für den Zoom des Bildes zuständig. Eine Brennweite von 50mm ist eine typische Brennweite, die dem menschlichen Blickwinkel nahe kommt. Geringere Brennweiten sorgen für ein größeres Sichtfeld während größere Brennweiten mit einem größeren Zoom einhergehen. \cite{focal_lentgh}.
 
 \paragraph{Öffnungswinkel}
 
 .
 
-\paragraph{ISO}
+\paragraph{Belichtungsdauer und Bewegungsunschärfe}
 
 .
 
-\paragraph{Motion Blur}
+\paragraph{ISO und Rauschen}
 
-.
+Bei der Aufnahme von Bildern wird zwischen zwei Arten von Rauschen unterschieden: temporales und fixiertes Rauschen. Wohingegen fixiertes Rauschen zwischen Aufnahmen gleich bleibt, ändert sich temporales Rauschen zwischen Aufnahmen nichtdeterministisch. Die Ursprünge dieses Rauschens sind weitreichend von Imperfektionen in Objektiven zu physikalischen Gegebenheiten durch die Diskretisierung einer Szene auf dem Kamerasensor. Ein wesentlicher Grund für die Existenz von Rauschen ist die ISO. Der ISO-Wert gibt die Empfindlichkeit des Kamerasensors und damit die Lichtmenge an, die bei der Aufnahme mit einer Kamera auf den Sensor gelangt. Je höher der ISO-Wert ist, desto sensitiver ist der Kamerasensor für eintreffende Lichtstrahlen, wodurch hohe ISO-Werte übermäßiges Rauschen mit sich ziehen können \cite{camera_everything}. Dieses Rauschen wird insbesondere bei automatischer Einstellung der Kameraparameter in dunklen Umgebungen deutlich, wodurch dunkle Aufnahmen mit starkem Rauschen einhergehen. Diese Art von Bildern ist insbesondere bei Aufnahmen in Mobiltelefonen vermehrt zu finden, weshalb es im Kontext dieser Thesis besonders relevant ist.
 
-\paragraph{Film Grain}
+\paragraph{Farbsäume}
 
-.
-
-\paragraph{Lens Distortion}
-
-.
+Kameralinsen bestehen aus Glas mit einem Refraktionsindex, der von der Wellenlänge des eintreffenden Lichtes abhängt. Daraus resultiert eine unterschiedliche Lichtbrechung der jeweiligen Lichtwellen und es entstehen Farbsäume in dem aufgenommenen Bild. \cite{lens_distortion, camera_everything}. Bei Farbsäumen handelt es sich um die prismatische Auftrennung der Farbinformationen, die besonders an Kanten von Objekten und am Rand des aufgenommenen Bildes verstärkt auftreten. Dieser Effekt kann in einer Software auf zwei unterschiedliche Arten umgesetzt werden: Simulation oder Komposition. Bei der Simulation wird das eingefangene Licht durch rekonstruierte Linsen gebrochen und die Farbsäume werden direkt durch die Kamera aufgenommen. Dieser Schritt ist rechnerisch aufwendig und wird daher im Vergleich zur Komposition selten eingesetzt. Bei der Komposition wird die Aufnahme in der Nachverarbeitung derart abgeändert, dass der Effekt der Farbsäume nachgestellt wird. Da der Effekt in herkömmlichen Aufnahmen für das ungeschulte Auge schwer erkennbar ist, ist der Unterschied dieser Methoden für diese Anwendung verschwindend gering.
 
 
 \todo{Kameramodelle beschreiben}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Noise-Texturen}
 \label{sec:noise}
 
@@ -77,7 +74,7 @@ Grundlagen hier.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{imgs/rendering/perlin_noise.png}
+    \includegraphics[width=0.8\textwidth]{imgs/rendering/grundlagen/perlin_noise.png}
     \caption{Generierung von Perlin Noise \cite{perlin_noise_img}.}
     \label{img:perlin_noise_generation}
 \end{figure}
@@ -94,6 +91,7 @@ Grundlagen hier.
 \todo{Noise beschreiben}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Texturen, Material und Shader}
 \label{sec:material_texturen}
 
@@ -124,12 +122,15 @@ Grundlagen hier.
 \todo{Material und Texturen beschreiben}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Dart-Terminologie}
 \label{sec:dart_terminologie}
 
-\paragraph{Tip, Shaft, Barrel, Flight}
+Im Darts gibt es eine Vielzahl an Begrifflichkeiten, von denen einige auch in dieser Thesis genutzt werden. Die grundlegenden Begriffe und ihre Bedeutungen werden in diesem Unterkapitel erläutert.
 
-.
+\paragraph{Tip, Barrel, Shaft, Flight}
+
+Die Begriffe Tip, Barrel, Shaft und Flight beziehen sich auf die Einzelteile der Dartpfeile. 
 
 \paragraph{Spinne}
 
@@ -142,6 +143,7 @@ Oder doch \quotes{Treble}?
 \todo{Dart-Terminologie beschreiben}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Dartscheiben-Geometrie}
 \label{sec:dartscheiben_geometrie}
 

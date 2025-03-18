@@ -84,7 +84,7 @@ Aus den Start- und Endpunkten der Liniensegmente lassen sich unter Verwendung de
 
 Anhand der polaren Gleichungen $L_\text{polar}$ wird in diesem Schritt der Mittelpunkt der Dartscheibe ermittelt. Der Mittelpunkt zeichnet sich dadurch aus, dass alle Linien, die zwischen Dartfeldern liegen, folgend als Feldlinien bezeichnet, auf diesen gerichtet sind. Unter der Annahme, dass alle Feldlinien in $L_\text{polar}$ vorhanden sind, überschneiden sich eine Vielzahl dieser Linien im Mittelpunkt der Dartscheibe. Insbesondere ist bekannt, dass diese Linien in jeweils unterschiedlichen Winkeln auftreten, deren grobe Werte bekannt sind.
 
-Unter Berücksichtigung dieser Beobachtung geschieht ein Billing der Linien $L_\text{polar}$ anhand ihrer Winkel $\theta_i$ in $b=10$ uniforme Bins $B$ der Größe $\frac{180\degree}{b}=18\degree$ mit den Intervallen $ B_i = [i \times \frac{180\degree}{b}, (i+1) \times \frac{180\degree}{b})$. Für jeden dieser Bins wird eine binäre Maske erstellt, auf der die jeweiligen Polarlinien mit einheitlicher Intensität gezeichnet werden. Diese Masken werden anschließend überlagert und weichgezeichnet, um den Einfluss von Ungenauigkeiten zu minimieren. In dem resultierenden Bild zeichnet sich der Punkt $P_\text{max} = (x_\text{max}, y_\text{max})$ mit dem höchsten Wert dadurch aus, dass durch ihn die meisten Linien verschiedener Richtungen verlaufen. Diese Eigenschaft ist durch die Art der Filterung dadurch verfeinert, dass statt beliebiger Kanten gezielt Kanten mit bestimmten Eigenschaften als Grundlage für die Linien dienen. Durch diese Wahl an Eigenschaften ist mit hoher Wahrscheinlichkeit davon auszugehen, dass mit dem Punkt $P_\text{max}$ der Mittelpunkt der Dartscheibe $M=(m_x, m_y)$ identifiziert wurde.
+Unter Berücksichtigung dieser Beobachtung geschieht ein Binning der Linien $L_\text{polar}$ anhand ihrer Winkel $\theta_i$ in $b=10$ uniforme Bins $B$ der Größe $\frac{180\degree}{b}=18\degree$ mit den Intervallen $ B_i = [i \times \frac{180\degree}{b}, (i+1) \times \frac{180\degree}{b})$. Für jeden dieser Bins wird eine binäre Maske erstellt, auf der die jeweiligen Polarlinien mit einheitlicher Intensität gezeichnet werden. Diese Masken werden anschließend überlagert und weichgezeichnet, um den Einfluss von Ungenauigkeiten zu minimieren. In dem resultierenden Bild zeichnet sich der Punkt $P_\text{max} = (x_\text{max}, y_\text{max})$ mit dem höchsten Wert dadurch aus, dass durch ihn die meisten Linien verschiedener Richtungen verlaufen. Diese Eigenschaft ist durch die Art der Filterung dadurch verfeinert, dass statt beliebiger Kanten gezielt Kanten mit bestimmten Eigenschaften als Grundlage für die Linien dienen. Durch diese Wahl an Eigenschaften ist mit hoher Wahrscheinlichkeit davon auszugehen, dass mit dem Punkt $P_\text{max}$ der Mittelpunkt der Dartscheibe $M=(m_x, m_y)$ identifiziert wurde.
 
 Hinsichtlich der Robustheit dieses Algorithmus ist der Fall hervorzuheben, dass Feldlinien durch u.\,a. perspektivische Verzerrungen oder fehlerhafte Kanten- und Linienerkennung möglicherweise von den zu erwartenden Winkelintervallen abweichen können und nicht in den ihnen zugewiesenen Bins eingeordnet werden. Es kann dadurch zur Einordnung mehrerer Feldlinien in gleiche Bins und folglich dem Auslassen von Bins führen. Da bei der Ermittlung des Mittelpunktes jedoch nach einem globalen Maximum statt einem bestimmten Zahlenwert gesucht wird, ist ein gewisser Grad an Robustheit gegen nicht oder nicht korrekt gefüllte Bins gegeben.
 
@@ -147,24 +147,100 @@ Diese Schritte werden für alle Startindizes $s \in [0, 9]$ ausgeführt und die 
 \subsection{Orientierung}
 \label{sec:orientierung}
 
-.
+An dieser Stelle in dem Algorithmus ist der Mittelpunkt der Dartscheibe identifiziert und die Winkel der Feldlinien sind normalisiert, jedoch ist an diesem Punkt noch keine korrekte Normalisierung der Dartscheibe gegeben. Durch perspektivische Verzerrungen ist es möglich, dass die Dartscheibe nicht die Form eines Kreises, sondern einer Ellipse besitzt, wie in \autoref{img:dart_ellipse} anhand eines Beispiels dargestellt ist.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\textwidth]{imgs/cv/methodik/ellipse.png}
+    \caption{Ellipsoide Dartscheibe mit entzerrten Feldlinienwinkeln.}
+    \label{img:dart_ellipse}
+\end{figure}
+
+Das Vorgehen der Orientierung basiert auf der Umsetzung des DeepDarts-Systems, in welchem Orientierungspunkte identifiziert werden, deren Positionen in einem ideal entzerrten Bild bekannt sind. Anhand dieser Punktverschiebungen kann folglich eine Homographie abgeleitet werden, die eine finale Transformation des Bildes vornimmt, um diese Punkte auf ihre Zielpositionen zu überführen und die Dartscheibe final zu entzerren. Im Gegensatz zu einer handvoll fest definierter Orientierungspunkte, wie es im DeepDarts-System festgelegt wurde, werden für dieses System beliebig viele Orientierungspunkte identifiziert, wodurch eine wesentlich robustere Entzerrung ermöglicht ist.
+
+Die wesentlichen Schritte der Orientierung sind in \autoref{img:orientierung} dargestellt und werden in den folgenden Unterkapiteln genauer erläutert.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/cv/methodik/orientation.pdf}
+    \caption{Schritte zur Orientierung der Dartscheibe. (1) Log-Polare Darstellung der Dartscheibe. (2) Identifizierte Eckpunkte. Hervorgehobene Streifen veranschaulichen die erwarteten Bereiche der Feldlinien. (3) Identifizierung und Klassifizierung von Surroundings. Positiv klassifizierte Surroundings sind grün umrandet, negative rot. Weiße Balken an der Seite der Surroundings geben den Score an, der zur Klassifizierung errechnet wird; der Threshold befindet sich auf halber Höhe der Balken. In der oberen linken Ecke befindet sich die mittlere Surrounding. (4) Projektion der identifizierten Orientierungspunkte. Pfeile deuten die Richtung der Verschiebungen an; der graue Ring ist die Trennlinie zwischen inneren und äußeren Punkten. (5) Entzerrte Dartscheibe. Die ideale Entzerrung ist über das Bild gelegt.}
+    \label{img:orientierung}
+\end{figure}
 
 \subsubsection{Identifizierung von Orientierungspunkten}
 \label{sec:orientierungspunkte_finden}
 
-.
+Die konkreten Orientierungspunkte werden nach dem Vorbild des DeepDarts-Systems ausgewählt und befinden sich an Eckpunkten zwischen Dartfeldern. Diese Punkte sind besonders markant und durch ihre Position zwischen den Feldern klar zu identifizieren. Es werden die Kreuzpunkte auf der Innen- und Außenseite des Triple-Rings sowie entlang der Innenseite des Double-Rings identifiziert, was eine Gesamtzahl von bis zu 60 Orientierungspunkten ergibt. Diese Punkte sind dadurch charakterisiert, dass die an jede existierende Feldfarbe -- schwarz, weiß, rot und grün -- grenzen, was für die Identifizierung genutzt wird.
 
-\subsubsection{Klassifikation von Orientierungspunkten}
+\paragraph{Log-Polare Darstellung}
+
+Für die Identifizierung der Orientierungspunkte wird das Bild in seine Log-Polare Darstellung umgewandelt. Dazu wird das Bild um den Mittelpunkt der Dartscheibe abgewickelt und ausgerollt, sodass sich der Mittelpunkt der Dartscheibe entlang der Bildkante erstreckt. Der Effekt diese Transformation ist die Parallelisierung der Feldlinien, die durch Entzerrung der Winkel äquidistant verlaufen; die Positionen der Feldlinien in der Log-Polaren Darstellung sind damit bekannt. Auf Grundlage dieses Wissens können die Farben der schwarzen und weißen Felder extrahiert werden. Diese werden genutzt, um die Bestimmung der Lage der Orientierungspunkte zu unterstützen.
+
+\paragraph{Identifizierung von Ecken}
+
+Orientierungspunkte befinden sich an Eckpunkten von Feldern. Dadurch ergibt sich, dass sie bei einer Eckenerkennung stark ausschlagen. Mithilfe der Harris Corner Detection werden daher Ecken in dem Bild identifiziert und auf Grundlage ihrer Position gefiltert, sodass eine Liste an Eckpunkten entlang der Feldlinien identifiziert wird. Diese Eckpunkte sind potenzielle Orientierungspunkte, sofern ihre Umgebung wie erwartet gestaltet ist.
+
+\subsubsection{Klassifizierung von Orientierungspunkten}
 \label{sec:orientierungspunkte_klassifizieren}
 
-.
+Für jeden verbliebenen Eckpunkt in dem Log-Polaren Bild der Dartscheibe wird eine Surrounding betrachtet. Als Surrounding wird die unmittelbare, quadratische Umgebung um einen potenziellen Orientierungspunkt bezeichnet. Durch sie ist eine Einordnung möglich, ob es sich bei einer Ecke um einen Orientierungspunkt handelt oder nicht. Für jede Surrounding wird eine Farbraumtransformation in einen Farbraum mit dem Namen CrYV. Dieser-Farbraum setzt sich aus unterschiedlichen Farbräumen zusammen und ist darauf ausgelegt, die Unterschiede zwischen schwarzen, weißen und bunten Feldern zu verstärken. Dabei wird nicht zwischen rot und grün unterschieden, da sich diese Farben aus den Positionen der schwarzen und weißen Felder ableiten lassen.
 
-\subsubsection{Homographiebildung}
-\label{sec:homographie}
+In dem CrYV-Farbraum werden die mittleren Farbwerte der Ecken aller Surroundings klassifiziert. Durch diese lässt sich einerseits herausfinden, ob eine Ecke ein Outlier ist, und andererseits, in welcher Orientierung sich ein Eckpunkt befindet. Dazu werden die Ecken in anhand heuristisch erarbeiteter Thresholds in die Kategorien schwarz, weiß und farbig eingeordnet. Entspricht eine Surrounding nicht der Erwartung, dass ein schwarzes, ein weißes und zwei farbige Bereiche in diesem liegen, wird der jeweilige Punkt nicht weiter betrachtet. Durch diese Einordnung werden diejenigen Punkte herausgefiltert, die mit großer Wahrscheinlichkeit keine Orientierungspunkte sind.
 
-.
+In einem folgenden Schritt wird eine mittlere Surrounding aller verbliebenen Eckpunkte als Median aller normalisierter Surroundings errechnet. Dieses mittlere Surrounding wird auf zweierlei Arten gegen jede Surrounding verglichen. Die erste Metrik ist der Abstand der Farbwerte im Lab-Farbraum, die zweite Metrik ist der SSIM-Index. Durch Gewichtung dieser Metriken wird eine pessimistische Kategorisierung der Surroundings in valide und nicht valide unternommen. Dieser Threshold wird dabei sehr strikt gesetzt, um die Wahrscheinlichkeit von Outliern möglichst gering zu halten. Da für eine Homographiefindung lediglich vier Punkte notwendig sind, ist der Verlust einzelner korrekter Orientierungspunkte in Kauf zu nehmen.
+
+Nach diesem Schritt verbleiben diejenigen Punkte im Bild, die auf den Eckpunkten der Felder liegen und deren Orientierung durch ihre Surroundings bekannt sind.
+
+\subsubsection{Punktverschiebungen berechnen}
+\label{sec:punktverschiebungen}
+
+Durch die Position und die Beschaffenheit der Surroundings der klassifizierten Eckpunkte ist eine Rückrechnung auf die Position der Punkte im Ursprungsbild nach der Entzerrung der Feldlinienwinkel möglich. Darüber hinaus ist durch die Orientierung der Surrounding bekannt, ob er sich auf der Innen- oder Außenseite eines Rings befindet. Durch diese Informationen lässt sich für jeden eindeutig zuordnen, auf welcher Position dieser in einem ideal entzerrten Bild liegen muss. Die Unterscheidung zwischen Innenseite des Triple- und Innenseite des Double-Rings lässt sich durch Bildung des Mittelwerts der Orientierungspunkte auf der Außenseite des Triple-Rings ermitteln. Jegliche Punkte, deren Abstand geringer als das 1,2-fache des entsprechenden Outer-Triple-Orientierungspunkts derselben Feldlinie besitzen, werden als Inner-Triple-Orientierungspunkt klassifiziert, alle anderen als Inner-Double-Orientierungspunkt. Nicht erkannte Outer-Triple-Orientierungspunkte werden durch Interpolierung identifiziert.
+
+Nach diesem Prozess sind Start- und Zielpunkte bekannt und damit einhergehend die Verschiebungen aller Orientierungspunkte. Sofern mindestens 3/60 möglichen Punkten identifiziert wurden, ist eine Entzerrung der Dartscheibe möglich, da der Mittelpunkt als vierter Punkt fungiert, um eine Homographie vollständig zu parametrisieren.
 
 \subsubsection{Entzerrung}
 \label{sec:entzerrung}
 
-.
+Die finale Entzerrung der Dartscheibe geschieht nicht durch die Nutzung aller Orientierungspunkte. Es besteht die Möglichkeit, dass sich unter den identifizierten Punkten Outlier befinden, die irrtümlicherweise als Orientierungspunkte identifiziert wurden, oder dass Fehler bei der Identifizierung der Zielpunkte gemacht wurden. Ist dies der Fall, ist die Generierung einer Homographie aus allen Punkten möglicherweise durch diese Outlier verzerrt und die finale Normalisierung scheitert. Um diesem Fall zu entgegnen, wird eine RANSAC-basierte Homographiefindung durchgeführt.
+
+Dazu werden 16 Durchläufe der Homographiefindung durchgeführt, in denen jeweils zufällig 75\% der Orientierungspunkte ausgewählt werden. Die endgültige Homographie wird aus dem Median aller Durchläufe gebildet. Existieren Outlier in den Orientierungspunkten, fallen diese nicht so sehr ins Gewicht, da sie durch das zufällige Auswählen der Orientierungspunkte einen geringeren Einfluss auf die Gesamtheit der Homographien haben.
+
+Es bleibt festzuhalten, dass der Algorithmus durch diesen Schritt nicht deterministisch ist und unterschiedliche Durchläufe des Algorithmus zu unterschiedlichen Ergebnissen führen können.
+
+\subsection{Zusammenführen aller Komponenten}
+\label{sec:zusammenfuehrung_aller_komponenten_cv}
+
+An diesem Punkt wurde die gesamte CV-Pipeline durchlaufen und es wurden mehrere Transformationsmatrizen für verschiedene Zwischenschritte der Normalisierung erstellt. Die Reihenfolge der angewandten Transformationen, um die Dartscheibe zu normalisieren, lautet:
+
+\begin{enumerate}
+    \item Skalierung der Dartscheibe auf die Berechnungsgröße nach \autoref{sec:vorverarbeitung} (\nameref{sec:vorverarbeitung}): $M_\text{scale}$
+    \item Angleichung der Feldlinienwinkel nach \autoref{sec:linien} (\nameref{sec:linien}): $M_\text{align}$
+    \item Mapping der Orientierungspunkte auf Ziel-Positionen nach \autoref{sec:orientierung} (\nameref{sec:orientierung}): $M_\text{project}$
+\end{enumerate}
+
+Die Aneinanderreihung dieser Transformationen führt zu der finalen Transformation $M_\text{final}$. Mathematisch setzt sich diese wie folgt zusammen:
+
+\[ M_\text{final} = M_\text{project} \times M_\text{align} \times M_\text{scale} \]
+
+Nach der Anwendung dieser Transformation auf das Eingabebild wird ein finales Zuschneiden des Bildes auf die Eingabegröße des neuronalen Netzes vorgenommen, was die Normalisierung des Bildes abschließt.
+
+Der Effekt der Entzerrung anhand des Beispielbildes ist in \autoref{img:cv_input_ouptut} dargestellt.
+
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/cv/methodik/input.jpg}
+        \caption{Nicht-normalisiertes Input-Bild.}
+        \label{img:cv_input_bild}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering\includegraphics[width=\textwidth]{imgs/cv/methodik/output.png}
+        \caption{Normalisiertes Output-Bild.}
+        \label{img:cv_output_bild}
+    \end{subfigure}
+    \caption{Entzerrung eines Beispielbildes aus dem DeepDarts-Datensatz \cite{deepdarts-data}. \autoref{img:cv_input_bild} zeigt das Input-Bild, \autoref{img:cv_output_bild} zeigt das normalisierte Output-Bild nach der Verarbeitung durch die CV-Pipeline.}
+    \label{img:cv_input_ouptut}
+\end{figure}

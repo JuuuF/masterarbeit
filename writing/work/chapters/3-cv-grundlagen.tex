@@ -3,22 +3,24 @@
 \section{Grundlagen}
 \label{sec:cv:grundlagen}
 
-Bevor in the Thematik der Normalisierung eingegangen wird, ist die Klärung von Grundbegriffen und -konzepten relevant. Diese legen den Grundbaustein für die Nachvollziehbarkeit der Algorithmen und Techniken, die für die Verarbeitung der Bilddaten wichtig sind.
+Bevor in the Thematik der Normalisierung eingegangen wird, ist die Klärung von Grundbegriffen und -konzepten relevant. Diese legen den Grundbaustein für die Nachvollziehbarkeit der Algorithmen und Techniken, die für die Verarbeitung der Bilddaten wichtig sind. Diese Grundlagen setzen mathematische Kenntnisse voraus, wie sie in einem Studium der Informatik erlernt und verstanden werden. Spezifische Algorithmen und Techniken der herkömmlichen Computer Vision werden grundlegend erläutert, jedoch nicht in einem Detailgrad, der zum vollständigen Durchdringen der Themen notwendig ist. Diese Sektion ist lediglich dafür vorgesehen, ausreichend Kontext zu den jeweils verwendeten Methoden und Algorithmen zu liefern, um die Anwendung und Arbeitsweise des Vorgehens zu verstehen.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Polarlinien}
 \label{sec:polarlinien}
 
-Die polare Darstellung von Linien ist für die Identifizierung der Dartscheibe dahingehend relevant, dass sie es ermöglicht, einer Linie einen Winkel zuzuordnen, in dem diese liegt. Eine polare Linie ist beschrieben mit einem Tupel $(\rho, \theta)$, in dem $\rho$ der minimale Abstand der Linie zum Koordinatenursprung ist und $\theta$ der Winkel der Liniennormalen zur x-Achse. Die Charakterisierung einer Linie durch einen Winkel in \autoref{sec:linien} verwendet.
+Die polare Darstellung von Linien ist für die Identifizierung der Dartscheibe dahingehend relevant, dass sie es ermöglicht, einer Linie einen Winkel zuzuordnen, in dem diese verläuft. Eine Polarlinie ist definiert als ein Tupel $(\rho, \theta)$, in dem $\rho$ der minimale Abstand der Linie zum Koordinatenursprung ist und $\theta$ der Winkel der Liniennormalen zur x-Achse. Die Charakterisierung einer Linie durch einen Winkel in \autoref{sec:linien} verwendet.
 
 Zur Umrechnung einer Linie, gegeben durch zwei Punkte $P_1 = (x_1, y_1)$ und $P_2 = (x_2, y_2)$, in Polarform werden folgende Gleichungen genutzt \cite{polar_linien}:
 
 \[ \rho = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2} \]
 \[ \theta = \atan \frac{y_2 - y_1}{x_2 - x_1} \]
 
-Festzuhalten ist, dass Start- und Endpunkte der Linie durch diese Art der polaren Beschreibung verloren gehen. Dies beruht auf der Annahme, dass mathematische Beschreibungen von Linien infinite Längen haben. Dieses Artefakt der Umrechnung ist bei der Methodik dieser Arbeit zur Identifizierung von Charakteristiken von Vorteil und wird gezielt in \autoref{sec:mittelpunktextraktion} genutzt.
+Festzuhalten ist, dass Start- und Endpunkte der Linie durch diese Art der polaren Beschreibung nicht berücksichtigt werden. Dies beruht auf der Gegebenheit, dass mathematische Beschreibungen von Linien infinite Längen haben. Diese Eigenschaft in dieser Darstellung von Polarlinien wird in der Methodik dieser Arbeit zur Identifizierung von Charakteristiken von Vorteil genutzt und wird gezielt in \autoref{sec:mittelpunktextraktion} eingesetzt.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Thresholding}
 \label{sec:thresholding}
 
@@ -28,6 +30,7 @@ Als Thresholding wird in der Datenverarbeitung die Einteilung von Werten eines D
 In dieser Thesis wird Thresholding in vielerlei Hinsicht verwendet, unter anderem in \autoref{sec:filterung} zur Unterscheidung zwischen Kante und Hintergrund oder in \autoref{sec:linienfilterung} zur Filterung von Linien anhand einer Abstandsmetrik.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Binning}
 \label{sec:binning}
 
@@ -40,6 +43,7 @@ Um dieses Artefakt zu umgehen, gibt es das Soft Binning, in dem Werte anteilig i
 Binning wird in dieser Thesis unter anderem in \autoref{sec:mittelpunktextraktion} genutzt, um Polarlinien anhand ihrer Winkel zu kategorisieren.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Faltung}
 \label{sec:was_filterung}
 
@@ -59,6 +63,7 @@ Dabei ist $I \in \mathbb{N}^2$ ein Eingabebild mit einem Kanal, $x$ und $y$ sind
 Diese allgemeine Formel lässt sich auf die Verwendung unter mehrerer Kanäle anwenden. Für eine Faltung eines Bildes mit $c_0$ Kanälen, einer Kernel-Größe von $k_x \times k_y$ und einer Ausgabe in $c_1$ Kanälen wird ein Kernel der Größe $ c_0 \times k_x \times k_y \times c_1$ erstellt. Dabei werden für jeden Pixel in jedem Kanal alle Eingabekanäle betrachtet und gefiltert.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Kantenerkennung}
 \label{sec:kantenerkennung}
 
@@ -113,6 +118,7 @@ Anhängig von den Werten eines Kernels werden unterschiedliche Charakteristiken 
 Filterung und Kantenerkennung werden in dieser Thesis ausgiebig genutzt. So wird in \autoref{sec:kanten} Kantenerkennung als erster Schritt der Normalisierung angewandt und Filterung generell in \autoref{cha:ki} als wichtiger Bestandteil von Schichten neuronaler Netze.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Harris Corner Detection}
 \label{sec:harris_corners}
 
@@ -158,6 +164,7 @@ Bei der Klassifizierung von Bildpixeln kommt es dazu, dass Cluster von Pixeln al
 
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Hough-Transformation}
 \label{sec:hough_transformation}
 
@@ -171,6 +178,7 @@ Dabei sind $\rho$ und $\theta$ Winkel und Abstand einer Linie zum Koordinatenurs
 Input der Hough-Transformation ist ein durch Thresholding vorverarbeitetes Bild, in dem typischerweise Kanten oder Ecken extrahiert wurden. Die extrahierten Pixel werden im Parameter-Space akkumuliert, in dem sie sich in Form von Sinuswellen überschneiden. Liegen demnach mehrere Punkte im Image-Space in einer Linie, so überschneiden sich ihre korrespondieren Sinus-Darstellungen im Parameter-Space in einem Punkt. Dieser Punkt liegt an den Koordinaten $(\rho, \theta)$ und beschreibt die Parameter der Geraden, die durch die Punkte verläuft. Das Identifizieren von Peaks im Parameter-Space führt analog zur Identifizierung von Linien im Image-Space.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Transformationsmatrizen}
 \label{sec:transformations_matrizen}
 
@@ -291,24 +299,31 @@ Im Gegensatz zu affinen Transformationen können Matrixeinträge in Homographien
 \end{align*}
 
 
-Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je 2 Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:homographie} genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten und entzerrten Bildern zu mappen.
+Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je 2 Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:entzerrung} genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten und entzerrten Bildern zu mappen.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Logpolare Entzerrung}
 \label{sec:logpolare_entzerrung}
 
 \cite{logpolar}.
 
+\todo{Logpolare Entzerrung beschreiben}
+
 % -------------------------------------------------------------------------------------------------
 \subsection{Farbräume}
 \label{sec:farbräume}
 
-.
+\todo{Farbräume beschreiben}
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Structural Similarity (SSIM)}
 \label{sec:ssim}
 
-.
+\todo{SSIM erklären}
 
+% -------------------------------------------------------------------------------------------------
+\subsection{RANSAC}
+\label{sec:ransac}
 
+\todo{RANSAC erklären}

@@ -1,18 +1,16 @@
 % !TEX root = main.tex
-\documentclass[10pt,twoside,a4paper]{report}
+\documentclass[10pt,twoside,a4paper]{book}
 
 \input{preamble}
 
 \begin{document}
 
+\frontmatter
 \input{chapters/0-title}
-
-\pagenumbering{Roman}
-\tableofcontents
-\pagediff
-
-\pagenumbering{arabic}
 \setcounter{page}{1}
+\tableofcontents
+
+\mainmatter
 \input{chapters/1-einleitung}
 \pagediff
 \input{chapters/2-daten}
