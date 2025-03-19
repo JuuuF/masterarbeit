@@ -7,7 +7,6 @@ Blender_/
 *.png
 *.JPG
 *.svg
-*.drawio
 data/generation/hdri*/
 data/generation/textures/
 data/generation/fonts/
@@ -24,6 +23,7 @@ writing/notes/
 private/
 notes/
 *.pkl
+*.bkp
 
 # Cache files
 data/cache/
