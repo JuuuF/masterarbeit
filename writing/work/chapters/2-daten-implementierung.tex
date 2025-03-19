@@ -6,7 +6,61 @@
 Implementierung hier.
 
 % -------------------------------------------------------------------------------------------------
-\subsection{Daten-Implementierung}
-\label{sec:daten_implementierung}
 
-.
+\subsection{Parametrisierung der Dartscheibe}  % ==================================================
+\label{sec:dartscheibe_parametrisierung}
+
+\subsubsection{Einsatz von Noise-Texturen}
+
+WIE wurde es umgesetzt? -> Maskierungen etc.
+
+\todo{}
+
+\subsection{Zusammensetzung der Dartpfeile}  % ====================================================
+\label{sec:dartpfeile_zusammensetzung}
+
+WIE sind sie zusammengesetzt? Nutzung von Geometry-Nodes
+
+\todo{}
+
+\subsection{Render-Einstellungen}  % ==============================================================
+\label{sec:render_einstellungen}
+
+Farbexport realistisch, nicht cinematisch oder animatronisch (?) -> wie bei Handykamera
+
+\todo{}
+
+\subsection{Generierung von Dartpfeil-Positionen}  % ==============================================
+\label{sec:wie_dartpfeil_positionen}
+
+\subsubsection{Heatmaps}
+\label{sec:heatmaps}
+
+\todo{}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{imgs/rendering/methodik/heatmaps.pdf}
+    \caption{Heatmaps für die Datenerstellung; (links) Generelle Heatmap für \nicefrac{2}{3} der Daten; (rechts) Multiplier-Heatmap für Oversampling auf \nicefrac{1}{3} der Daten.}
+    \label{img:heatmaps}
+\end{figure}
+
+\subsubsection{Scoring}
+
+\todo{}
+
+\subsection{Ermittlung von Kameraparametern}  % ===================================================
+\label{sec:ermittlung_kameraparamater}
+
+Brennweite abh. von Abstand,
+Auflösung abh. von Seitenverhältnis,
+Fokuspunkt auf Dartscheibe
+
+\todo{}
+
+\subsection{Berechnung von Entzerrung}  % =========================================================
+\label{sec:berechnung_entzerrung}
+
+Orientierungspunkt-Masken -> Homographie
+
+\todo{}

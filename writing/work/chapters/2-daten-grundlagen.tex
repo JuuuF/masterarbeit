@@ -7,24 +7,21 @@ Grundlagen hier.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Rendering}
-\label{sec:rendering}
+\subsection{Prozedurale Datenerstellung}  % DATENERSTELLUNG =======================================
+\label{sec:prozedurale_datenerstellung}
 
-.
+Was ist es? Wozu ist es gut?
 
-\subsubsection{Ray-Tracing}
-\label{sec:ray_tracing}
-
-.
-
-\todo{Rendering erklären.}
+\todo{}
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Binärbilder und Masken}
-\label{sec:masken}
+\subsection{3D-Rendering}
+\label{sec:3d_rendering}
 
-\todo{Masken und Binärbilder beschreiben}
+Kurz Ray-Tracing anreißen.
+
+\todo{}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -39,11 +36,11 @@ Die Brennweite einer Kamera -- bzw. eines Objektives -- bestimmt die Lichtbrechu
 
 \paragraph{Öffnungswinkel}
 
-.
+\todo{}
 
 \paragraph{Belichtungsdauer und Bewegungsunschärfe}
 
-.
+\todo{}
 
 \paragraph{ISO und Rauschen}
 
@@ -53,73 +50,49 @@ Bei der Aufnahme von Bildern wird zwischen zwei Arten von Rauschen unterschieden
 
 Kameralinsen bestehen aus Glas mit einem Refraktionsindex, der von der Wellenlänge des eintreffenden Lichtes abhängt. Daraus resultiert eine unterschiedliche Lichtbrechung der jeweiligen Lichtwellen und es entstehen Farbsäume in dem aufgenommenen Bild. \cite{lens_distortion, camera_everything}. Bei Farbsäumen handelt es sich um die prismatische Auftrennung der Farbinformationen, die besonders an Kanten von Objekten und am Rand des aufgenommenen Bildes verstärkt auftreten. Dieser Effekt kann in einer Software auf zwei unterschiedliche Arten umgesetzt werden: Simulation oder Komposition. Bei der Simulation wird das eingefangene Licht durch rekonstruierte Linsen gebrochen und die Farbsäume werden direkt durch die Kamera aufgenommen. Dieser Schritt ist rechnerisch aufwendig und wird daher im Vergleich zur Komposition selten eingesetzt. Bei der Komposition wird die Aufnahme in der Nachverarbeitung derart abgeändert, dass der Effekt der Farbsäume nachgestellt wird. Da der Effekt in herkömmlichen Aufnahmen für das ungeschulte Auge schwer erkennbar ist, ist der Unterschied dieser Methoden für diese Anwendung verschwindend gering.
 
+% -------------------------------------------------------------------------------------------------
 
-\todo{Kameramodelle beschreiben}
+\subsection{Binärbilder und Masken}
+\label{sec:masken}
+
+Was bringt die Erstellung von Masken? -> Informationsgewinn / -erhaltung / -extraktion -> mehr Informationen als in Render-Bild
+
+\todo{}
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Noise-Texturen}
-\label{sec:noise}
+\subsection{Dartscheiben-Geometrie}  % DARTS ======================================================
+\label{sec:dartscheiben_geometrie}
 
-\subsection{White Noise}
+Die Geometrie und der Aufbaue einer Dartscheibe ist für die Erstellung der Daten zentral. Eine schematische Darstellung einer Dartscheibe ist in \autoref{img:dart_board} gegeben.
 
-\cite{white_noise}
+\paragraph{Die Dartscheibe}
 
-\subsection{Perlin Noise}
+Die Dartscheibe besteht grundlegend aus einer Scheibe mit 451mm Durchmesser. Sie besteht aus 20 einheitlich großen, radial angeordneten Feldern mit Zahlenwerden von 1 bis 20. Jedes Feld besitzt einen Double- und einen Triple-Ring mit einem Durchmesser von 8-10mm. Der Triple-Ring ist etwa 10cm vom Mittelpunkt entfernt; der Double-Ring etwa 16cm. Insgesamt ergibt sich ein Durchmesser von 34cm punkteerzielender Felder, der Bereich jenseits der 17cm Abstand des Mittelpunktes gibt keine Punkte \cite{wdf-rules}.
 
+In der Mitte der Dartscheibe befinden sich die Felder Bull und Double Bull (oder Bull's Eye). Sie haben Durchmesser jeweils ca. 32mm und 12,7mm. Das Bull gibt 25 Punkte, das Double Bull 50.
 
-\cite{perlin_noise_original,perlin_noise_extension}
+Die Felder mit einfachen Punktzahlen sind abwechselnd schwarz und weiß gefärbt, die Mehrfach-Felder der schwarzen Felder sind rot und die der weißen Felder grün gefärbt. Das Bull ist grün und das Double Bull rot.
 
+\paragraph{Rund um die Dartscheibe}
 
+Die Punktzahlen der Dartfelder werden durch aus Drähten gefertigten Zahlen angezeigt. Diese befinden sich an einem Ring am Äußeren Ende der Dartscheibe und sind radial um die Dartscheibe angeordnet. Dieser Zahlenring ist nicht fest an der Dartscheibe montiert, sodass er nach Belieben rotiert werden kann, um eine ungleichmäßige Abnutzung der Dartscheibe auszugleichen.
+
+\paragraph{Material}
+
+Die Felder der Steeldarts-Dartscheibe werden aus Fasern hergestellt, typisch sind dabei Sisal-Fasern. Diese besitzen die Eigenschaft, dass ein eintreffender Dartpfeil nicht in sie eindringt, sondern die lediglich verdrängt, wodurch die bleibenden Schäden der Einstichlöcher gering gehalten werden.
+
+\paragraph{Double und Triple}
+
+Mit Double und Triple (auch Treble) werden die Ringe an Feldern bezeichnet, die Vielfache der Feldgrundzahl als Score erteilen. Der Triple-Ring befindet sich zwischen den Einzelfeldern der Dartscheibe und gewährt das Dreifache der Grundpunktzahl des Feldes. Der Double-Ring befindet sich auf der Außenseite der Dartscheibe und gewährt seinem Namen entsprechend das Doppelte der Feldzahl. Das Feld mit der größten Punktzahl ist die Triple-20 mit $3 \times 20 = 60$ Punkten.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{imgs/rendering/grundlagen/perlin_noise.png}
-    \caption{Generierung von Perlin Noise \cite{perlin_noise_img}.}
-    \label{img:perlin_noise_generation}
+    \includegraphics[width=\textwidth]{imgs/rendering/dart_board.pdf}
+    \caption{Dartscheibe}
+    \label{img:dart_board}
 \end{figure}
 
-\subsection{Seeding}
-
-.
-
-\subsection{Thresholding bei Noise}
-
-.
-
-
-\todo{Noise beschreiben}
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Texturen, Material und Shader}
-\label{sec:material_texturen}
-
-.
-
-\subsubsection{Normal Maps}
-
-.
-
-\subsubsection{Lichtreaktionen}
-
-\paragraph{Emission}
-
-.
-
-\paragraph{Reflexion}
-
-.
-
-\paragraph{Diffuse Lichtbrechung}
-
-.
-
-\paragraph{Transmission (?)}
-
-.
-
-\todo{Material und Texturen beschreiben}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -130,21 +103,62 @@ Im Darts gibt es eine Vielzahl an Begrifflichkeiten, von denen einige auch in di
 
 \paragraph{Tip, Barrel, Shaft, Flight}
 
-Die Begriffe Tip, Barrel, Shaft und Flight beziehen sich auf die Einzelteile der Dartpfeile. 
+Ein Dartpfeil besteht aus unterschiedlichen Bestandteilen. Die vier wesentlichen Bestandteile sind Tip, Barrel, Shaft und Flight\footnote{Abweichungen dieser Bezeichnungen sind möglich, sodass der Shaft auch häufig als Stem bezeichnet wird. Zur Vereinheitlichung wurden die genannten Begriffe verwendet.}, aufgezählt von der Vorderseite nach hinten \cite{wdf-rules,pdc_rules}. Die Tip ist die Spitze des Dartpfeils, die in die Dartscheibe eintrifft. Die Barrel ist der Teil des Dartpfeils, an dem er gegriffen wird und liegt direkt hinter der Tip. Auf die Barrel folgt der Shaft, der die Brücke zum Flight, dem Flügelende des Dartpfeils, schließt. Der Flight besteht aus vier Einzelflügeln, die in Abständen von $90\degree$ zueinander stehen und orthogonal zum Shaft verlaufen.
 
 \paragraph{Spinne}
 
-.
-
-\paragraph{Double/Triple Ring}
-
-Oder doch \quotes{Treble}?
-
-\todo{Dart-Terminologie beschreiben}
+Als Spinne wird der Metallrahmen der Dartscheibe bezeichnet, der die Feldsegmente voneinander trennt. Die Ausprägung der Spinne ist unterschiedlich, jedoch ist ein tendenzieller Trend zu erkennen, dass neue Dartscheiben dünnere und unauffälligere Spinnen besitzen als alte Dartscheiben. Je unauffälliger die Spinne ist, desto geringer ist die Wahrscheinlichkeit eines Bounce-Outs, bei dem der Dartpfeil auf die Spinne trifft und nicht auf der Dartscheibe landet.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Dartscheiben-Geometrie}
-\label{sec:dartscheiben_geometrie}
+\subsection{Steeldarts}
+\label{sec:steeldarts}
 
-\todo{Dartscheiben-Geometrie beschreiben}
+\todo{Was Steeldarts?}
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Material und Texturen}  % TEXTURIERUNG ================================================
+
+Licht-Eigenschaften / Normal Maps / Shaders
+
+\todo{}
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Noise-Texturen}
+\label{sec:noise}
+
+\subsubsection{White Noise}
+
+\cite{white_noise}
+
+\subsubsection{Perlin Noise}
+
+\cite{perlin_noise_original,perlin_noise_extension}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{imgs/rendering/grundlagen/perlin_noise.png}
+    \caption{Generierung von Perlin Noise \cite{perlin_noise_img}.}
+    \label{img:perlin_noise_generation}
+\end{figure}
+
+\subsection{Seeding}
+
+\todo{}
+
+\subsection{Thresholding und Maskierung}
+
+Warum braucht man das? Wozu macht man das? -> Thresholding zur Kombination von Texturen miteinander / Layering mehrerer Texturen
+
+\todo{}
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Prozedurale Texturen}
+\label{sec:was_prozedurale_texturen}
+
+Warum ist das wichtig -\> Parametrisierung
+
+\todo{}
