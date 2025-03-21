@@ -5,6 +5,8 @@
 
 Methodik hier \autoref{img:rendering_pipeline}.
 
+\todo{Übersicht über Aufbau des Kapitels}
+
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/rendering/rendering_pipeline.pdf}
@@ -14,48 +16,77 @@ Methodik hier \autoref{img:rendering_pipeline}.
 
 \subsection{3D-Szene} % ===========================================================================
 
-\subsubsection{Dartscheibe}
+Das Fundament der Datengenerierung ist die Simulation realistischer Dartscheiben. Diese Simulation fußt auf der virtuellen 3D-Szene, deren Grundzüge in den folgenden Unterkapiteln beschrieben werden. Es werden die zentralen Objekte der Szene beschrieben, die Dreh- und Angelpunkt der Datenerstellung darstellen und die für die Varianz und Komplexität der erstellten Daten ausschlaggebend sind. An Objekten werden die Dartscheibe in \autoref{sec:dartscheibe}, die Dartpfeile in \autoref{sec:dartpfeile} und die Beleuchtungsmöglichkeiten in \autoref{sec:lichter} beschrieben, sowie die globalen Parameter der Szene in \autoref{sec:parameter}.
 
-\todo{}
+\subsubsection{Dartscheibe}
+\label{sec:dartscheibe}
+
+Die Dartscheibe ist jenes Objekt, welches statisch in der Szene vertreten ist und in jedem gerenderten Bild vorhanden ist. Damit ist ihr Aussehen zentral für die Qualität der Daten. Sie wurde gemäß der Richtlinien \quotes{Playing and Toutnament Rules} der \ac{wdf} erstellt \cite{wdf-rules}. Beschreibungen dieses Regelwerks wurden in dieser Thesis als Quelle für Maße und Toleranzen genutzt; Dartscheiben mit esoterischen Maßen und Feldfarben, die nicht konform mit den Regeln sind, wurden nicht explizit für diese Arbeit mit einbezogen. Zusätzlich zu diesen Regeln wurden unterschiedliche reale Dartscheiben als Referenzen genutzt, die reale Gebrauchsspuren aufweisen und anhand derer zu erwartende Beschaffenheiten eingefangen wurden.
 
 \subsubsection{Dartpfeile}
+\label{sec:dartpfeile}
 
-\todo{}
+Zusätzlich zentral für die Datenerstellung sind die Dartpfeile. Im Vergleich zur Dartscheibe ist das Aussehen der Dartpfeile nicht stark durch die Darts-Regulierungen vorgegeben \cite{wdf-rules,pdc_rules}. Lediglich die maximale Länge und das Gewicht sowie die grundlegende Zusammensetzung der Pfeile werden in den Regulierungen thematisiert. Dadurch ist die Spanne des Aussehens möglicher Dartpfeile sehr groß und muss dementsprechend behandelt werden, um systematische Fehler zu mindern.
 
-\subsubsection{Lichtobjekte}
+\subsubsection{Beleuchtung und Lichtobjekte}
+\label{sec:lichtobjekte}
 
-\todo{}
+Für die Beleuchtung der Szene werden globals und lokale Beleuchtungsmöglichkeiten verwendet. Globale Beleuchtung wird durch die Verwendung von Environment erzielt während lokale Beleuchtung durch spezielle Lichtobjekte umgesetzt wird. Diese Lichtobjekte stellen unterschiedliche Beleuchtungsmöglichkeiten dar, die bei der Recherche zum Aussehen und den Umgebungen von Dartscheiben beobachtet wurden. Diese sorgen für eine vielseitige Beleuchtung der Szene.
+
+\subsubsection{Weitere Objekte}
+\label{sec:weitere_objekte}
+
+Eine weitere Beobachtung typischer Dartscheiben ist Anbringung von Dartscheiben in Dartschränken. Diese schützen die Wand vor an der Dartscheibe vorbei geworfenen Dartpfeilen und ermöglichen das Verschließen der Dartscheibe. Für die 3D-Szene wurde daher ein Dartschrank aus Holz modelliert, dessen Holzfarbe zufällig gesetzt wird. Die Existenz des Dartschranks ist verbunden mit der Abwesenheit eines Ringlichts, das in \autoref{sec:lichter} beschrieben wird, da sich diese Objekte überschneiden.
 
 \subsubsection{Parametrisierung}
+\label{sec:parameter}
 
-\todo{}
+Für Generierung von Zufallsvariablen stellt die Szene zwei Parameter zur Verfügung: Seed und Alter. Der Seed ist ein Wert in einem vorgegebenen Intervall, der zur deterministischen Generierung von Zufallsvariablen genutzt wird. Diese Zufallsvariablen werden in den Objekten genutzt, um Abnutzungen, Zusammensetzungen, Verschiebungen und Texturen zu beeinflussen. Auf diese Weise ist ein deterministisches Erstellen von Szenen möglich. Der Seed wird ebenfalls zur Generierung des Alters-Parameters genutzt. Dieser gibt das Alter der Objekte in der Szene an und wird verwendet, um den Grad der Abnutzung in Dartscheibe und Dartpfeilen zu bestimmen.
 
+\todo{Verweise auf Implementierung einbinden}
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Scripting}  % =========================================================================
 \label{sec:scripting}
 
+Neben der 3D-Szene wird ein externes Skript genutzt, mit dem auf die Szene zugegriffen wird und durch das Einstellungen getätigt werden. Dieses Unterkapitel thematisiert den Hintergrund und die Arbeitsweise dieses Skriptes.
+
 \subsubsection{Wozu externes Skript?}
 
-\todo{}
+Obwohl die 3D-Szene der zentrale Punkt der Datenerstellung ist, geschieht das Setzen spezifischer Parameter und das Rendern der Szene durch ein Skript. Der Hintergrund dessen ist die Flexibilität einer programmatischen Herangehensweise im Vergleich zum strikten Modellieren. Darüber hinaus ist die automatisierbare Arbeitsweise und der Verzicht auf eine grafische Nutzeroberfläche prädestiniert für die Erstellung einer großen Menge an Daten.
 
 \subsubsection{Einfluss der Parametrisierung}
 
-Alter + Einfluss / Umsetzung
+Für jedes generierte Sample ist der erste zentrale Schritt des Skriptes das Setzen des Seeds. Dieser beeinflusst das Aussehen der Objekte in der Szene, jedoch nicht ihre Positionierung oder Existenz. Der Seed beeinflusst lediglich das Aussehen und die Beschaffenheit der Dartscheibe sowie die Zusammensetzung der Dartpfeile.
 
-Welche Bereiche der Texturen werden damit beeinflusst
-\todo{}
+Der Seed hält einen zufälligen Wert, jedoch ist diesem Wert keine konkrete Bedeutung zugeschrieben, da er zur Generierung von Zufallsvariablen genutzt wird, die wiederum in den Materialien und Geometrien der Objekte eingesetzt werden. Der tatsächliche Wert des Seeds wird einzig genutzt, um das Alter der Szene zu bestimmen. Kleine Werte werden als geringes Alter interpretiert, große Werte als hohes Alter. Das Alter schlägt sich in dem Anblick der Dartscheibe und der Dartpfeile nieder.
 
-\subsubsection{Manuelle Beeinflussung der Szene}
+\subsubsection{Spezifisches Setzen von Parametern}
 
-Texte auf Dartscheiben
-\todo{}
+Der Seed und der Alters-Parameter bestimmen weitestgehend das Aussehen der Szene, jedoch existiert die Ausnahme der Texte um die Dartscheibe. Diese Texte werden durch das Skript in ihrem Inhalt, der Schriftart und in ihrer Positionierung manipuliert.
+
+Darüber hinaus ist das Setzen der Dartpfeil-Positionen ein wichtiger Schritt des Skriptes. Diese werden anhand von Wahrscheinlichkeitsverteilungen auf der Dartscheibe verteilt und zufällig rotiert. Aus diesen Positionen kann die erzielte Punktzahl des simulierten Dartspiels abgeleitet werden.
+
+Die Kamera wird von dem Skript in einem vordefinierten Raum positioniert und ihre internen sowie externen Parameter werden in definierten Intervallen randomisiert, zu Teilen auch basierend auf ihrer Position. Es werden unter anderem Brennweite, Fokuspunkt, Auflösung und das Seitenverhältnis gesetzt, um einer Datenverzerrung hinsichtlich spezifischer Kameraeinstellungen vorzubeugen. Würden alle Sample die selben Kameraparameter nutzen, besteht die Gefahr der Spezialisierung eines aus diesen Daten trainierten Systems auf diese Gegebenheiten. Dadurch besteht die Gefahr der fehlerhaften Inferenz auf Daten, die nicht diese exakten internen Kameraparameter vorweisen. Durch Randomisierung der Parameter wird diese Einschränkung der Generalisierungsfähigkeit umgangen.
 
 \subsubsection{Statische und dynamische Objekte}
 
-Welche werden angezeigt, welche nicht?
-\todo{}
+Die Präsenz und Absenz einiger Objekte in der Szene wird ebenfalls durch das Skript gesteuert. Somit ist eine Unterscheidung möglich zwischen statischen Objekten, die in jeder Szene vorhanden sind, und dynamischen Objekten, die nicht in jeder Szene vorhanden sind.
+
+Statische Objekte der Szene sind die Dartscheibe, die Kamera und die Environment Map. Diese sind in jeder Zusammensetzung der Szene vorhanden, obgleich die Environment Map lediglich sehr fade erkennbar ist.
+
+Entgegen der Annahme, die Dartpfeile seien ebenfalls statische Objekte, sind diese nicht in jeder Szene vorhanden. Da die variable Anzahl an Würfen abgebildet werden muss, ist ein zufälliges Ausblenden der Dartpfeile möglich. Dadurch besteht die Möglichkeit, dass alle Dartpfeile ausgeblendet werden und eine leere Dartscheibe abgebildet wird.
+
+Darüber hinaus werden jegliche Lichtobjekte zu den dynamischen Objekten gezählt, da sie durch das Skript ein- und ausgeblendet werden können. Obwohl die Existenz mindestens einer Lichtquelle vorgegeben ist, ist keines der Lichtobjekte statisch in jeder Szene vorhanden. Diese Tatsache fußt ebenfalls auf der Unterbindung systematischer Fehler durch einseitige Modellierung der Szene.
+
+Zuletzt ist ebenfalls der Dartschrank ein dynamisches Objekt, dessen Existenz von dem Skript gesteuert wird. Diese Existenz ist an die Abwesenheit gewisser Lichtobjekte geknüpft, sodass keine ungewollte Überschneidungen von Objekten in der Szene vorhanden sind.
+
+\subsubsection{Rendern von Bildern}
+
+Der Anstoß zum Rendern von Bildern aus der Szene geschieht ebenfalls durch das Skript. Nachdem die Szene vorbereitet wurde, wird ein Bild aus der Sicht der Kamera gerendert. In diesem Bild ist eine randomisierte Dartscheibe mit einem zufälligen Dartwurf abgebildet, die aus einem zufälligen Winkel in einer variierenden Beleuchtung eingefangen wurde. Zusätzlich zu diesem Bild werden weitere Masken von Objekten gerendert. Diese Masken werden als binäre Schwarzweißbilder exportiert und zeigen lediglich einzelne Objekte. Unter anderem werden die Dartpfeile, die Fläche der Dartscheibe, die Schnittpunkte der Dartpfeile und der Dartscheibe sowie Orientierungspunkte der Dartscheibe, wie sie im DeepDarts-System verwendet wurden, generiert. Durch diese Masken wird die Ableitung unterschiedlicher Informationen aus dem Bild genutzt.
+
+Zusätzlich zum Speichern der Bilder werden Metainformationen zu der Szene gespeichert. Diese beinhalten u.\,a. Informationen zu Kameraparametern, Punktzahl, Existenz von Objekten und dem Kamerawinkel zur Dartscheibe. Diese Informationen dienen der Annotation der Daten sowie der Erhebung von Statistiken.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -66,35 +97,74 @@ Verweis: Details in Implementierung.
 
 \subsubsection{Material der Dartscheibe}
 
-\todo{}
+Die Dartscheibe besteht grundlegend aus den Darts-Feldern, der Spinne, dem Zahlenring und einer Beschriftung. Die Dartfelder sowie der Rahmen der Dartscheibe sind der Beschaffenheit von Sisal nachempfunden und werden mit unterschiedlichen Gebrauchsspuren versehen. Das Material von Sisal ist sehr diffus und wenig reflektiv. Die Oberfläche ist angeraut und weist Unebenheiten auf.
+
+Die Gebrauchsspuren des Sisals wird in Form von Abnutzung durch Kratzer, Einstichlöcher und Staubansammlung sowie durch Risse im Material. Darüber hinaus ist zur Simulation von Alterung der Dartscheibe eine Verfärbung der Felder und Verstärkung der Abnutzungen eingebaut. Die Beschaffenheiten und Vorkommen dieser Abnutzungen sind realen Dartscheiben nachempfunden und zielen darauf ab, eine möglichst große Spanne unterschiedlicher Dartscheiben abzudecken.
+
+Die Spinne der Dartscheibe ist als teilweise reflektives Metall modelliert. Die Spinne der Dartscheibe ist ebenfalls von einem Altersprozess betroffen, da beobachtet wurde, dass die Dicke und Präsenz der Spinne bei Dartscheiben zunehmenden Alters stärker ausgeprägt sind. Historisch ist dies dadurch begründet, dass der Herstellungsprozess von Dartscheiben im Laufe der Zeit fortschrittlicher wurde. Alte Spinnen
+
+Da alte Dartscheiben aktuell weiterhin in Verwendung sind, ist eine Abdeckung ihrer Geometrien in der Datenerstellung von Relevanz. Die Spinne sowie der Zahlenring unterliegen darüber hinaus einer Wahrscheinlichkeit, von Rostbildung betroffen zu sein, und werden mit steigendem Alter der Dartscheibe verformt, sodass die nicht auf den zu erwartenden Positionen liegen. Diese Verformungen wurden ebenfalls auf realen Dartscheiben beobachtet und sind potenziell für Dartpfeile, die nahe der Spinne landen, relevant.
+
+Die Beschriftung der Dartscheibe beinhaltet typischerweise den Herstellernamen der Dartscheibe sowie Symbole und Logos. Diese werden mit zufällig generierten Texten approximiert, die entlang des Randes der Dartscheibe verlaufen und zufällig platziert werden.
 
 \subsubsection{Generierung der Dartpfeile}
 
-\todo{}
+Obligatorische Bestandteile von Dartpfeilen beinhalten Tip, Barrel, Shaft und Flight. Aus jeweiligen Pools von Objekten werden Dartpfeile zufällig zusammengestellt, um randomisierte Dartpfeile zu generieren.
+
+Die Tips der Dartpfeile sind wenig variabel und unterscheiden sich hauptsächlich in Länge und Farbe. Trotz ihrer geringen Größe ist eine realistische Modellierung der Tips bedeutend für die Daten, da sie ausschlaggebend für die erzielte Punktzahl sind. Neben silbernen Tips sind ebenfalls schwarze oder auch bronzene Tips möglich, die in ihrer Reflektivität variieren.
+
+Die Barrels sind im Vergleich zu den Tips wesentlich komplexer, sodass einige vordefinierte Barrels generiert wurden, die zufällig hinter eine Tip gefügt werden. Darüber hinaus wird die Länge der Barrels zufällig variiert, um weitere Variationen einzubinden. Die Beschaffenheit von Barrels realer Dartpfeile ist sehr unterschiedlich, sodass eine sehr große Variabilität ihrer Erscheinungsbilder möglich ist. Um weitere Variabilitäten einzubinden, wurden teilweise Materialien verwendet, deren Farbe zufällig gesetzt wird.
+
+Auf die Barrel folgt der Shaft des Dartpfeils, der als Übergang zum Ende des Dartpfeils dient. Dieser wird ebenso wie die Barrel aus vorgefertigten Bauteilen ausgewählt, in seiner Länge modifiziert und teilweise mit zufälligen Farben versehen. Reale Dartpfeile folgen häufig einem kohärenten Farbschema während die Abstimmung von Barrels und Shafts in dieser Thesis zufällig ist. Hinsichtlich der Variabilität der Dartpfeile ist diese Herangehensweise jedoch präferiert.
+
+Das Ende der Dartpfeile bilden die Flights. Diese sind die meist aus Plastik gefertigten Flügel des Dartpfeils und ihr Erscheinungsbild variiert von allen Bestandteilen am stärksten. Farben von Flights reichen von einzelnen Farben über Flaggen und Wappen bis hin zu abstrakten Bildern. Zusätzlich ist die Form von Flights nicht vorgegeben. Diese Gegebenheiten wurden in dieser Thesis durch Projektion eines zufälligen Bereichs eines Texturatlas\footnote{Der Texturatlas beinhaltet Länderflaggen sowie geometrische Formen und zufällige Farben. Teile des Atlas wurden durch die Bilderstellungs-KI von DeepAI \cite{deepai-image} generiert.} auf eine Grundformen für Flights realisiert. Die Grundformen sind ebenfalls vorgefertigt und orientieren sich an realen Formen für Flights. Weiterhin ist eine Verformung der Flights als Gebrauchsspur von Dartpfeilen identifiziert worden, die ebenfalls in die Generierung der Dartpfeile einbezogen ist. Die Materialien der Flights variieren in ihrer Reflektivität, sind jedoch sehr glatt und dem Erscheinungsbild von Plastik nachempfunden.
 
 \subsubsection{Lichtquellen}
+\label{sec:lichter}
 
-\todo{}
+Hinsichtlich ber Beleuchtungsmöglichkeiten der Szene existieren unterschiedliche Objekte, die jeweils unterschiedliche Auswirkungen der Beleuchtung mit sich ziehen. Für die Datenerstellung wurden fünf unterschiedliche Arten der Beleuchtung modelliert.
+
+\paragraph{Environment Maps}
+
+Environment Maps, auch als HDRIs bezeichnet, sind $360\degree$-Scans von realen Umgebungen. Diese können bei dem Rendern von Szenen als Hintergrund genutzt werden, sodass die Farben zur Ausleuchtung der Szene dienen. Dadurch ist die Simulation realistischer Beleuchtungen möglich, ohne die jeweilige Szene nachzustellen. Die Intensität der Environment Maps bestimmt dabei die Ausprägung der Beleuchtung, sodass eine Intensität von $\nicefrac{1}{2}$ die Helligkeit der Environment Map reduziert, sodass eine Spanne unterschiedlicher Beleuchtungen unter der Verwendung der selben Environment Map möglich ist.
+
+\paragraph{Kamerablitz}
+
+Wenige Zentimeter neben der Kamera befindet sich ein Punktlicht, das als Kamerablitz fungiert. Es kann ein- und ausgeschaltet werden und sorgt unter dessen Verwendung für eine helle Ausleuchtung der Szene. Die Farbe des Lichtes ist kaltweiß und sorgt durch sein Positionierung für harte Kanten entlang der Kanten im Bild. Besonders stark ist dieser Effekt bei Dartpfeilen zu beobachten.
+
+\paragraph{Spotlight}
+
+Bei der Aufnahme realer Daten ist die Existenz von Spotlights aufgekommen. Bei Spotlights handelt es sich um ein oder mehrere Lichter, die auf die Dartscheibe gerichtet sind und den Feldbereich ausleuchten. Diese Art der Ausleuchtung sorgt ebenfalls für einen auffälligen Schattenwurf und wird in der 3D-Szene als Flächenlicht variierender Größe modelliert. Diese Art der Beleuchtung wurde im Strongbows Pub\footnote{\url{https://www.strongbowspub.de}} in Kiel beobachtet.
+
+\paragraph{Ringlicht}
+
+Ein typisches Accessoire für Dartscheiben sind Ringlichter. Diese bestehen aus einem Gestell, das an der Dartscheibe befestigt wird und an dem LEDs in einem Ring vor dieser angeordnet, um diese direkt zu beleuchten. Ringlichter sorgen für eine uniforme Ausleuchtung der Dartscheibe und wenig Schattenwurf der Pfeile. Modelliert sind Ringlichter nach dem Vorbild der Dartscheiben in Jess Bar in Kiel. Die LEDs sind bei dieser Art des Ringlichts an der Vorderkante eines zylindrischen Korpus angebracht, in dem die Dartscheibe befestigt ist. Dieser Korpus kann unterschiedliche Farben besitzen.
+
+\paragraph{Deckenbeleuchtung}
+
+Zusätzlich zu den bereits genannten Beleuchtungsmöglichkeiten existieren Deckenleuchten in der Szene, die für eine warmweiße Beleuchtung sorgen. Diese Lichter werden unter anderem als Rückfall-Beleuchtung verwendet, sofern -- mit Ausnahme der Environment Maps -- keine andere Beleuchtung aktiviert ist. Dadurch ist sichergestellt, dass keine unbeleuchtete Szene entsteht.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Postprocessing}  % ====================================================================
+\subsection{Nachverarbeitung und Fertigstellung der Daten}  % =====================================
 \label{sec:methodik_postprocessing}
+
+Nach dem Rendern von Bildern und Masken der Szene erfolgt eine Nachverarbeitung der Daten durch ein weiteres Skript. Durch dieses werden weitere Informationen von den gespeicherten Informationen angeleitet und für das Training eines datengestützten Systems vorbereitet.
 
 \subsubsection{Entzerrung der Dartscheibe}
 
-Homographie
+Die gerenderten Bilder müssen für das Training eines neuronalen Netzes, wie es in dieser Thesis verwendet wird, normalisiert werden. Diese Normalisierung besteht darin, das Bild der Dartscheibe derart durch eine Homographie zu entzerren, dass ihre Ringe von Ellipsen zu Kreisen transformiert werden und sie korrekt ausgerichtet ist.
 
-\todo{}
+Zur Identifizierung der Homographie wird die Maske der Orientierungspunkte verwendet. Die Orientierungspunkte befinden sich an vier Positionen in konstanten Abständen entlang der Außenseite des Double-Rings. Durch die Maske sind vier Positionen bekannt, die zur Erstellung einer eindeutigen Homographie notwendig sind. Diese Art der Entzerrung folgt dem Vorbild des DeepDarts-Systems \cite{deepdarts}.
 
-\subsubsection{Identifizierung von Dartpfeilpositionen in Bildern}
+\subsubsection{Identifizierung von Dartpfeil-Positionen in Bildern}
 
-\todo{}
+Durch die Masken der Einstichstellen im gerenderten Bild sind die Positionen der Dartpfeile bekannt. Durch Überlagerung mit den Masken der Dartpfeile ist eine eindeutige Positionierung und Punktzuweisung der einzelnen Punktzahlen der Darts möglich. Die Positionen aus dem gerenderten Bild lassen sich durch die im vorherigen Unterkapitel abgeleitete Homographie auf ihre Positionen im entzerrten Bild abbilden. Dadurch ist eine fehlerfreie Positionierung der Einstichstellen möglich, obgleich diese sichtbar oder von anderen Darts verdeckt sind. Eben diese Eigenschaft der generierten Daten ist neben der automatisierten Erstellung ein wesentlicher Vorteil der Datengenerierung. Die Korrektheit der Annotationen ist durch diese Vorgehensweise garantiert.
 
 \subsubsection{Statistiken über Sample erheben}
 
-Dartpfeil-IoU, verdeckte Einstichstellen, Board-Geometrie
+Zusätzlich zu den minimal notwendigen Informationen werden Statistiken zu den generierten Daten abgeleitet und gespeichert. Diese dienen der Erhebung von Statistiken und dem Einblick in die Stärken und Schwächen eines Systems. Inbegriffen in diesen Daten sind ein Maß zur Überdeckung der Dartpfeile zueinander. Diese geben einen Einblick darüber, ob die Verdeckung von Dartpfeilen einen Einfluss auf die Performance des Systems hat. Darüber hinaus wird festgehalten, wie viele der Einstichlöcher durch andere Dartpfeile verdeckt sind und damit nicht eindeutig zu sehen sind.
 
-\todo{}
+Durch Approximation von Ellipsen und Linien auf Grundlage der Orientierungspunkte und Dartscheiben-Maske ist eine geometrische Beschreibung der Dartscheibe möglich. Diese mathematische Darstellung der Grundformen kann genutzt werden, um Rückschlüsse auf den Einfluss der Perspektive auf die System-Performance zu ziehen.
 
 % -------------------------------------------------------------------------------------------------
