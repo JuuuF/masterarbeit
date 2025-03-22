@@ -124,8 +124,8 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von 18mm bis 60mm. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
 
 \begin{align*}
-    l_\text{lower} &= l_\text{min} + \frac{d}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2} \\
-    l_\text{upper} &= \frac{l_\text{max} - l_\text{min}}{2} + \frac{d}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}
+    l_\text{lower} & = l_\text{min} + \frac{d}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}                          \\
+    l_\text{upper} & = \frac{l_\text{max} - l_\text{min}}{2} + \frac{d}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}
 \end{align*}
 
 Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen Ober- und Untergrenze werden zufällig uniform gewählt. Auf diese Weise wird eine Korrelation zwischen verwendeter Brennweite und Abstand zur Dartscheibe gewonnen unter Beibehaltung der Variabilität der Daten und Einfluss von Zufallswerten.
@@ -141,16 +141,19 @@ Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen
                 ylabel={Brennweite $l$ der Kamera [mm]},
                 scaled x ticks = false,
                 grid=both,
-                legend pos=north west,
-                legend style={nodes={scale=0.8, transform shape}},
+                extra x ticks={60,150},
+                extra x tick labels={$d_\text{min}$, $d_\text{max}$},
+                extra x tick style={ticklabel pos=top},
+                extra y ticks={18,60},
+                extra y tick labels={$l_\text{min}$, $l_\text{max}$},
+                extra y tick style={ticklabel pos=right},
             ]
-            \addplot[name path = upper, thick, data_primary]{0.21 * x + 28.5};
-            \addplot[name path = lower, thick, data_secondary]{0.21 * x + 7 . 5};
+            \addplot[name path = upper, thick, densely dashed, data_primary]{0.23 * x + 25};
+            \addplot[name path = lower, thick, densely dashed, data_primary]{0.23 * x + 4};
             \addplot[color=data_secondary, opacity=0.5] fill between[of = upper and lower];
-            \legend{Obergrenze, Untergrenze, Mögliche Brennwenten};
         \end{axis}
     \end{tikzpicture}
-    \captionof{figure}{Abhängigkeit der Brennweiten von dem Abstand zur Dartscheibe.}
+    \captionof{figure}{Abhängigkeit der Brennweiten von dem Abstand zur Dartscheibe. Ober- und Untergrenzen sind durch Strichlinien angegeben, der farblich hervorgehobene Bereich stellt die Spanne möglicher Brennweiten für jeweilige Entfernungen dar.}
     \label{fig:brennweiten}
 \end{center}
 
