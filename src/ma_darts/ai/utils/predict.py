@@ -20,6 +20,40 @@ def convert_to_absolute_coordinates(
     return pos_abs  # (bs, s, s, 2, 3)
 
 
+def non_max_suppression(
+    pos: np.ndarray,  # bs * (n*, 2)
+    cls: np.ndarray,  # bs * (n*)
+    cnf: np.ndarray,  # bs * (n*)
+    distance_threshold: float = 10.0,
+) -> dict[str, np.ndarray]:
+    out_pos = []
+    out_cls = []
+    out_cnf = []
+    for pos_batch, cls_batch, cnf_batch in zip(pos, cls, cnf):
+        keep_indices = []
+        suppressed = np.zeros(len(pos_batch), dtype=bool)
+
+        # Iterate over confidences, starting with biggest
+        for i in np.argsort(-cnf_batch):
+            # Skip suppressed
+            if suppressed[i]:
+                continue
+            keep_indices.append(i)
+
+            # Compute distances
+            dists = np.linalg.norm(pos_batch[i] - pos_batch, axis=1)
+
+            # Suppress too close positions
+            suppressed[dists < distance_threshold] = True
+
+        # Apply filtering
+        out_pos.append(pos_batch[keep_indices])
+        out_cls.append(cls_batch[keep_indices])
+        out_cnf.append(cnf_batch[keep_indices])
+
+    return out_pos, out_cls, out_cnf
+
+
 def yolo_v8_predict(
     model: tf.keras.Model,
     imgs: np.array,  # (bs, 800, 800, 3)
@@ -67,6 +101,9 @@ def yolo_v8_predict(
     cls = [cls_batch[ids] for cls_batch, ids in zip(cls, out_ids)]  # bs * (m*,)
     cnf = [cnf_batch[ids] for cnf_batch, ids in zip(cnf, out_ids)]  # bs * (m*,)
     # fmt: on
+
+    # non-maximum suppression
+    pos, cls, cnf = non_max_suppression(pos, cls, cnf)
 
     # Sort by confidences
     sort_ids = [np.argsort(cnf_batch)[::-1] for cnf_batch in cnf]  # bs * (n*,)
