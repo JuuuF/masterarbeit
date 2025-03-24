@@ -79,8 +79,8 @@ class Utils:
 
         # Prediction callback
         Xs, ys = [], []
-        for ds in [train_ds, val_ds_ma, val_ds_paper, val_ds_real]:
-            X, y = next(iter(ds.unbatch().batch(4).take(1)))
+        for ds in [ds_gen_train, ds_paper_d1, ds_strongbows, ds_gen_val, ds_paper_d2, ds_jess]:
+            X, y = next(iter(ds.unbatch().batch(2).take(1)))
             Xs.append(X)
             ys.append(y)
         Xs = np.concatenate(Xs, axis=0)
@@ -339,8 +339,8 @@ if args.model_path is None:
 else:
     model = tf.keras.models.load_model(args.model_path, compile=False)
 
-if "GPU_SERVER" not in os.environ.keys():
-    model.load_weights("data/ai/darts/latest.weights.h5")
+# if "GPU_SERVER" not in os.environ.keys():
+#     model.load_weights("data/ai/darts/latest.weights.h5")
 
 # Compile model
 metrics = [
@@ -371,22 +371,59 @@ model.compile(
 # -----------------------------------------------
 # Get Data
 
-train_ds = dataloader_ma(
+ds_gen_train = dataloader_ma(
     "data/generation/out/",
     batch_size=BATCH_SIZE,
     shuffle=True,
     augment=True,
     cache=True,
     clear_cache=args.clear_cache,
+)  # 24,576
+
+ds_paper_d1 = dataloader_paper(
+    base_dir="data/paper/",
+    dataset="d1",
+    split="val",
+    img_size=img_size,
+    shuffle=True,
+    augment=True,
+    batch_size=BATCH_SIZE,
+    cache=True,
+    clear_cache=args.clear_cache,
+)  # 2000
+
+ds_strongbows = dataloader_ma(
+    "data/darts_references/strongbows_out/",
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    augment=True,
+    cache=True,
+    clear_cache=args.clear_cache,
+)  # 168
+
+# 24576 + 256 + 160 = 24992
+train_ds = ds_gen_train.concatenate(  # 24576
+    ds_paper_d1.take(256 // BATCH_SIZE),  # + 256
+).concatenate(
+    ds_strongbows.take(160 // BATCH_SIZE),  # + 160
 )
+
 # Utils.check_dataset(train_ds)
 # if "GPU_SERVER" not in os.environ.keys():
 #     train_ds = dummy_ds(n_samples=8)
 
+ds_gen_val = dataloader_ma(
+    "data/generation/out_val/",
+    batch_size=BATCH_SIZE,
+    shuffle=False,
+    augment=False,
+    cache=True,
+    clear_cache=args.clear_cache,
+)  # 256
 
-val_ds_paper = dataloader_paper(
+ds_paper_d2 = dataloader_paper(
     base_dir="data/paper/",
-    dataset="d1",
+    dataset="d2",
     split="test",
     img_size=img_size,
     shuffle=False,
@@ -394,26 +431,23 @@ val_ds_paper = dataloader_paper(
     batch_size=BATCH_SIZE,
     cache=True,
     clear_cache=args.clear_cache,
-).take(10)
-val_ds_ma = dataloader_ma(
-    "data/generation/out_val/",
-    batch_size=BATCH_SIZE,
-    shuffle=False,
-    augment=False,
-    cache=True,
-    clear_cache=args.clear_cache,
-).take(10)
-val_ds_real = dataloader_ma(
-    "data/darts_references/strongbows_out/",
-    batch_size=BATCH_SIZE,
-    shuffle=False,
-    augment=False,
-    cache=True,
-    clear_cache=args.clear_cache,
-).take(10)
-# Utils.check_dataset(val_ds_real)
+)  # 152
 
-val_ds = val_ds_paper.concatenate(val_ds_ma).concatenate(val_ds_real)
+ds_jess = dataloader_ma(
+    "data/darts_references/jess_out/",
+    batch_size=BATCH_SIZE,
+    shuffle=False,
+    augment=False,
+    cache=True,
+    clear_cache=args.clear_cache,
+)  # 128
+
+# 256 + 256 + 128 = 640
+val_ds = ds_gen_val.concatenate(  # 256
+    ds_paper_d2.take(256 // BATCH_SIZE),  # + 256
+).concatenate(
+    ds_jess.take(128 // BATCH_SIZE),  # + 128
+)
 
 
 # Utils.check_dataset(val_ds)
