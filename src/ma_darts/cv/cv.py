@@ -214,7 +214,7 @@ def undistort_img(img: np.ndarray, profile: bool = False) -> np.ndarray:
 
     # Estimate line angles
     thetas = lines.get_rough_line_angles(
-        img.shape[:2], img_lines_filtered, cy, cx, show=False
+        img.shape[:2], img_lines_filtered, cy, cx, show=None
     )
     profiler.profile("lines.get_rough_line_angles")
 
@@ -229,7 +229,7 @@ def undistort_img(img: np.ndarray, profile: bool = False) -> np.ndarray:
 
     # Align lines by filtered edges
     img_lines = orientation.align_angles(
-        img_lines_filtered, thetas, img.shape[:2], cy, cx, show=False
+        img_lines_filtered, thetas, img.shape[:2], cy, cx, show=None
     )
     profiler.profile("orientation.align_angles")
 
