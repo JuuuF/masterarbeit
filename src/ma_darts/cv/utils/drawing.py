@@ -24,9 +24,9 @@ def draw_polar_line(
 
     color = tuple(int(c * intensity) for c in color)
     if inplace:
-        cv2.line(img, pt1, pt2, color, thickness)
+        cv2.line(img, pt1, pt2, color, thickness, line_type)
     else:
-        img = cv2.line(img.copy(), pt1, pt2, color, thickness)
+        img = cv2.line(img.copy(), pt1, pt2, color, thickness, line_type)
     return img
 
 

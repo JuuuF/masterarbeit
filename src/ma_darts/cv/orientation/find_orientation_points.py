@@ -419,9 +419,9 @@ def is_correct_surrounding(
         surrounding[:2] = c
         surrounding[:, :2] = c
         surrounding[:, -2:] = c
-        surrounding[0] = (0, 0, 0)
-        surrounding[:, 0] = (0, 0, 0)
-        surrounding[:, -1] = (0, 0, 0)
+        # surrounding[0] = (0, 0, 0)
+        # surrounding[:, 0] = (0, 0, 0)
+        # surrounding[:, -1] = (0, 0, 0)
 
         # similarity indication
         end = int(surrounding.shape[1] * similarity)
@@ -429,6 +429,9 @@ def is_correct_surrounding(
         surrounding[-2:, :end] = (255, 255, 255)
         surrounding[-2:, end:] = (0, 0, 0)
         surrounding[-1, int(similarity_threshold * surrounding.shape[1])] = (255, 0, 0)
+        surrounding = np.pad(surrounding, [(1, 1), (1, 1), (0, 0)])
+
+        # show_imgs(np.kron(surrounding, np.ones((10, 10, 1), np.uint8)))
     return is_orientation_point, surrounding
 
 
@@ -458,9 +461,9 @@ def filter_surroundings(
             cv2.circle(debug_img, (x, y), 5, (255, 255, 255))
             cv2.circle(debug_img, (x, y), 2, (0, 0, 255), -1)
             # Place surrounding on image: top left
-            if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
+            if y - surrounding_.shape[0] >= 0 and x - surrounding_.shape[1] >= 0:
                 debug_img[
-                    y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
+                    y - surrounding_.shape[0] : y, x - surrounding_.shape[1] : x
                 ] = surrounding_
 
     for y, x, surrounding in inner_ring_b:
@@ -476,9 +479,10 @@ def filter_surroundings(
             cv2.circle(debug_img, (x, y), 5, (255, 255, 255))
             cv2.circle(debug_img, (x, y), 2, (0, 255, 0), -1)
             # Place surrounding on image: top left
-            if y - surrounding.shape[0] >= 0 and x - surrounding.shape[1] >= 0:
+            if y - surrounding_.shape[0] >= 0 and x - surrounding_.shape[1] >= 0:
+                # Add tile to image
                 debug_img[
-                    y - surrounding.shape[0] : y, x - surrounding.shape[1] : x
+                    y - surrounding_.shape[0] : y, x - surrounding_.shape[1] : x
                 ] = surrounding_
 
     for y, x, surrounding in outer_ring_a:
@@ -495,11 +499,11 @@ def filter_surroundings(
             cv2.circle(debug_img, (x, y), 2, (0, 0, 255), -1)
             # Place surrounding on image: top right
             if (
-                y - surrounding.shape[0] >= 0
-                and x + surrounding.shape[1] < debug_img.shape[1]
+                y - surrounding_.shape[0] >= 0
+                and x + surrounding_.shape[1] < debug_img.shape[1]
             ):
                 debug_img[
-                    y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
+                    y - surrounding_.shape[0] : y, x : x + surrounding_.shape[1]
                 ] = surrounding_
 
     for y, x, surrounding in outer_ring_b:
@@ -516,11 +520,11 @@ def filter_surroundings(
             cv2.circle(debug_img, (x, y), 2, (0, 255, 0), -1)
             # Place surrounding on image: top right
             if (
-                y - surrounding.shape[0] >= 0
-                and x + surrounding.shape[1] < debug_img.shape[1]
+                y - surrounding_.shape[0] >= 0
+                and x + surrounding_.shape[1] < debug_img.shape[1]
             ):
                 debug_img[
-                    y - surrounding.shape[0] : y, x : x + surrounding.shape[1]
+                    y - surrounding_.shape[0] : y, x : x + surrounding_.shape[1]
                 ] = surrounding_
 
     return keeps, debug_img

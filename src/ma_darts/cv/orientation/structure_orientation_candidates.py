@@ -108,17 +108,17 @@ def structure_orientation_candidates(
                 cv2.circle(
                     img,
                     (int(src_x), int(src_y)),
-                    3,
+                    4,
                     c,
-                    thickness=1,
+                    thickness=2,
                     lineType=cv2.LINE_AA,
                 )
                 cv2.circle(
                     img,
                     (int(dst_x), int(dst_y)),
-                    3,
+                    4,
                     [i//1.5 for i in c],
-                    thickness=1,
+                    thickness=2,
                     lineType=cv2.LINE_AA,
                 )
                 cv2.arrowedLine(
@@ -143,8 +143,8 @@ def structure_orientation_candidates(
                 img,
                 p,
                 p2,
-                color=(200, 200, 200),
-                thickness=1,
+                color=(255, 255, 255),
+                thickness=2,
                 lineType=cv2.LINE_AA,
             )
         # if show:

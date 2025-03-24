@@ -54,7 +54,7 @@ def align_angles(
     img_shape: tuple[int, int],
     cy: float,
     cx: float,
-    show: bool = False,
+    show: np.ndarray | None = None,
 ) -> list[tuple[float, float]]:
     rho_guess = np.sqrt(img_shape[0] ** 2 + img_shape[1] ** 2) / 2
     bounds = [(-rho_guess * 2, rho_guess * 2), (0, np.pi)]
@@ -110,11 +110,13 @@ def align_angles(
         # print(theta, theta_)
         out_lines.append((rho_, theta_))
 
-    if show:  # or create_debug_img:  # TODO: debug img
-        out = img.copy()
+    if show is not None:  # or create_debug_img:  # TODO: debug img
+        from ma_darts.cv.utils import draw_polar_line, show_imgs
+        import cv2
+        out = show.copy()
         for rho, theta in out_lines:
-            draw_polar_line(out, rho, theta)
-        if show:
+            draw_polar_line(out, rho, theta, thickness=3, line_type=cv2.LINE_AA)
+        if show is not None:
             show_imgs(lines_aligned=out, block=False)
         # Utils.append_debug_img(out, "Aligned Angles")  # TODO: debug img
     return out_lines

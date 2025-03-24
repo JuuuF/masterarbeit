@@ -68,7 +68,7 @@ def extract_lines(
                 p1,
                 p2,
                 tuple(np.random.randint(256) for _ in range(3)),
-                1,
+                3,
                 lineType=cv2.LINE_AA,
             )
             color = np.random.randint(128) + 128

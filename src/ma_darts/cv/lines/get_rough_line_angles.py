@@ -31,7 +31,7 @@ def display_line_peaks(acc, acc_smooth):
         out[: round(a * 360), i] = colors[i]
     out = out[::-1]
 
-    out = cv2.addWeighted(out, 1.0, out_base, 0.75, 1.0)
+    out = cv2.addWeighted(out, 1.0, out_base, 1.0, 1.0)
     show_imgs(out)
 
 
@@ -42,7 +42,7 @@ def get_rough_line_angles(
     ],  # p1, p2, length (normalized), center distance [px], rho, theta
     cy: int,
     cx: int,
-    show: bool = False,
+    show: np.ndarray | None = None,
 ):
     # Draw lines onto black canvas
     line_img = np.zeros(img_shape, np.uint8)
@@ -99,7 +99,7 @@ def get_rough_line_angles(
     peak_thetas = np.deg2rad(angle_step) * peaks
     peak_thetas = (peak_thetas + np.pi / 2) % np.pi
 
-    # Utils.display_line_peaks(accumulator, acc_smooth)
+    # display_line_peaks(accumulator, acc_smooth)
 
     if len(peak_values) > 10:
         # Remove smallest peaks
@@ -126,17 +126,9 @@ def get_rough_line_angles(
 
         # TODO: interpolate peak_thetas and peak_values for added values
 
-    if show:  # or create_debug_img:  # TODO: debug img
-        res = img // 8
-        for line in lines:
-            cv2.line(
-                res,
-                line[0][::-1],
-                line[1][::-1],
-                color=(0, 255, 0),
-                thickness=1,
-                lineType=cv2.LINE_AA,
-            )
+    if show is not None:  # or create_debug_img:  # TODO: debug img
+        from ma_darts.cv.utils import draw_polar_line_through_point
+        res = show // 4
         for t, v in zip(peak_thetas, peak_values / peak_values.max()):
             intensity = v / 2 + 0.5
             draw_polar_line_through_point(
@@ -145,6 +137,16 @@ def get_rough_line_angles(
                 t,
                 color=(255, 0, 0),
                 intensity=intensity,
+                thickness=2
+            )
+        for line in lines:
+            cv2.line(
+                res,
+                line[0][::-1],
+                line[1][::-1],
+                color=(0, 255, 0),
+                thickness=3,
+                lineType=cv2.LINE_AA,
             )
 
         # with open("dump/out.txt", "w") as f:
@@ -162,9 +164,9 @@ def get_rough_line_angles(
         #             sep="",
         #             file=f,
         #         )
-        if show:
+        if show is not None:
             show_imgs(field_separating_lines=res, block=False)
-        Utils.append_debug_img(res, "Field-Separating Lines")
+        # Utils.append_debug_img(res, "Field-Separating Lines")
 
     thetas = sorted(peak_thetas)
     return thetas

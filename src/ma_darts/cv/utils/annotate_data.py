@@ -3,11 +3,11 @@ import cv2
 import json
 import numpy as np
 
-src_dir = "data/darts_references/strongbows"
-dst_dir = "data/darts_references/strongbows_out"
+src_dir = "data/darts_references/jess"
+dst_dir = "data/darts_references/jess_out"
 files = sorted([f for f in os.listdir(src_dir)])
 
-from ma_darts.cv.utils import show_imgs
+from ma_darts.cv.utils import show_imgs, apply_matrix
 from ma_darts.cv.data_preparation import ImageUtils
 from ma_darts.cv.cv import undistort_img
 
@@ -141,7 +141,7 @@ class Annotation:
         if homography is None:
             return
         self.H = homography
-        self.img_undistort = apply_matrix(self.img, self.H)
+        self.img_undistort = apply_matrix(self.img, self.H)[:800, :800]
 
         img_show = self.img_undistort.copy()
         cv2.circle(img_show, (400, 400), 300, (255, 255, 255), 2, cv2.LINE_AA)
