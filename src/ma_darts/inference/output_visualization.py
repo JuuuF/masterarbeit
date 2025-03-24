@@ -40,6 +40,7 @@ def visualize_prediction(
     cnf = res["confidences"]
     for (y, x), (scr_val, scr_str), c in zip(pos, scr, cnf):
         if scr_str == "HIDDEN":
+            print("HIDDEN")
             continue
         y, x = int(y), int(x)
 

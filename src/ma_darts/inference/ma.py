@@ -17,6 +17,7 @@ def inference_ma(
     model_path: str | None = None,
     model: tf.keras.Model | None = None,
     confidence_threshold: float = 0.5,
+    distance_threshold: int | float = 10,
     max_outputs: int = 3,
     verbose: bool = False,
 ) -> list[np.ndarray]:
@@ -97,9 +98,9 @@ def inference_ma(
             if cnf >= confidence_threshold:
                 ma_outputs[img_path]["scores"].append(scr)
                 ma_outputs[img_path]["confidences"].append(cnf)
-            else:
-                ma_outputs[img_path]["scores"].append((0, "HIDDEN"))
-                ma_outputs[img_path]["confidences"].append(1 - cnf)
+            # else:
+            #     ma_outputs[img_path]["scores"].append((0, "HIDDEN"))
+            #     ma_outputs[img_path]["confidences"].append(1 - cnf)
 
         ma_outputs[img_path]["success"] = True
         ai_times.append(time() - ai_start)
@@ -107,11 +108,16 @@ def inference_ma(
     # Timing
     dt = time() - start
     sample_time = dt / len(img_paths)
+    ma_outputs["sample_time"] = sample_time
     if verbose:
         print("-" * 50)
         print(f"MA inference: {dt:.03f}s -> {sample_time:.03f}s/sample")
-        print(f"\tCV time: {np.sum(cv_times):.03f}s -> {np.mean(cv_times):.03f}s/sample")
-        print(f"\tAI time: {np.sum(ai_times):.03f}s -> {np.mean(ai_times):.03f}s/sample")
+        print(
+            f"\tCV time: {np.sum(cv_times):.03f}s -> {np.mean(cv_times):.03f}s/sample"
+        )
+        print(
+            f"\tAI time: {np.sum(ai_times):.03f}s -> {np.mean(ai_times):.03f}s/sample"
+        )
         print("-" * 50)
     if added_batch:
         return ma_outputs[img_paths[0]]
@@ -146,8 +152,10 @@ if __name__ == "__main__":
     from ma_darts.ai.models import yolo_v8_model
 
     model = yolo_v8_model(variant="n")
+    # model.summary()
+    # exit()
     model.load_weights("data/ai/darts/latest.weights.h5")
-    # model = tf.keras.models.load_model("dump/trains/run_1/darts_model.keras")
+    # model = tf.keras.models.load_model("data/ai/darts/train_13/yolov8_train_13.keras")
 
     # img_paths = img_paths[:10]
     # ma_outputs = inference_ma(

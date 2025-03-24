@@ -541,9 +541,12 @@ def _dd_inference(config: str, img_paths: list) -> np.ndarray:
     ma_outputs = DeepDartsCode.predict(yolo, img_paths=img_paths)
     dt = time() - start
     sample_time = dt / len(img_paths)
-    print("-" * 50)
-    print(f"DeepDarts inference: {dt:.03f}s -> {sample_time:.03f}s/sample")
-    print("-" * 50)
+    ma_outputs["sample_time"] = sample_time
+
+    if verbose:
+        print("-" * 50)
+        print(f"DeepDarts inference: {dt:.03f}s -> {sample_time:.03f}s/sample")
+        print("-" * 50)
 
     # Save outputs to disk
     with open(output_file, "wb") as f:
