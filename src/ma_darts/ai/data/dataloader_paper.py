@@ -428,7 +428,7 @@ def dataloader_paper(
     base_ds = paper_base_ds(base_dir, dataset, split)
     ds = finalize_base_ds(
         base_ds,
-        data_dir=base_dir,
+        data_dir=os.path.join(base_dir, dataset),
         img_size=img_size,
         shuffle=shuffle,
         augment=augment,
