@@ -271,7 +271,7 @@ class DeepDartsCode:
 
         # Extract polar coordinates from positions
         xy = xy_undist - c
-        angles = np.arctan2(-xy[4:, 1], xy[4:, 0]) / np.pi * 180
+        angles = np.arctan2(-xy[4:, 1], xy[4:, 0]) / np.pi * 180 - 9
         angles = [a + 360 if a < 0 else a for a in angles]  # map to 0-360
         distances = np.linalg.norm(xy[4:], axis=-1)
 
@@ -470,9 +470,9 @@ class DeepDartsCode:
                 bboxes
             )  # (7, 3): 4x orientation + 3x dart, [x, y, visibile]
 
-        if i > 0:
-            fps = (len(img_paths) - 1) / (time() - ti)
-            print(f"FPS: {fps:.2f}")
+        # if i > 0:
+        #     fps = (len(img_paths) - 1) / (time() - ti)
+        #     print(f"FPS: {fps:.2f}")
 
         scores = []
         mses = []
@@ -530,7 +530,7 @@ class DeepDartsCode:
         return ma_outputs
 
 
-def _dd_inference(config: str, img_paths: list) -> np.ndarray:
+def _dd_inference(config: str, img_paths: list, verbose: bool = False) -> np.ndarray:
 
     # Load model
     yolo = DeepDartsCode.load_model(config=config)
