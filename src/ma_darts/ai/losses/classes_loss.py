@@ -8,8 +8,8 @@ class ClassesLoss(tf.keras.losses.Loss):
         super(ClassesLoss, self).__init__(*args, **kwargs)
 
         self.loss_fn = tf.keras.losses.CategoricalFocalCrossentropy(
-            alpha=0.5,
-            gamma=2.0,
+            # alpha=0.5,
+            # gamma=2.0,
         )
         self.multiplier = multiplier
 

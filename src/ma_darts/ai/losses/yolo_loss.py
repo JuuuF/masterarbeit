@@ -45,7 +45,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         # DIoU Loss
         self.diou_loss = DIoULoss(self.square_size)
         self.base_diou_loss = tf.constant(2, tf.float32)
-        self.diou_mult = tf.constant(0.1, tf.float32)
+        self.diou_mult = tf.constant(0.02, tf.float32)
 
         self._diou_width = diou_width
         self.diou_width = diou_width if diou_width is not None else diou_threshold
