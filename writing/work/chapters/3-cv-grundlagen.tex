@@ -303,27 +303,40 @@ Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in ein
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Logpolare Entzerrung}
+\subsection{Log-polare Entzerrung}
 \label{sec:logpolare_entzerrung}
 
-\cite{logpolar}.
+Die log-polare Darstellung eines Bildes wird durch eine Transformation des Koordinatensystems erlangt. Während Koordinaten in einem kartesischen Koordinatensystem durch $x$- und $y$-Koordinaten angegeben sind, werden Punkte im log-polaren Koordinatensystem durch ein Tupel $\left(\rho, \theta\right)$ beschrieben. Sie sind definiert als logarithmischer Abstand und Winkel zu einem spezifischen Punkt $\left(c_x, c_y\right)$ \cite{logpolar}. Die Umwandlung der Koordinaten ist definiert durch:
 
-\todo{Logpolare Entzerrung beschreiben}
+\begin{align*}
+    \rho(x, y)   & = \ln \sqrt{(x - c_x)^ 2 + (y - c_y)^2}      \\
+    \theta(x, y) & = \arctan2 \left((y - c_y), (x - c_x)\right)
+\end{align*}
+
+In dieser Thesis wird die log-polare Darstellung eines Bildes in \autoref{sec:orientierungspunkte_finden} genutzt, um Dartscheiben um ihren Mittelpunkt abzuwickeln. Der Effekt dieser Entzerrung ist die Transformation der Dartfelder von Kreisabschnitten zu Rechtecken.
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Farbräume}
 \label{sec:farbräume}
 
-\todo{Farbräume beschreiben}
+Farbinformationen in Bildern werden auf unterschiedliche Arten gespeichert. Diese unterschiedlichen Arten der Darstellungen von Farben werden als Farbräume bezeichnet \cite{color_space}. Zu den am weitesten verbreiteten Farbräumen zählen unter anderem der RGB- Farbraum und der HSV-Farbraum. Im RGB-Farbraum werden Farbinformationen analog zum menschlichen Auge in designierten Kanälen für rote, grüne und blaue Bestandteile des Bildes unterteilt; im HSV-Farbraum stehen die Kanäle H, S und V für Färbung (\quotes{hue}), Sättigung (\quotes{saturation}) und Helligkeit (\quotes{value}). Visuell nähere Verbundenheit zwischen der menschlichen Farbwahrnehmung wird durch die Farbräume YCbCr und Lab erzielt. Diese Farbräume nutzen ebenfalls drei Farbkanäle, die jedoch abstrakter gestaltet sind und Farbinformationen auf eine Art encodieren, dass eine Interpolation von Farben zueinander mit visuellem Einklang ermöglichen, der in RGB und HSV nicht trivial erzielbar ist.
+
+Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nachteilen in Verbindung. In dieser Arbeit werden die aufgezählten Farbräume zur Identifizierung von Farben und Hervorhebung von Merkmalen in Bildern genutzt. Die Verwendung von Farbraumtransformationen geschieht in \autoref{sec:orientierungspunkte_klassifizieren}.
 
 % -------------------------------------------------------------------------------------------------
 \subsection{Structural Similarity (SSIM)}
 \label{sec:ssim}
 
-\todo{SSIM erklären}
+Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeauthor{ssim} eine Metrik entwickelt, die über das triviale Vergleichen von Farbinformationen hinaus geht \cite{ssim}. Grundprinzip der SSIM-Metrik ist das Einfangen und Vergleichen visuell auffälliger Änderungen im Bild und Unterdrückung von Effekten wie Weichzeichnung und lokaler Verschiebungen von Pixeln. Es werden Informationen zu Luminanz, Kontrast und Struktur auf Eingabebildern identifiziert und jeweils miteinander verglichen. Eine gewichtetes Produkt der jeweiligen Ähnlichkeitsfaktoren bestimmt schließlich den SSIM-Wert.
+
+Diese Handhabung der Informationsverarbeitung sorgt für Robustheit gegenüber visuell geringer Änderungen, die jedoch starke Auswirkungen auf die zugrundeliegenden Daten besitzen. Ein Beispiel ist das Weichzeichnen eines Bildes oder das Hinzufügen von Rauschen. Diese Operationen ändern die Pixelwerte der Eingabebilder stark, jedoch sind sie visuell unauffällig.
 
 % -------------------------------------------------------------------------------------------------
 \subsection{RANSAC}
 \label{sec:ransac}
 
-\todo{RANSAC erklären}
+Nicht-ideale Daten beinhalten häufig Outlier. Outlier sind Datenpunkte, die nicht der zu erwartenden oder gewünschten Datenstruktur folgen, sondern als fehlerhafte Aufnahmen in den Daten vorhanden sind. Triviale Least-Squares-Approximationen aller Datenpunkte ist für diese Anomalien in Daten anfällig, wodurch die Ergebnisse dieser Methoden beeinflusst werden. Um mit dieser Art der Anomalien umzugehen, stellten \citeauthor{ransac} 1981 den RANSAC-Algorithmus vor \cite{ransac}.
+
+RANSAC steht für \quotes{Random Sample Consensus} und beruht auf dem zufälligen Auswählen eines Subsets von Datenpunkten zur Approximation einer akkuraten Beschreibung der Daten. Nach dem Auswählen zufälliger Punkte und Approximieren einer Zielverteilung wird jeder Punkt anhand von Grenzbedingungen als Inlier oder Outlier klassifiziert. Das Verhältnis von Inliern zu Outliern wird als Metrik zur Bewertung der Approximation genutzt. Durch wiederholtes Auswählen zufälliger Datenpunkte und Klassifizierung der Approximation ist eine Identifizierung einer Approximation möglich, auf die Outlier in den Datenpunkten wenig Einfluss nehmen.
+
+In dieser Arbeit wird dieser Ansatz in \autoref{sec:entzerrung} genutzt, um eine Entzerrung der Dartscheibe auf Grundlage von Orientierungspunkten zu identifizieren.

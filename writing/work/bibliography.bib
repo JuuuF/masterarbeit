@@ -201,9 +201,22 @@
   journal = {Proc. of Second Workshop on Cybernetic Vision}
 }
 
+% color spaces
+@article{color_space,
+  title   = {The metric of colour space},
+  journal = {Graphical Models},
+  volume  = {82},
+  pages   = {77-86},
+  year    = {2015},
+  issn    = {1524-0703},
+  doi     = {https://doi.org/10.1016/j.gmod.2015.06.005},
+  url     = {https://www.sciencedirect.com/science/article/pii/S1524070315000247},
+  author  = {Jens Gravesen}
+}
+
 % Perlin Noise
 @misc{perlin_noise_img,
-  author       = {},
+  author       = {Noiseposti.ng},
   howpublished = {Website},
   title        = {The Perlin Problem: Moving Past Square Noise},
   year         = {2022},
@@ -251,6 +264,40 @@
   url       = {https://ebookcentral.proquest.com/lib/christianalbrechts/detail.action?docID=1193660},
   isbn      = {978-981-281-204-9}
 }
+
+% ransac
+@article{ransac,
+  author     = {Fischler, Martin A. and Bolles, Robert C.},
+  title      = {Random sample consensus: a paradigm for model fitting with applications to image analysis and automated cartography},
+  year       = {1981},
+  issue_date = {June 1981},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {24},
+  number     = {6},
+  issn       = {0001-0782},
+  url        = {https://doi.org/10.1145/358669.358692},
+  doi        = {10.1145/358669.358692},
+  journal    = {Commun. ACM},
+  month      = jun,
+  pages      = {381 -- 395},
+  numpages   = {15},
+  keywords   = {automated cartography, camera calibration, image matching, location determination, model fitting, scene analysis}
+}
+
+% SSIM
+@article{ssim,
+  author   = {Zhou Wang and Bovik, A.C. and Sheikh, H.R. and Simoncelli, E.P.},
+  journal  = {IEEE Transactions on Image Processing},
+  title    = {Image quality assessment: from error visibility to structural similarity},
+  year     = {2004},
+  volume   = {13},
+  number   = {4},
+  pages    = {600-612},
+  keywords = {Image quality;Humans;Transform coding;Visual system;Visual perception;Data mining;Layout;Quality assessment;Degradation;Indexes},
+  doi      = {10.1109/TIP.2003.819861}
+}
+
 
 % Pinhole Camera
 @article{pinhole_camera,
@@ -320,4 +367,91 @@
   month      = {11},
   pages      = {20 -- 25},
   collection = {ICAIP 2021}
+}
+
+
+# -------------------------------------------------------------------------------------------------
+# Related Work
+
+- Ziel: Defekt-Identifizierung in Bildern
+- Nutzung von Blender zur Generierung von Daten
+- Python-Scripting
+- Prozedurale Texturen + PBR
+@article{synth_data_blender_defects,
+  title    = {Procedural synthetic training data generation for AI-based defect detection in industrial surface inspection},
+  journal  = {Procedia CIRP},
+  volume   = {107},
+  pages    = {1101-1106},
+  year     = {2022},
+  note     = {Leading manufacturing systems transformation - Proceedings of the 55th CIRP Conference on Manufacturing Systems 2022},
+  issn     = {2212-8271},
+  doi      = {https://doi.org/10.1016/j.procir.2022.05.115},
+  url      = {https://www.sciencedirect.com/science/article/pii/S2212827122003997},
+  author   = {Ole Schmedemann and Melvin Baaß and Daniel Schoepflin and Thorsten Schüppstuhl},
+  keywords = {Synthetic training data, machine learning, surface inspection, industrial quality control, domain randomization}
+}
+% Synthetische Trainingsdaten
+@misc{synth_data,
+  title         = {On Pre-Trained Image Features and Synthetic Images for Deep Learning},
+  author        = {Stefan Hinterstoisser and Vincent Lepetit and Paul Wohlhart and Kurt Konolige},
+  year          = {2017},
+  eprint        = {1710.10710},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/1710.10710}
+}
+
+- Ziel: Instanzsegmentierung
+- 3D modelle von Autos rendern
+- Hintergründe augmentieren
+- Augmentierung von Kameraparametern
+@inproceedings{synth_data_cars_with_cam_aug,
+  title         = {Augmented Reality Meets Deep Learning for Car Instance Segmentation in Urban Scenes},
+  author        = {Alhaija, Hassan Abu and Mustikovela, Siva Karthik and Mescheder, Lars and Geiger, Andreas and Rother, Carsten},
+  booktitle     = {Proceedings of the British Machine Vision Conference 2017},
+  month         = {09},
+  year          = {2017},
+  month_numeric = {9}
+}
+
+- Mensch-Posen -> 3D-Modell -> Rendering
+- Annotationen: Pose, Körperteile, Tiefeninformationen, etc.
+@inproceedings{synth_data_pose_estimation,
+  title     = {Learning from Synthetic Humans},
+  url       = {http://dx.doi.org/10.1109/CVPR.2017.492},
+  doi       = {10.1109/cvpr.2017.492},
+  booktitle = {2017 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  publisher = {IEEE},
+  author    = {Varol, Gul and Romero, Javier and Martin, Xavier and Mahmood, Naureen and Black, Michael J. and Laptev, Ivan and Schmid, Cordelia},
+  year      = {2017},
+  month     = jul,
+  pages     = {4627 -- 4635}
+}
+
+- Lernziel: Viewpoint estimation (= in welchem Winkel steht ein Objekt?)
+- synth. Daten ermöglichen out-of-distribution-Training
+- gute Ergebnisse mit synth. Daten
+- Salting mit echten Daten noch besser
+@misc{data_gen_importance,
+  title         = {How useful is photo-realistic rendering for visual learning?},
+  author        = {Yair Movshovitz-Attias and Takeo Kanade and Yaser Sheikh},
+  year          = {2016},
+  eprint        = {1603.08152},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/1603.08152}
+}
+
+- Ziel: autonomes Fahren
+- reale Daten: Bilder
+- synth. Daten: Lidar-gestützt
+- Kombination von synth. und echten Daten erbringt Vorteile
+@misc{synth_data_importance_2,
+  title         = {Evaluating the Impact of Synthetic Data on Object Detection Tasks in Autonomous Driving},
+  author        = {Enes Özeren and Arka Bhowmick},
+  year          = {2025},
+  eprint        = {2503.09803},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2503.09803}
 }

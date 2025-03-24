@@ -163,7 +163,7 @@ Die wesentlichen Schritte der Orientierung sind in \autoref{img:orientierung} da
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/cv/methodik/orientation.pdf}
-    \caption{Schritte zur Orientierung der Dartscheibe. (1) Log-Polare Darstellung der Dartscheibe. (2) Identifizierte Eckpunkte. Hervorgehobene Streifen veranschaulichen die erwarteten Bereiche der Feldlinien. (3) Identifizierung und Klassifizierung von Surroundings. Positiv klassifizierte Surroundings sind grün umrandet, negative rot. Weiße Balken an der Seite der Surroundings geben den Score an, der zur Klassifizierung errechnet wird; der Threshold befindet sich auf halber Höhe der Balken. In der oberen linken Ecke befindet sich die mittlere Surrounding. (4) Projektion der identifizierten Orientierungspunkte. Pfeile deuten die Richtung der Verschiebungen an; der graue Ring ist die Trennlinie zwischen inneren und äußeren Punkten. (5) Entzerrte Dartscheibe. Die ideale Entzerrung ist über das Bild gelegt.}
+    \caption{Schritte zur Orientierung der Dartscheibe. (1) Log-polare Darstellung der Dartscheibe. (2) Identifizierte Eckpunkte. Hervorgehobene Streifen veranschaulichen die erwarteten Bereiche der Feldlinien. (3) Identifizierung und Klassifizierung von Surroundings. Positiv klassifizierte Surroundings sind grün umrandet, negative rot. Weiße Balken an der Seite der Surroundings geben den Score an, der zur Klassifizierung errechnet wird; der Threshold befindet sich auf halber Höhe der Balken. In der oberen linken Ecke befindet sich die mittlere Surrounding. (4) Projektion der identifizierten Orientierungspunkte. Pfeile deuten die Richtung der Verschiebungen an; der graue Ring ist die Trennlinie zwischen inneren und äußeren Punkten. (5) Entzerrte Dartscheibe. Die ideale Entzerrung ist über das Bild gelegt.}
     \label{img:orientierung}
 \end{figure}
 
@@ -174,7 +174,7 @@ Die konkreten Orientierungspunkte werden nach dem Vorbild des DeepDarts-Systems 
 
 \paragraph{Log-Polare Darstellung}
 
-Für die Identifizierung der Orientierungspunkte wird das Bild in seine Log-Polare Darstellung umgewandelt. Dazu wird das Bild um den Mittelpunkt der Dartscheibe abgewickelt und ausgerollt, sodass sich der Mittelpunkt der Dartscheibe entlang der Bildkante erstreckt. Der Effekt diese Transformation ist die Parallelisierung der Feldlinien, die durch Entzerrung der Winkel äquidistant verlaufen; die Positionen der Feldlinien in der Log-Polaren Darstellung sind damit bekannt. Auf Grundlage dieses Wissens können die Farben der schwarzen und weißen Felder extrahiert werden. Diese werden genutzt, um die Bestimmung der Lage der Orientierungspunkte zu unterstützen.
+Für die Identifizierung der Orientierungspunkte wird das Bild in das log-polare Koordinatensystem überführt. Dazu wird das Bild um den Mittelpunkt der Dartscheibe abgewickelt und ausgerollt, sodass sich der Mittelpunkt der Dartscheibe entlang der Bildkante erstreckt. Dartfelder werden dadurch von Teilstücken eines Kreises zu Rechtecken transformiert und es erfolgt eine Parallelisierung der Feldlinien. Durch die Entzerrung der Winkel sind die Feldlinien in der log.polaren Darstellung äquidistant und die Koordinaten der Feldlinien sind dadurch bekannt. Auf Grundlage dieses Wissens können die Farben der schwarzen und weißen Felder extrahiert werden. Diese werden genutzt, um die Bestimmung der Lage der Orientierungspunkte zu unterstützen.
 
 \paragraph{Identifizierung von Ecken}
 
@@ -183,7 +183,7 @@ Orientierungspunkte befinden sich an Eckpunkten von Feldern. Dadurch ergibt sich
 \subsubsection{Klassifizierung von Orientierungspunkten}
 \label{sec:orientierungspunkte_klassifizieren}
 
-Für jeden verbliebenen Eckpunkt in dem Log-Polaren Bild der Dartscheibe wird eine Surrounding betrachtet. Als Surrounding wird die unmittelbare, quadratische Umgebung um einen potenziellen Orientierungspunkt bezeichnet. Durch sie ist eine Einordnung möglich, ob es sich bei einer Ecke um einen Orientierungspunkt handelt oder nicht. Für jede Surrounding wird eine Farbraumtransformation in einen Farbraum mit dem Namen CrYV. Dieser-Farbraum setzt sich aus unterschiedlichen Farbräumen zusammen und ist darauf ausgelegt, die Unterschiede zwischen schwarzen, weißen und bunten Feldern zu verstärken. Dabei wird nicht zwischen rot und grün unterschieden, da sich diese Farben aus den Positionen der schwarzen und weißen Felder ableiten lassen.
+Für jeden verbliebenen Eckpunkt in dem log-polaren Bild der Dartscheibe wird eine Surrounding betrachtet. Als Surrounding wird die unmittelbare, quadratische Umgebung um einen potenziellen Orientierungspunkt bezeichnet. Durch sie ist eine Einordnung möglich, ob es sich bei einer Ecke um einen Orientierungspunkt handelt oder nicht. Für jede Surrounding wird eine Farbraumtransformation in einen Farbraum mit dem Namen CrYV. Dieser-Farbraum setzt sich aus unterschiedlichen Farbräumen zusammen und ist darauf ausgelegt, die Unterschiede zwischen schwarzen, weißen und bunten Feldern zu verstärken. Dabei wird nicht zwischen rot und grün unterschieden, da sich diese Farben aus den Positionen der schwarzen und weißen Felder ableiten lassen.
 
 In dem CrYV-Farbraum werden die mittleren Farbwerte der Ecken aller Surroundings klassifiziert. Durch diese lässt sich einerseits herausfinden, ob eine Ecke ein Outlier ist, und andererseits, in welcher Orientierung sich ein Eckpunkt befindet. Dazu werden die Ecken in anhand heuristisch erarbeiteter Thresholds in die Kategorien schwarz, weiß und farbig eingeordnet. Entspricht eine Surrounding nicht der Erwartung, dass ein schwarzes, ein weißes und zwei farbige Bereiche in diesem liegen, wird der jeweilige Punkt nicht weiter betrachtet. Durch diese Einordnung werden diejenigen Punkte herausgefiltert, die mit großer Wahrscheinlichkeit keine Orientierungspunkte sind.
 
@@ -204,6 +204,8 @@ Nach diesem Prozess sind Start- und Zielpunkte bekannt und damit einhergehend di
 Die finale Entzerrung der Dartscheibe geschieht nicht durch die Nutzung aller Orientierungspunkte. Es besteht die Möglichkeit, dass sich unter den identifizierten Punkten Outlier befinden, die irrtümlicherweise als Orientierungspunkte identifiziert wurden, oder dass Fehler bei der Identifizierung der Zielpunkte gemacht wurden. Ist dies der Fall, ist die Generierung einer Homographie aus allen Punkten möglicherweise durch diese Outlier verzerrt und die finale Normalisierung scheitert. Um diesem Fall zu entgegnen, wird eine RANSAC-basierte Homographiefindung durchgeführt.
 
 Dazu werden 16 Durchläufe der Homographiefindung durchgeführt, in denen jeweils zufällig 75\% der Orientierungspunkte ausgewählt werden. Die endgültige Homographie wird aus dem Median aller Durchläufe gebildet. Existieren Outlier in den Orientierungspunkten, fallen diese nicht so sehr ins Gewicht, da sie durch das zufällige Auswählen der Orientierungspunkte einen geringeren Einfluss auf die Gesamtheit der Homographien haben.
+
+\todo{RANSAC-Anpassung einbeziehen!}
 
 Es bleibt festzuhalten, dass der Algorithmus durch diesen Schritt nicht deterministisch ist und unterschiedliche Durchläufe des Algorithmus zu unterschiedlichen Ergebnissen führen können.
 
