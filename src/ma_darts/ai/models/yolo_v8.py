@@ -169,8 +169,8 @@ def Detect(
         x_pos, k=1, s=1, p=False, c=2 * reg_max
     )  # original: c=4 * reg_max, but we omit w and h
 
-    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c)
-    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c)
+    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout)
+    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout)
     x_cls = Conv2d(
         x_cls, k=1, s=1, p=False, c=nc * reg_max
     )  # original: c=nc, but I want a per-estimation confidence
