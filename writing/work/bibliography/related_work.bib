@@ -1,0 +1,227 @@
+
+# -------------------------------------------------------------------------------------------------
+Prozedurale Datenerstellung
+
+- Prozedurale Datenerstellung in Computerspielen
+@inproceedings{proc_data_games_1,
+  author    = {Beukman, Michael and Cleghorn, Christopher W and James, Steven},
+  title     = {Procedural content generation using neuroevolution and novelty search for diverse video game levels},
+  year      = {2022},
+  isbn      = {9781450392372},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3512290.3528701},
+  doi       = {10.1145/3512290.3528701},
+  booktitle = {Proceedings of the Genetic and Evolutionary Computation Conference},
+  pages     = {1028--1037},
+  numpages  = {10},
+  keywords  = {neuroevolution, novelty search, procedural content generation},
+  location  = {Boston, Massachusetts},
+  series    = {GECCO '22}
+}
+@inproceedings{proc_data_games_2,
+  author    = {DIAS, Diogo Miguel P.L. and SOUSA, Joao Paulo P. and BARROSO, Barbara C.V.B. and MAGALHAES, Ines M.B.},
+  title     = {A Novel Procedural Content Generation Algorithm for Tower Defense Games},
+  year      = {2023},
+  isbn      = {9781450397407},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3564982.3564993},
+  doi       = {10.1145/3564982.3564993},
+  booktitle = {Proceedings of the 6th International Conference on Algorithms, Computing and Systems},
+  articleno = {9},
+  numpages  = {7},
+  location  = {Larissa, Greece},
+  series    = {ICACS '22}
+}
+@inproceedings{proc_data_games_3,
+  author    = {Smith, Gillian and Gan, Elaine and Othenin-Girard, Alexei and Whitehead, Jim},
+  title     = {PCG-based game design: enabling new play experiences through procedural content generation},
+  year      = {2011},
+  isbn      = {9781450308724},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/2000919.2000926},
+  doi       = {10.1145/2000919.2000926},
+  booktitle = {Proceedings of the 2nd International Workshop on Procedural Content Generation in Games},
+  articleno = {7},
+  numpages  = {4},
+  keywords  = {procedural level generation, game design theory, game design},
+  location  = {Bordeaux, France},
+  series    = {PCGames '11}
+}
+
+# -------------------------------------------------------------------------------------------------
+# Darts-Scoring-Systems
+
+- Fixe Webcam
+- Nutzung von Markern
+- Reine CV: Differenzbildeer zu Kalibrierungs-Bild
+  - anfällig für äußere Einfllüsse
+@misc{darts_project_1,
+  author       = {Lars Gudjons, Fabian Krauss},
+  howpublished = {GitHub Project},
+  title        = {Darts_Project},
+  year         = {2024},
+  url          = {https://github.com/LarsG21/Darts_Project}
+}
+- fixe Kamera
+- Kalibrierung notwendig
+- Raspberry Pi + weitere Voraussertzungen
+@misc{dart_project_2,
+  author       = {Pär Sundbäck, Hannes Hoettinger},
+  howpublished = {GitHub Project},
+  title        = {DartScore},
+  year         = {2020},
+  url          = {https://github.com/teddycool/DartScore}
+}
+- 2 fixe Kameras
+- Hardware-Voraussetzungen
+@misc{darts_project_3,
+  author       = {Hannes Hoettinger},
+  howpublished = {GitHub Projeect},
+  title        = {opencv-steel-darts},
+  year         = {2019},
+  url          = {https://github.com/hanneshoettinger/opencv-steel-darts}
+}
+- 2 Kameras
+- Differenz-Bilder zur Identifizierung von Dartpfeilen
+- Striktes Setup
+@misc{darts_proect_4,
+  author       = {DartCaller},
+  howpublished = {GitHub Project},
+  title        = {darts-recognition},
+  year         = {2021},
+  url          = {https://github.com/DartCaller/darts-recognition}
+}
+
+- multi-camera darts scoring
+- 5 Kameras
+- aber dafür auch in Echtzeit
+@article{dart_scoring_multicam,
+  author  = {Ervin Domazet},
+  title   = {Real-time optical dart detection and scoring algorithm for steel tip dartboards},
+  journal = {ICGA Journal},
+  volume  = {44},
+  number  = {3},
+  pages   = {72-90},
+  year    = {2022},
+  doi     = {10.3233/ICG-230214},
+  url     = {https://journals.sagepub.com/doi/abs/10.3233/ICG-230214},
+  eprint  = {https://journals.sagepub.com/doi/pdf/10.3233/ICG-230214}
+}
+
+- akustische Triangulation durch 3 Mikrofone
+- wohl relativ erfolgreich, aber keine Genauigkeit unter ~2.5cm
+- Nutzung von Mikrofonen + Einrichtung notwendig
+- anderer Ansatz, aber nicht unbedingt besser
+@misc{dart_scoring_microphone,
+  author       = {Ankush Patel, Michael Ehrenberg},
+  title        = {The Design and Implementation of an Automated Dartboard},
+  howpublished = {Final Project Report for MIT 6.111, Fall 2005},
+  year         = {2005},
+  note         = {Submitted December 14, 2005},
+  url          = {https://web.mit.edu/6.111/www/f2005/projects/mje_Project_Final_Report.pdf}
+}
+
+
+# -------------------------------------------------------------------------------------------------
+# Data Generation
+
+- Ziel: Defekt-Identifizierung in Bildern
+- Nutzung von Blender zur Generierung von Daten
+- Python-Scripting
+- Prozedurale Texturen + PBR
+@article{synth_data_blender_defects,
+  title    = {Procedural synthetic training data generation for AI-based defect detection in industrial surface inspection},
+  journal  = {Procedia CIRP},
+  volume   = {107},
+  pages    = {1101-1106},
+  year     = {2022},
+  note     = {Leading manufacturing systems transformation - Proceedings of the 55th CIRP Conference on Manufacturing Systems 2022},
+  issn     = {2212-8271},
+  doi      = {https://doi.org/10.1016/j.procir.2022.05.115},
+  url      = {https://www.sciencedirect.com/science/article/pii/S2212827122003997},
+  author   = {Ole Schmedemann and Melvin Baaß and Daniel Schoepflin and Thorsten Schüppstuhl},
+  keywords = {Synthetic training data, machine learning, surface inspection, industrial quality control, domain randomization}
+}
+
+- Ziel: Semantische Segmentierung von Straßenverkehr
+- Nutzung von synthetischen Daten
+- prozedurrale Generierung von 3D-Szenen
+- Nutzung von Ray Tracing + PBR
+@misc{synth_data_procedural,
+  title         = {Procedural Modeling and Physically Based Rendering for Synthetic Data Generation in Automotive Applications},
+  author        = {Apostolia Tsirikoglou and Joel Kronander and Magnus Wrenninge and Jonas Unger},
+  year          = {2017},
+  eprint        = {1710.06270},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/1710.06270}
+}
+
+% Synthetische Trainingsdaten
+@misc{synth_data,
+  title         = {On Pre-Trained Image Features and Synthetic Images for Deep Learning},
+  author        = {Stefan Hinterstoisser and Vincent Lepetit and Paul Wohlhart and Kurt Konolige},
+  year          = {2017},
+  eprint        = {1710.10710},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/1710.10710}
+}
+
+- Ziel: Instanzsegmentierung
+- 3D modelle von Autos rendern
+- Hintergründe augmentieren
+- Augmentierung von Kameraparametern
+@inproceedings{synth_data_cars_with_cam_aug,
+  title         = {Augmented Reality Meets Deep Learning for Car Instance Segmentation in Urban Scenes},
+  author        = {Alhaija, Hassan Abu and Mustikovela, Siva Karthik and Mescheder, Lars and Geiger, Andreas and Rother, Carsten},
+  booktitle     = {Proceedings of the British Machine Vision Conference 2017},
+  month         = {09},
+  year          = {2017},
+  month_numeric = {9}
+}
+
+- Mensch-Posen -> 3D-Modell -> Rendering
+- Annotationen: Pose, Körperteile, Tiefeninformationen, etc.
+@inproceedings{synth_data_pose_estimation,
+  title     = {Learning from Synthetic Humans},
+  url       = {http://dx.doi.org/10.1109/CVPR.2017.492},
+  doi       = {10.1109/cvpr.2017.492},
+  booktitle = {2017 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  publisher = {IEEE},
+  author    = {Varol, Gul and Romero, Javier and Martin, Xavier and Mahmood, Naureen and Black, Michael J. and Laptev, Ivan and Schmid, Cordelia},
+  year      = {2017},
+  month     = jul,
+  pages     = {4627 -- 4635}
+}
+
+- Lernziel: Viewpoint estimation (= in welchem Winkel steht ein Objekt?)
+- synth. Daten ermöglichen out-of-distribution-Training
+- gute Ergebnisse mit synth. Daten
+- Salting mit echten Daten noch besser
+@misc{data_gen_importance,
+  title         = {How useful is photo-realistic rendering for visual learning?},
+  author        = {Yair Movshovitz-Attias and Takeo Kanade and Yaser Sheikh},
+  year          = {2016},
+  eprint        = {1603.08152},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/1603.08152}
+}
+
+- Ziel: autonomes Fahren
+- reale Daten: Bilder
+- synth. Daten: Lidar-gestützt
+- Kombination von synth. und echten Daten erbringt Vorteile
+@misc{synth_data_importance_2,
+  title         = {Evaluating the Impact of Synthetic Data on Object Detection Tasks in Autonomous Driving},
+  author        = {Enes Özeren and Arka Bhowmick},
+  year          = {2025},
+  eprint        = {2503.09803},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2503.09803}
+}
