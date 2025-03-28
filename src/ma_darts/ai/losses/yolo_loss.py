@@ -85,7 +85,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         # )
 
         # Compute DIoU loss
-        raw_diou_loss = self.diou_loss(y_true, y_pred) * self.diou_mult
+        # raw_diou_loss = self.diou_loss(y_true, y_pred) * self.diou_mult
         # diou_activation = self.get_activation(
         #     raw_pos_loss, self.diou_threshold, self.diou_width
         # )
@@ -96,7 +96,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
         # )
 
         # Combine all losses
-        total_loss = raw_xst_loss + raw_cls_loss + raw_pos_loss + raw_diou_loss
+        total_loss = raw_xst_loss + raw_cls_loss + raw_pos_loss  # + raw_diou_loss
 
         return total_loss
 

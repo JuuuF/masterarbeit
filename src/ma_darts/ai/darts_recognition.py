@@ -347,7 +347,7 @@ metrics = [
     ExistenceLoss(name="01_xst_loss", multiplier=400),
     ClassesLoss(name="02_cls_loss", multiplier=850),
     PositionsLoss(name="03_pos_loss", multiplier=0.5),
-    DIoULoss(name="04_diou_loss", multiplier=0.02),
+    # DIoULoss(name="04_diou_loss", multiplier=0.02),
 ]
 # metrics = [metrics for _ in range(3)]
 model.compile(
