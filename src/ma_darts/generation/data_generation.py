@@ -123,19 +123,20 @@ def check_sample(sample_info: pd.Series):
 
 def create_sample(
     id: int = None,
-    sample_path=os.path.join(OUT_DIR, "{id}"),
+    out_dir: str = OUT_DIR,
     clean_up: bool = False,
 ) -> pd.Series | None:
     print("-" * 120)
     print(f"Sample {id}".center(120))
 
+    sample_path = os.path.join(out_dir, "{id}")
     # --------------------------------------------------------------------
     # Render / Load Data
     sample_info_path = os.path.join(sample_path, "info.pkl")
     if id is None or not os.path.exists(sample_info_path.format(id=id)):
         # No ID given or info not available -> render sample
         try:
-            sample_info = render_image(id=id, out_dir=OUT_DIR)
+            sample_info = render_image(id=id, out_dir=out_dir)
         except AssertionError as e:
             print("Error while rendering sample:")
             print("\t", e)
@@ -265,6 +266,10 @@ if __name__ == "__main__":
 
         sample_info = None
         while sample_info is None:
-            sample_info = create_sample(i, clean_up=args.clean_up)
+            sample_info = create_sample(
+                i,
+                out_dir=args.out_dir,
+                clean_up=args.clean_up,
+            )
         # check_sample(sample_info)
         # del render_image, prepare_sample, is_prepared
