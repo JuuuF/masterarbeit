@@ -76,18 +76,6 @@ def get_target_homographies(img_paths):
 
 
 def inference_on_image_paths(img_paths: list[str]):
-    # XXX
-    # XXX
-    # XXX
-    # XXX
-    # XXX
-    print("REDUCING image paths to 16 samples")
-    img_paths = img_paths[:64]
-    # XXX
-    # XXX
-    # XXX
-    # XXX
-    # XXX
     # Get MA results
     print("=" * 60)
     print("MA inference".center(60))
