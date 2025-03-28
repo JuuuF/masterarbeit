@@ -1,0 +1,482 @@
+# Gliederung Masterarbeit
+
+
+
+
+
+Einleitung:
+  - Machine learning Problem: was für eins?
+  - Yolo: sparse Predictions
+
+
+
+
+
+
+
+
+<!---------------------------------------------->
+
+## Einleitung
+
+- Dart Scoring
+  - Nutzen des Scorings
+- DeepDarts-System
+  - Herangehensweise
+  - Ergebnisse
+  - Schwachstellen
+- Projektaufbau
+  - Datenerstellung
+  - CV-Normalisierung
+  - Dartpfeil-Erkennung
+- Single-Camera-Systeme
+
+### Warum synthetische Datenerstellung?
+
+- KI-Training basiert auf Daten
+- Korrektheit von Daten relevant
+- Generierung von Daten als Mittel zur Erstellung ausreichender Menge
+
+- Aufbau der Arbeit
+
+<!---------------------------------------------->
+
+## Datenerstellung
+
+### Grundlagen (Datenerstellung)
+
+#### Datenerstellung-Basics
+
+- Prozedurale Datenerstellung
+  - Was ist es?
+  - Wozu ist es gut?
+- Rendering generell
+  - Ray Tracing (kurz erklären)
+- Funktion einer Kamera
+  - Brennweite
+  - Öffnungswinkel
+  - ISO
+  - Film Grain / Lens Distortion
+- Masken
+  - Was bringt die Erstellung von Masken?
+    -> Informationen über Szene extrahieren
+
+#### Darts
+
+- Dartscheiben-Geometrie
+  - Aufbau, Aussehen, Toleranzen
+- Dart-Terminologie
+  - Tip, Shaft, Barrel, Flight
+  - Spinne
+
+#### Texturierung
+
+- Material und Texturen
+  - Shader
+  - Licht-Eigenschaften -> Reflektivität / Roughness
+  - Normal Maps
+- Noise-Texturen
+  - Arten von Noise
+    - White Noise
+    - Perlin Noise
+  - Seeding
+  - Thresholding / Maskierung
+    -> warum braucht man das? Wozu wird es genutzt?
+    - Bezug: Thresholding von Texturen untereinander
+- Prozedurale Texturen
+  - Warum ist es wichtig? -> Parametrisierung
+
+---
+
+---
+
+### Methodik (Datenerstellung)
+
+- 3D-Szene -> was ist überhaupt notwendig?
+  - Dartscheibe
+  - Pfeile
+  - Lichter
+  - Kamera
+  - Parametrisierung
+    -> Prozedurale / randomisierte Implementierung
+
+- Scripting:
+  - Wozu externes Skript?
+  - Einfluss der Parametrisierung
+    - Alter + Einfluss / Umsetzung
+    - Welche Bereiche der Texturen werden damit beeinflusst?
+  - Manuelle Beeinflussung der Szene
+    - Texte auf Dartscheibe
+  - Statische Objekte vs. dynamische Objekte
+    - Welche Objekte werden angezeigt, welche nicht?
+
+- Material + Licht
+  - Dartscheibe - Material
+    - grob beschreiben, WAS simuliert ist, aber NICHT WIE
+  - Dartpfeile - Zusammensetzung
+    - erklären, DASS sie zusammengesetzt sind, nicht WIE
+  - Unterschiedliche Lichter + ihre Daseinsberechtigungen
+    - auch Environment-Texturen -> Beleuchtung
+  - Details dazu in Implementierung -> Verweis
+
+- Post-Processing
+  - Entzerrung anhand von Orientierungspunkten
+    -> Homographie-Erstellung
+  - Dartpfeil-Positionen in Render + entzerrtem Bild
+  - Statistiken erheben (Dartpfeil-IoU, Anzahl verdeckte Tips, Board-Geometrie)
+
+---
+
+---
+
+### Implementierung (Datenerstellung)
+
+- Dartscheiben-Parametrisierung
+  - Aussehen / Nutzung von Noise-Texturen -> WIE wurde es umgesetzt?
+  - Variation der Spinne anhand von Noise-Verschiebung, anhängig von Alter
+- Dartpfeil-Zusammensetzung
+  - WIE sind die Dartpfeile zusammengesetzt?
+  - Nutzung von Geometry-Nodes
+
+- Render-Einstellungen
+  - Farbexport realistisch + wie Handykamera
+
+- Generierung von Positionen
+  - Heatmaps
+  - \+ Scoring
+- Ermittlung von Kameraparametern
+  - Brennweite in Abhängigkeit von Abstand
+  - Auflösung in Abhängigkeit von Seitenverhältnis
+  - Fokuspunkt um Dartscheibe
+- Berechnung von Entzerrung
+  - Orientierungs-Masken -> Punkte -> Homographie
+
+---
+
+---
+
+### Ergebnisse (Datenerstellung)
+
+- Beispiel-Render darstellen
+  - Variationen aufzeigen
+- Erstellungszeit ~30s/Sample
+  - Erstellen von Daten headless auf GPU-Server möglich
+- sichtlicher (qualitativer) Unterschied zwischen echten Aufnahmen und gerenderten Aufnahmen
+  - augenscheinlich kein Fotorealismus in den Rendern
+  - Unterscheidung zwischen echten und gerenderten Aufnahmen möglich
+  - ...aber nah dran
+  - Gründe dafür finden und aufzählen!
+    - Shader-Komplexität
+    - Scans von echten Dartscheiben / Erweiterung der prozeduralen Texturen
+    - PBR (Physically-based rendering)
+- Korrekte Annotation von Dartpfeilen
+- Entzerrung mit (augenscheinlich) minimalen Verschiebungen
+  - Grundlage: Masken-Bilder der Orientierungspunkte
+  - ungenaue Punkterkennung
+    -> durch Geometrie-Differenzen
+    -> durch Kameraperspektive
+
+<!---------------------------------------------->
+
+## CV
+
+### Grundlagen (CV)
+
+- Polarlinien
+- Binning
+  - soft-binning vs hard-binning
+- Thresholding
+- Filterung
+  - Sobel
+
+- Kantenerkennung
+- Harris Corner Detection
+- Hough-Transformation
+- Affine / Projektive Transformations-Matrizen
+  - Rotation
+  - Skalierung
+  - Translation
+  - Scherung
+
+- Logpolare Entzerrung
+
+- Farbräume
+  - HSV
+  - YCbCr
+  - Lab
+- SSIM
+
+### Methodik (CV)
+
+- Warum CV-Algorithmus und nicht KI?
+
+- Preprocessing
+  - Skalierung
+
+- Kantenerkennung
+  - Filterung
+    - Kontrasterhöhung + Weichzeichnung
+    - Annahmen für 15x15-Filter
+  - Skelettierung
+
+- Linienerkennung
+  - Linienfindung
+    - Hough-Lines
+  - Mittelpunktextraktion
+    - Winkel-Binning
+  - Linienfilterung
+    - Abstands-Berechnung
+  - Winkelentzerrung: alle Feld-Winkel gleich
+    - Rotation erster Linie
+    - Scherung der Orthogonalen
+    - vertikale Skalierung mit minimalem Fehler
+    - Wiederholung für alle Linien als Start
+
+- Orientierung
+  - Orientierungspunkte finden
+    - Logpolare Transformation
+    - Corner Detection
+      - Farbraum-Transformation
+        - CrYV-Farbraum erklären
+      - Surroundings-Thresholding (Ecken klassifizieren schwarz/weiß/farbig)
+  - Orientierungspunkte klassifizieren
+    - Abgleich Mean-Surrounding
+      - Lab-Farbraum
+      - SSIM-Abgleich
+      -> Ringe: Innen-/Außenseite
+    - Logpolare Position zu Winkel umwandeln
+  - Homographiefindung
+    - Thresholding: Positionen + Orientierung -> Klassifizierung in Ringe
+    - Berechnung von Ziel-Positionen anhand von Winkel + Entfernung
+  - Entzerrung
+    - Nicht alle Orientierungspunkte nutzen, da Outlier dabei sein können
+    - RANSAC-Herangehensweise -> 75% aller Punkte + 16 Durchläufe
+    - Median-Homographie aller Entzerrungen
+
+### Implementierung (CV)
+
+- Winkelfindung aus gefilterten Linien
+  - Adaption der Hough-Transformation
+  - Codebeispiel: get_rough_line_angles(...)
+- evtl. Winkelentzerrung: undistort_by_lines(...)
+  - Verwendung von Matrizen und Transformationen + Auswirkungen auf Winkel
+- Farbidentifizierung mittels CrYV
+  - is_black(...)
+  - is_white(...)
+  - is_color(...)
+- Surroundings-Klassifizierung: extract_surroundings(...)
+  - top/bottom left/right black/white/color
+  - Kombination der Ecken -> Art der Surrounding (innen / außen von Ring)
+  - Abgleich mit mittlerem Surrounding
+
+### Ergebnisse (CV)
+
+- Metriken erklären
+  - Erfolgreiche Identifizierungen
+  - Mittlere Orientierungspunkt-Distanz der Transformation
+  - Pixel-Distanz zu Vorhersagen
+
+- Auswertung:
+  - Statistik mit Paper-Daten
+    - MA-System vs DD-System
+  - Statistik mit Render-Daten
+    - MA-System vs DD-System
+  - ggf. Statistik mit echten Daten
+  - Dauer / Geschwindigkeit
+    - Schwer zu messen, da DD-System alles in einem Schritt macht
+  - Fehlerursachen
+    - Analyse über Metadaten der Render-Daten
+
+- Auswertungen:
+  - Simulations-Daten, Deepdarts-Daten
+  - Systeme: Eigenes System, DeepDarts-d1, DeepDarts-d2
+  - Metriken:
+    - Geschwindigkeit: DeepDarts besser als MA
+    - Genauigkeit: MA VIEL besser als DeepDarts auf nicht-DD-Daten
+
+<!---------------------------------------------->
+
+## KI
+
+### Grundlagen (KI)
+
+- Neuronale Netze
+  - Grundlagen
+  - CNNs
+  - Klassifizierung + Regression
+- Training / Backpropagation
+  - Optimizer
+- Terminologie
+  - Trainingsdaten
+  - Validierungsdaten
+  - Testdaten
+  - Out-of-distribution-training
+  - Over-/Underfitting
+  - Loss-Funktionen
+    - Overfitting
+- Augmentierung
+  - Pixel-Augmentierung
+  - Transformations-Augmentierung
+  - das evtl. in Methodik?
+- YOLOv8
+  - Anwendungsbereich
+    - Echtzeitanwendung
+    - Objekterkennung
+  - Multi-Scale-Output
+  - Bounding Boxes
+  - Non-maximum-suppression (?)
+- ~Subclassing / Vererbung / Objektorientierung~
+
+- Oversampling der Daten
+  - künstliches Hinzufügen von Daten, die selten gesehen werden
+  - Klassen "rot" und "grün" wurden kaum vorhergesagt
+  - 20480x uniform verteilt
+  - 4096x Ringe spezifisch
+
+### Methodik (KI)
+
+- YOLOv8
+  - Warum dieses Modell?
+  - Adaption des Modells
+    - Multi-Scale-Output nicht verwenden
+    - keine Bounding Boxes
+    - Dreiteilung der Outputs:
+      - Existenz
+      - Position
+      - Klasse
+- Loss-Funktionen:
+  - Welche Hintergründe / Zielsetzung
+  - Zusammensetzung mehrerer Losses
+    - Existenz, Klassen, Positionen
+  - Inkrementelles Einbinden von Losses
+    - Fokus auf spezifische Bereiche in Training
+    - nicht alles auf einmal lernen
+    - inkrementell komplexere Aufgaben im Verlauf des Trainings
+- Training
+  - welcher Optimizer?
+  - Loss-Funktionen erklären
+  - augmentierte Trainingsdaten
+  - Out-of-distribution-Training
+  - dynamisches Training:
+    - adaptive Learning Rate
+  - Modell-Performance-Monitoring:
+    - Early Stopping durch Validation Loss
+
+### Implementierung (KI)
+
+- YOLOv8: TensorFlow statt PyTorch
+  - eigene Implementierung
+  - Grundlage: YOLOv8-Docs (eigentlich vom Bild, aber das stammt von Config-Datei aus Repo)
+  - Layer-Subclassing
+- GPU-Optimierung
+  - Subclassing + Verwendung von TF-Funktionen
+- Losses
+  - Loss-Subclassing
+- Training
+  - Model-Checkpoints
+
+- Optimierung
+
+### Ergebnisse (KI)
+
+- TODO: 2000 Test-Daten
+
+- Metriken:
+  - Anzahl korrekter Dartpfeile identifiziert
+  - Anteil korrekte Felder identifiziert
+  - PCS (DeepDarts-Metrik)
+    - als Vergleich zur System-Performance
+  - Abstand korrekter Positionen
+- Vergleich DeepDarts:
+  - DeepDarts-Daten
+  - Rendering-Daten (Validation / Test, aber nicht Training!)
+  - Echte Daten
+- Vergleich unterschiedlicher Datenquellen
+  - Inferenz auf generierten Daten vs. DD-Daten vs. echte Daten (nicht aus Validierungs-Set)
+  - laut Trainingsanalysen ist Inferenz auf generierten Daten besser als auf anderen
+
+<!---------------------------------------------->
+
+## Diskussion
+
+### Datenerstellung (Diskussion)
+
+- nicht fotorealistisch, aber für Training mit KI reicht es
+  - Grundkonzept ist klar
+  - out-of-distribution-Training funktioniert (wie gut?)
+  - Augmentierung so stark, dass Unterschied zwischen echten und generierten Daten verschwimmt (sollte man denken)
+- Anzahl unterschiedlicher Dartpfeile stark limitiert
+  - Barrels + Shafts stark limitiert -> ggf. Overfitting bei KI-Training
+- prozedurale Texturen vs. Scans
+  - Flexibilität vs. Realismus
+- Entzerrung nicht 100% genau
+  -> keine *perfekten* Trainingsdaten
+- Umgebungen könnten variabler sein
+  - Mehr Hintergründe
+  - unterschiedlichere Beleuchtungen
+  - Aufnahmewinkel teilweise nicht realistisch
+- Statisches Compositing sorgt für Bias
+  - Könnte mit Parametern ausgestattet werden
+- Umgebungen nicht realistisch
+  - andere Objekte auf Dartscheibe / stark beschädigte Dartscheibe / Verzierungen bzw. Dekoration an und um Scheibe / ...
+  - kein direkter Hintergrund der Dartscheibe
+    - keine Reflexionen des Lichts
+    - keine Umgebungsbeleuchtung, nur direkt
+
+### CV (Diskussion)
+
+- Dauert lange im Gegensatz zu DD-System / einfacher KI-Inferenz
+  - unfairer Vergleich, da KI auf Graphen kompiliert und optimiert ist; CV ist interpretierter Python-Code
+- nicht 100%, aber ganz gut, wenn es klappt
+- durch RANSAC nicht deterministisch
+- klappt nicht immer
+  - Parameter können angepasst werden
+- relativ robust gegen Outlier
+- robust gegen Verdeckung der Dartscheibe
+- ist keine KI
+  - man weiß, wie es funktioniert
+  - man kann es debuggen
+
+### KI (Diskussion)
+
+- kein bereits trainiertes Modell genutzt
+  - YOLOv8 wurde mit PyTorch erstellt
+  - eigene Expertise liegt in TensorFlow
+- größeres Modell als Referenz-Paper
+  - ~6M vs. ~17M Parameter
+  - Aufgabe ist aber auch komplexer
+    - DD-KI unterliegt massivem Daten-Bias und ist stark overfitted
+- striktes Out-of-distribution-Training möglicherweise nicht optimal
+  - sichtbarer Unterschied in unterschiedlichen Quellen aus Validierungsdaten
+  - generierte Validierungsdaten deutlich besser erkannt als echte Aufnahmen
+  - sichtbare Schwachpunkte von Out-of-distribution-Training
+
+<!---------------------------------------------->
+
+## Fazit
+
+- es ist sehr schwer, alle Gegebenheiten in automatisierter Datenerstellung zu erfassen
+  - Training auf echten Daten möglicherweise notwendig
+- erstellte Daten sind ausreichend, um ein neuronales Netz grundlegend auf Datenlage zu trainieren
+  - Inferenz nicht fehlerfrei möglich
+  - aber trotzdem zu weiten Teilen gute Ergebnisse
+  - Ausmerzung von Feinheiten notwendig, um zuverlässig zu funktionieren
+- im Gegensatz zu DD-System nicht overfitted
+  - Inferenz auf neuen Daten grundlegend möglich
+- robustes Entzerren von Dartscheiben möglich
+  - kein Training notwendig
+  - orientiert an grundlegenden Gegebenheiten, nicht an Daten
+  - klar strukturiert, Fehlerquellen präzise zu erkennen
+  - gutes System! *pat pat*
+
+### Ausblick
+
+- neues Trainieren des Systems auf echten Daten
+- Verbesserung der Datengenerierung, um realistischer zu werden und mehr Umgebungsbedingungen zu simulieren
+- Kompilierung der CV-Pipeline
+  - entweder Cython / Numba oder Implementierung in kompilierter Sprache
+- Ellipsen-Erkennung in CV einbauen (\cite{ellipse_detection_algorithm})
+- Datenerstellung auf weitere Farben und Formen der Dartscheibe erweitern
+  - z.B. blau-rote Felder
+  - ist aber meist nicht in Steeldarts gegeben, sondern eher in elektronischen Dartscheiben
+    - und bei elektronischen Dartscheiben ist dieses System ohnehin überflüssig
