@@ -151,7 +151,7 @@ if __name__ == "__main__":
     # model = tf.keras.models.load_model("data/ai/darts_model.keras", compile=False)
     from ma_darts.ai.models import yolo_v8_model
 
-    model = yolo_v8_model(variant="n")
+    model = yolo_v8_model(variant="l")
     # model.summary()
     # exit()
     model.load_weights("data/ai/darts/latest.weights.h5")
