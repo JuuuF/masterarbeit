@@ -1,19 +1,9 @@
 # Gliederung Masterarbeit
 
-
-
-
-
 Einleitung:
-  - Machine learning Problem: was für eins?
-  - Yolo: sparse Predictions
 
-
-
-
-
-
-
+- Machine learning Problem: was für eins?
+- YOLO: sparse Predictions
 
 <!---------------------------------------------->
 
@@ -304,8 +294,7 @@ Einleitung:
   - Grundlagen
   - CNNs
   - Klassifizierung + Regression
-- Training / Backpropagation
-  - Optimizer
+
 - Terminologie
   - Trainingsdaten
   - Validierungsdaten
@@ -314,10 +303,15 @@ Einleitung:
   - Over-/Underfitting
   - Loss-Funktionen
     - Overfitting
+
+- Training / Backpropagation
+  - Optimizer
+
 - Augmentierung
   - Pixel-Augmentierung
   - Transformations-Augmentierung
   - das evtl. in Methodik?
+
 - YOLOv8
   - Anwendungsbereich
     - Echtzeitanwendung
@@ -325,13 +319,6 @@ Einleitung:
   - Multi-Scale-Output
   - Bounding Boxes
   - Non-maximum-suppression (?)
-- ~Subclassing / Vererbung / Objektorientierung~
-
-- Oversampling der Daten
-  - künstliches Hinzufügen von Daten, die selten gesehen werden
-  - Klassen "rot" und "grün" wurden kaum vorhergesagt
-  - 20480x uniform verteilt
-  - 4096x Ringe spezifisch
 
 ### Methodik (KI)
 
@@ -359,8 +346,12 @@ Einleitung:
   - Out-of-distribution-Training
   - dynamisches Training:
     - adaptive Learning Rate
-  - Modell-Performance-Monitoring:
-    - Early Stopping durch Validation Loss
+
+- Oversampling der Daten
+  - künstliches Hinzufügen von Daten, die selten gesehen werden
+  - Klassen "rot" und "grün" wurden kaum vorhergesagt
+  - 20480x uniform verteilt
+  - 4096x Ringe spezifisch
 
 ### Implementierung (KI)
 
@@ -378,8 +369,6 @@ Einleitung:
 - Optimierung
 
 ### Ergebnisse (KI)
-
-- TODO: 2000 Test-Daten
 
 - Metriken:
   - Anzahl korrekter Dartpfeile identifiziert
