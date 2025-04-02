@@ -71,12 +71,12 @@ class Augmentation:
         )
 
         # JPEG compression
-        img = tf.image.stateless_random_jpeg_quality(
-            img,
-            min_jpeg_quality=self.min_jpeg_quality,
-            max_jpeg_quality=100,
-            seed=seed + 3,
-        )
+        # img = tf.image.stateless_random_jpeg_quality(
+        #     img,
+        #     min_jpeg_quality=self.min_jpeg_quality,
+        #     max_jpeg_quality=100,
+        #     seed=seed + 4,
+        # )
 
         return img
 
