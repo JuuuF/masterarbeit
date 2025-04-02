@@ -6,69 +6,101 @@
 Grundlagen hier.
 
 % -------------------------------------------------------------------------------------------------
-\subsection{Neuronale Netze}
-\label{sec:neuronale_letze}
 
-Kernbaustein dieser Sektion des Projekts sind neuronale Netze, häufig auch als \ac{ki} bezeichnet. In diesem Unterabschnitt wird auf die grundlegende Arbeitsweise neuronaler Netze und ihre Einsatzbereiche eingegangen.
+\subsection{Was sind neuronale Netze?}
+\label{sec:was_nn}
 
-\subsubsection{Multi-Layer Perzeptron}
-\label{sec:multi_layer_perceptron}
+Neuronale Netze sind Kern eines spezifischen Bereichs des Machine Learnings, in dem sich auf das Erlernen von Eigenschaften auf Grundlage von Daten fokussiert wird. Durch sie wird die Tür zur Approximation beliebiger Funktionen geöffnet, indem Resultate der zu erlernenden Funktionen gegeben werden. Die Komplexität der Funktionen ist dabei beliebig, sodass die Spanne möglicher Einsatzbereiche von Sinuswellenapproximation bis zur Generierung natürlicher Sprache und Interaktion mit Menschen im Einsatzbereich von neuronalen Netzen liegt.
 
-Der Grundbaustein aller neuronaler Netze ist das Perzeptron. Ein Perzeptron besitzt eine Liste an Inputs, deren gewichtete Summe durch eine Aktivierungsfunktion zu einem Output-Wert transformiert wird. Dieser Aufbau ist den Neuronen in Gehirnen nachempfunden und ist intern einem Gewicht für jeden Input und einem Bias-Term, der zu den gewichteten Gewichten addiert wird, parametrisiert. Diese Parameter sind für den Output des Perzeptrons ausschlaggebend. Mathematisch ist ein Perzeptron definiert durch:
+Hauptsächlich ausschlaggebend für den Erfolg des neuronalen Netzes ist seine Architektur, ihr innerer Aufbau. Herkömmliche neuronale Netze werden aus subsequenten Schichten aufgebaut, die miteinander interagieren und eingehende Daten transformieren. Die Art der Schicht gibt die Spezifikation der Transformationen an, sodass unterschiedliche Schichten die Daten unterschiedlich verarbeiten. Innerhalb dieser Schichten existieren Parameter, die die Arbeitsweise der Transformation steuern.
 
-\[ o = f \left(\sum_{i=0}^{N} w_i x_i + b \right) \]
+Die Arbeitsweise eines neuronalen Netzes gleicht der eines Fließbands, dessen Eingabe Rohmaterial ist, welches durch unterschiedliche Verarbeitungsschritte zu einem Endprodukt geformt wird. Die Einstellungen von Stellschrauben der Verarbeitungsschritte bestimmen die Feinabstimmung der Verarbeitungsschritte und agieren analog zu den Parametern einer Netzwerkschicht. Durch wiederholtes Verarbeiten von Eingaben und Adjustierung der Stellschrauben wird ein gewünschtes Endergebnis erzielt. Im Kontext neuronaler Netze wird dieses Identifizieren gewünschter Parameter als Training bezeichnet.
 
-Durch Kombination mehrerer Perzeptrons ist die 
+Der Name der neuronalen Netze leitet sich von in Gehirnen vorzufindenden Neuronen ab, die für den Gedankenfluss verantwortlich sind. Das Erlernen von Parametern zur Steuerung von Ausgaben ist der Arbeitsweise von Neuronen nachempfunden. Der ursprüngliche Kern neuronaler Netze war die Nachahmung von Sachverhalten in Gehirnen, jedoch ist es mittlerweile darüber hinaus gewachsen, sodass Rückschlüsse auf neuronale Verhaltensweisen unterschiedlicher Netzwerkschichten nicht zwingend möglich sind.
 
-\todo{Quellen finden}
-\todo{Neuronale Netze weiter beschreiben}
+\subsubsection{Convolutional Neural Networks (CNNs)}
+\label{sec:cnns}
 
-\subsubsection{Convolutional Neural Networks}
-\label{sec:cnn}
-
-\todo{CNNs beschreiben}
+Die Art der verarbeiteten Daten in einem neuronalen Netz kann viele Formen annehmen. Insbesondere die Verarbeitung von Bilddaten ist ein großer Themenbereich neuronaler Netze und essenziell für diese Thesis. Bereits in \autoref{sec:was_filterung} wurde die Faltung auf Bilddaten eingeführt, die auf Grundlage von Kerneln funktioniert. Auf dieser Arbeitsweise fußen die Convolutional-Schichten. Die Parameter dieser Schichten bestimmen die Ausprägung eines Kerbels, der auf eingehende Bilddaten angewandt wird. Durch vielfache Hintereinanderreihung von Convolutional-Schichten können inkrementell komplexere Strukturen in Bildern identifiziert und abstrakt festgehalten werden \cite{alexnet}. Neuronale Netze, die auf Convolutional-Schichten aufbauen, werden als Convolutional Neural Networks, kurz CNNs, bezeichnet.
 
 \subsubsection{Klassifizierung und Regression}
 \label{sec:klassifizierung_regression}
 
-\todo{Klassifizierung und Regression beschreiben}
+Ebenso komplex wie Eingabedaten neuronaler Netze können ihre Ausgaben sein. Allgemein lassen sich Ausgaben von neuronalen Netzen in zwei Kategorien einteilen: Klassifikation und Regression\footnote{Neben Klassifikation und Regression sind weitere Arten von Ausgaben möglich, beispielsweise Embeddings von Autoencodern. Für den Kontext dieser Arbeit sind diese Arten der Ausgaben jedoch nicht relevant, weshalb sich auf die gängigen Ausgaben klassischer neuronaler Netze beschränkt wird.} \cite{nn_terminology}.
 
-\subsubsection{Training und Backpropagation}
-\label{sec:training_backpropagation}
+Bei der Klassifikation werden Datenpunkte in Form von Klassen vorhergesagt. Bei der Klassifizierung von Bildern sind Netzwerkausgaben der Klassen unterschiedlicher Objekte, Lebewesen oder Eigenschaften möglich (Beispielsweise die Beantwortung der Frage \quotes{\textit{Welches} Tier ist in diesem Bild zu sehen?}). Ebenso ist eine binäre Klassifikation hinsichtlich der Existenz bestimmter Sachverhalte üblich (Beispielsweise die Beantwortung der Frage \quotes{\textit{Existiert} eine Katze in diesem Bild?}). Die Ausgabe von Netzwerken geschieht für diese Arten der Fragen typischerweise in Form von Vektoren, die diese Kategorien durch One-Hot-Encoding (oder 1-of-n-Encoding) darstellen \cite{one_hot_encoding}. Dabei ist jeder Kategorie ein Eintrag im Vektor zugeordnet; die Größe der Zahlenwerte geben die Ausgaben des Netzes für die jeweiligen Kategorien an.
 
-\todo{Training und Backpropagation beschreiben}
+Konträr zur Klassifikation diskreter Gegebenheiten ist die Vorhersage kontinuierlicher Werte als Ausgabe eines neuronalen Netzes möglich, die Regression. Beispiele für Ausgaben einer Regression beinhalten Funktionswerte oder Koordinaten. Ziel einer Regression ist es, konkrete Zahlenwerte vorherzusagen. Sofern eine Begrenzung der ausgegebenen Werte möglich ist, ist die Normalisierung von Daten in die Intervalle $[0, 1]$ oder $[-1, 1]$ üblich. Der Hintergrund dieser Normalisierung liegt in der Arbeitsweise der Netzwerkschichten und wird üblicherweise in einem Nachverarbeitungsschritt nach der Vorhersage des neuronalen Netzes wieder umgekehrt.
 
-\subsubsection{Loss-Funktionen}
-\label{sec:loss_funktionen}
-
-\todo{Loss-Funktionen beschreiben}
+In dieser Thesis werden sowohl binäre als auch klassenbezogene Klassifikation sowie Regression verwendet. Die binäre Klassifikation wird zur Identifizierung von Dartpfeilen genutzt, klassenbezogene Klassifikation zur Identifizierung von Feldfarben unter Dartpfeilen und Regression wird genutzt, um die exakten Positionen der Dartpfeile auf der Dartscheibe darzustellen.
 
 % -------------------------------------------------------------------------------------------------
+
+\subsection{Training Neuronaler Netze}
+\label{sec:was_nn_training}
+
+Das Training neuronaler Netze kann abhängig von seinen Ausgaben auf unterschiedliche Arten verlaufen. In dieser Arbeit wird Supervised Learning verwendet, bei welchem Eingabedaten mit ihren zugehörigen Ausgaben gegeben sind. Das Netzwerk erlernt auf der Grundlage dieser Daten PArameter, durch die die Ausgaben zu den jeweiligen Eingaben ableiten. Weitere Methoden zum Training neuronaler Netze sind Unsupervised Learning und Reinforcement Learning. Bei Unsupervised Learning liegen lediglich Eingabedaten vor und die Ausgaben werden von dem Netzwerk identifiziert. Diese Art des Lernens wird beispielsweise bei Clustering von Datenpunkten oder Findung von Wort-Embeddings verwendet. Reinforcement Learning wird genutzt, um einem System das Agieren in einer Umgebung zu ermöglichen und basiert auf Belohnung gewünschter Ereignisse und Bestrafung nicht gewünschter Ereignisse \cite{nn_terminology}. Im Kontext dieser Arbeit lediglich Supervised Learning angewendet, um das neuronale Netz zu trainieren.
+
+Supervised Training basiert auf der Korrektur von Fehlern getätigter Vorhersagen des neuronalen Netzes. Als Forward Pass eines neuronalen Netzes wird die Vorhersage von Daten bezeichnet, durch die eine Ausgabe des Netzes erzeugt wird. Der Fehler von Vorhersagen wird durch eine Metrik gemessen, die hinsichtlich der Parameter des Netzwerks differenzierbar ist. Diese Metrik wird als Loss-Funktion\footnote{Alternativ wird diese Funktion auch als Cost- oder Error-Funktion bezeichnet. In dieser Arbeit wird die Terminologie der Loss-Funktion verwendet.} bezeichnet, der Fehler des Netzwerks als Loss. Durch die Differenzierbarkeit ist ihr Gradient bekannt und kann genutzt werden, um lokale Minima zu identifizieren. Je geringer der Fehler ist, desto korrekter sind die Vorhersagen des Systems. Das Erreichen eines Minimums der Loss-Funktion ist das Ziel des Trainings. Die Identifizierung der Parameterangleichungen zur Annäherung an ein Minimum der Loss-Funktion geschieht durch einen Prozess, der als Backpropagation bezeichnet wird. Während der Backpropagation werden iterativ Parameter der Netzwerkschichten angepasst, um die Vorhersage für die gegebenen Daten derart zu korrigieren, dass ein folgender Forward Pass auf den selben Daten einen geringeren Loss mit sich zieht.
+
+Die Implementierung der Backpropagation und die Umsetzung der Parameteranpassung geschieht durch Optimierungsalgorithmen. Die Arbeitsweise dieser Algorithmen ist grundlegend ähnlich hinsichtlich der Eingaben des Problems, in den konkreten Arbeitsweisen unterscheiden sie sich jedoch. Die Auswahl eines passenden Optimierungsalgorithmus ist abhängig von der zugrundeliegenden Aufgabe und der Netzwerkarchitektur.
+
+\todo{noch einmal gegenlesen und Quellen suchen}
+
+% -------------------------------------------------------------------------------------------------
+
 \subsection{Terminologie}
-\label{sec:terminologie}
+\label{sec:nn_terminologie}
+
+Der Themenbereich der neuronalen Netze umfasst eine Vielzahl von Konzepten und Begriffen. Dieses Unterkapitel gibt einen Überblick über die zentralen Begriffe, die in dieser Arbeit von Bedeutung sind \cite{nn_terminology}.
 
 \paragraph{Trainingsdaten}
+
+Dreh- und Angelpunkt des Trainings neuronaler Netze sind die Trainingsdaten. Sie werden genutzt, um die Parameter des zu trainierenden neuronalen Netzes anzupassen, indem getroffene Vorhersagen bewertet werden. Mit dieser Fehlerbewertung durch die Loss-Funktion werden die Parameter während der Backpropagation angepasst. Trainingsdaten haben üblicherweise die größte Kardinalität aller für das Training und die Evaluation verwendeten Datensätze.
+
+Um ein effektives Training eines neuronalen Netzes zu gewährleiten, ist die Wahl der Trainingsdaten essenziell. Da der Trainingserfolg eines neuronalen Netzes abhängig von den Trainingsdaten ist und die durch die Parameter erlernten Strukturen in den Daten nicht bekannt sind, ist eine möglichst uniforme Abdeckung der zugrundeliegenden Daten wichtig. Jegliche Verzerrungen der Datenlage wird potenziell von dem neuronalen Netz erlernt und kann zu einer fehlerhaften Inferenz auf neuen Daten führen.
+
 \paragraph{Validierungsdaten}
+
+Validierungsdaten werden ebenso wie die Trainingsdaten während des Trainings eines neuronalen Netzes genutzt, konträr zu Trainingsdaten haben diese jedoch keinen Einfluss auf den Trainingserfolg. In regelmäßigen Intervallen wird der aktuelle Stand der Netzwerkparameter auf den Validierungsdaten ausgewertet, um Einblicke in die Performance des Netzwerks auf Daten zu gewinnen, die nicht für das Training verwendet wurden. Durch diese Daten können Rückschlüsse auf die Fähigkeit des neuronalen Netzes gezogen werden, das Gelernte auf neue Daten zu übertragen und die zugrundeliegenden Strukturen der Daten zu generalisieren. Die strikte Separierung von Trainings- und Validierungsdaten ist dabei obligatorisch, um eine Verzerrung der Generalisierbarkeit zu vermeiden \cite{nn_terminology}.
+
+Die Wahl der Validierungsdaten unterliegt den gleichen Voraussetzungen wie den Trainingsdaten, um Verzerrungen in die Einblicke der Netzwerk-Performance zu vermeiden. Darüber hinaus sollten Validierungsdaten jedoch auf eine Art und Weise gewählt werden, die nicht zu große Ähnlichkeiten zu den Trainingsdaten aufweist, da diese Nähe der Daten ebenfalls eine Verzerrung der Datenlage mit sich ziehen kann, sofern keine uniforme Verteilung der Trainingsdaten vorliegt.
+
 \paragraph{Testdaten}
-\paragraph{Out-of-distribution-Training}
-\paragraph{Overfitting}
-\paragraph{Underfitting}
+
+Nach dem Training eines neuronalen Netzes werden Testdaten genutzt, um die Netzwerk-Performance zu evaluieren. Während Trainings- und Validierungsdaten Einfluss auf den Verlauf des Trainings nehmen, werden Testdaten genutzt, um einen unabhängigen Einblick in die Netzwerkperformance nach Beendigung des Trainings zu gewinnen \cite{nn_terminology}. Durch Testdaten wird die Inferenz des trainierten Netzes auf unbekannten Daten simuliert, wodurch eine objektive Abschätzung der Generalisierbarkeit ermöglicht wird.
+
+Für die Wahl der Testdaten sind die selben Voraussetzungen zu beachten, die für Trainings- und Validierungsdaten gelten, um einer Verzerrung der Datenlage vorzubeugen. Die Wahl von Trainings-, Validierungs- und Testdaten spielt für die Auswertung des neuronalen Netzes dieser Thesis eine wichtige Rolle.
+
+\paragraph{Out-of-Distribution-Training}
+
+Dass die für das Trainings verwendeten Daten einen universellen Überblick über die gesamte Datenlage geben, ist häufig nicht möglich. Verzerrungen der Datenlage sind -- gewollt oder ungewollt -- in den meisten Fällen nicht zu umgehen. Weichen die Trainingsdaten jedoch bewusst von den Validierungs- und Testdaten ab, spricht man von Out-of-Distribution-Training. Das neuronale Netz wird auf Daten trainiert, die daher einer anderen Verteilung entsprechen als der zu erwartenden Daten für die Inferenz des Netzes.
+
+\paragraph{Under- und Overfitting}
+
+Die Validierungsdaten eines Trainings werden verwendet, um den Erfolg eines Trainings zu beurteilen. Während Optimierungsalgorithmen darauf ausgelegt sind, den Trainings-Loss zu minimieren, ist es möglich, dass der Validierungs-Loss von diesem abweicht. Befindet sich der Wert des Validierungs-Loss signifikant über dem Trainings-Loss, spricht man von Underfitting \cite{nn_terminology}. In dieser Situation ist das neuronale Netz nicht in der Lage, das gelernte auf neue Daten anzuwenden, da es noch nicht ausreichend trainiert wurde. Fallen Trainings- und Validierungs-Loss zeitweise gleichermaßen, gefolgt von einem Anstieg des Validierungs-Losses, wird dies als Overfitting bezeichnet. In dieser Situation werden Vorhersagen auf den Trainingsdaten besser, jedoch verliert das neuronale Netz die Fähigkeit der Generalisierbarkeit gelernter Strukturen auf neue Daten. Dies ist analog zum Auswendiglernen der Trainingsdaten und dem Verlernen der zugrundeliegenden Strukturen, die die Daten ausmachen.
+
+\todo{Gegenlesen und ggf. Quellen finden}
 
 % -------------------------------------------------------------------------------------------------
-\subsection{Augmentierung}
-\label{sec:augmentierung}
 
-\todo{Augmentierung beschreiben}
+\subsection{Was ist Augmentierung?}
+\label{sec:was_augmentierung}
+
+Für ein robustes Training eines neuronalen Netzes ist eine große und möglichst umfangreiche Datenlage notwendig. Zur Vergrößerung der vorhandenen Datenlage kann Augmentierung genutzt werden. Als Augmentierung wird die Abänderung der Daten beschrieben, die die Integrität der Daten aufrechterhält. So hat das Hinzufügen von Rauschen auf ein Bild geringfügig bis keinen Einfluss auf die Semantik des Bildes während die zugrundeliegenden Daten stark stark beeinflusst werden können. Ein robust trainiertes neuronales Netz ist in der Lage, sowohl die Bedeutung des unveränderten als auch die des augmentierten Bildes korrekt zu bestimmen. Durch Variation der Eingabedaten kann die Quantität der Datenlage künstlich vervielfacht werden, ohne Einbußen in ihrer Qualität zu erfahren.
+
+\todo{Gegenlesen, Quellen finden}
 
 % -------------------------------------------------------------------------------------------------
-\subsection{YOLOv8}
+
+\subsection{Das YOLOv8-Modell}
 \label{sec:yolov8}
 
-\todo{YOLOv8 beschreiben}
+- Anwendungsbereich
+- Multi-Scale-Output
+- Bounding Boxes
+- Non-Maximum-Suppression
+
+\todo{}
 
 % -------------------------------------------------------------------------------------------------
-\subsection{Oversampling / Klassenungleichgewicht}
-\label{sec:oversampling}
-
-\todo{Oversampling beschreiben}
-

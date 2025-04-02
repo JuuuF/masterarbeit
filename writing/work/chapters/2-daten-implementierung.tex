@@ -64,7 +64,7 @@ Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass lediglich g
 
 \subsubsection{Positionierung}
 
-Eine Uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartsrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese wurden in Form von Heatmaps in die Szene eingearbeitet.
+Eine Uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese wurden in Form von Heatmaps in die Szene eingearbeitet.
 
 Die für die Datengenerierung dieses Thesis genutzten Heatmaps sind in \autoref{img:heatmaps} dargestellt. Es wurden zwei unterschiedliche Heatmaps genutzt: Eine realistische Heatmap und eine Heatmap zur gezielten Erstellung von Multiplier-Feldern und ihren Umgebungen. Die generelle Heatmap orientiert sich an den für DeepDarts gefundenen Wahrscheinlichkeitsverteilungen \cite{deepdarts}, Verteilungen aus Online-Recherchen \cite{heatmap} und eigenen Beobachtungen. Die Wahrscheinlichkeitsverteilungen dieser Heatmaps beziehen die gesamte Dartscheibe ein, sodass Treffer außerhalb der Dartfelder ebenfalls möglich sind.
 
@@ -170,7 +170,7 @@ Zuletzt werden Verwackelte Kamerabilder simuliert. Mit einer Wahrscheinlichkeit 
 \subsection{Render-Einstellungen}  % ==============================================================
 \label{sec:render_einstellungen}
 
-Zur Handhabung der Farbinformation bietet Blender eine Vielzahl unterschiedlicher Einstellungen. Die hohe Diversität unterschiedlicher gewünschter Erscheinungsbilder sorgt für viele Möglichkeiten zur Anpassung der Farbaufnahme der Kameras in den Szenen. Für einen Cartoon ist beispielsweise ein anderer Umgang mit Farben bei dem Rendern von Bildern erwünscht als für eine cinematische Szene. Die für diese Thesis verwendeten Farbräume wurden derart gewählt, dass Farben möglichst realistisch dargestellt werden. Dazu wurde als Darstellungsgerät und Sequencer sRGB mit einer AgX als Anzeigetransformation gewählt. Trotz häufiger Korrekturen von Handykameras hinsichtlich Kontrasterhöhung der Aufnahmen wurde sich für einen neutralen Basiskontrast entschieden. Eine Erhöhung des Kontrasts geschieht bei der Augmentierung der Trainingsdaten in \autoref{sec:augmentierung}.
+Zur Handhabung der Farbinformation bietet Blender eine Vielzahl unterschiedlicher Einstellungen. Die hohe Diversität unterschiedlicher gewünschter Erscheinungsbilder sorgt für viele Möglichkeiten zur Anpassung der Farbaufnahme der Kameras in den Szenen. Für einen Cartoon ist beispielsweise ein anderer Umgang mit Farben bei dem Rendern von Bildern erwünscht als für eine cinematische Szene. Die für diese Thesis verwendeten Farbräume wurden derart gewählt, dass Farben möglichst realistisch dargestellt werden. Dazu wurde als Darstellungsgerät und Sequencer sRGB mit einer AgX als Anzeigetransformation gewählt. Trotz häufiger Korrekturen von Handykameras hinsichtlich Kontrasterhöhung der Aufnahmen wurde sich für einen neutralen Basiskontrast entschieden. Eine Erhöhung des Kontrasts geschieht bei der Augmentierung der Trainingsdaten in \autoref{sec:daten_augmentierung}.
 
 \subsection{Berechnung von Entzerrung}  % =========================================================
 \label{sec:berechnung_entzerrung}
