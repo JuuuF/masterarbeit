@@ -16,6 +16,33 @@ def get_out_grid(out_size, n_cols):
     return grid
 
 
+@tf.function
+def update_block(i, grid, grid_pos, xst, local_pos, cls):
+    # Get target cell
+    grid_y = grid_pos[0, i]
+    grid_x = grid_pos[1, i]
+    current_cell = grid[grid_y, grid_x]  # (8, 3)
+
+    # Get next available cell column
+    cell_available = tf.cast(tf.equal(current_cell[0, :], 0), tf.int32)
+    cell_col = tf.argmax(cell_available, output_type=tf.int32)
+
+    # Setup updates and indices
+    updates = tf.concat([xst[:, i], local_pos[:, i], cls[:, i]], axis=0)
+    indices = tf.stack(
+        [
+            tf.fill([8], grid_y),
+            tf.fill([8], grid_x),
+            tf.range(8, dtype=tf.int32),
+            tf.fill([8], cell_col),
+        ],
+        axis=1,
+    )
+    grid_res = tf.tensor_scatter_nd_update(grid, indices, updates)
+    return grid_res
+
+
+@tf.function
 def scaled_out(
     xst: tf.Tensor,  # (1, 3)
     pos: tf.Tensor,  # (2, 3)
@@ -35,172 +62,14 @@ def scaled_out(
 
     grid_pos = tf.cast(pos_abs / cell_size, tf.int32)  # (2, 3)
     local_pos = tf.math.floormod(pos_abs, cell_size) / cell_size  # (2, 3)
-    # --------------------------------------
 
-    # grid_y, grid_x = grid_pos[0], grid_pos[1]  # (3,), (3,)
-    # pos_update = tf.concat([local_pos, cls], axis=0)  # (8, 3)
-
-    # indices = grid_pos
-    # cell_cols = tf.argmax(
-    #     tf.cast(out_grid[grid_y, grid_x, 2] == 1, tf.int32), axis=-1
-    # )
-
-    # indices = tf.stack(
-    #     [grid_y, grid_x, tf.fill([3], 2)], axis=-1
-    # )  # (3, 3): 3x (y, x, 2)
-
-    # cell_cols = tf.argmax()  # these depend on each other
-
-    # 0. ------------------------------------
-    # Get target cell
-    grid_y, grid_x = grid_pos[0, 0], grid_pos[1, 0]
-    current_cell = out_grid[grid_y, grid_x]
-
-    # Get next available cell column
-    cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
-    cell_col = tf.cast(cell_col, tf.int32)
-
-    # Update position and class data
-    pos_update = tf.concat([xst[:, 0], local_pos[:, 0], cls[:, 0]], axis=0)
-
-    # Get update indices
-    indices = []
-    indices.append([grid_y, grid_x, 0, cell_col])
-    indices.append([grid_y, grid_x, 1, cell_col])
-    indices.append([grid_y, grid_x, 2, cell_col])
-    indices.append([grid_y, grid_x, 3, cell_col])
-    indices.append([grid_y, grid_x, 4, cell_col])
-    indices.append([grid_y, grid_x, 5, cell_col])
-    indices.append([grid_y, grid_x, 6, cell_col])
-    indices.append([grid_y, grid_x, 7, cell_col])
-    updates = []
-    updates.append(pos_update[0])
-    updates.append(pos_update[1])
-    updates.append(pos_update[2])
-    updates.append(pos_update[3])
-    updates.append(pos_update[4])
-    updates.append(pos_update[5])
-    updates.append(pos_update[6])
-    updates.append(pos_update[7])
-
-    # Apply updates
-    indices = tf.convert_to_tensor(indices, dtype=tf.int32)
-    updates = tf.convert_to_tensor(updates, dtype=tf.float32)
-    out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
-
-    # 1. ------------------------------------
-    # Get target cell
-    grid_y, grid_x = grid_pos[0, 1], grid_pos[1, 1]
-    current_cell = out_grid[grid_y, grid_x]
-
-    # Get next available cell column
-    cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
-    cell_col = tf.cast(cell_col, tf.int32)
-
-    # Update position and class data
-    pos_update = tf.concat([xst[:, 1], local_pos[:, 1], cls[:, 1]], axis=0)
-
-    # Get update indices
-    indices = []
-    indices.append([grid_y, grid_x, 0, cell_col])
-    indices.append([grid_y, grid_x, 1, cell_col])
-    indices.append([grid_y, grid_x, 2, cell_col])
-    indices.append([grid_y, grid_x, 3, cell_col])
-    indices.append([grid_y, grid_x, 4, cell_col])
-    indices.append([grid_y, grid_x, 5, cell_col])
-    indices.append([grid_y, grid_x, 6, cell_col])
-    indices.append([grid_y, grid_x, 7, cell_col])
-    updates = []
-    updates.append(pos_update[0])
-    updates.append(pos_update[1])
-    updates.append(pos_update[2])
-    updates.append(pos_update[3])
-    updates.append(pos_update[4])
-    updates.append(pos_update[5])
-    updates.append(pos_update[6])
-    updates.append(pos_update[7])
-
-    # Apply updates
-    indices = tf.convert_to_tensor(indices, dtype=tf.int32)
-    updates = tf.convert_to_tensor(updates, dtype=tf.float32)
-    out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
-
-    # 2. ------------------------------------
-    # Get target cell
-    grid_y, grid_x = grid_pos[0, 2], grid_pos[1, 2]
-    current_cell = out_grid[grid_y, grid_x]
-
-    # Get next available cell column
-    cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
-    cell_col = tf.cast(cell_col, tf.int32)
-
-    # Update position and class data
-    pos_update = tf.concat([xst[:, 2], local_pos[:, 2], cls[:, 2]], axis=0)
-
-    # Get update indices
-    indices = []
-    indices.append([grid_y, grid_x, 0, cell_col])
-    indices.append([grid_y, grid_x, 1, cell_col])
-    indices.append([grid_y, grid_x, 2, cell_col])
-    indices.append([grid_y, grid_x, 3, cell_col])
-    indices.append([grid_y, grid_x, 4, cell_col])
-    indices.append([grid_y, grid_x, 5, cell_col])
-    indices.append([grid_y, grid_x, 6, cell_col])
-    indices.append([grid_y, grid_x, 7, cell_col])
-    updates = []
-    updates.append(pos_update[0])
-    updates.append(pos_update[1])
-    updates.append(pos_update[2])
-    updates.append(pos_update[3])
-    updates.append(pos_update[4])
-    updates.append(pos_update[5])
-    updates.append(pos_update[6])
-    updates.append(pos_update[7])
-
-    # Apply updates
-    indices = tf.convert_to_tensor(indices, dtype=tf.int32)
-    updates = tf.convert_to_tensor(updates, dtype=tf.float32)
-    out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
-
+    out_grid = update_block(0, out_grid, grid_pos, xst, local_pos, cls)
+    out_grid = update_block(1, out_grid, grid_pos, xst, local_pos, cls)
+    out_grid = update_block(2, out_grid, grid_pos, xst, local_pos, cls)
     return out_grid
 
-    # updates = []
-    # indices = []
 
-    # for i in tf.range(3):
-    #     # Get target cell
-    #     grid_y, grid_x = grid_pos[0, i], grid_pos[1, i]
-    #     current_cell = out_grid[grid_y, grid_x]
-
-    #     # Get next available cell column
-    #     cell_col = tf.argmax(tf.cast(current_cell[2] == 1, tf.int32))
-    #     cell_col = tf.cast(cell_col, tf.int32)
-    #     # tf.print("cell_col:")
-    #     # tf.print(cell_col)
-
-    #     # Update position and class data
-    #     pos_update = tf.concat([local_pos[:, i], cls[:, i]], axis=0)
-
-    #     # Get update indices
-    #     for cell_row in tf.range(tf.shape(pos_update)[0], dtype=tf.int32):
-    #         indices.append([grid_y, grid_x, cell_row, cell_col])
-    #         updates.append(pos_update[cell_row])
-
-    # indices = tf.convert_to_tensor(indices, dtype=tf.int32)
-    # updates = tf.convert_to_tensor(updates, dtype=tf.float32)
-
-    # # Apply updates
-    # out_grid = tf.tensor_scatter_nd_update(out_grid, indices, updates)
-
-    # # tf.print("--- indices + updates")
-    # # for i, u in zip(indices, updates):
-    # #     tf.print(i, ":", u, "->", out_grid[i[0], i[1], i[2], i[3]])
-    # # tf.print("-"*50)
-
-    # return out_grid
-
-
-# @tf.function
+@tf.function
 def positions_to_yolo(
     img: tf.Tensor,  # (800, 800, 3)
     xst: tf.Tensor,  # (1, 3)

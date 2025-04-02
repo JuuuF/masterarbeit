@@ -31,13 +31,7 @@ from ma_darts.ai.models import (
     yolo_to_positions_and_class,
 )
 from ma_darts.ai.data import dataloader_paper, dataloader_ma, dummy_ds
-from ma_darts.ai.losses import (
-    YOLOv8Loss,
-    ExistenceLoss,
-    ClassesLoss,
-    PositionsLoss,
-    DIoULoss,
-)
+from ma_darts.ai.losses import YOLOv8Loss, ExistenceLoss, ClassesLoss, PositionsLoss
 
 from tqdm import tqdm
 from argparse import ArgumentParser
