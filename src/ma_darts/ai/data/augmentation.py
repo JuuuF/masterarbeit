@@ -3,13 +3,13 @@ from ma_darts import img_size
 
 
 class Augmentation:
-    def __init__(self):
+    def __init__(self, img_size=img_size):
         self.img_size = tf.constant(img_size, tf.int32)
 
         # Image Augmentation Parameters
         self.brightness_adjust = 0.03
         self.contrast_adjust = 0.3
-        self.noise_amount = 0.1
+        self.noise_amount = 0.15
         self.saturation_amount = 0.2
         self.min_jpeg_quality = 20
 
@@ -26,12 +26,19 @@ class Augmentation:
         channel_r = img[..., 2:3] * channel_weights[2]
         img = tf.concat([channel_b, channel_g, channel_r], axis=-1)
 
+
         # Brightness
-        img = tf.image.stateless_random_brightness(
-            img,
-            max_delta=self.brightness_adjust,
+        img_brightness = tf.reduce_mean(img)
+        brightness_lower = tf.maximum(0.1, img_brightness - self.brightness_adjust)
+        brightness_upper = img_brightness + self.brightness_adjust
+        brightness_target = tf.random.stateless_uniform(
+            [],
+            minval=brightness_lower,
+            maxval=brightness_upper,
             seed=seed,
         )
+        brightness_delta = brightness_target - img_brightness
+        img = img + brightness_delta
         img = tf.clip_by_value(img, 0.0, 1.0)
 
         # Contrast
@@ -44,8 +51,9 @@ class Augmentation:
         img = tf.clip_by_value(img, 0.0, 1.0)
 
         # Noise
-        noise = tf.random.normal(
-            (self.img_size, self.img_size, 3),
+        noise = tf.random.stateless_normal(
+            shape=(self.img_size, self.img_size, 3),
+            seed=seed + 2,
             mean=0.0,
             stddev=self.noise_amount,
             dtype=tf.float32,
@@ -158,7 +166,10 @@ class Augmentation:
         M = tf.matmul(M, self.translation_matrix(-400, -400))
 
         # Rotation
-        rotation = tf.random.uniform((1,), 0.0, 2 * 3.14159)
+        rotation_steps = tf.random.uniform((1,), 0, 20, tf.int32)  # 0..19
+        rotation = tf.cast(rotation_steps, tf.float32) * tf.constant(
+            0.31415, tf.float32
+        )
         M = tf.matmul(M, self.rotation_matrix(rotation))
         pos = self.apply_rotation_to_pos(pos, rotation)
 
