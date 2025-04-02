@@ -168,8 +168,8 @@ def Detect(
         x_pos, k=1, s=1, p=False, c=2 * reg_max
     )  # original: c=4 * reg_max, but we omit w and h
 
-    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout)
-    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout)
+    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout * 2)
+    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout * 2)
     x_cls = Conv2d(
         x_cls, k=1, s=1, p=False, c=nc * reg_max
     )  # original: c=nc, but I want a per-estimation confidence
@@ -332,7 +332,7 @@ def yolo_v8_model(
 
     # Backbone
     x = inputs
-    dropout_backbone = 0.1
+    dropout_backbone = 0.15
 
     # fmt: off
     x_0 = Conv(x, k=3, s=2, p=True, c=round(64 * w), dropout=0.0)  # P1
@@ -348,29 +348,32 @@ def yolo_v8_model(
     # fmt: on
 
     # Head
+    dropout_head = 0.3
     x_10 = Upsample(x_9)
     x_11 = Concat([x_6, x_10])
-    x_12 = C2f(x_11, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=0.2)
+    x_12 = C2f(
+        x_11, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=dropout_head
+    )
     x_13 = Upsample(x_12)
     x_14 = Concat([x_4, x_13])
     x_15 = C2f(
-        x_14, shortcut=False, n=round(3 * d), c=round(256 * w), dropout=0.2
+        x_14, shortcut=False, n=round(3 * d), c=round(256 * w), dropout=dropout_head
     )  # P3
 
-    x_16 = Conv(x_15, k=3, s=2, p=True, c=round(256 * w), dropout=0.2)  # P3
+    x_16 = Conv(x_15, k=3, s=2, p=True, c=round(256 * w), dropout=dropout_head)  # P3
     x_17 = Concat([x_12, x_16])
     x_18 = C2f(
-        x_17, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=0.2
+        x_17, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=dropout_head
     )  # P4
-    x_19 = Conv(x_18, k=3, s=2, p=True, c=round(512 * w), dropout=0.2)
+    x_19 = Conv(x_18, k=3, s=2, p=True, c=round(512 * w), dropout=dropout_head)
     x_20 = Concat([x_9, x_19])
     x_21 = C2f(
-        x_20, shortcut=False, n=round(3 * d), c=round(512 * w * r), dropout=0.2
+        x_20, shortcut=False, n=round(3 * d), c=round(512 * w * r), dropout=dropout_head
     )  # P5
 
     # (n, n, 2)
     detect_s_pos, detect_s_cls = Detect(
-        x_21, reg_max=reg_max, nc=n_classes, dropout=0.1
+        x_21, reg_max=reg_max, nc=n_classes, dropout=0.15
     )  # (None, 25, 25, 3*2), (None, 25, 25, 3*6)
     # Output Transformation
     detect = OutputTransformation(
