@@ -3,6 +3,7 @@ import tensorflow as tf
 from ma_darts.ai.data import Augmentation
 
 
+@tf.function
 def get_out_grid(out_size, n_cols):
     # Start with a blank cell
     cell_col = tf.zeros((n_cols), tf.float32)  # (n,)
