@@ -10,6 +10,7 @@ class ClassesLoss(tf.keras.losses.Loss):
         self.loss_fn = tf.keras.losses.CategoricalFocalCrossentropy(
             # alpha=0.5,
             # gamma=2.0,
+            reduction=None,
         )
         self.multiplier = multiplier
 
@@ -50,8 +51,8 @@ class ClassesLoss(tf.keras.losses.Loss):
         # Extract true class masks
         positive_mask = tf.cast(xst_true > 0.5, tf.float32)  # (bs, s, s, 3, 1)
         positive_mask = tf.reshape(positive_mask, (batch_size, -1))  # (bs, s*s*3)
-        cls_loss = self.loss_fn(cls_true, cls_pred, sample_weight=positive_mask)
-        return cls_loss * tf.constant(self.multiplier, tf.float32)
+        cls_loss = self.loss_fn(cls_true, cls_pred, sample_weight=positive_mask)  # (bs,)
+        return cls_loss * tf.constant(self.multiplier, tf.float32)  # (bs,)
 
 
 if __name__ == "__main__":

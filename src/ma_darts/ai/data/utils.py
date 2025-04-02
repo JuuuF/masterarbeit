@@ -250,6 +250,7 @@ def finalize_base_ds(
     prefetch: int = tf.data.AUTOTUNE,
     cache: bool = True,
     clear_cache: bool = False,
+    sample_weight: float = 1.0,
 ) -> tf.data.Dataset:
 
     # Assure data types
@@ -298,6 +299,12 @@ def finalize_base_ds(
             tf.ensure_shape(img, [img_size, img_size, 3]),
             tf.ensure_shape(out_s, [img_size // 32, img_size // 32, 1 + 2 + 5, 3]),
         ),
+        num_parallel_calls=tf.data.AUTOTUNE,
+    )
+
+    # Add weights
+    ds = ds.map(
+        lambda img, out: (img, out, tf.constant(sample_weight, tf.float32)),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 

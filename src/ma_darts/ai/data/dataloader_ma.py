@@ -204,6 +204,7 @@ def dataloader_ma(
     prefetch: int = tf.data.AUTOTUNE,
     cache: bool = True,
     clear_cache: bool = False,
+    sample_weight: float = 1.0,
 ):
     # Collect files
     img_paths = tf.data.Dataset.list_files(
@@ -235,5 +236,6 @@ def dataloader_ma(
         batch_size=batch_size,
         cache=cache,
         clear_cache=clear_cache,
+        sample_weight=sample_weight,
     )
     return ds

@@ -49,8 +49,7 @@ class PositionsLoss(tf.keras.losses.Loss):
         diffs = tf.abs(pos_true - pos_pred)  # (bs, s * s * 3, 2)
         total_dists = tf.reduce_sum(diffs, axis=[1, 2])  # (bs,)
         n_trues = tf.reduce_sum(positive_mask, axis=[1, 2])  # (bs,)
-        final_dists = total_dists / tf.maximum(n_trues, 1)
-        loss = tf.reduce_mean(final_dists)
+        loss = total_dists / tf.maximum(n_trues, 1)  # (bs,)
         return loss * tf.constant(self.multiplier, tf.float32)
 
 

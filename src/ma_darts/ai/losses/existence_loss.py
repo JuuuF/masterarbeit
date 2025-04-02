@@ -11,6 +11,7 @@ class ExistenceLoss(tf.keras.losses.Loss):
             apply_class_balancing=True,
             alpha=0.5,
             gamma=2.0,
+            reduction=None,
         )
         self.multiplier = multiplier
 
@@ -42,13 +43,8 @@ class ExistenceLoss(tf.keras.losses.Loss):
         xst_true = tf.reshape(xst_true, (batch_size, -1))  # (bs, s * s * 3)
         xst_pred = tf.reshape(xst_pred, (batch_size, -1))
 
-        # Hard Negative Sampling
-        # false_positives = tf.logical_and(xst_true < 0.5, xst_pred > 0.5)
-        # false_negatives = tf.logical_and(xst_true > 0.5, xst_pred < 0.5)
-        # weights = tf.where(false_positives, 0.2, 1.0)  # reduce false positives
-
-        loss = self.loss_fn(xst_true, xst_pred)
-        return loss * tf.constant(self.multiplier, tf.float32)
+        loss = self.loss_fn(xst_true, xst_pred)  # (bs,)
+        return loss * tf.constant(self.multiplier, tf.float32)  # (bs,)
 
 
 if __name__ == "__main__":

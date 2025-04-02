@@ -79,8 +79,15 @@ class Utils:
 
         # Prediction callback
         Xs, ys = [], []
-        for ds in [ds_gen_train, ds_paper_d1, ds_strongbows, ds_gen_val, ds_paper_d2, ds_jess]:
-            X, y = next(iter(ds.unbatch().batch(2).take(1)))
+        for ds in [
+            ds_gen_train,
+            ds_paper_d1,
+            ds_strongbows,
+            ds_gen_val,
+            ds_paper_d2,
+            ds_jess,
+        ]:
+            X, y, _w = next(iter(ds.unbatch().batch(2).take(1)))
             Xs.append(X)
             ys.append(y)
         Xs = np.concatenate(Xs, axis=0)
@@ -221,7 +228,10 @@ class Utils:
 
     def check_dataset(ds):
 
-        for Xs, ys in ds:
+        for X in ds:
+            # there might be weights, so we unpack separately
+            Xs = X[0]
+            ys = X[1]
             imgs = np.uint8(Xs * 255)
             for img, y in zip(imgs, ys):
                 pos, cls = yolo_to_positions_and_class(y)
@@ -390,6 +400,7 @@ ds_paper_d1 = dataloader_paper(
     batch_size=BATCH_SIZE,
     cache=True,
     clear_cache=args.clear_cache,
+    sample_weight=5,
 )  # 2000
 
 ds_strongbows = dataloader_ma(
@@ -399,6 +410,7 @@ ds_strongbows = dataloader_ma(
     augment=True,
     cache=True,
     clear_cache=args.clear_cache,
+    sample_weight=8,
 )  # 168
 
 # 24576 + 256 + 160 = 24992

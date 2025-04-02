@@ -424,6 +424,7 @@ def dataloader_paper(
     prefetch: int = tf.data.AUTOTUNE,
     cache: bool = True,
     clear_cache: bool = False,
+    sample_weight: float = 1.0,
 ) -> tf.data.Dataset:
     base_ds = paper_base_ds(base_dir, dataset, split)
     ds = finalize_base_ds(
@@ -436,6 +437,7 @@ def dataloader_paper(
         prefetch=prefetch,
         cache=cache,
         clear_cache=clear_cache,
+        sample_weight=sample_weight,
     )
     return ds
 
