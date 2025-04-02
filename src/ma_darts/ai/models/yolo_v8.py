@@ -117,18 +117,17 @@ def Conv(
 
 def SPPF(
     x: tf.Tensor,
-    pool_sizes: list[int] = [5, 5, 5],
+    pool_size: int = 5,
     name: str | None = None,
 ) -> tf.Tensor:
     c = x.shape[-1]
     x = Conv(x, k=1, s=1, p=False, c=c)
 
-    xs = []
-    for i, p in enumerate(pool_sizes):
-        x = MaxPool2d(x, p=p)
-        xs.append(x)
+    p1 = MaxPool2d(x, p=pool_size)
+    p2 = MaxPool2d(p1, p=pool_size)
+    p3 = MaxPool2d(p2, p=pool_size)
 
-    x = Concat(xs)
+    x = Concat([x, p1, p2, p3])
     x = Conv(x, k=1, s=1, p=False, c=c)
 
     return x
@@ -345,7 +344,7 @@ def yolo_v8_model(
     x_6 = C2f(x_5, shortcut=True, n=round(6 * d), c=round(512 * w), dropout=dropout_backbone)
     x_7 = Conv(x_6, k=3, s=2, p=True, c=round(512 * w * r), dropout=dropout_backbone)  # P5
     x_8 = C2f(x_7, shortcut=True, n=round(3 * d), c=round(512 * w * r), dropout=dropout_backbone)
-    x_9 = SPPF(x_8, pool_sizes=[5, 5, 5])
+    x_9 = SPPF(x_8, pool_size=5)
     # fmt: on
 
     # Head
