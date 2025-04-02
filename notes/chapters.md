@@ -11,23 +11,61 @@ Einleitung:
 
 - Dart Scoring
   - Nutzen des Scorings
+  - Scoring durch Single-Camera-System
 - DeepDarts-System
   - Herangehensweise
   - Ergebnisse
   - Schwachstellen
-- Projektaufbau
-  - Datenerstellung
-  - CV-Normalisierung
-  - Dartpfeil-Erkennung
-- Single-Camera-Systeme
+    - stark limitierte Datenlage bzgl. Diversität
+    - eher Proof-of-Concept als einsetzbares System
+    - keine Generalisierbarkeit durch Overfitting
 
 ### Warum synthetische Datenerstellung?
 
 - KI-Training basiert auf Daten
 - Korrektheit von Daten relevant
 - Generierung von Daten als Mittel zur Erstellung ausreichender Menge
+- viele Daten erstellen mit wenig Aufwand
+- Umfang der Daten klar definiert: Dartpfeile auf Dartscheibe verteilen
+  - schematische Beschreibung der Daten möglich
+  - Generierung von Trainingsdaten für KI nicht unüblich: synth_data_*
 
-- Aufbau der Arbeit
+### Related Work
+
+- Prozedurale Datenerstellung für Spiele:
+  - proc_data_games[1,2,3]
+  - Erstellung zufälliger Spielumgebungen auf Grundlage zufälliger Generation
+  - hier: zufällige Generierung von Darts-Runden statt Welten
+  - Konzept gleich, wird bereits genutzt
+  - PGD-G: Procedural Data Generation for Games
+
+- Dart-Scoring-Systems
+  - GitHub-Projekte
+    - darts_project[1,2,3,4]
+    - Dart-scoring mittels Webcams + vorherigem Setup
+  - Multi-Cam system
+    - 5 Kameras
+    - dart_scoring_multicam
+  - Mikrofon-System
+    - akustische Triangulierung
+    - dart_scoring_microphone
+
+### Aufbau der Arbeit
+
+- Aufbau der Arbeit beschreiben
+- Start: Datengenerierung
+- Danach: CV-Verarbeitung
+  - Entzerrung / Normalisierung
+- Danach: KI-Training
+  - Dartpfeil-Erkennung
+- Jeweils: Grundlagen, Methodik, Implementierung, Ergebnisse
+- Grund für Aufbau:
+  - Projekte weitestgehend voneinander abgekapselt
+  - Schnittstellen der Systeme klar definiert
+  - Komplexes Projekt, Betrachtung der einzelnen Systeme zur Übersicht
+  - Thematische Kapselung der Arbeit
+- Danach: Diskussion der jeweiligen Systeme
+- Zuletzt: Fazit der Arbeit + Future Work
 
 <!---------------------------------------------->
 
@@ -319,6 +357,13 @@ Einleitung:
   - Multi-Scale-Output
   - Bounding Boxes
   - Non-maximum-suppression (?)
+- ~Subclassing / Vererbung / Objektorientierung~
+
+- Oversampling der Daten
+  - künstliches Hinzufügen von Daten, die selten gesehen werden
+  - Klassen "rot" und "grün" wurden kaum vorhergesagt
+  - 20480x uniform verteilt
+  - 4096x Ringe spezifisch
 
 ### Methodik (KI)
 
@@ -460,7 +505,8 @@ Einleitung:
 
 ### Ausblick
 
-- neues Trainieren des Systems auf echten Daten
+- neues Trainieren des Systems auf mehr echten Daten
+- Implementierung von PBR in Datenerstellung
 - Verbesserung der Datengenerierung, um realistischer zu werden und mehr Umgebungsbedingungen zu simulieren
 - Kompilierung der CV-Pipeline
   - entweder Cython / Numba oder Implementierung in kompilierter Sprache
@@ -469,3 +515,6 @@ Einleitung:
   - z.B. blau-rote Felder
   - ist aber meist nicht in Steeldarts gegeben, sondern eher in elektronischen Dartscheiben
     - und bei elektronischen Dartscheiben ist dieses System ohnehin überflüssig
+- KI-Prediction auf Grundlage einer leeren Dartscheibe
+  - Kalibrierungs-Bild schließen und als Referenz nutzen
+  - Wenn bekannt ist, dass keine Dartpfeile auf Kalibrierungs-Bild vorhanden sind, ist die Wahrscheinlichkeit von Fehlklassifikationen des Hintergrundes geringer
