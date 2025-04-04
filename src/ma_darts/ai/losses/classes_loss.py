@@ -7,7 +7,7 @@ class ClassesLoss(tf.keras.losses.Loss):
     def __init__(self, multiplier: float = 1, *args, **kwargs):
         super(ClassesLoss, self).__init__(*args, **kwargs)
 
-        self.loss_fn = tf.keras.losses.CategoricalCrossentropy(
+        self.loss_fn = tf.keras.losses.CategoricalFocalCrossentropy(
             # alpha=0.5,
             # gamma=2.0,
             reduction=None,
