@@ -3,7 +3,7 @@ import tensorflow as tf
 from ma_darts.ai.data import Augmentation
 
 
-@tf.function
+# @tf.function
 def get_out_grid(out_size, n_cols):
     # Start with a blank cell
     cell_col = tf.zeros((n_cols), tf.float32)  # (n,)
@@ -17,7 +17,7 @@ def get_out_grid(out_size, n_cols):
     return grid
 
 
-@tf.function
+# @tf.function
 def update_block(i, grid, grid_pos, xst, local_pos, cls):
     # Get target cell
     grid_y = grid_pos[0, i]
@@ -43,7 +43,7 @@ def update_block(i, grid, grid_pos, xst, local_pos, cls):
     return grid_res
 
 
-@tf.function
+# @tf.function
 def scaled_out(
     xst: tf.Tensor,  # (1, 3)
     pos: tf.Tensor,  # (2, 3)
@@ -70,7 +70,7 @@ def scaled_out(
     return out_grid
 
 
-@tf.function
+# @tf.function
 def positions_to_yolo(
     img: tf.Tensor,  # (800, 800, 3)
     xst: tf.Tensor,  # (1, 3)

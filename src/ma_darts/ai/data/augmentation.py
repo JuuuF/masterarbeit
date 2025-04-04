@@ -13,7 +13,7 @@ class Augmentation:
         self.saturation_amount = 0.2
         self.min_jpeg_quality = 20
 
-    @tf.function
+    # @tf.function
     def pixel_augmentation(
         self,
         img: tf.Tensor,  # (800, 800, 3)
@@ -80,7 +80,7 @@ class Augmentation:
 
         return img
 
-    @tf.function
+    # @tf.function
     def translation_matrix(self, dy=0, dx=0):
         return tf.cast(
             [
@@ -91,7 +91,7 @@ class Augmentation:
             tf.float32,
         )
 
-    @tf.function
+    # @tf.function
     def rotation_matrix(
         self,
         angle: tf.Tensor,
@@ -109,7 +109,7 @@ class Augmentation:
             tf.float32,
         )
 
-    @tf.function
+    # @tf.function
     def apply_rotation_to_pos(
         self,
         pos: tf.Tensor,  # (2, 3)
@@ -136,7 +136,7 @@ class Augmentation:
         pos_ = pos_ + 0.5
         return pos_
 
-    @tf.function
+    # @tf.function
     def apply_translation_to_pos(
         self,
         pos: tf.Tensor,  # (2, 3)
@@ -152,7 +152,7 @@ class Augmentation:
         )
         return pos
 
-    @tf.function
+    # @tf.function
     def transformation_augmentation(
         self,
         img: tf.Tensor,  # (800, 800, 3)
@@ -201,7 +201,7 @@ class Augmentation:
         pos = tf.cast(tf.clip_by_value(pos, 0, 1), tf.float32)
         return img, pos
 
-    @tf.function
+    # @tf.function
     def __call__(
         self,
         img: tf.Tensor,  # (800, 800, 3)
@@ -209,8 +209,10 @@ class Augmentation:
         pos: tf.Tensor,  # (2, 3)
         cls: tf.Tensor,  # (5, 3)
     ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-        pixel_factor = tf.pow(tf.random.uniform((), 0, 1), 5)
-        img = self.pixel_augmentation(img) * (1 - pixel_factor) + img * pixel_factor
 
-        img, pos = self.transformation_augmentation(img, pos)
+        with tf.device("/GPU:0"):
+            pixel_factor = tf.pow(tf.random.uniform((), 0, 1), 5)
+            img = self.pixel_augmentation(img) * (1 - pixel_factor) + img * pixel_factor
+
+            img, pos = self.transformation_augmentation(img, pos)
         return img, xst, pos, cls
