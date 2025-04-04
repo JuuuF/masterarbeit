@@ -337,7 +337,7 @@ def yolo_v8_model(
 
     # Backbone
     x = inputs
-    dropout_backbone = 0.15
+    dropout_backbone = 0.1
 
     # fmt: off
     x_0 = Conv(x, k=3, s=2, p=True, c=round(64 * w), dropout=0.0)  # P1
@@ -353,7 +353,7 @@ def yolo_v8_model(
     # fmt: on
 
     # Head
-    dropout_head = 0.3
+    dropout_head = 0.2
     x_10 = Upsample(x_9)
     x_11 = Concat([x_6, x_10])
     x_12 = C2f(
