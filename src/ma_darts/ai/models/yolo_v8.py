@@ -158,9 +158,14 @@ def Detect(
     name: str | None = None,
     dropout: float = 0.0,
 ) -> tuple[tf.Tensor, tf.Tensor]:
+    x_xst = x
     x_pos = x
     x_cls = x
     c = x.shape[-1]
+
+    x_xst = Conv(x_xst, k=3, s=1, p=True, c=c, dropout=dropout)
+    x_xst = Conv(x_xst, k=3, s=1, p=True, c=c, dropout=dropout)
+    x_xst = Conv2d(x_xst, k=1, s=1, p=False, c=reg_max)  # original: not even present
 
     x_pos = Conv(x_pos, k=3, s=1, p=True, c=c, dropout=dropout)
     x_pos = Conv(x_pos, k=3, s=1, p=True, c=c, dropout=dropout)
@@ -168,13 +173,13 @@ def Detect(
         x_pos, k=1, s=1, p=False, c=2 * reg_max
     )  # original: c=4 * reg_max, but we omit w and h
 
-    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout * 2)
-    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout * 2)
+    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout)
+    x_cls = Conv(x_cls, k=3, s=1, p=True, c=c, dropout=dropout)
     x_cls = Conv2d(
         x_cls, k=1, s=1, p=False, c=nc * reg_max
     )  # original: c=nc, but I want a per-estimation confidence
 
-    return x_pos, x_cls
+    return x_xst, x_pos, x_cls
 
 
 def C2f(
@@ -243,6 +248,7 @@ def ClampReLU(
 
 
 def OutputTransformation(
+    x_xst: tf.Tensor,  # (None, n, n, reg_max)
     x_pos: tf.Tensor,  # (None, n, n, reg_max * 2)
     x_cls: tf.Tensor,  # (None, n, n, reg_max * n_classes)
     reg_max: int,
@@ -251,23 +257,22 @@ def OutputTransformation(
 ) -> tf.Tensor:
 
     # Reshaping
+    x_xst = Reshape(
+        x_xst,
+        shape=x_xst.shape[1:3] + (1, reg_max),
+    )  # (y, x, 1, 3)
     x_pos = Reshape(
         x_pos,
         shape=x_pos.shape[1:3] + (2, reg_max),
     )  # (y, x, 2, 3)
-
-    # Extract existence
     x_cls = Reshape(
         x_cls,
         shape=x_cls.shape[1:3] + (n_classes, reg_max),
-    )  # (y, x, n_classes, 3)
-
-    x_xst = x_cls[..., :1, :]  # (None, n, n, 1, 3)
-    x_cls = x_cls[..., 1:, :]  # (None, n, n, 5, 3)
+    )  # (y, x, 5, 3)
 
     # Activations
     x_xst = Sigmoid(x_xst)
-    x_pos = ClampReLU(x_pos)  # clamp between 0 and 1
+    x_pos = Sigmoid(x_pos)  # clamp to 0 and 1; for some reason, sigmoid is okay here
     # x_cls = Softmax(x_cls, axis=-2)  # determine class percentage-wise
 
     # Combining
@@ -372,15 +377,16 @@ def yolo_v8_model(
     )  # P5
 
     # (n, n, 2)
-    detect_s_pos, detect_s_cls = Detect(
-        x_21, reg_max=reg_max, nc=n_classes, dropout=0.15
-    )  # (None, 25, 25, 3*2), (None, 25, 25, 3*6)
+    detect_s_xst, detect_s_pos, detect_s_cls = Detect(
+        x_21, reg_max=reg_max, nc=n_classes - 1, dropout=0.1
+    )  # (None, 25, 25, 3), (None, 25, 25, 3*2), (None, 25, 25, 3*(6-1))
     # Output Transformation
     detect = OutputTransformation(
+        detect_s_xst,
         detect_s_pos,
         detect_s_cls,
         reg_max=reg_max,
-        n_classes=n_classes,
+        n_classes=n_classes - 1,
         out_name="out_s",
     )  # (s, s, 2 + n_classes, reg_max)
 
