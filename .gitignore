@@ -1,4 +1,5 @@
 # Blender files
+*.blend
 *.blend1
 *.blend2
 Blender_/
