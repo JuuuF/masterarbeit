@@ -385,21 +385,21 @@ ds_paper_d1 = dataloader_paper(
     sample_weight=5,
 )  # 2000
 
-ds_strongbows = dataloader_ma(
-    "data/darts_references/strongbows_out/",
+ds_jess = dataloader_ma(
+    "data/darts_references/jess_out/",
     batch_size=BATCH_SIZE,
     shuffle=True,
     augment=True,
     cache=True,
     clear_cache=args.clear_cache,
     sample_weight=8,
-)  # 168
+)  # 128
 
-# 24576 + 256 + 160 = 24992
+# 24576 + 256 + 160 = 24960
 train_ds = ds_gen_train.concatenate(  # 24576
     ds_paper_d1.take(256 // BATCH_SIZE),  # + 256
 ).concatenate(
-    ds_strongbows.take(160 // BATCH_SIZE),  # + 160
+    ds_jess.take(128 // BATCH_SIZE),  # + 128
 )
 
 # Utils.check_dataset(train_ds)
@@ -427,20 +427,20 @@ ds_paper_d2 = dataloader_paper(
     clear_cache=args.clear_cache,
 )  # 152
 
-ds_jess = dataloader_ma(
-    "data/darts_references/jess_out/",
+ds_strongbows = dataloader_ma(
+    "data/darts_references/strongbows_out/",
     batch_size=BATCH_SIZE,
     shuffle=False,
     augment=False,
     cache=True,
     clear_cache=args.clear_cache,
-)  # 128
+)  # 168
 
-# 256 + 256 + 128 = 640
+# 256 + 256 + 128 = 672
 val_ds = ds_gen_val.concatenate(  # 256
     ds_paper_d2.take(256 // BATCH_SIZE),  # + 256
 ).concatenate(
-    ds_jess.take(128 // BATCH_SIZE),  # + 128
+    ds_strongbows.take(160 // BATCH_SIZE),  # + 160
 )
 
 
