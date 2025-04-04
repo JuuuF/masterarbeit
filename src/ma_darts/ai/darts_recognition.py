@@ -40,6 +40,7 @@ from datetime import datetime
 from ma_darts import img_size, classes
 
 BATCH_SIZE = 16 if "GPU_SERVER" in os.environ.keys() else 4
+initial_lr = 0.001
 
 
 class Utils:
@@ -95,14 +96,21 @@ class Utils:
         )
         callbacks.append(pc)
 
+        # Adaptive Learning Rate
         lr = tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss",
-            factor=np.power(0.1, 1 / 3),
-            patience=25,
+            factor=np.power(0.1, 1 / 4),
+            patience=50,
             verbose=1,
-            min_lr=1e-5,
+            min_lr=1e-6,
         )
         callbacks.append(lr)
+
+        lr_warmup = ma_callbacks.WarmupLearningRateScheduler(
+            warmup_epochs=4,
+            initial_lr=initial_lr,
+        )
+        callbacks.append(lr_warmup)
 
         # TensorBoard
         tb = tf.keras.callbacks.TensorBoard(
@@ -314,20 +322,6 @@ class Data:
             show_imgs(img)
 
 
-# data_dir = "data/generation/out"
-# sample_ids = [f for f in os.listdir(data_dir) if f.isnumeric()]
-# sample_ids = sorted(sample_ids, key=int)
-
-# for i in range(1000):
-#     sample_id = sample_ids[i]
-#     sample_info = pickle.load(open(os.path.join(data_dir, sample_id, "info.pkl"), "rb"))
-#     score = sample_info.scores
-#     classes = Data.extract_dart_classes(sample_info)
-#     print(score, classes)
-#     input()
-# exit()
-
-
 # -----------------------------------------------
 # Command Line Arguments
 
@@ -353,18 +347,12 @@ metrics = [
     PositionsLoss(name="03_pos_loss", multiplier=0.5),
     # DIoULoss(name="04_diou_loss", multiplier=0.02),
 ]
-# metrics = [metrics for _ in range(3)]
+
 model.compile(
-    optimizer=tf.keras.optimizers.AdamW(learning_rate=0.001),
-    loss=YOLOv8Loss(
-        square_size=0.05,
-        cls_threshold=0.003,
-        cls_width=0.002,
-        pos_threshold=0.004,
-        pos_width=0.002,
-        diou_threshold=0.003,
-        diou_width=0.001,
+    optimizer=tf.keras.optimizers.AdamW(
+        learning_rate=initial_lr,
     ),
+    loss=YOLOv8Loss(),
     metrics=metrics,
 )
 # model.summary(160)
