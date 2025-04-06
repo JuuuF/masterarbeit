@@ -129,36 +129,44 @@ Licht-Eigenschaften / Normal Maps / Shaders
 \subsection{Noise-Texturen}
 \label{sec:noise}
 
+Essenziell für prozedurale Datenerstellung ist die Verwendung von Noise-Texturen. Diese ermöglichen es, Kontrolle über die Variation der Daten zu behalten während der Zufall der Datenerstellung erhalten bleibt. Es gibt unterschiedliche Arten von Noise-Texturen, die für die Generierung zufälliger Texturen verwendet werden \cite{noise_generation}. In dieser Arbeit wurden vorgehend White Noise und Perlin Noise in der Datengenerierung genutzt, daher werden diese in den folgenden Unterabschnitten genauer erläutert.
+
 \subsubsection{White Noise}
 
-\cite{white_noise}
+White Noise -- zu deutsch: weißes Rauschen -- ist eine Zufallsverteilung von Zahlenwerten, die nicht vorhersehbar ist und doch einem Muster folgt. Sie ist dadurch charakterisiert, dass jeder Ausgangswert mit der selben Wahrscheinlichkeit versehen ist \cite{white_noise}. Im 1-dimensionalen Beispiel von Audio entspricht weißes Rauschen der Charakteristik, dass jede Frequenz in einem Signal gleichermaßen vertreten ist. Hinsichtlich einer diskreten 2-dimensionalen Textur ist die Wahl jedes Intensitätswerts eines Pixels unabhängig voneinander gleichverteilt über das Intervall $[0, 1]$.
 
 \subsubsection{Perlin Noise}
 
-\cite{perlin_noise_original,perlin_noise_extension}
+Perlin Noise bildet die Basis für gezielte Generierung von Strukturen prozeduraler Natur. 1982 von Ken Perlin für den Film Tron entwickelt, zielte Perlin Noise in Vergleich zu White Noise auf die Generierung von zusammenhängendem Rauschen ab, das zur Generierung natürlicher Strukturen verwendet werden kann \cite{perlin_noise_original,perlin_noise_extension}.
+
+Zur Berechnung einer 2D-Textur mit Perlin Noise wird ein Bild in Regionen unterteilt. Jeder Ecke dieser Regionen wird ein Vektor zugeordnet, der in eine zufällige Richtung zeigt, die uniform aus dem Intervall $[0, 2\pi]$ gewählt wird, wie in \autoref{img:perlin_noise_generation} dargestellt. Für jeden Pixel $(x, y)$ im Bild wird die korrespondierende Region bestimmt und die Punktprodukte zwischen den Vektoren der Ecken der Region und den Verbindungsvektoren zu dem Punkt werden gebildet. Die Intensität des Pixels wird durch bilineare Interpolation dieser Werte auf Grundlage seiner Position in der Region bestimmt. Auf diese Weise entsteht ein zusammenhängendes Muster, das als Perlin Noise bezeichnet wird \cite{perlin_noise_original}.
+
+Der Detailgrad von Perlin Noise wird durch Überlagerung mehrerer Schichten erzielt, die sich in der Größe ihrer Regionen unterscheiden; je kleiner die Regionen, desto größer der Detailgrad. Durch Variation der Gitterauflösung und Überlagerung mehrerer Schichten kann ein beliebiger Detailgrad erzielt werden, der in einem natürlichen Rauschen resultiert.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/rendering/grundlagen/perlin_noise.png}
-    \caption{Generierung von Perlin Noise \cite{perlin_noise_img}.}
+    \caption{Generierung von Perlin Noise \cite{perlin_noise_img}. Zufällige Rotationsvektoren werden uniform über ein Bild verteilt, durch sie wird die Texturierung bestimmt.}
     \label{img:perlin_noise_generation}
 \end{figure}
 
 \subsection{Seeding}
 
-\todo{}
+Die algorithmische Generierung von Zufallszahlen ist nicht ohne Verzerrung möglich. Daher werden von Computern generierte Zufallszahlen auch als pseudo-zufällig bezeichnet. Die Generierung von Zufallszahlen beruht auf deterministischen Algorithmen, die üblicherweise einen Seed verwenden, um Zahlen zu generieren. Durch die Verwendung des selben Seeds ist das Ziehen von Zufallszahlen deterministisch wiederholbar, wodurch die Generierung von Daten reproduzierbar und nachvollziehbar ist.
 
 \subsection{Thresholding und Maskierung}
 
 Warum braucht man das? Wozu macht man das? -> Thresholding zur Kombination von Texturen miteinander / Layering mehrerer Texturen
 
-\todo{}
+In der Datengenerierung dieser Thesis wird Thresholding und Maskierung verwendet, um Texturen gezielt miteinander zu kombinieren. Im Bezug auf die Verwendung in der Datengenerierung wird  für Thresholding ein Schwellwert verwendet, der die Farbwerte einer Textur bestimmen. Ist die Pixelintensität oberhalb des Schwellwerts, wird dieser entweder verwendet, andernfalls nicht; das selbe ist umgekehrt möglich. Typische Einsätze von Thresholding in dieser Arbeit ist die Eingrenzung von Noise-Texturen auf die größten Pixelintensitäten oberhalb eines Schwellwerts.
+
+Wird dieses globale Thresholding aller Pixel lokalisiert, sodass jedem Pixel ein dedizierter Threshold zugeordnet wird, spricht man von Maskierung. Eine Maske bestimmt die Grenzwerte, die zur Einblendung der modulierten Textur notwendig sind. Neben binärer Ein- und Ausblendung von Pixeln ermöglichen Masken durch Verwendung von Pixelwerten im Intervall $[0, 1]$ anteiliges Anzeigen der Quelltextur. Diese Arbeitsweise wird in dieser Thesis zur Erstellung einer realistischen Dartscheibe durch Überlagerung unterschiedlicher maskierter Texturen verwendet.
+
+\todo{Dieser Text ist nicht gut, gerne überarbeiten. Mehr Zahlen und Definitionen. Und eine Quelle wäre wohl nicht verkehrt.}
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Prozedurale Texturen}
 \label{sec:was_prozedurale_texturen}
 
-Warum ist das wichtig -\> Parametrisierung
-
-\todo{}
+Prozedurale Texturen sind der Kern der Datenerstellung in dieser Thesis. Sie dienen als Blaupause zur Generierung zufälliger Texturen, indem sie ein generelles Erscheinungsbild einer Textur definieren. Dieses Erscheinungsbild ist aufgebaut aus Bestandteilen, die Seeding integrieren, um ihr Aussehen zu bestimmen. Die Änderung des verwendeten Seeds führt folglich zu einer Änderung der Textur. Der Grad der Änderung ist vorhersehbar und kann durch Grenzwerte begrenzt sein, die konkrete Änderung unterliegt jedoch weiterhin der Pseudo-Zufälligkeit. Unter Einbindung dieser Technik kann eine beliebige Anzahl unterschiedlicher Texturen generiert werden.

@@ -3,10 +3,87 @@
 \section{Ergebnisse}
 \label{sec:cv:ergebnisse}
 
-Hier die Ergebnisse
+Hier die Ergebnisse.
 
 % -------------------------------------------------------------------------------------------------
-\subsection{CV-Ergebnis}
-\label{sec:cv_ergebnis}
+\subsection{Metriken}
+\label{sec:cv_metriken}
 
-.
+Für die Messung der Entzerrungsgenauigkeit des entwickelten Algorithmus werden zwei konsekutive Metriken verwendet. Die erste Metrik $\chi$ misst die Fähigkeit eines Systems, eine Homographie zur Entzerrung einer Dartscheibe zu ermitteln, unabhängig von ihrer Genauigkeit.
+
+\begin{equation*}
+    \chi(S, I) =
+    \begin{cases}
+        1, & \text{wenn System $S$ zu Bild $I$ eine Homographie ermitteln kann} \\
+        0, & \text{ansonsten}
+    \end{cases}
+\end{equation*}
+
+Die zweite Metrik $\Lambda(H, \widehat{H})$ bestimmt die Genauigkeit der ermittelten Entzerrungs-Homographie $\widehat{H}$, gegeben einer Ziel-Homographie $H$. Da ein trivialer Vergleich der Zahlenwerte der ermittelten Homographien wenig Aufschluss über die konkrete Genauigkeit der Entzerrung liefert, ist eine komplexere Metrik notwendig. Für die verwendete Metrik $\Lambda$ werden $N=61$ unterschiedliche Orientierungspunkte verwendet. Diese befinden sich entlang der Feldlinien radial verteilt in den Ringen der äußeren Bulls, des äußeren Triple-Rings und des äußeren Double-Rings. Zusätzlich ist der Mittelpunkt als weiterer Orientierungspunkt mit aufgenommen. Die Positionen $P_{i \in [N]}$ aller Orientierungspunkte im Zielbild sind durch die Definition der Entzerrung festgelegt. Diese Punkte werden durch die inverse Ziel-Homographie an ihre Ursprungspositionen $\widetilde{P}_i = \mathrm{inv}(H) \times P_i$ transformiert und von dort durch die ermittelte Homographie zu den vorhergesagten Zielpositionen $\widehat{P}_i = \widehat{H} \times \widetilde{P}_i$ rücktransformiert. Der Wert der Metrik ist definiert durch:
+
+\[ \Lambda(H, \widehat{H}) = \frac{1}{N} \sum_{i = 1}^{N} \left\lVert P_i - \widehat{H} \times \mathrm{inv}(H) \times P_i \right\rVert _2  \]
+
+Durch diese Metrik ist eine Quantifizierung der Ähnlichkeit zweier Homographien zur Entzerrung einer Dartscheibe möglich. Zu sehen ist bei dieser Definition, dass $\Lambda(H, \widehat{H}) = 0\,\text{px}$, wenn $H = \widehat{H}$, da $\widehat{H} \times \mathrm{inv}(H) = I$, die Identitätsmatrix.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Verwendete Daten}
+\label{sec:cv_ergebnisse_daten}
+
+- Gen-Daten + DD-Daten
+- keine negativen Sample, da lediglich Ergebnisse auf positiven Daten relevant sind.
+- es geht darum, Dartscheiben zu entzerren, nicht darum, sie zu identifizieren
+- dass Dartscheiben in den Bilden vorhanden sind, wird als Voraussetzung für die Verwendung des Systems angesehen
+
+Zur Evaluierung des Algorithmus werden Daten benötigt. Die Daten dieser Auswertung stammen aus 5 unterschiedlichen Quellen und werden voneinander getrennt gehalten. Dies dient der Identifizierung von einerseits Verzerrungen auf Daten und andererseits Schwachstellen in dem getesteten System. Die Datenquellen sind in \autoref{tab:datenquellen} aufgelistet und stellen sich zusammen aus synthetischen Daten sowie Daten des DeepDarts-Systems.
+
+Die Daten beinhalten lediglich positive Datensätze, indes in jedem Bild eine Dartscheibe vorhanden ist. Aufgabe der Systems ist nicht die Identifizierung von Dartscheiben, sondern die Entzerrung dieser, sodass eine Existenz einer Dartscheibe in den Bildern vorausgesetzt wird.
+
+\begin{table}
+    \centering
+    \begin{tabular}{r||c|cc|cc}
+        \multirow{2}{*}{Datenquelle} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Generierte\\ Bilder\end{tabular}} & \multicolumn{2}{c|}{DeepDarts-D1} & \multicolumn{2}{c}{DeepDarts-D2}                        \\
+                                     &                                                                              & Validierung                       & Test                             & Validierung & Test   \\ \hline
+        Anzahl Bilder                & 2048                                                                         & 1000                              & 2000                             & 70          & 150    \\
+        Automatische Annotation      & \cmark                                                                       & \xmark                            & \xmark                           & \xmark      & \xmark
+    \end{tabular}
+    \caption{Datenquellen für die Auswertung der Dartscheibenentzerrungen.}
+    \label{tab:datenquellen}
+\end{table}
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Quantitative Auswertung}
+\label{sec:cv_quantitative_auswertung}
+
+\subsubsection{Geschwindigkeit der Vorhersagen}
+
+- Zeit pro Vorhersage
+- absolute Zeit nur bedingt relevant, da systemabhängig
+- gibt aber grobe Richtung vor, wie schnell das System sein kann
+- Vergleich mit DD, um Unterschied klar zu machen
+
+\todo{}
+
+\subsubsection{Auswertung auf Render-Daten}
+
+- Metriken MA + DD
+
+\todo{}
+
+\subsubsection{Auswertung auf DeepDarts-Daten}
+
+- Metriken MA + DD
+
+\todo{}
+
+\subsubsection{Auswertung auf echten Daten}
+
+- Metriken MA + DD
+
+\todo{}
+
+\subsubsection{Zusammenfassung der daten}
+
+- DD schneller
+- MA besser
+
+\todo{}
