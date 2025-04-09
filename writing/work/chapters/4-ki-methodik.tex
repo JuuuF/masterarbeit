@@ -6,42 +6,169 @@
 Methodik hier.
 
 % -------------------------------------------------------------------------------------------------
-\subsection{Wahl des Netzwerks}
-\label{sec:netzwerk_wahl}
-
-\todo{Netzwerkwahl beschreiben}
-
-\subsubsection{Warum YOLOv8?}
+\subsection{YOLOv8}
 \label{sec:warum_yolov8}
 
-\todo{Warum denn nun?}
+\subsubsection{Warum dieses Modell?}
 
-\subsubsection{Adaption der Netzwerkarchitektur}
+Die YOLOv8-Architektur wurde analog zur restlichen Familie der YOLO-Netzwerke für effiziente und genaue Identifizierung von Objekten in Bilddaten entwickelt \cite{yolov8_paper}. Zudem werden YOLO-Architekturen in unterschiedlichen Konfigurationen bereitgestellt, die dir Komplexität der Modelle bestimmen. So wurden für die YOLOv8-Architektur die Konfigurationen n (nano), s (small), m (medium), l (large) und x (extra large) bereitgestellt, wobei die Nano-Varianten die geringste Parameterzahl besitzen und die Extra-Large-Varianten die größte. Die Trainingserfolge sind typischerweise proportional zur Parameterzahl der Netzwerke.
+
+YOLOv8 ist ein State-of-the-Art Single-Shot CNN, welches in der Lage ist, selbst unter Verwendung weniger Parameter und in ressourcenbegrenzten Umgebungen in Echtzeit verwendet zu werden. Darüber hinaus wurde mit YOLOv4 die Vorgängerversion dieser Netzwerkarchitektur im DeepDarts-System zur Vorhersage von Dartpfeilpositionen verwendet. Durch die Arbeit des DeepDarts-Systems wurde die Fähigkeit des Erlernens dieser Aufgabe durch Netzwerke der YOLO-Familie bereits erarbeitet und es kann in dieser Thesis auf diesem Wissen aufgebaut werden.
+
+\subsubsection{Adaption des Modells}
 \label{sec:yolo_adaption}
 
-\paragraph{Multi-Scale-Output}
+Obgleich durch \citeauthor{deepdarts} der Einsatz von YOLO-Architekturen zur Identifizierung von Dartpfeilen gezeigt wurde ist die generelle Strukturierung der Architektur nicht optimal für die zugrundeliegende Aufgabe. Für eine Abstimmung von Architektur und Aufgabe wurden strukturelle Änderungen im Netzwerkaufbau unternommen. Die Adaptierte Netzwerkarchitektur wird im Folgenden als YOLOv8* bezeichnet, um eine Differenzierung zwischen zu der offiziellen YOLOv8-Architektur herzustellen.
 
 \paragraph{Bounding Boxes}
 
-\paragraph{Dreiteilung des Outputs}
+Im Wesentlichen ist die Verwendung von Ankerpunkten mit umliegenden Bounding Boxes bei der Lokalisierung von Objekten in Bildern effektiv und zielführend. Bei der Vorhersage spezifischer Positionen in einem Bild liefert die Verwendung von Bounding Boxes jedoch keinen signifikanten Vorteil. Das DeepDarts-System projizierte quadratische Bounding Boxes auf die Dartpfeilspitzen, um Outputdaten zum Training des Netzwerks zu generieren. Diese Bounding Boxes wurden im Verlauf des Trainings verkleinert, bis sie eine minimale Größe erreichten \cite{deepdarts}. Die letztendliche Positionsberechnung der identifizierten Dartpfeile bezog die Bounding Boxes nicht mit ein, da der Ankerpunkt der quadratischen Bounding Box die Position des Dartpfeils angibt. Die YOLOv8*-Architektur wurde an ihren Einsatz angepasst, indem die Verwendung von Bounding Boxes aus der Architektur eliminiert wurde.
 
-\begin{itemize}
-    \item Existenz
-    \item Position
-    \item Klasse
-    \item alles 3x pro Zelle
-\end{itemize}
+\paragraph{Multi-Scale-Output}
 
-\todo{Adaption erklären}
+In der YOLOv8-Architektur wird ein Multi-Scale-Output zur Identifizierung von Objekten unterschiedlicher Größen eingesetzt. Objekte werden in 3 unterschiedlichen Kontextgrößen identifiziert; durch Nachverarbeitungsschritte werden diese Outputs miteinander kombiniert. Dieser Multi-Scale-Output ist in der YOLOv8*-Architektur nicht vorhanden, da für die zu identifizierenden Objekte keine starken Größenvariationen zu erwarten sind. Zudem unterliegt eine kleine Kontextgröße der Gefahr der fehlerhaften Klassifizierung von Abnutzungen der Dartscheibe als Dartpfeil. Der Kontext des gesamten Dartpfeils ist zur Identifizierung seines Einstichpunktes notwendig; dieser ist durch die Normalisierung der Dartscheibe auf eine feste Größe von $800 \times 800\,\text{px}$ durch den größten Kontext gegeben.
 
-\subsection{Datenaugmentierung}
+\paragraph{Dreiteilungen der Outputs}
+
+Die YOLOv8*-Architektur unterteilt das Eingabebild in Regionen und bestimmt die Existenz von Dartpfeilen je Region. Da eine typische Runde Darts aus 3 Würfen besteht, ist davon auszugehen, dass eine maximale Anzahl von 3 Dartpfeilen in den Bildern zu identifizieren sind. Dabei kann jedoch nicht ausgeschlossen werden, dass sich die Dartpfeilspitzen in unterschiedlichen Regionen befinden. Je Region wird daher eine feste Anzahl von 3 möglichen Dartpfeilpositionen vorhergesagt. Existiert lediglich ein Dartpfeil, so sind zwei mögliche Outputs genullt.
+
+\todo{Dense-Layer?}
+
+\subsubsection{Konfiguration des Netzwerks}
+
+Für diese Thesis wurden die Konfigurationen YOLOv8*-n und YOLOv8*-x trainiert, um einen Überblick über die Fähigkeiten der Modellarchitektur zu erlangen. Nano-Varianten der Modelle sind für die Ausführen in Echtzeitumgebungen und in Szenarien mit begrenzter Rechenleistung, beispielsweise in Mobiltelefonen, ausgelegt. Ihre Inferenzzeit ist durch ihre geringe Größe gering im Vergleich zu anderen Konfigurationen. Die Extra-Large-Varianten der Modelle werden für maximale Performance hinsichtlich der Ergebnisse verwendet. Sie werden in Systemen verwendet, in denen Rechenleistung kein Bottleneck darstellt.
+
+\todo{Tatsächliche Konfiguration aufzeigen.}
+
+YOLOv8-n bzw. YOLOv8-x
+Konfiguration erklären -> woher kommen die Varianten?
+Anzahl Parameter
+Vergleich mit DeepDarts-Netzwerk
+
+\subsubsection{Aufbau der Architektur}
+
+Der Aufbau des in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{img:yolov8_architektur} dargestellt. Sie ist unterteilt in die Bereiche Backbone, Head und Detect. Das Backbone und der Head sind im wesentlichen analog zur YOLOv8-Architektur strukturiert. Jedoch wurde die Detection in einen eigenen Bereich überführt und adaptiert indes durch die Eliminierung des Multi-Scale-Outputs lediglich eine Verbindung zwischen Head und Detection besteht. Der Detection-Bereich ist unterteilt in drei parallele Stränge, die Existenz, Position und Klasse vorhersagen und zu einem gemeinsamen Output konkateniert werden. Dieser Output besitzt eine Größe von $25 \times 25 \times 8 \times 3$.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/ai/yolov8.pdf}
+    \caption{YOLOv8*-Architektur. (1) Bottleneck; Extraktion von Features. (2) Head; Kombination von Features. (3) Detect; Deutung von Features.}
+    \label{img:yolov8_architektur}
+\end{figure}
+
+Die Bestandteile der Architektur sind in \autoref{img:yolov8_parts} dargestellt. Es wurden 4 zusammengesetzte Blöcke definiert, die unterliegende Funktionen im Aufbau von YOLOv8* übernehmen.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/ai/yolov8_parts.pdf}
+    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (4, 5) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut.}
+    \label{img:yolov8_parts}
+\end{figure}
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Loss-Funktionen}
+\label{sec:losses}
+
+\todo{Einleitende Sätze}
+
+\subsubsection{Zusammensetzung des Losses}
+
+Die Loss-Funktion zum Trainieren der YOLOv8*-Architektur folgt dem Aufbau dieser. Sie ist definiert als gewichtete Summe aus Existenz-Loss, Klassen-Loss und Positions-Loss:
+
+\[ \mathcal{L}(y, \hat{y}) = \omega_\text{xst} \mathcal{L}_\text{xst}(y, \hat{y}) + \omega_\text{cls} \mathcal{L}_\text{cls}(y, \hat{y}) + \omega_\text{pos} \mathcal{L}_\text{pos}(y, \hat{y}) \]
+
+\paragraph{Existenz-Loss}
+
+Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge aller Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und 3 Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0.16\% $. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts.
+
+\paragraph{Klassen-Loss}
+
+Dies, das, class.
+
+\todo{}
+
+\paragraph{Positions-Loss}
+
+Position, yo ho.
+
+\todo{}
+
+\paragraph{Gewichtung}
+
+Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position resultieren unterschiedliche Bildbereiche der Loss-Werte. Die Loss-Gewichte $\omega_\text{xst}$, $\omega_\text{cls}$ und $\omega_\text{pos}$ gewichten die Loss-Outputs derart, dass kein Loss wesentlich überwiegt und eine Reduktion des Losses $\mathcal{L}$ eine uniforme Reduktion der Losses $\mathcal{L}_\text{xst}$, $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$ mit sich zieht. Zum Anpassen der Losses aneinander für eine gleichwertige Konvergenz wurden die gewichte $\omega_\text{xst} = 400$, $\omega_\text{cls} = 850$ und $\omega_\text{pos} = 0.5$ verwendet.
+
+\subsubsection{Hintergründe und Zielsetzung}
+
+Targetting bestimmter Bereiche des Netzwerks
+
+\todo{}
+
+\subsubsection{Abweichung von DIoU-Loss}
+
+Bei dem Training von YOLO-Architekturen ist die die Verwendung vom IoU-Losses oder Adaptionen wie CIoU, DIoU oder GIoU \cite{diou_losses}, eine übliche Praxis \cite{yolov1,yolov8_paper,yolo_training_giou}. Diese Erweiterungen des IoU-Losses stützen sich grundlegend auf der Annahme der Existenz von Bounding Boxes. Da diese in der YOLOv8*-Architektur eliminiert wurden, ist die Verwendung von IoU-basierten Loss-Funktionen obsolet. Es wurde jedoch mit einer Adaption des GIoU-Losses experimentiert, in der Quadrate vordefinierter Größe auf die vorhergesagten Positionen projiziert werden, anhand derer ein IoU-Loss möglich wäre. Durch diese Herangehensweise können viele Annahmen getroffen werden, durch die Optimierungen bezüglich Äquivalenz von GIoU-Loss und DIoU-Loss und effiziente Berechnung der Intersection-Area durch Distanzen der Punkte voneinander möglich sind. Da dieser Ansatz jedoch trotz Optimierungen mit einer großen Rechenleistung und starker Kongruenz zum Positions-Loss einherging, wurde diese Idee für das Training des Netzwerks verworfen.
+
+% -------------------------------------------------------------------------------------------------
+\subsection{Training}
+\label{sec:nn_training}
+
+\subsubsection{Ziel des Trainings}
+
+\todo{}
+
+\subsubsection{Trainingsdaten}
+\label{sec:trainingsdaten}
+
+Die Trainingsdaten bilden die Basis des Trainings eines neuronalen Netzes. Für das Training des DeepDarts-Systems wurden wenig diverse Daten verwendet, wodurch die Performance des Systems beeinträchtigt wurde, wie bereits in \autoref{sec:cv:ergebnisse} dargestellt wurde. Um diesem Phänomen der einseitigen und wenig diversen Daten entgegenzuwirken, wurde in dieser Thesis auf die Nutzung eigener, synthetisch generierter Daten gesetzt, die durch Salting echter Daten angereichert wurden. Die Datenerstellung erfolgte nach dem in \autoref{cha:daten} beschriebenen Prinzip. Zum Salting wurden einerseits Daten aus dem DeepDarts-Datensatz verwendet, sowie manuell aufgenommene Daten aus einem Lokal.
+
+Die überwiegende Mehrheit der Trainingsdaten wird durch die generierten Daten ausgemacht mit dem Ziel, durch diese ein grundlegendes Verständnis der zu lösenden Aufgabe der Klassifikation von Existenz und Feldfarbe sowie der Regression von Positionen der Dartpfeilspitzen zu erlangen. Das Salting durch eine geringe Menge echter Daten dient der Festigung der erlernten Grundprinzipien und der Adaption auf echte Daten zur Minimierung des Risikos des Overfittings. Daten, die zum Salting verwendet werden, besitzen zur Regulierung von Kardinalitätsunterschieden eine höhere Gewichtung als generierte Daten.
+
+Supervised Training setzt die Existenz sowohl von Inputs als auch korrekten Outputs voraus, um die getätigten Vorhersagen des Netzwerks auf ihre Korrektheit zu überprüfen und die Netzwerkparameter durch Backpropagation zu adaptieren. Dazu sind einheitliche In- und Outputs notwendig. Die Inputdaten bestehen aus normalisierten 3-Kanal-Farbbildern mit dem Farbformat BGR und Abmessungen von $800 \times 800\,\text{px}$\footnote{Da es sich bei dem trainierten Netzwerk um ein Fully Convolutional Neural Network handelt, ist eine Festlegung auf konkrete Bilddimensionen nicht notwendig. Zur Vereinheitlichung der Daten und zur Normalisierung der Eingaben wurde jedoch eine feste Größe verwendet.}.
+
+Die Outputdaten besitzen die Form $25 \times 25 \times 8 \times 3$. Das Input-Bild wird in $25 \times 25$ Regionen -- entsprechend $32 \times 32\,\text{px}$ je Region --, für die je eine Matrix der Größe $8 \times 3$ vorhergesagt wird. Diese Matrix enthält Informationen zu Existenz von Dartpfeilspitzen in ihrer Region, die relative Position dieser sowie die getroffene Feldfarbe. Je Region können bis zu 3 Dartpfeile identifiziert werden. Eine schematische Veranschaulichung der Datenstruktur ist in \autoref{img:datenformat} gezeigt.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/ai/data_outputs.pdf}
+    \caption{Schematische Darstellung des Output-Datenformats. Die Anzahl der Output-Zellen wurde hinsichtlich der Übersichtlichkeit auf $10 \times 10$ Regionen begrenzt.}
+    \label{img:datenformat}
+\end{figure}
+
+
+\subsubsection{Oversampling}
+\label{sec:oversampling}
+
+Fasel Fasel
+
+% Referenz nach vorne:
+Die Heatmaps zum Generieren der für das Oversampling genutzten Wahrscheinlichkeitsverteilungen sind in \autoref{img:heatmaps} dargestellt; Details zur Datenerstellung mittels dieser Heatmaps wurden in \autoref{sec:wie_dartpfeil_positionen} (\nameref{sec:wie_dartpfeil_positionen}) erläutert.
+
+
+\subsubsection{Validierungsdaten}
+\label{sec:validierungsdaten}
+
+Zusätzlich zu den Trainingsdaten werden für das Supervised Training Validierungsdaten verwendet. Diese setzen sich ebenfalls aus unterschiedlichen Quellen zusammen, jedoch in gleichen Anteilen und resultierend ohne spezifische Gewichtung. Analog zu den Trainingsdaten stammen die Validierungsdaten aus einem Pool generierter Daten, Daten des DeepDarts-Datensatzes und manuell aufgenommen und annotierten Daten. Dabei wurde auf eine strikte Trennung der Daten geachtet, sodass die generierten Daten gesondert gerendert, die DeepDarts-Daten aus einem separaten Teil de Daten mit sich unterscheidender Dartscheibe ausgewählt und die manuell aufgenommen Daten an einem anderen Ort aufgenommen wurden als die in den Trainingsdaten vorhandenen Daten. Auf diese Weise ist eine strikte Trennung der Trainings- und Validierungsdaten gegeben, durch die Verzerrungen durch Ähnlichkeiten zwischen Datensätzen minimiert werden während gleichzeitig unterschiedliche Quellen verwendet werden.
+
+\subsubsection{Augmentierung}
 \label{sec:daten_augmentierung}
 
-\autoref{img:augmentierungs_pipeline}
+Arten der Augmentierung
+Hintergrund der Augmentierungen
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/ai/augmentation_pipeline.pdf}
-    \caption{Augmentierungs-Pipeline}
+    \caption{Pipeline der Daten-Augmentierung.}
     \label{img:augmentierungs_pipeline}
 \end{figure}
+
+\subsubsection{Dynamisches Training}
+
+Adaptive Learning Rate: monitor validation-loss
+Startup Learning-Rate: graduelles Erhöhen der Learning Rate zu Beginn des Trainings
+
+\subsubsection{Trainingsablauf}
+
+Daten zum Training, Graphen etc
+
+% -------------------------------------------------------------------------------------------------
+

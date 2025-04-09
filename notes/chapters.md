@@ -376,21 +376,38 @@ Einleitung:
       - Existenz
       - Position
       - Klasse
+  - Konfiguration des Netzwerks
+    - YOLOv8-n bzw. YOLOv8-x
+    - Konfiguration erklären -> woher kommen die Varianten?
+    - Anzahl Parameter
+    - Vergleich mit DeepDarts-Netzwerk
+
 - Loss-Funktionen:
   - Welche Hintergründe / Zielsetzung
   - Zusammensetzung mehrerer Losses
     - Existenz, Klassen, Positionen
-  - Inkrementelles Einbinden von Losses
-    - Fokus auf spezifische Bereiche in Training
-    - nicht alles auf einmal lernen
-    - inkrementell komplexere Aufgaben im Verlauf des Trainings
+    - Gewichtung der Losses
+  - Warum nicht DIoU?
+    - Einbindung von Klassen schwierig
+    - ansonsten ähnlich zu Positions-Loss
+    - Komzept ambivalent/komplex; Mehrwert im Training war nicht sichtbar
+
 - Training
-  - welcher Optimizer?
-  - Loss-Funktionen erklären
-  - augmentierte Trainingsdaten
-  - Out-of-distribution-Training
+  - Welches Ziel? Wie wurde trainiert?
+    - welcher Optimizer?
+    - Out-of-distribution-Training
+  - Trainingsdaten
+    - Quellen
+      - Generierte Daten + Salting mit echten Daten
+      - Gewichtung unterschiedlicher Quellen
+    - Augmentierung
+    - Art der Outputs
+      - Wie werden dem Netzwerk die Daten präsentiert?
+  - Validierungsdaten
+    - Quellen
   - dynamisches Training:
     - adaptive Learning Rate
+    - anfängliches Steigern der Learning Rate zur Stabilisierung von Anfangsfluktuationen
 
 - Oversampling der Daten
   - künstliches Hinzufügen von Daten, die selten gesehen werden
@@ -404,14 +421,20 @@ Einleitung:
   - eigene Implementierung
   - Grundlage: YOLOv8-Docs (eigentlich vom Bild, aber das stammt von Config-Datei aus Repo)
   - Layer-Subclassing
-- GPU-Optimierung
-  - Subclassing + Verwendung von TF-Funktionen
-- Losses
-  - Loss-Subclassing
-- Training
-  - Model-Checkpoints
 
-- Optimierung
+- Training
+  - Rahmenbedingungen
+    - GPUs: NVIDIA GeForce RTX 4090
+    - Batch Size
+    - Learning Rate
+    - Epochen
+    - Datenmengen (Training + Validierung)
+    - Augmentierugsparameter
+
+  - Batch-Sizes, Datenmenge, Epochen, Augmentierungsparameter, Learning Rate
+  - tf.data-Pipeline
+    - Optimierung durch Auslagerung von Berechnungen auf GPU
+    - Paralleles Laden von Daten
 
 ### Ergebnisse (KI)
 
@@ -503,9 +526,10 @@ Einleitung:
   - klar strukturiert, Fehlerquellen präzise zu erkennen
   - gutes System! *pat pat*
 
-### Ausblick
+## Ausblick
 
 - neues Trainieren des Systems auf mehr echten Daten
+- Quantisierung der Netzwerke
 - Implementierung von PBR in Datenerstellung
 - Verbesserung der Datengenerierung, um realistischer zu werden und mehr Umgebungsbedingungen zu simulieren
 - Kompilierung der CV-Pipeline
