@@ -14,7 +14,7 @@ Implementierung hier.
 
 \subsubsection{Einsatz von Noise-Texturen}
 
-Das Material der Dartscheibe besteht aus unterschiedlichen Schichten, die miteinander kombiniert werden. Ein Grundbestandteil der meisten Schichten 
+Das Material der Dartscheibe besteht aus unterschiedlichen Schichten, die miteinander kombiniert werden. Ein Grundbestandteil der meisten Schichten
 
 WIE wurde es umgesetzt? -> Maskierungen etc.
 
@@ -48,7 +48,7 @@ Im Anschluss an die Barrel wird der Shaft des Dartpfeils platziert. Dieser wird 
 
 Die Flights sind die komplexesten Elemente der Dartpfeile, da sie sie größte Spanne an Erscheinungsbildern besitzen. Ihr Aussehen variiert nicht nur durch ihre Farben, sondern auch durch durch ihre Form. Flights setzen sich aus vier gleichen Flügeln zusammen, die entlang des Dartpfeils in einem Abstand von $90\degree$ platziert sind. Um die Variation der Formen einzufangen, wurden 15 unterschiedliche Formen für Flights modelliert, die sich an realen Formen von Flights orientieren. Ihre Textur wird aus einem Texturatlas mit einer Größe von $1920 \times 1920$ Pixeln gesampled. Dieser besteht aus 9 unterschiedlichen Grundtexturen, die aus Landesflaggen und abstrakten Formen unterschiedlicher Farbpaletten bestehen. Abhängig vom Altersfaktor wird die Verformung der Flights gesteuert, sodass neue Flights keine Deformierungen aufweisen, alte Flights jedoch stark deformiert werden, um Gebrauchsspuren zu simulieren.
 
-\paragraph{\,\,}
+\vspace{\baselineskip}
 
 Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass lediglich gleiche Dartpfeile existieren. Eine Variation der Dartpfeile innerhalb einer Szene ist möglich, es wurde sich jedoch gegen diese Art der Umsetzung entschieden, da die Verwendung unterschiedlicher Dartpfeile für den selben Wurf unwahrscheinlich ist. Unterschiedliche zufällig generierte Dartpfeile sind in \autoref{img:dartpfeile} dargestellt. Hervorzuheben sind die unterschiedlichen Farben und Formen der Flights sowie die variierenden Bestandteile und ihre Texturierung.
 
@@ -114,9 +114,9 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/rendering/implementierung/camera_space.png}
-    \caption{Visualisierung des für die Datenerstellung verwendeten Kamerabereich.}
+    \caption{Darstellung des Kamerabereichs, der zur Erstellung der Daten verwendet wurde.}
     \label{img:camera_space}
-\end{figure} Einstellungen verwendet
+\end{figure}
 
 \subsubsection{Brennweite}
 

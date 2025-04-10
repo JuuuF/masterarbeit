@@ -528,17 +528,26 @@ Einleitung:
 
 ## Ausblick
 
-- neues Trainieren des Systems auf mehr echten Daten
-- Quantisierung der Netzwerke
+### Datenerstellung (Ausblick)
+
 - Implementierung von PBR in Datenerstellung
 - Verbesserung der Datengenerierung, um realistischer zu werden und mehr Umgebungsbedingungen zu simulieren
-- Kompilierung der CV-Pipeline
-  - entweder Cython / Numba oder Implementierung in kompilierter Sprache
-- Ellipsen-Erkennung in CV einbauen (\cite{ellipse_detection_algorithm})
 - Datenerstellung auf weitere Farben und Formen der Dartscheibe erweitern
   - z.B. blau-rote Felder
   - ist aber meist nicht in Steeldarts gegeben, sondern eher in elektronischen Dartscheiben
     - und bei elektronischen Dartscheiben ist dieses System ohnehin überflüssig
+
+### CV (Ausblick)
+
+- Kompilierung der CV-Pipeline
+  - entweder Cython / Numba oder Implementierung in kompilierter Sprache
+- Ellipsen-Erkennung in CV einbauen (\cite{ellipse_detection_algorithm})
+
+### KI (Ausblick)
+
+- neues Trainieren des Systems auf mehr echten Daten
+- Quantisierung der Netzwerke
 - KI-Prediction auf Grundlage einer leeren Dartscheibe
   - Kalibrierungs-Bild schließen und als Referenz nutzen
   - Wenn bekannt ist, dass keine Dartpfeile auf Kalibrierungs-Bild vorhanden sind, ist die Wahrscheinlichkeit von Fehlklassifikationen des Hintergrundes geringer
+- Warm Starts der Learning Rate: lr_warm_restart, lr_adamw_warm_restart

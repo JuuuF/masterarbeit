@@ -11,7 +11,9 @@ Methodik hier.
 
 \subsubsection{Warum dieses Modell?}
 
-Die YOLOv8-Architektur wurde analog zur restlichen Familie der YOLO-Netzwerke für effiziente und genaue Identifizierung von Objekten in Bilddaten entwickelt \cite{yolov8_paper}. Zudem werden YOLO-Architekturen in unterschiedlichen Konfigurationen bereitgestellt, die dir Komplexität der Modelle bestimmen. So wurden für die YOLOv8-Architektur die Konfigurationen n (nano), s (small), m (medium), l (large) und x (extra large) bereitgestellt, wobei die Nano-Varianten die geringste Parameterzahl besitzen und die Extra-Large-Varianten die größte. Die Trainingserfolge sind typischerweise proportional zur Parameterzahl der Netzwerke.
+Die YOLOv8-Architektur wurde analog zur restlichen Familie der YOLO-Netzwerke für effiziente und genaue Identifizierung von Objekten in Bilddaten entwickelt \cite{yolov8_paper,adamw_yolo}. Zudem werden YOLO-Architekturen in unterschiedlichen Konfigurationen bereitgestellt, die dir Komplexität der Modelle bestimmen. So wurden für die YOLOv8-Architektur die Konfigurationen n (nano), s (small), m (medium), l (large) und x (extra large) bereitgestellt, wobei die Nano-Varianten die geringste Parameterzahl besitzen und die Extra-Large-Varianten die größte. Die Trainingserfolge sind typischerweise proportional zur Parameterzahl der Netzwerke.
+
+\todo{Dieser Absatz ist Grütze.}
 
 YOLOv8 ist ein State-of-the-Art Single-Shot CNN, welches in der Lage ist, selbst unter Verwendung weniger Parameter und in ressourcenbegrenzten Umgebungen in Echtzeit verwendet zu werden. Darüber hinaus wurde mit YOLOv4 die Vorgängerversion dieser Netzwerkarchitektur im DeepDarts-System zur Vorhersage von Dartpfeilpositionen verwendet. Durch die Arbeit des DeepDarts-Systems wurde die Fähigkeit des Erlernens dieser Aufgabe durch Netzwerke der YOLO-Familie bereits erarbeitet und es kann in dieser Thesis auf diesem Wissen aufgebaut werden.
 
@@ -83,6 +85,8 @@ Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz
 
 \paragraph{Klassen-Loss}
 
+Der Klassen-Loss beruht ebenso wie der Existenz-Loss auf dem Focal-Loss. Zur Berechnung des Losses werden die Regionen in Betracht gezogen, die einen Dartpfeil enthalten. Regionen ohne Dartpfeil werden nicht betrachtet, da diesen keine eindeutige Klasse zugeordnet werden kann. Es wird die kategorische Focal-Kreuzentropie (Categorical Focal Cross-Entropy) \cite{focal_loss} verwendet, um den Loss der den Dartpfeilen zugeordneten Klassen und den vorhergesagten Klassen in den jeweiligen Ziel-Regionen zu bestimmen. Die Klassen stehen für die Farben schwarz, weiß, rot und grün sowie einer Klasse zur Identifizierung des Außenbereichs, in dem keine Punkte erzielt werden (vgl. \autoref{img:datenformat}).
+
 Dies, das, class.
 
 \todo{}
@@ -111,9 +115,7 @@ Bei dem Training von YOLO-Architekturen ist die die Verwendung vom IoU-Losses od
 \subsection{Training}
 \label{sec:nn_training}
 
-\subsubsection{Ziel des Trainings}
-
-\todo{}
+Das Training des neuronalen Netzes zielt auf das Erlernen der Identifizierung von Dartpfeilspitzen in normalisierten Eingabebildern ab. Das Training stützt sich dabei auf die Verwendung synthetisch generierter Trainingsdaten, die durch sporadische Anreicherung durch echte Daten erweitert und durch starke Augmentierungstechniken vervielfältigt werden. Der Aufbau der Trainingsdaten, die Arten und die Verwendung von Augmentierung sowie der Trainingsablauf werden in den folgenden Unterkapiteln thematisiert und im Detail beschrieben.
 
 \subsubsection{Trainingsdaten}
 \label{sec:trainingsdaten}
@@ -133,26 +135,30 @@ Die Outputdaten besitzen die Form $25 \times 25 \times 8 \times 3$. Das Input-Bi
     \label{img:datenformat}
 \end{figure}
 
-
-\subsubsection{Oversampling}
-\label{sec:oversampling}
-
-Fasel Fasel
-
-% Referenz nach vorne:
-Die Heatmaps zum Generieren der für das Oversampling genutzten Wahrscheinlichkeitsverteilungen sind in \autoref{img:heatmaps} dargestellt; Details zur Datenerstellung mittels dieser Heatmaps wurden in \autoref{sec:wie_dartpfeil_positionen} (\nameref{sec:wie_dartpfeil_positionen}) erläutert.
-
-
 \subsubsection{Validierungsdaten}
 \label{sec:validierungsdaten}
 
 Zusätzlich zu den Trainingsdaten werden für das Supervised Training Validierungsdaten verwendet. Diese setzen sich ebenfalls aus unterschiedlichen Quellen zusammen, jedoch in gleichen Anteilen und resultierend ohne spezifische Gewichtung. Analog zu den Trainingsdaten stammen die Validierungsdaten aus einem Pool generierter Daten, Daten des DeepDarts-Datensatzes und manuell aufgenommen und annotierten Daten. Dabei wurde auf eine strikte Trennung der Daten geachtet, sodass die generierten Daten gesondert gerendert, die DeepDarts-Daten aus einem separaten Teil de Daten mit sich unterscheidender Dartscheibe ausgewählt und die manuell aufgenommen Daten an einem anderen Ort aufgenommen wurden als die in den Trainingsdaten vorhandenen Daten. Auf diese Weise ist eine strikte Trennung der Trainings- und Validierungsdaten gegeben, durch die Verzerrungen durch Ähnlichkeiten zwischen Datensätzen minimiert werden während gleichzeitig unterschiedliche Quellen verwendet werden.
 
+
+\subsubsection{Oversampling}
+\label{sec:oversampling}
+
+Die Datenerstellung beruht auf der Verwendung von Heatmaps zur Positionierung der Dartpfeile auf der Dartscheibe, wodurch eine annähernd uniforme Verteilung über die gesamte Dartscheibe resultiert. Durch die Geometrie der Dartscheibe führt diese Art der Verteilung zu einer Verteilungsungleichheit der Klassen schwarzer und weißer Felder im Vergleich zu roten und grünen Feldern. Um diesem Klassenungleichgewicht entgegenzuwirken, wurde ein Oversampling roter und grüner Felder sowie ihrer unmittelbaren Umgebungen durchgeführt.
+
+Durch das Oversampling ist ein übermäßiger Prozentsatz unterrepräsentierter Klassen in den Daten vorhanden, der zu einem ausgeglichenen Lernen aller Klassen führt \cite{oversampling}. Ohne Oversampling flächenmäßig kleiner Felder der Dartscheibe in den Trainingsdaten resultierte die Vorhersage von Double-, Triple- oder Bull-Pfeilen in Fehlklassifizierungen als schwarze bzw. weiße Felder.
+
+Trotz der Vorteile von Oversampling muss auf eine korrekte Einbindung dessen geachtet werden, um eine übermäßige Verzerrung der Datenlage zu verhindern \cite{oversampling_bad}. Für diese Thesis wurden $24\,576$ Daten erstellt, davon $20\,480$ reguläre Daten und $4096$ Oversampling-Daten. Der Prozentsatz des Oversamplings beläuft sich damit auf $16.67\%$ der generierten Daten.
+
+Die Heatmaps zum Generieren der für das Oversampling genutzten Wahrscheinlichkeitsverteilungen sind in \autoref{img:heatmaps} dargestellt; Details zur Datenerstellung mittels dieser Heatmaps wurden in \autoref{sec:wie_dartpfeil_positionen} (\nameref{sec:wie_dartpfeil_positionen}) erläutert.
+
+
 \subsubsection{Augmentierung}
 \label{sec:daten_augmentierung}
 
-Arten der Augmentierung
-Hintergrund der Augmentierungen
+Erstrebenswert für die Erstellung von Trainingsdaten ist eine maximale Abdeckung aller plausibler und zu erwartender Parameter, die die Daten ausmachen. Insbesondere bei komplexen Daten -- darunter auch Bilddaten -- ist eine uniforme Abdeckung der Quellmenge an Input-Daten nicht möglich. Es ist daher davon auszugehen, dass die Trainingsdaten mit einer gewissen Verzerrung einhergehen. Durch Augmentierung werden neue Daten aus bereits vorhandenen Daten abgeleitet, indem die Parameter der Daten manipuliert werden. Durch diese Technik wird eine größere Bandbreite möglicher Parameter und resultierend mögliche Eingaben in das System abgedeckt \cite{augmentierung, augmentation_max_likelihood_est}. Durch Verwendung von Datenaugmentierung ist eine generelle Verbesserung der Netzwerkperformance zu erwarten \cite{augmentierung_auswirking}.
+
+Für die Augmentierung von Bilddaten existieren unterschiedliche Herangehensweisen \cite{augmentierung_techniken}. Konkret wurden in dieser Arbeit zwei Arten von Augmentierung auf die Trainingsdaten angewendet: Pixel-Manipulation und Transformation. Die Pipeline zur Augmentierung der Trainingsdaten ist in \autoref{img:augmentierungs_pipeline} dargestellt.
 
 \begin{figure}
     \centering
@@ -161,14 +167,42 @@ Hintergrund der Augmentierungen
     \label{img:augmentierungs_pipeline}
 \end{figure}
 
+\paragraph{Pixel-Manipulation}
+
+Unter Pixel-Manipulation versteht sich die Änderung von Pixel-Werten der Eingabebilder, die keine Beeinflussung der Output-Daten mit sich ziehen. Diese Manipulation ist in 5 Unterschritte aufgeteilt, die sukzessiv auf die Input-Daten angewandt werden. Die Manipulation beginnt mit einer Aufhellung oder Verdunklung einzelner Farbkanäle der Bilddaten, gefolgt von zufälliger Helligkeits- und Kontrastanpassung. Danach werden die Bilddaten mit einem normalverteilten Gaußschem Rauschen angereichert und zuletzt wird die Sättigung des resultierenden Bildes zufällig gesetzt.
+
+Das Analogon dieser Manipulation ist das Vorherrschen unterschiedlicher Beleuchtungen und Kamera-Parameter bezüglich ISO, Kontrastverhalten und Über- und Unterbelichtung, sowie variierende Qualität der Kameraaufnahmen. Es ist klar zu erkennen, dass diese Art der Augmentierung keinen Einfluss auf die Outputs der Daten nimmt, da lediglich die Repräsentation der Pixel, jedoch nicht die Aussage des Bildes abgeändert wird.
+
+\paragraph{Transformation}
+
+Entgegen der Pixel-Manipulation nimmt die Transformation Einfluss auf die Output-Daten, indem affine Transformationen auf die Daten angewandt und somit die Positionen der Dartpfeilspitzen in den Bildern manipuliert werden. Die Transformation besteht aus drei Schritten: Flipping, Rotation und Translation. Bei dem Flipping wird das Bild zufällig horizontal und vertikal gespiegelt. Die Rotation rotiert das Bild um Ganzzahlige Vielfache von $18\degree$ um den Mittelpunkt. Diese Rotationsinkremente entsprechen den Feldlinienwinkeln der Dartscheibe und sorgen dafür, dass die Wertigkeit der Dartfelder rotiert, jedoch die Position der Feldlinien erhalten bleibt, da diese durch die in \autoref{cha:cv} vorgestellte Vorverarbeitung vorgegeben ist. Zuletzt wird das Bild durch eine Translation in $x$- und $y$-Richtung um wenige Pixel verschoben, um Ungenauigkeiten des Normalisierungsalgorithmus zu simulieren.
+
+\vspace{\baselineskip}
+
+Diese Augmentierungen werden dynamisch beim Einlesen der Daten angewandt, sodass jedes Sample in jeder Epoche des Trainings unterschiedlich augmentiert wird. Durch diese Technik wird Overfitting durch Auswendiglernen der Daten entgegengewirkt und die Fähigkeit des neuronalen Netzes zur Generalisierung der Problemstellung wird verstärkt. Das Augmentieren ermöglicht das Fokussieren auf die Extraktion relevanter Kerninformationen in den Daten anstelle oberflächlicher Erscheinungsbilder.
+
 \subsubsection{Dynamisches Training}
 
-Adaptive Learning Rate: monitor validation-loss
-Startup Learning-Rate: graduelles Erhöhen der Learning Rate zu Beginn des Trainings
+Die Geschwindigkeit des Trainings wird durch die Learning Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning Rate sorgt für rapide und starke Änderungen während eine geringe Learning Rate eine geringe Änderung und langsame Konvergenz der Parameterwerte mit sich zieht. Für das Training in dieser Thesis wurde eine adaptive Learning Rate verwendet, die dynamisch auf den Verlauf des Trainings reagiert und für eine gezielte Konvergenz sorgt \cite{adaptive_lr_schedule}.
+
+Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn des Trainings ansteigen lässt und sie heruntersetzt, sobald über eine vorbestimmte Dauer keine Verbesserung des Validation-Losses geschehen ist:
+
+\begin{equation*}
+    \text{lr}(e) =
+    \begin{cases}
+        \frac{\text{lr}_0}{e+1},                            & \text{wenn\,} e < e_\text{warmup},                                                     \\
+        \min(\text{lr}_\text{min}, \text{lr}(e-1) \cdot f), & \text{wenn\,} \min(\text{val\_loss}) \notin \{\text{val\_loss}_i \mid i \in [0,e-w]\}, \\
+        \text{lr}(e-1),                                     & \text{ansonsten.}
+    \end{cases}
+\end{equation*}
+
+Es wurden Parameterbelegungen $\text{lr}_0 = 0.001$, $\text{lr}_\text{min} = 10^-6$, $e_\text{warmup} = 8$, $f = 0.1^0.25$ und $w = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
 
 \subsubsection{Trainingsablauf}
 
-Daten zum Training, Graphen etc
+Für das Training wurden die erwähnten Techniken und Optimierungen eingesetzt. Als Optimizer wurde sich für AdamW entschieden, der sich durch adaptive Gradientenanpassung auszeichnet und empirisch für solide Generalisierungsfähigkeiten bekannt ist \cite{adamw, adamw_good, adamw_good2, adamw_good3, adamw_good4}.
+
+\todo{Daten zum Training, Graphen etc}
 
 % -------------------------------------------------------------------------------------------------
 

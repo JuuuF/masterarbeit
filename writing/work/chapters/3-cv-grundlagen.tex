@@ -51,12 +51,9 @@ Die Faltung, auch Convolution genannt, ist eine mathematische Operation, die ihr
 
 \[ (f*g)(x) = \int_{-\infty}^{-\infty} f(t) g(x-t) dt\]
 
-In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die Extraktion von Merkmalen aus Bildern ermöglicht. Die diskrete 2D-Faltung funktioniert, indem ein Kernel auf jede Position eines Bildes angewandt wird. Mathematisch ist sie wie folgt beschrieben:
+In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die Extraktion von Merkmalen aus Bildern ermöglicht. Die diskrete 2D-Faltung funktioniert, indem ein Kernel auf jede Position eines Bildes angewandt wird. Mathematisch ist sie wie folgt beschrieben \cite{discrete_convolution}:
 
-\[ I[x, y] = \sum_{i=0}^{x_k} \sum_{j=0}^{y_k} k[i, j] * I[x-i, y-j] \]
-
-\todo{Quelle für Formel}
-\todo{Visualisierung?}
+\[ I[x, y] = \sum_{i=0}^{x_k} \sum_{j=0}^{y_k} I[x - \lfloor\frac{x_k}{2}\rfloor + i - 1, y - \lfloor \frac{y_k}{2} \rfloor + j - 1] \times k[i, j] \]
 
 Dabei ist $I \in \mathbb{N}^2$ ein Eingabebild mit einem Kanal, $x$ und $y$ sind Positionen im Bild in $k \in \mathbb{N}^2$ ein Kernel der Größe $x_k \times y_k$.
 
