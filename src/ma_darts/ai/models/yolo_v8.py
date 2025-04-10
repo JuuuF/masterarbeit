@@ -247,6 +247,37 @@ def ClampReLU(
     return layers.ReLU(max_value=1.0)(x)
 
 
+def Dense(
+    x: tf.Tensor,
+    c: int,
+    dropout: float = 0.0,
+) -> tf.Tensor:
+    x = layers.Dense(units=c)(x)
+    x = BatchNorm2d(x)
+    x = SiLU(x)
+    if dropout:
+        x = layers.Dropout(dropout)(x)
+    return x
+
+
+def TransitionBlock(
+    x: tf.Tensor,
+    dropout: float = 0.0,
+) -> tf.Tensor:
+    base_shape = x.shape[1:]
+    base_channels = base_shape[-1]
+    x_in = x
+
+    x = Conv(x, k=1, s=1, p=False, c=1, dropout=dropout)
+    x = layers.Flatten()(x)
+    x = Dense(x, c=base_shape[0] * base_shape[1], dropout=dropout)
+    x = Reshape(x, base_shape[:2] + (1,))
+    x = Conv(x, k=1, s=1, p=False, c=base_channels)
+
+    x = Add([x_in, x])
+    return x
+
+
 def OutputTransformation(
     x_xst: tf.Tensor,  # (None, n, n, reg_max)
     x_pos: tf.Tensor,  # (None, n, n, reg_max * 2)
@@ -353,8 +384,9 @@ def yolo_v8_model(
     # fmt: on
 
     # Head
-    dropout_head = 0.2
-    x_10 = Upsample(x_9)
+    dropout_head = 0.25
+    x_9t = TransitionBlock(x_9, dropout=dropout_head)
+    x_10 = Upsample(x_9t)
     x_11 = Concat([x_6, x_10])
     x_12 = C2f(
         x_11, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=dropout_head
@@ -378,7 +410,7 @@ def yolo_v8_model(
 
     # (n, n, 2)
     detect_s_xst, detect_s_pos, detect_s_cls = Detect(
-        x_21, reg_max=reg_max, nc=n_classes - 1, dropout=0.1
+        x_21, reg_max=reg_max, nc=n_classes - 1, dropout=0.25
     )  # (None, 25, 25, 3), (None, 25, 25, 3*2), (None, 25, 25, 3*(6-1))
     # Output Transformation
     detect = OutputTransformation(
