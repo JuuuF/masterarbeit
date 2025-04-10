@@ -175,7 +175,7 @@ class Augmentation:
         rotation_steps = tf.random.uniform((1,), 0, 20, tf.int32)  # 0..19
         rotation = tf.cast(rotation_steps, tf.float32) * tf.constant(
             0.31415, tf.float32
-        )
+        )  # 18° increments = pi/10
         M = tf.matmul(M, self.rotation_matrix(rotation))
         pos = self.apply_rotation_to_pos(pos, rotation)
 

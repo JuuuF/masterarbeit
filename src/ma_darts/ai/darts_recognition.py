@@ -107,7 +107,7 @@ class Utils:
         callbacks.append(lr)
 
         lr_warmup = ma_callbacks.WarmupLearningRateScheduler(
-            warmup_epochs=4,
+            warmup_epochs=8,
             initial_lr=initial_lr,
         )
         callbacks.append(lr_warmup)
