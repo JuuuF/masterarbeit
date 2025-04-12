@@ -31,7 +31,15 @@ from ma_darts.ai.models import (
     yolo_to_positions_and_class,
 )
 from ma_darts.ai.data import dataloader_paper, dataloader_ma, dummy_ds
-from ma_darts.ai.losses import YOLOv8Loss, ExistenceLoss, ClassesLoss, PositionsLoss
+from ma_darts.ai.losses import (
+    YOLOv8Loss,
+    ExistenceLoss,
+    ClassesLoss,
+    PositionsLoss,
+    xst_weight,
+    cls_weight,
+    pos_weight,
+)
 
 from tqdm import tqdm
 from argparse import ArgumentParser
@@ -342,10 +350,9 @@ else:
 
 # Compile model
 metrics = [
-    ExistenceLoss(name="01_xst_loss", multiplier=400),
-    ClassesLoss(name="02_cls_loss", multiplier=4000),
-    PositionsLoss(name="03_pos_loss", multiplier=0.5),
-    # DIoULoss(name="04_diou_loss", multiplier=0.02),
+    ExistenceLoss(name="01_xst_loss", multiplier=xst_weight),
+    ClassesLoss(name="02_cls_loss", multiplier=cls_weight),
+    PositionsLoss(name="03_pos_loss", multiplier=pos_weight),
 ]
 
 model.compile(

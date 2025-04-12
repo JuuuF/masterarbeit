@@ -4,21 +4,24 @@ from ma_darts.ai.utils import split_outputs_to_xst_pos_cls
 
 
 class ClassesLoss(tf.keras.losses.Loss):
-    def __init__(self, multiplier: float = 1, *args, **kwargs):
+    def __init__(
+        self, multiplier: float = 1, from_logits: bool = True, *args, **kwargs
+    ):
         super(ClassesLoss, self).__init__(*args, **kwargs)
 
         self.loss_fn = tf.keras.losses.CategoricalFocalCrossentropy(
-            # alpha=0.5,
-            # gamma=2.0,
             reduction=None,
+            from_logits=from_logits,
         )
         self.multiplier = multiplier
+        self.from_logits = from_logits
 
     def get_config(self):
         config = super(ClassesLoss, self).get_config()
         config.update(
             {
                 "multiplier": self.multiplier,
+                "from_logits": self.from_logits,
             }
         )
         return config
@@ -42,9 +45,6 @@ class ClassesLoss(tf.keras.losses.Loss):
         cls_true = tf.reshape(cls_true, (batch_size, -1, n_classes))  # (bs, s*s*3, 5)
         cls_pred = tf.reshape(cls_pred, (batch_size, -1, n_classes))
 
-        # Apply softmax activation (only to predicted logits)
-        cls_pred = tf.keras.activations.softmax(cls_pred, axis=-1)
-
         # Label Smoothing
         n_classes = 5
         epsilon = 0.01
@@ -53,7 +53,9 @@ class ClassesLoss(tf.keras.losses.Loss):
         # Extract true class masks
         positive_mask = tf.cast(xst_true > 0.5, tf.float32)  # (bs, s, s, 3, 1)
         positive_mask = tf.reshape(positive_mask, (batch_size, -1))  # (bs, s*s*3)
-        cls_loss = self.loss_fn(cls_true, cls_pred, sample_weight=positive_mask)  # (bs,)
+        cls_loss = self.loss_fn(
+            cls_true, cls_pred, sample_weight=positive_mask
+        )  # (bs,)
         return cls_loss * tf.constant(self.multiplier, tf.float32)  # (bs,)
 
 

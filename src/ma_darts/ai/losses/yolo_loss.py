@@ -2,61 +2,51 @@ import numpy as np
 import tensorflow as tf
 
 from ma_darts import img_size
-from ma_darts.ai.losses import ExistenceLoss, ClassesLoss, PositionsLoss, DIoULoss
+from ma_darts.ai.losses import (
+    ExistenceLoss,
+    ClassesLoss,
+    PositionsLoss,
+    xst_weight,
+    cls_weight,
+    pos_weight,
+)
 
 
 class YOLOv8Loss(tf.keras.losses.Loss):
     def __init__(
         self,
-        square_size: float = 0.05,
         *args,
         **kwargs,
     ):
         super(YOLOv8Loss, self).__init__(*args, **kwargs)
-        self.square_size = square_size
 
-        self.xst_loss = ExistenceLoss()
-        self.xst_mult = tf.constant(400, tf.float32)  # 100
+        self.xst_loss = ExistenceLoss(multiplier=xst_weight)
 
         # Classes Loss
-        self.cls_loss = ClassesLoss()
-        self.cls_mult = tf.constant(4000, tf.float32)  # 100
+        self.cls_loss = ClassesLoss(multiplier=cls_weight)
 
         # Positions Loss
-        self.pos_loss = PositionsLoss()
-        self.pos_mult = tf.constant(0.5, tf.float32)  # 1.5
-
-        # DIoU Loss
-        self.diou_loss = DIoULoss(self.square_size)
-        self.diou_mult = tf.constant(0.02, tf.float32)
+        self.pos_loss = PositionsLoss(multiplier=pos_weight)
 
     # @tf.function
     def call(self, y_true, y_pred):
 
         # Compute XST loss
-        raw_xst_loss = self.xst_loss(y_true, y_pred) * self.xst_mult
+        xst_loss = self.xst_loss(y_true, y_pred)
 
         # Compute CLS loss
-        raw_cls_loss = self.cls_loss(y_true, y_pred) * self.cls_mult
+        cls_loss = self.cls_loss(y_true, y_pred)
 
         # Compute POS loss
-        raw_pos_loss = self.pos_loss(y_true, y_pred) * self.pos_mult
-
-        # Compute DIoU loss
-        # raw_diou_loss = self.diou_loss(y_true, y_pred) * self.diou_mult
+        pos_loss = self.pos_loss(y_true, y_pred)
 
         # Combine all losses
-        total_loss = raw_xst_loss + raw_cls_loss + raw_pos_loss  # + raw_diou_loss
+        total_loss = xst_loss + cls_loss + pos_loss
 
         return total_loss
 
     def get_config(self):
         config = super(YOLOv8Loss, self).get_config()
-        config.update(
-            {
-                "square_size": self.square_size,
-            }
-        )
         return config
 
 
