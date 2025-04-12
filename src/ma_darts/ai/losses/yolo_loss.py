@@ -20,7 +20,7 @@ class YOLOv8Loss(tf.keras.losses.Loss):
 
         # Classes Loss
         self.cls_loss = ClassesLoss()
-        self.cls_mult = tf.constant(850, tf.float32)  # 100
+        self.cls_mult = tf.constant(4000, tf.float32)  # 100
 
         # Positions Loss
         self.pos_loss = PositionsLoss()

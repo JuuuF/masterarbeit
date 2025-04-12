@@ -128,7 +128,7 @@ if __name__ == "__main__":
     import os
     from itertools import zip_longest
 
-    img_dir = "data/darts_references/jess"
+    img_dir = "data/darts_references/strongbows"
     img_paths_jess = [os.path.join(img_dir, f) for f in os.listdir(img_dir)]
     img_dir = "data/generation/out_val"
     img_paths_gen = [

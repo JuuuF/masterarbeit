@@ -77,10 +77,10 @@ class Utils:
         for ds in [
             ds_gen_train,
             ds_paper_d1,
-            ds_strongbows,
+            ds_jess,
             ds_gen_val,
             ds_paper_d2,
-            ds_jess,
+            ds_strongbows,
         ]:
             X, y, _w = next(iter(ds.unbatch().batch(2).take(1)))
             Xs.append(X)
@@ -343,7 +343,7 @@ else:
 # Compile model
 metrics = [
     ExistenceLoss(name="01_xst_loss", multiplier=400),
-    ClassesLoss(name="02_cls_loss", multiplier=850),
+    ClassesLoss(name="02_cls_loss", multiplier=4000),
     PositionsLoss(name="03_pos_loss", multiplier=0.5),
     # DIoULoss(name="04_diou_loss", multiplier=0.02),
 ]

@@ -556,7 +556,7 @@ if __name__ == "__main__":
     model.compile(loss="mse", optimizer="adam")
     model.build(input_shape=(None, 800, 800, 3))
     model.summary()
-    tf.keras.utils.plot_model(model, "dump/model.png", show_shapes=True)
+    # tf.keras.utils.plot_model(model, "dump/model.png", show_shapes=True)
     exit()
     # model.compile(
     #     loss=lambda x, y: yolo_v8_loss(x, y, 50),

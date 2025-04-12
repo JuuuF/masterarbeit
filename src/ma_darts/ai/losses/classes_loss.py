@@ -46,7 +46,9 @@ class ClassesLoss(tf.keras.losses.Loss):
         cls_pred = tf.keras.activations.softmax(cls_pred, axis=-1)
 
         # Label Smoothing
-        cls_true = 0.998 * cls_true + 0.001
+        n_classes = 5
+        epsilon = 0.01
+        cls_true = (1 - epsilon * (n_classes + 1)) * cls_true + epsilon
 
         # Extract true class masks
         positive_mask = tf.cast(xst_true > 0.5, tf.float32)  # (bs, s, s, 3, 1)
