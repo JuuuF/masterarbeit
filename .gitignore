@@ -42,10 +42,14 @@ data/cache/
 *.bcf
 *.xml
 *.toc
-!main.pdf
 *.latexmkrc
 *.md5
 *.auxlock
+
+# nomenclature files
+*.ilg
+*.nlo
+*.nls
 
 # GIMP
 *.xcf
