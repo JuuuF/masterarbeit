@@ -272,7 +272,6 @@ def TransitionBlock(
     x = Conv(x, k=1, s=1, p=False, c=bottleneck_channels, dropout=dropout)  # (x, y, n)
     x = layers.Flatten()(x)  # (x * y,)
     x = Dense(x, c=base_shape[0] * base_shape[1] * bottleneck_channels, dropout=dropout)  # (x * y * n)
-    x = Dense(x, c=base_shape[0] * base_shape[1] * bottleneck_channels, dropout=dropout)  # (x * y * n)
     x = Reshape(x, base_shape[:2] + (bottleneck_channels,))  # (x, y, n)
     x = Conv(x, k=1, s=1, p=False, c=base_channels)  # (x, y, s)
 
@@ -409,10 +408,11 @@ def yolo_v8_model(
     x_21 = C2f(
         x_20, shortcut=False, n=round(3 * d), c=round(512 * w * r), dropout=dropout_head
     )  # P5
+    x_21t = TransitionBlock(x_21, dropout=dropout_head)
 
     # (n, n, 2)
     detect_s_xst, detect_s_pos, detect_s_cls = Detect(
-        x_21, reg_max=reg_max, nc=n_classes - 1, dropout=0.25
+        x_21t, reg_max=reg_max, nc=n_classes - 1, dropout=0.25
     )  # (None, 25, 25, 3), (None, 25, 25, 3*2), (None, 25, 25, 3*(6-1))
     # Output Transformation
     detect = OutputTransformation(
