@@ -34,7 +34,9 @@ In der YOLOv8-Architektur wird ein Multi-Scale-Output zur Identifizierung von Ob
 
 Die YOLOv8*-Architektur unterteilt das Eingabebild in Regionen und bestimmt die Existenz von Dartpfeilen je Region. Da eine typische Runde Darts aus 3 Würfen besteht, ist davon auszugehen, dass eine maximale Anzahl von 3 Dartpfeilen in den Bildern zu identifizieren sind. Dabei kann jedoch nicht ausgeschlossen werden, dass sich die Dartpfeilspitzen in unterschiedlichen Regionen befinden. Je Region wird daher eine feste Anzahl von 3 möglichen Dartpfeilpositionen vorhergesagt. Existiert lediglich ein Dartpfeil, so sind zwei mögliche Outputs genullt.
 
-\todo{Dense-Layer?}
+\paragraph{Transition-Block}
+
+Eine grundlegende Änderung der YOLOv8-Architektur ist das Hinzufügen von Transition-Blocks. Diese befinden sich an den Übergängen zwischen Backbone und Head sowie Head und Detect. Sie brechen den Fully-Convolutional-Approach der YOLO-Netzwerke durch Einbindung von Dense-Schichten. Die Eigenschaft von Fully-Connected-CNNs, Bilder beliebiger Eingabegrößen verarbeiten zu können, geht mit der Einschränkung einher, keinen direkten globalen Kontext des Bildes einzufangen. Da die Eingabegrößen der Bilder der in dieser Thesis erarbeiteten Systems durch die Vorverarbeitung vorgegeben sind, liefert die Verarbeitung beliebiger Eingabegrößen keinen Mehrwert und ermöglicht damit die Lockerung dieses Paradigmas. Folglich ist eine Einbindung von Fully-Connected-Schichten architektonisch möglich und ermöglicht einen globalen Überblick über das Eingabebild, anhand derer Informationen der gesamten Dartscheibe in untergeordnete Abschnitte des Netzwerks einfließen können. Die Einschränkung auf lokale Kontextfenster wird dadurch in der YOLOv8*-Architektur aufgehoben.
 
 \subsubsection{Konfiguration des Netzwerks}
 
@@ -63,7 +65,7 @@ Die Bestandteile der Architektur sind in \autoref{img:yolov8_parts} dargestellt.
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/ai/yolov8_parts.pdf}
-    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (4, 5) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut.}
+    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (4, 5) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (6) Transition-Block; Residualer Fully-Connected layer zum Einfangen globaler Informationen.}
     \label{img:yolov8_parts}
 \end{figure}
 

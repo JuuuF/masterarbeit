@@ -10,9 +10,13 @@ Grundlagen hier.
 \subsection{Prozedurale Datenerstellung}  % DATENERSTELLUNG =======================================
 \label{sec:prozedurale_datenerstellung}
 
-Was ist es? Wozu ist es gut?
+Prozedurale Datenerstellung findet seinen Einsatz in vielen unterschiedlichen Bereichen. In dieser Arbeit wird prozedurale Datenerstellung verwendet, um Trainingsdaten zum Trainieren Neuronaler Netze zu erstellen. In diesem Unterabschnitt wird die Frage geklärt, was prozedurale Datenerstellung ist und was die Vorteile ihrer Nutzung sind.
 
-\todo{}
+Die Erstellung von Daten kann sowohl manuell als auch automatisch geschehen. Prozedurale Datenerstellung beschreibt eine Technik zur automatisierten Datenerstellung durch den Einsatz von Zufallswerten. Für die Generierung von Daten werden Rahmenbedingungen festgelegt, innerhalb derer Zufallswerte generiert werden, welche zur Steuerung von Parametern eingesetzt werden. Die Art der Zufallswerte ist dabei je nach Einsatzbereich unterschiedlich; für diese Thesis finden hauptsächlich 1- und 2-dimensionale Zufallswerte ihren Einsatz. Die Verwendung von 1-dimensionalen Zufallswerten wird beispielsweise verwendet, um Parameter von Texturfarben zu bestimmen, z.~B.Sättigung oder Helligkeit von Farbwerten. 2-dimensionale Zufallswerte werden in Form von Noise-Texturen eingebunden, die beispielsweise die Oberflächenbeschaffenheit von Objekten beeinflussen können. Die Wertebereiche dieser Zufallswerte können durch Skalierung, Clipping oder sonstige Techniken der Nachverarbeitung auf ihren Einsatzbereich angepasst werden. Durch diese Art der Parametrisierung durch Zufallswerte ist das automatisierte Erstellen einer Vielzahl unterschiedlicher Daten möglich.
+
+Der Vorteil prozeduraler Datenerstellung ist die enorme Komplexität der erstellen Daten, die durch Kombination einer Vielzahl von Zufallsparametern erzielt werden kann. Die verwendeten Zufallsparameter eines erstellten Datensamples beschreiben seine Position im vieldimensionalen Parameter-Raum und ermöglichen eine deterministische Reproduktion des Samples.
+
+\todo{Überarbeiten: Dieser Abschnitt ist nicht gut.}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -111,18 +115,20 @@ Als Spinne wird der Metallrahmen der Dartscheibe bezeichnet, der die Feldsegment
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Steeldarts}
+\subsection{Steeldarts und Softdarts}
 \label{sec:steeldarts}
 
-\todo{Was Steeldarts?}
+Steeldarts ist die klassische Form von Darts, in der Dartpfeile mit Metallspitzen auf eine Dartscheibe geworfen werden. Die Bezeichnung des Steeldarts bezieht sich auf die Verwendung von Dartpfeilspitzen, die aus Metall gefertigt sind und ein spitzes Ende zum Eindringen in eine Zielscheibe besitzen. Diese Scheibe besteht üblicherweise aus Sisalfasern, die durch die Dartpfeile nicht irreparabel beschädigen. Dem gegenüber stehen Softdarts, bei welchem Pfeile mit Spitzen aus Kunststoff verwendet werden, die typischerweise auf eine elektronische Dartscheibe geworfen werden.
+
+Wesentlicher unterschied zwischen Soft- und Steeldarts ist neben der unterschiedlichen Ausrüstung die Art des Scorings. Während die meist elektronischen Dartscheiben von Softdarts ein automatischen Scoring verwenden muss die Punktzahl bei Steeldarts manuell gezählt werden. Eben dieser Unterschied ist Kern dieser Thesis, in der ein automatisches Scoring-System für Steeldarts entwickelt wird. Während er Einsatz von Softdarts auf Gelegenheitsspiele und Hobbynutzung ausgelegt ist, kommt Steeldarts in professionellen Umgebungen zum Einsatz.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Material und Texturen}  % TEXTURIERUNG ================================================
 
-Licht-Eigenschaften / Normal Maps / Shaders
+Materialien und Texturen finden ihren Einsatz in der Erstellung von 3D-Szenen. Objekten sind Materialien zugewiesen, die das Aussehen und Verhalten der Objekte bei Lichteinfall bestimmen. Eine Textur beschreibt die Farbgebung eines Materials, das Material beschreibt die Interaktion der Textur mit Licht. Beim Eintreffen von Licht auf ein Material kann dieses unterschiedlich abgeändert werden. Wesentliche Eigenschaften von Materialien sind der Grad der Diffusität, Reflektivität und Absorption. Ein diffuses Material strahlt eingehende Lichtstrahlen in zufällige Richtungen; reflektive Materialien spiegeln eingehende Lichtstrahlen; absorbierende Materialien haben keine Reaktion auf einfallendes Licht. Jedes Material gewichtet diese Parameter unterschiedlich, um eine charakteristische Lichtreaktion hervorzurufen.
 
-\todo{}
+Die Interaktion mit Licht ist zudem durch die sogenannte Normal Map eines Materials beeinflusst, die die Oberflächenbeschaffenheit der Textur beschreibt. Neben der Geometrie des Objekts ermöglicht die Normal Map eine detaillierte Oberfläche, die die Lichtbrechung beeinflusst und realistische Interaktionen mit Licht ermöglicht.
 
 % -------------------------------------------------------------------------------------------------
 

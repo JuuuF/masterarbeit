@@ -92,7 +92,9 @@ Alle verbleibenden Dartpfeile auf der Dartscheibe werden im Anschluss rotiert. D
 
 \subsubsection{Scoring}
 
-Nachdem die Dartpfeile Positioniert und rotiert sind wird das Scoring der Szene vorgenommen. An diesem Punkt sind die Position der Dartscheibe $p_\text{Dartscheibe} \in \mathbb{R}^3$ und die Positionen aller Dartpfeile $p_{Pfeil}, i \in \mathbb{R}^3$ bekannt. Durch ihre Winkel und Abstände lassen sich die Dartfelder identifizieren, in denen die Dartpfeile eingetroffen sind. Auf diese Weise lässt sich für jeden Dartpfeil ermitteln, in welchem Feld dieser eingetroffen ist und welche Punktzahl durch ihn erzielt wurde.
+Nachdem die Dartpfeile Positioniert und rotiert sind wird das Scoring der Szene vorgenommen. An diesem Punkt sind die Position der Dartscheibe $p_\text{Dartscheibe} \in \mathbb{R}^3$ und die Positionen aller Dartpfeile $p_{\text{Pfeil}, i} \in \mathbb{R}^3$ bekannt. Durch ihre Winkel und Abstände lassen sich die Dartfelder identifizieren, in denen die Dartpfeile eingetroffen sind. Auf diese Weise lässt sich für jeden Dartpfeil ermitteln, in welchem Feld dieser eingetroffen ist und welche Punktzahl durch ihn erzielt wurde.
+\nomenclature{$p_\text{Dartscheibe}$}{Position der Dartscheibe im Raum}
+\nomenclature{$p_{\text{Pfeil}, i}$}{Position der Dartpfeile im Raum}
 
 \subsection{Ermittlung von Kameraparametern}  % ===================================================
 \label{sec:ermittlung_kameraparamater}
@@ -109,6 +111,12 @@ Für die Positionierung der Kamera in der Szene existiert ein Objekt, das den Be
     \item \textbf{Maximaler Seitenabstand $dx_\text{max}$}: Maximaler seitlicher Abstand der Kamera zum Dartscheibenmittelpunkt
 \end{itemize}
 
+\nomenclature{$\phi_h$}{Horizontaler Öffnungswinkel des Kamera-Space zu den Seiten der Dartscheibe}
+\nomenclature{$\phi_v$}{Vertikaler Öffnungswinkel des Kamera-Space in die Höhe}
+\nomenclature{$\left(d_\text{min}, d_\text{max}\right)$}{Minimaler und maximaler Abstand der Kamera von der Dartscheibe}
+\nomenclature{$\left(y_\text{min}, y_\text{max}\right)$}{Minimale und maximale Höhe der Kamera im Raum}
+\nomenclature{$dx_\text{max}$}{Maximaler seitlicher Abstand der Kamera zum Dartscheibenmittelpunkt}
+
 Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 110\degree$, $\phi_v = 60\degree$, $d_\text{min} = 60\,\text{cm}$, $d_\text{max} = 150\,\text{cm}$, $y_\text{min} = 160\,\text{cm}$, $y_\text{max} = 220\,\text{cm}$, $dx_\text{max} = 60\,\text{cm}$. Der verwendete Kameraraum ist in \autoref{img:camera_space} dargestellt.
 
 \begin{figure}
@@ -123,9 +131,12 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von 18mm bis 60mm. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
 
 \begin{align*}
-    l_\text{lower} & = l_\text{min} + \frac{d}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}                          \\
-    l_\text{upper} & = \frac{l_\text{max} - l_\text{min}}{2} + \frac{d}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}
+    l_\text{lower} & = l_\text{min} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}                          \\
+    l_\text{upper} & = \frac{l_\text{max} - l_\text{min}}{2} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}
 \end{align*}
+\nomenclature{$l_\text{lower}$, $l_\text{upper}$}{Unterer und oberer Grenzwert für die Brennweite der Kamera}
+\nomenclature{$l_\text{min}$, $l_\text{max}$}{Minimale und maximale Brennweite der Kamera}
+\nomenclature{$d_\text{Kamera}$}{Abstand der Kamera zur Dartscheibe}
 
 Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen Ober- und Untergrenze werden zufällig uniform gewählt. Auf diese Weise wird eine Korrelation zwischen verwendeter Brennweite und Abstand zur Dartscheibe gewonnen unter Beibehaltung der Variabilität der Daten und Einfluss von Zufallswerten.
 
