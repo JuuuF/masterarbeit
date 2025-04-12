@@ -266,13 +266,15 @@ def TransitionBlock(
 ) -> tf.Tensor:
     base_shape = x.shape[1:]
     base_channels = base_shape[-1]
-    x_in = x
+    x_in = x  # (x, y, s)
 
-    x = Conv(x, k=1, s=1, p=False, c=1, dropout=dropout)
-    x = layers.Flatten()(x)
-    x = Dense(x, c=base_shape[0] * base_shape[1], dropout=dropout)
-    x = Reshape(x, base_shape[:2] + (1,))
-    x = Conv(x, k=1, s=1, p=False, c=base_channels)
+    bottleneck_channels = 1
+    x = Conv(x, k=1, s=1, p=False, c=bottleneck_channels, dropout=dropout)  # (x, y, n)
+    x = layers.Flatten()(x)  # (x * y,)
+    x = Dense(x, c=base_shape[0] * base_shape[1] * bottleneck_channels, dropout=dropout)  # (x * y * n)
+    x = Dense(x, c=base_shape[0] * base_shape[1] * bottleneck_channels, dropout=dropout)  # (x * y * n)
+    x = Reshape(x, base_shape[:2] + (bottleneck_channels,))  # (x, y, n)
+    x = Conv(x, k=1, s=1, p=False, c=base_channels)  # (x, y, s)
 
     x = Add([x_in, x])
     return x
