@@ -105,7 +105,7 @@ Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position
 
 \subsubsection{Hintergründe und Zielsetzung}
 
-Targetting bestimmter Bereiche des Netzwerks
+Targeting bestimmter Bereiche des Netzwerks
 
 \todo{}
 
@@ -193,12 +193,18 @@ Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn de
     \text{lr}(e) =
     \begin{cases}
         \frac{\text{lr}_0}{e+1},                            & \text{wenn\,} e < e_\text{warmup},                                                     \\
-        \min(\text{lr}_\text{min}, \text{lr}(e-1) \cdot f), & \text{wenn\,} \min(\text{val\_loss}) \notin \{\text{val\_loss}_i \mid i \in [0,e-w]\}, \\
+        \min(\text{lr}_\text{min}, \text{lr}(e-1) \cdot f_\text{lr}), & \text{wenn\,} \min(\text{val\_loss}) \notin \{\text{val\_loss}_i \mid i \in [0,e-w_\text{lr}]\}, \\
         \text{lr}(e-1),                                     & \text{ansonsten.}
     \end{cases}
 \end{equation*}
+\nomenclature{$e \in \mathbb{N}$}{Aktuelle Trainingsepoche}
+\nomenclature{$e_\text{warmup} \in \mathbb{N}$}{Anzahl an Warmup-Epochen für das Training}
+\nomenclature{$\text{lr}_0$}{Initiale Learning Rate}
+\nomenclature{$\text{lr}_\text{min}$}{Minimale Learning Rate}
+\nomenclature{$f_\text{lr}$}{Adaptionsfaktor der Learning Rate}
+\nomenclature{$w_\text{lr}$}{Fenstergröße des Learning Rate-Schedules}
 
-Es wurden Parameterbelegungen $\text{lr}_0 = 0.001$, $\text{lr}_\text{min} = 10^-6$, $e_\text{warmup} = 8$, $f = 0.1^0.25$ und $w = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
+Es wurden Parameterbelegungen $\text{lr}_0 = 0.001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0.1^{0.25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
 
 \subsubsection{Trainingsablauf}
 

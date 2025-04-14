@@ -137,6 +137,7 @@ Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kame
 \nomenclature{$l_\text{lower}$, $l_\text{upper}$}{Unterer und oberer Grenzwert für die Brennweite der Kamera}
 \nomenclature{$l_\text{min}$, $l_\text{max}$}{Minimale und maximale Brennweite der Kamera}
 \nomenclature{$d_\text{Kamera}$}{Abstand der Kamera zur Dartscheibe}
+\nomenclature{$l_\text{Kamera}$}{Brennweite der Kamera}
 
 Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen Ober- und Untergrenze werden zufällig uniform gewählt. Auf diese Weise wird eine Korrelation zwischen verwendeter Brennweite und Abstand zur Dartscheibe gewonnen unter Beibehaltung der Variabilität der Daten und Einfluss von Zufallswerten.
 
@@ -147,8 +148,8 @@ Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen
                 ymax = 65,
                 domain = 60:150,
                 samples=50,
-                xlabel={Abstand $d$ der Kamera zur Dartscheibe [cm]},
-                ylabel={Brennweite $l$ der Kamera [mm]},
+                xlabel={$d_\text{Kamera}$ [cm]},
+                ylabel={$l_\text{Kamera}$ [mm]},
                 scaled x ticks = false,
                 grid=both,
                 extra x ticks={60,150},
@@ -169,7 +170,7 @@ Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen
 
 \subsubsection{Seitenverhältnis und Auflösung}
 
-Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in dieser Arbeit berücksichtigt. So wird aus unterschiedlichen Seitenverhältnissen, die von Kameras in Mobiltelefonen verwendet werden, ausgewählt. Mögliche Seitenverhältnisse sind $4:3$, $16:9$, $1:1$, $3:2$, $2:1$, $21:9$ und $5:4$. Die Ausrichtung der Kamera ist in $\nicefrac{2}{3}$ der Aufnahmen vertikal und in $\nicefrac{1}{3}$ der Aufnahmen horizontal. Die Auflösung der Kamera wird uniform im Intervall $[1000\text{px}, 4000\text{px}]$ gewählt, welches die Pixelzahl entlang der längeren Seite angibt.
+Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in dieser Arbeit berücksichtigt. So wird aus unterschiedlichen Seitenverhältnissen, die von Kameras in Mobiltelefonen verwendet werden, ausgewählt. Mögliche Seitenverhältnisse sind $4:3$, $16:9$, $1:1$, $3:2$, $2:1$, $21:9$ und $5:4$. Die Ausrichtung der Kamera ist in $\nicefrac{2}{3}$ der Aufnahmen vertikal und in $\nicefrac{1}{3}$ der Aufnahmen horizontal. Die Auflösung der Kamera wird uniform im Intervall $[1000\,\text{px}, 4000\,\text{px}]$ gewählt, welches die Pixelzahl entlang der längeren Seite angibt.
 
 \subsubsection{Fokuspunkt}
 
