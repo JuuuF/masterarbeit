@@ -1,7 +1,7 @@
 __all__ = []
 
 xst_weight = 400.0
-cls_weight = 4000.0
+cls_weight = 2000.0
 pos_weight = 0.5
 
 __all__.append("xst_weight")
