@@ -6,6 +6,7 @@
 Methodik hier.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{YOLOv8}
 \label{sec:warum_yolov8}
 
@@ -65,11 +66,12 @@ Die Bestandteile der Architektur sind in \autoref{img:yolov8_parts} dargestellt.
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/ai/yolov8_parts.pdf}
-    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (4, 5) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (6) Transition-Block; Residualer Fully-Connected layer zum Einfangen globaler Informationen.}
+    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3, 4) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (5) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (6) Transition-Block; Residualer Fully-Connected layer zum Einfangen globaler Informationen.}
     \label{img:yolov8_parts}
 \end{figure}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Loss-Funktionen}
 \label{sec:losses}
 
@@ -78,9 +80,7 @@ Die Bestandteile der Architektur sind in \autoref{img:yolov8_parts} dargestellt.
 \subsubsection{Zusammensetzung des Losses}
 
 Die Loss-Funktion zum Trainieren der YOLOv8*-Architektur folgt dem Aufbau dieser. Sie ist definiert als gewichtete Summe aus Existenz-Loss, Klassen-Loss und Positions-Loss:
-
 \[ \mathcal{L}(y, \hat{y}) = \omega_\text{xst} \mathcal{L}_\text{xst}(y, \hat{y}) + \omega_\text{cls} \mathcal{L}_\text{cls}(y, \hat{y}) + \omega_\text{pos} \mathcal{L}_\text{pos}(y, \hat{y}) \]
-
 \paragraph{Existenz-Loss}
 
 Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge aller Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und 3 Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0.16\% $. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts.
@@ -114,6 +114,7 @@ Targeting bestimmter Bereiche des Netzwerks
 Bei dem Training von YOLO-Architekturen ist die die Verwendung vom IoU-Losses oder Adaptionen wie CIoU, DIoU oder GIoU \cite{diou_losses}, eine übliche Praxis \cite{yolov1,yolov8_paper,yolo_training_giou}. Diese Erweiterungen des IoU-Losses stützen sich grundlegend auf der Annahme der Existenz von Bounding Boxes. Da diese in der YOLOv8*-Architektur eliminiert wurden, ist die Verwendung von IoU-basierten Loss-Funktionen obsolet. Es wurde jedoch mit einer Adaption des GIoU-Losses experimentiert, in der Quadrate vordefinierter Größe auf die vorhergesagten Positionen projiziert werden, anhand derer ein IoU-Loss möglich wäre. Durch diese Herangehensweise können viele Annahmen getroffen werden, durch die Optimierungen bezüglich Äquivalenz von GIoU-Loss und DIoU-Loss und effiziente Berechnung der Intersection-Area durch Distanzen der Punkte voneinander möglich sind. Da dieser Ansatz jedoch trotz Optimierungen mit einer großen Rechenleistung und starker Kongruenz zum Positions-Loss einherging, wurde diese Idee für das Training des Netzwerks verworfen.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Training}
 \label{sec:nn_training}
 

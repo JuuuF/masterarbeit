@@ -6,6 +6,7 @@
 Methodik hier.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Warum Computer Vision?}
 \label{sec:warum_cv}
 
@@ -14,6 +15,7 @@ Normalisierung von Daten für ein neuronales Netz kann auf unterschiedliche Arte
 Ebenfalls war die Verwendung von Computer Vision aufgrund der auffälligen Geometrie einer Dartscheibe naheliegend, da sie Ähnlichkeiten mit Schachbrettern aufweist, welche in der Computer Vision zur Identifizierung von Kameraparametern verwendet werden. Da die Nutzung bekannter Geometrien eine zentrale Arbeitsweise der Computer Vision darstellt, war die Intuition gegeben, dass auch eine Erkennung eines ähnlich markanten Objektes in einem Bild möglich ist. Aus dieser Intuition heraus wurde der in diesem Abschnitt beschriebene Algorithmus entwickelt.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Vorverarbeitung}
 \label{sec:vorverarbeitung}
 
@@ -24,6 +26,7 @@ Die Algorithmen der Computer Vision arbeiten auf Bildern beliebiger Größe. Da 
 Der Schritt der Vorverarbeitung kann übersprungen werden, indem $s_\text{max} = \infty$ gesetzt wird. Die Laufzeit der Normalisierung kann dadurch jedoch stark beeinträchtigt werden, da die Anzahl der Pixel quadratisch mit der Größe des Bildes skaliert.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Kantenverarbeitung}
 \label{sec:kanten}
 
@@ -60,6 +63,7 @@ Der Prozess der Kantenerkennung ist in \autoref{img:kantenerkennung} dargestellt
 \end{figure}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Linienverarbeitung}
 \label{sec:linien}
 
@@ -163,6 +167,7 @@ Diese Schritte werden für alle Startindizes $s \in [0, 9]$ ausgeführt und die 
 \nomenclature{$s \in \mathbb{N}$}{Indizes für Startlinien der Winkelentzerrung}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Orientierung}
 \label{sec:orientierung}
 
@@ -240,14 +245,11 @@ An diesem Punkt wurde die gesamte CV-Pipeline durchlaufen und es wurden mehrere 
 \end{enumerate}
 
 Die Aneinanderreihung dieser Transformationen führt zu der finalen Transformation $M_\text{final}$. Mathematisch setzt sich diese wie folgt zusammen:
-
 \[ M_\text{final} = M_\text{project} \times M_\text{align} \times M_\text{scale} \]
-
 \nomenclature{$M_\text{scale} \in \mathbb{R}^{3 \times 3}$}{Skalierungstransformation der Eingabebildes der Normalisierung}
 \nomenclature{$M_\text{align} \in \mathbb{R}^{3 \times 3}$}{Transformation zur Winkelentzerrung einer Dartscheibe}
 \nomenclature{$M_\text{project} \in \mathbb{R}^{3 \times 3}$}{Projektionsmatrix zur Überlagerung der Orientierungspunkte einer Dartscheibe}
 \nomenclature{$M_\text{final} \in \mathbb{R}^{3 \times 3}$}{Finale Entzerrungstransformation der Dartscheibe}
-
 Nach der Anwendung dieser Transformation auf das Eingabebild wird ein finales Zuschneiden des Bildes auf die Eingabegröße des neuronalen Netzes vorgenommen, was die Normalisierung des Bildes abschließt.
 
 Der Effekt der Entzerrung anhand des Beispielbildes ist in \autoref{img:cv_input_ouptut} dargestellt.

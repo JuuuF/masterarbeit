@@ -3,14 +3,14 @@
 \section{Ergebnisse}
 \label{sec:daten:ergebnisse}
 
-Ergebnisse hier.
+Die Resultate der Datenerstellung sind neben den gerenderten Bildern ebenfalls die normalisierten Bilder sowie die in den Bildern enthaltenen Positionen. Diese Informationen umfassen neben den Positionen der Dartpfeile und ihre erzielten Punktzahlen weitere Metainformationen, die das Bild ausmachen. In einem ersten Schritt werden exemplarische Daten aufgezeigt. Anschließend wird ein Überblick über die Rahmenbedingungen der Datenerstellung gegeben, bevor mit einer qualitativen Auswertung der gerenderten Bilder fortgefahren wird. Darauf folgen Einblicke in die Metainformationen der erstellten Daten. Danach wird auf die Korrektheit der Daten eingegangen und abschließend werden Ungenauigkeiten bei der Erstellung der Daten aufgezeigt.
+
+Eine qualitative Auswertung der Bilddaten ist mangels aussagekräftiger Metriken nicht durchgeführt worden. Eine objektive Bewertung der Realitätsnähe von Bildern ist äußerst komplex und die Aussagekraft nicht eindeutig.
 
 \subsection{Beispiel-Render}  % ===================================================================
 \label{sec:render_beispiel}
 
-Bevor zu der Auswertung der Ergebnisse der Datengenerierung übergegangen wird, wird ein Überblick über die erstellten Daten gegeben. In diesem Unterkapitel werden daher die Ergebnisse dargestellt und ihre Eigenschaften werden aufgezeigt.
-
-In \autoref{img:render_examples} sind Bilder aus den für diese Arbeit erstellten Daten dargestellt. Die Auswahl der Bilder erfolgte durch subjektive Selektion exemplarischer Beispiele, die die Variation der Gesamtdaten einfangen. Eine Verzerrung der tatsächlichen Datenlage ist durch das Betrachten lediglich weniger Beispiele und die Art der Selektion nicht auszuschließen, jedoch wurde Acht gegeben, die Auswahl möglichst divers zu halten.
+In \autoref{img:render_examples} sind Bilder aus den für diese Arbeit erstellten Daten dargestellt. Die Auswahl der Bilder erfolgte durch subjektive Selektion exemplarischer Beispiele, die die Variation der Gesamtdaten einfangen. Eine Verzerrung der tatsächlichen Datenlage ist durch das Betrachten lediglich weniger Beispiele und die Art der Selektion nicht auszuschließen, jedoch wurde Acht gegeben, die Auswahl möglichst divers und repräsentativ für die Gesamtheit aller Daten zu halten.
 
 \begin{figure}
     \centering
@@ -19,10 +19,11 @@ In \autoref{img:render_examples} sind Bilder aus den für diese Arbeit erstellte
     \label{img:render_examples}
 \end{figure}
 
-Die Variationen der Bilder
+Dargestellt sind 6 exemplarische Daten, die aus den für diese Thesis erstellten Trainingsdaten stammen. Diese Bilder zeigen die Spanne möglicher Bilder auf, die durch die Datenerstellung möglich sind. Die Variation der Kameraperspektiven ist in diesen Daten zu sehen, welche vollkommen unabhängig voneinander sind, im Vergleich zu den Trainingsdaten des DeepDarts-Systems. Ebenfalls ist eine Variation der Hintergründe und Beleuchtungen offensichtlich. Die Wahl der Environment-Maps, die den Hintergrund maßgeblich bestimmen, üben erheblichen Einfluss auf die Beleuchtung der Dartscheibe aus. Zusätzlich sind in zwei der dargestellten Bilder Ringlichter vorhanden, die darüber hinaus für eine Variation des Hintergrunds und der Beleuchtung sorgen. Die Dartscheiben der unterschiedlichen Bilder unterscheiden sich zusätzlich voneinander, wodurch eine große Spanne möglicher Dartscheiben simuliert werden kann. Hinsichtlich der Dartpfeile sind unterschiedliche Designs und Positionierungen in den Bildern vorhanden. Während in einigen Bildern alle Dartpfeile vorhanden sind, steckt in einem der dargestellten Bilder kein Dartpfeil in der Dartscheibe.
 
-\todo{entzerrte Bilder datrstellen}
+Unterschiedliche Seitenverhältnisse sind aus Gründen der Übersichtlichkeit bewusst nicht dargestellt worden, jedoch existiert eine uniforme Verteilung aller vordefinierter Seitenverhältnisse in den erstellten Daten.
 
+Die entzerrten Bilder befinden sich vertikal entlang der Mitte der Abbildung. Diese weisen allesamt die selbe Art der Entzerrung auf sowie die selben Abmessungen. Auffällig ist die Verzerrung von Dartpfeilen durch die Normalisierung der Dartscheiben: Je geringer der Winkel\footnote{Ein großer Winkel steht für eine frontale Aufnahme der Dartscheibe während ein geringer Winkel eine stark seitliche Aufnahme der Dartscheibe zeigt.} zwischen Dartscheibe und Kamera, desto stärker ist die Verzerrung der Dartpfeile durch den Effekt der Normalisierung. Ebenfalls anzumerken ist das Abschneiden der Dartpfeilenden, sofern sich diese über die Ränder der Dartscheibe hinaus erstrecken.
 
 \subsection{Rahmenbedingungen der Erstellung}  % ==================================================
 \label{sec:render_info}
@@ -48,22 +49,100 @@ Erklärung: Quantitative Auswertung nicht möglich (SSIM wäre eine Metrik, aber
           \end{itemize}
 \end{itemize}
 
-\todo{}
+\todo{Tabelle textualisieren!}
+
+\subsection{Quantitative Metadatenauswertung}
+\label{sec:metadaten}
+
+Eine quantitative Auswertung der Daten hinsichtlich ihres Erscheinungsbilds wurde aus bereits genannten Gründen nicht vollzogen. Jedoch existieren vielerlei Metadaten, die einer Auswertung unterzogen wurden. Dieser Unterabschnitt liefert einen Einblick in die Aufstellung der generierten Daten und die Resultate der in \autoref{sec:daten:methodik} beschriebenen Techniken. In \autoref{sec:kamera_ergebnisse} wird Einblick in ausgewählte intrinsische und extrinsische Parameter der Kamera gegeben, gefolgt von einer Übersicht über die Beleuchtungen und den Objekten, die um die Dartscheibe platziert werden können, sowie die Anzahl der Dartpfeile je Bild in \autoref{sec:beleuchtung_ergebnisse}. Zuletzt wird ein Blick auf die Verteilung der Dartpfeile über die Dartscheibe geworfen, indem die getroffenen Felder in \autoref{sec:felder_ergebnisse} betrachtet werden.
+
+\subsubsection{Kamera-Auswertung}
+\label{sec:kamera_ergebnisse}
+
+Die erste quantitative Auswertung dreht sich um ausgewählte und aussagekräftige Kameraparameter. Die Ergebnisse sind in \autoref{img:kamera_meta} in Form von Violinengraphen dargestellt. Die Graphen sind lediglich in ihrer y-Achse beschriftet, da die x-Achse relative Häufigkeiten ausdrückt.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/rendering/ergebnisse/cam_angles.pdf}
+        \caption{Winkel zur Dartscheibe [$\degree$].}
+        \label{fig:cam_angle}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/rendering/ergebnisse/cam_dists.pdf}
+        \caption{Distanzen zur Dartscheibe [m].}
+        \label{fig:cam_dist}
+    \end{subfigure}
+    \vskip\baselineskip
+    \begin{subfigure}{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/rendering/ergebnisse/cam_focal.pdf}
+        \caption{Brennweiten der Kamera [mm].}
+        \label{fig:cam_focal}
+    \end{subfigure}
+    \caption{Verteilungen der Kameraparameter in den Trainingsdaten. Breite der Violinengraphen geben relative Häufigkeiten an, Mittel- und Extremwerte sind dunkelblau gekennzeichnet. \autoref{fig:cam_angle} Kamerawinkel. \autoref{fig:cam_dist} Kameradistanzen. \autoref{fig:cam_focal} Kamerabrennweiten.}
+    \label{img:kamera_meta}
+\end{figure}
+
+\paragraph{Winkel zur Dartscheibe}
+
+In \autoref{fig:cam_angle} ist der Winkel der Kamera zur Dartscheibe dargestellt. Für die Berechnung der Winkel wurde die Normale der Dartscheibe, die wie die Dartpfeile denkrecht auf der Dartscheibe steht, betrachtet, invertiert und ihr Winkel zur z-Achse der Kamera berechnet. Resultierend ist ein Winkel von $0\degree$ eine Frontalaufnahme der Dartscheibe während ein Winkel von $90\degree$ eine Aufnahme von der Seite der Dartscheibe darstellt. Durch die Berechnung sind ausschließlich positive Werte der Winkel möglich.
+
+Die häufigsten Winkel der Kamera befinden sich um $20\degree$ mit einem mittleren Winkel von $\sim27\degree$ und einem maximalen Winkel von $\sim70\degree$. Auffällig ist das verminderte Vorkommen frontaler Aufnahmen, die durch geringe Winkel charakterisiert sind.
+
+\paragraph{Distanz zur Dartscheibe}
+
+\todo{Distanz}
+
+\paragraph{Brennweite der Kamera}
+
+\todo{Brennweite}
+
+\subsubsection{Beleuchtung und Objekte in der Szene}
+\label{sec:beleuchtung_ergebnisse}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/rendering/ergebnisse/lights_bar_chart.pdf}
+        \caption{Relative Auftrittswahrscheinlichkeiten der Beleuchtungs-Objekte und dem Darts-Schrank.}
+        \label{fig:lights}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/rendering/ergebnisse/dart_counts.pdf}
+        \caption{Relative Anzahl der Dartpfeile je gerendertem Bild.}
+        \label{fig:dart_counts}
+    \end{subfigure}
+    \caption{Informationen zu Beleuchtung und Dartpfeilen. \autoref{fig:lights} zeigt Beleuchtungs-Objekte in der Szene. \autoref{fig:dart_counts} zeigt die Anzahlen der Dartpfeile je Bild.}
+    \label{img:light_dart_meta}
+\end{figure}
+
+\subsubsection{Getroffene Felder}
+\label{sec:felder_ergebnisse}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imgs/rendering/ergebnisse/dartboard_stacked_final.pdf}
+    \caption{Relative Verteilung der Dartpfeile je Feld. Links: Felder 1-20; rechts: Bull und Outs.}
+    \label{img:dart_verteilung}
+\end{figure}
+
+\todo{Grafiken einfügen und beschreiben}
 
 \subsection{Korrekte Annotation der Daten}  % =====================================================
 \label{sec:korrekte_annotation}  % Danke, Bruder!
 
-\todo{}
+Bei der Erstellung von Daten werden die Positionen der Dartpfeile im 3D-Raum festgelegt und liegen für die Bestimmung der von den Dartpfeilen getroffenen Felder vor. Da Position sowie Transformation der Dartscheibe statisch sind, ist eine Rückrechnung der getroffenen Dartfelder sowie die korrekte Errechnung der erzielten Punktzahl fehlerfrei möglich. Dies siegelt sich ebenfalls in den Daten wider: Die Dartpfeile sind allesamt korrekt annotiert und es existieren durch die in \autoref{sec:dartpfeil_positionierung} erläuterten Methodiken des Umgangs mit ambivalenten Dartpfeilen keine Positionen, die auf mehrere Weisen gedeutet werden können. Anzumerken ist an dieser Stelle jedoch, dass eine Kollision der Dartpfeile mit der Spinne durch ihre Transformation als Resultat der Abnutzungssimulation nicht ausgeschlossen werden kann. Dieser Umstand tritt selten ein, jedoch wurden vereinzelte Daten mit dieser Anomalie identifiziert. Die Auftrittswahrscheinlichkeit dieses Umstands ist jedoch sehr gering und die Korrektheit der Annotation ist dadurch nicht beeinflusst\footnote{Aufgrund der Komplexität einer algorithmischen Identifizierung dieser Kollisionen wurde keine quantitative Auswertung über diesen Umstand vollzogen. Jedoch kann ein struktureller Fehler der Annotation nach manueller Betrachtung einer Vielzahl erstellter Daten ausgeschlossen werden.}.
 
 \subsection{Ungenauigkeiten der Datenerstellung}  % ===============================================
 \label{sec:daten_ungenauigkeiten}
 
-Grundlage: Masken bei Orientierung -> keine exakten Punkte
+Durch die Verwendung von 3D-Modellierung sind alle unterliegenden Informationen der Datenerstellung vorhanden und können zur korrekten Annotation der Daten verwendet werden. Trotz der Informationen über Kameraposition und -parameter sowie Dartpfeilpositionen und Nachverarbeitung geschieht die Bestimmung der Dartscheibenorientierung sowie die Lokalisierung von Dartpfeilpositionen im exportierten Bild nicht durch Berechnungen, sondern durch Nachverarbeitungsschritte. Diese gehen mit einem gewissen Grad Ungenauigkeit einher und sind resultierend nicht $100\%$ akkurat.
 
-- Kameraperspektive + Geometrie-Differenzen
-
-- optimale Entzerrung durch Verzerrungen ggf. auch gar nicht möglich
-
--> \quotes{korrekte} Daten evtl. nicht 100\% korrekt
-
-\todo{}
+Alle Informationen hinsichtlich in- und extrinsischer Kameraparameter, Objektpositionen sowie Nachverarbeitungsschritten liegen während der Erstellung der Daten vor, jedoch ist die Verwendung dieser zur Rückrechnung der Positionen im gerenderten Bild sehr komplex. Stattdessen werden Positionen durch Überschneidungen von Objekten und Rendering dieser als Binärbilder mit den selben Exportparametern exportiert. Durch Nachverarbeitungsschritte wie Clustering werden die dargestellten Positionen approximiert. Dieser Prozess unterliegt einem gewissen Grad der Ungenauigkeit, da mit diskretisierten Werten und Approximationen gearbeitet wird. Das Resultat dieser Erstellung ist eine minimale Variation der Orientierungspunkte hinsichtlich der Ausrichtung der Dartscheibe. Diese Abweichungen befinden sich in der Größenordnung weniger Pixel, jedoch ist diese Ungenauigkeit anzumerken. Eine Beeinträchtigung der Trainingserfolge durch diese Ungenauigkeiten wird jedoch durch die Anwendung von Augmentierung überschattet (vgl. \autoref{sec:daten_augmentierung}).

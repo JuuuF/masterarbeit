@@ -16,6 +16,7 @@ Den Daten des Deepdarts-Systems liegen einige Fehlstände zugrunde, die in diese
 Die synthetische Datenerstellung dieser Thesis basiert auf der 3D-Modellierungssoftware \textit{Blender}\cite{blender}. Mit dieser ist die Erstellung fotorealistischer und parametrisierbarer Szenen möglich, die gepaart mit externen Skripten zur automatisierten Datenerstellung genutzt wird. Dazu wird eine Szene erstellt, die als Blaupause aller synthetischer Daten fungiert. Die Objekte und Gegebenheiten in dieser Szene werden durch externes Setzen von spezifischen Parametern gelenkt und ermöglicht die Simulation einer Vielzahl unterschiedlicher Szenarien und Umgebungsbedingungen.
 
 % ------------------------------------------------------------------------
+
 \subsection{Die Szene in Blender}
 \label{sec:impl:daten:blender}
 
@@ -117,6 +118,7 @@ Um die Dartscheibe herum können ein Dartschrank oder ein LED-Ring eingeblendet 
 Beide Objekte können nicht gemeinsam auftreten, da sie im selben Raum agieren und ein gemeinsames Einblenden zu Überschneidungen der Objekte führen würde. Folglich ist entweder eines dieser Objekte oder keines vorhanden.
 
 % ------------------------------------------------------------------------
+
 \subsection{Python-Skript zur Randomisierung von Parametern}
 \label{sec:impl:daten:python}
 
@@ -194,6 +196,7 @@ Beispiele gerenderter Bilder sind in \autoref{img:render_examples} gezeigt. Die 
 \end{figure}
 
 % ------------------------------------------------------------------------
+
 \subsection{Post-Processing der Daten}
 \label{sec:impl:daten:postprocess}
 
@@ -210,6 +213,7 @@ Das Finden und Entzerren der Dartscheibe ist das zweite Unterprojekt in dieser T
 In den folgenden Unterkapiteln wird auf die einzelnen Module der Pipeline zur Entzerrung von Dartscheiben eingegangen. Allem voran wird auf die Herangehensweise der Entzerrung des Deepdarts-Systems eingegangen, auf der die Idee des in dieser Thesis erarbeiteten Entzerrungsalgorithmus basiert.
 
 % ------------------------------------------------------------------------
+
 \subsection{Entzerrung der Daten im Referenzpaper}
 \label{sec:impl:cv:paper}
 
@@ -234,6 +238,7 @@ Die in dem Paper unterbreitete Herangehensweise, dieses System robuster zu gesta
 % - Umsetzung komplexer als antizipiert, aber robuste Lösung gefunden
 
 % ------------------------------------------------------------------------
+
 \subsection{Überblick über die CV-Pipeline}
 \label{sec:impl:cv:pipeline}
 
@@ -249,12 +254,14 @@ Der erste Schritt der CV-Pipeline ist die Vorverarbeitung der Daten. Sie wird in
 \end{figure}
 
 % ------------------------------------------------------------------------
+
 \subsection{Vorverarbeitung}
 \label{sec:impl:cv:preprocessing}
 
 Die Vorverarbeitung in der CV-Pipeline dient dem Umgang mit zu großen Input-Bildern. Die Dauer der Berechnungen steht im Verhältnis zur Größe der Eingabebilder. Durch Verringern der Eingabegröße benötigen die Berechnungen weniger Ressourcen, jedoch werden die Ergebnisse durch geringeren Informationsgehalt in den Bildern ebenfalls reduziert. Ein Kompromiss zwischen Geschwindigkeit und Genauigkeit wurde gefunden, indem die Bilder solange mit dem Faktor 2 herunterskaliert werden, bis die maximale Seitenlänge weniger als 1600 Pixel beträgt. Die Skalierung um den Faktor 2 wird genutzt, um die Einführung von Artefakten zu minimieren, die bei einer Skalierung mit Fließkommazahlen auftreten können, und um die Komplexität der Operation gering zu halten.
 
 % ------------------------------------------------------------------------
+
 \subsection{Kantenerkennung}
 \label{sec:impl:cv:edges}
 
@@ -276,6 +283,7 @@ Die ersten Schritte der Kantenerkennung sind die Konvertierung des RGB-Eingabebi
 \end{figure}
 
 % ------------------------------------------------------------------------
+
 \subsection{Linienverarbeitung}
 \label{sec:impl:cv:lines}
 
@@ -351,6 +359,7 @@ Durch die Überschneidung der optimierten Feldlinien ergibt sich ein neuer Mitte
 
 
 % ------------------------------------------------------------------------
+
 \subsection{Orientierung}
 \label{sec:impl:cv:orient}
 

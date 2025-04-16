@@ -3,22 +3,40 @@
 \section{Implementierung}
 \label{sec:daten:implementierung}
 
-Implementierung hier.
-
-\todo{Einleitende Sätze}
+Nachdem die grundlegende Methodik zur Datenerstellung erläutert ist, widmet sich dieser Abschnitt einem Einblick in relevante Details der Implementierung. Diese dienen dem tiefgehenden Verständnis der Umsetzung der Datenerstellung. Es wird in einem ersten Unterabschnitt betrachtet, wie die Implementierung der Parameter in der Dartscheibe realisiert ist und wie die Texturen 
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Parametrisierung der Dartscheibe}  % ==================================================
 \label{sec:dartscheibe_parametrisierung}
 
-\subsubsection{Einsatz von Noise-Texturen}
+Die Dartscheibe ist auf unterschiedliche Weisen parametrisiert. Sie integriert sowohl den globalen Seed als auch den von diesem abgeleiteten Altersfaktor, um ihr Aussehen parametrisiert zu steuern. Grundlegend basiert das Aussehen jeder Dartscheibe auf einer idealen, neuen Dartscheibe. Die Dartscheibe besitzt ein Grundmaterial, welches durch seine Beschaffenheit an Sisal angelehnt ist und farblich einer neuen Dartscheibe entspricht.
 
-Das Material der Dartscheibe besteht aus unterschiedlichen Schichten, die miteinander kombiniert werden. Ein Grundbestandteil der meisten Schichten
+Der Einfluss des Seeds für diese Dartscheibe beläuft sich auf eine leichte Variation der Farben und Oberflächenstruktur. Mit zunehmendem Altersfaktor werden die Farben der Felder zwischen dem Grundfarbton und einer alten Variante der Feldfarben interpoliert, sodass ein Altern der Dartscheibe mit einer Verfärbung der Felder einhergeht.
 
-WIE wurde es umgesetzt? -> Maskierungen etc.
+\subsubsection{Parametrisierung von Spinne und Zahlen}
 
-\todo{}
+Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne mit zunehmendem Alter und einer Verschiebung der Zahlen beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhende Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale Verschiebungen aufweisen und alte Dartscheibe sehr starke Verschiebungen mit sich ziehen. Zusätzlich wirkt sich der Altersfaktor bei Spinne und Zahlen aus, indem Rost mit zunehmendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit rost-rotem Farbton in das Material eingearbeitet.
+
+\subsubsection{Parametrisierung des Materials}
+
+Die Dartscheibe weist zudem Gebrauchsspuren durch Einstichlöcher, Risse und Staubpartikel auf, die ebenso wie ihre Farbe von den Parametern des globalen Seeds und des Alters beeinflusst werden. Umgesetzt ist dies durch die Verwendung von Noise-Texturen, Maskierungen und Variation der Stärken dieser Techniken, um den Einfluss von Alter zu integrieren.
+
+\paragraph{Einstichlöcher}
+
+Die Einstichlöcher werden durch ein Zusammenspiel mehrerer Masken generiert. Zum einen existiert eine Maske, die uniform verteilt Einstichlöcher über die gesamte Dartscheibe verteilt. Diese wird moduliert durch eine Maske, die die Stärke der Existenz bestimmt. An den Stellen, an denen die Existenzmaske stark vorhanden ist, werden Einstichlöcher vermehrt sichtbar als an schwachen Stellen der Existenzmaske. Diese Verteilung ist zu diesem Punkt unabhängig von dem Altersfaktor und lediglich durch den globalen Seed parametrisiert. Der Altersfaktor bestimmt einerseits die Dichte der Einstichlöcher durch Manipulation der Skalierung der Einstichlockmaske, andererseits wird zudem die Stärke der Existenzmaske derart vom Altersfaktor beeinflusst, dass ein Zunehmen des Alters mit mehr Einstichlöchern einhergeht.
+
+\paragraph{Risse}
+
+Analog zu den Einstichlöchern werden die Risse im Material parametrisiert. Es existieren ebenfalls zwei Masken, die jeweils die Ausprägung der Risse und ihre Existenz bestimmen. Die Ausprägung der Risse ist durch eine verzerrte Voronoi-Textur erzielt, deren Verzerrung und Größe durch den Altersfaktor beeinflusst wird. Die Existenzmaske der Risse wird analog zur Existenz der Einstichlöcher gehandhabt. Die Existenzmasken der unterschiedlichen Charakteristiken werden zudem mit unterschiedlichen Variationen des globalen Seeds generiert, sodass eine Korrelation der Masken ausgeschlossen ist.
+
+\paragraph{Staubpartikel}
+
+Die Staubpartikel setzen sich aus Masken für kleine Haare und Staubpartikel selbst zusammen. Diese werden ebenso wie die zuvor beschriebenen Charakteristiken durch Masken der Existenz und Ausprägung erstellt.
+
+\vspace{\baselineskip}
+
+Die erstellten Masken der Einstichlöcher, Risse und Staubpartikel werden mit eigenen Texturen versehen und beeinflussen teilweise die Oberflächenbeschaffenheit der Dartscheibe durch Beeinflussung der Normalen des Materials.
 
 \subsection{Zusammensetzung der Dartpfeile}  % ====================================================
 \label{sec:dartpfeile_zusammensetzung}
@@ -82,7 +100,7 @@ Nach der Positionierung der Pfeile auf der Dartscheibe wird eine Nachverarbeitun
 
 \subsubsection{Existenz}
 
-Die Existenz von Dartpfeilen wird durch zwei Faktoren gesteuert. Vor der Positionierung eines Dartpfeils wird für jeden Pfeil entschieden, ob dieser existiert oder nicht. Die Wahrscheinlichkeit einer Ausblendung eines Dartpfeils liegt bei $\nicefrac{1}{3}$. Durch diese Zufallsentscheidung wird eine dynamische Anzahl an Dartpfeilen generiert.
+Die Existenz von Dartpfeilen wird durch zwei Faktoren gesteuert. Vor der Positionierung eines Dartpfeils wird für jeden Pfeil entschieden, ob dieser existiert oder nicht. Anhand einer Wahrscheinlichkeitsverteilung werden die Dartpfeile zufällig ausgeblendet. Durch diese Zufallsentscheidung wird eine dynamische Anzahl an Dartpfeilen generiert.
 
 Eine weitere Gegebenheit, unter der ein Dartpfeil ausgeblendet wird, ist die zu geringe Entfernung zu anderen Dartpfeilen. Liegt die Position eines Dartpfeils zu nahe an einem bereits platzierten Dartpfeil, wird dieser ausgeblendet. Es wurde sich gegen eine Adaption der Position entschieden, um zu starke Abweichung von Heatmaps und erneute Überschneidung der Spinne zu vermeiden; eine neue Positionierung des Dartpfeils wurde nicht eingesetzt, da die Möglichkeit besteht, dass die verwendete Heatmap nicht ausreichend Bereiche zur korrekten Platzierung aller Dartpfeile zur Verfügung stellt.
 

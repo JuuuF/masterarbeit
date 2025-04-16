@@ -13,10 +13,8 @@ Bevor in the Thematik der Normalisierung eingegangen wird, ist die Klärung von 
 Die polare Darstellung von Linien ist für die Identifizierung der Dartscheibe dahingehend relevant, dass sie es ermöglicht, einer Linie einen Winkel zuzuordnen, in dem diese verläuft. Eine Polarlinie ist definiert als ein Tupel $(\rho, \theta)$, in dem $\rho$ der minimale Abstand der Linie zum Koordinatenursprung ist und $\theta$ der Winkel der Liniennormalen zur x-Achse. Die Charakterisierung einer Linie durch einen Winkel in \autoref{sec:linien} verwendet.
 
 Zur Umrechnung einer Linie, gegeben durch zwei Punkte $P_1 = (x_1, y_1)$ und $P_2 = (x_2, y_2)$, in Polarform werden folgende Gleichungen genutzt \cite{polar_linien}:
-
 \[ \rho = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2} \]
 \[ \theta = \atan \frac{y_2 - y_1}{x_2 - x_1} \]
-
 Festzuhalten ist, dass Start- und Endpunkte der Linie durch diese Art der polaren Beschreibung nicht berücksichtigt werden. Dies beruht auf der Gegebenheit, dass mathematische Beschreibungen von Linien infinite Längen haben. Diese Eigenschaft in dieser Darstellung von Polarlinien wird in der Methodik dieser Arbeit zur Identifizierung von Charakteristiken von Vorteil genutzt und wird gezielt in \autoref{sec:mittelpunktextraktion} eingesetzt.
 
 % -------------------------------------------------------------------------------------------------
@@ -48,11 +46,8 @@ Binning wird in dieser Thesis unter anderem in \autoref{sec:mittelpunktextraktio
 \label{sec:was_filterung}
 
 Die Faltung, auch Convolution genannt, ist eine mathematische Operation, die ihren Ursprung in der Signalverarbeitung hat. Die Faltung nimmt zwei Funktionen $f$ und $g$ und berechnet eine resultierende Funktion $h = (f * g)$. Die Definition einer Faltung ist \cite{convolution}:
-
 \[ (f*g)(x) = \int_{-\infty}^{-\infty} f(t) g(x-t) dt\]
-
 In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die Extraktion von Merkmalen aus Bildern ermöglicht. Die diskrete 2D-Faltung funktioniert, indem ein Kernel auf jede Position eines Bildes angewandt wird. Mathematisch ist sie wie folgt beschrieben \cite{discrete_convolution}:
-
 \[ I[x, y] = \sum_{i=0}^{x_k} \sum_{j=0}^{y_k} I[x - \lfloor\frac{x_k}{2}\rfloor + i - 1, y - \lfloor \frac{y_k}{2} \rfloor + j - 1] \times k[i, j] \]
 \nomenclature{$I \in \mathbb{N}^2$}{Bild mit einem Kanal}
 \nomenclature{$k \in \mathbb{N}^2$}{Faltungs-Kernel}
@@ -60,7 +55,6 @@ In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die 
 \nomenclature{$c_0 \in \mathbb{N}$}{Anzahl der Eingabekanäle in einen Kernel}
 \nomenclature{$c_1 \in \mathbb{N}$}{Anzahl der Ausgabekanäle eines Kernels}
 \nomenclature{$x, y \in \mathbb{N}$}{Variable Koordinaten in einem kartesischen Koordinatensystem}
-
 Dabei ist $I \in \mathbb{N}^2$ ein Eingabebild mit einem Kanal, $x$ und $y$ sind Positionen im Bild in $k \in \mathbb{N}^2$ ein Kernel der Größe $x_k \times y_k$.
 
 Diese allgemeine Formel lässt sich auf die Verwendung unter mehrerer Kanäle anwenden. Für eine Faltung eines Bildes mit $c_0$ Kanälen, einer Kernel-Größe von $k_x \times k_y$ und einer Ausgabe in $c_1$ Kanälen wird ein Kernel der Größe $ c_0 \times k_x \times k_y \times c_1$ erstellt. Dabei werden für jeden Pixel in jedem Kanal alle Eingabekanäle betrachtet und gefiltert.
@@ -167,7 +161,6 @@ $\lambda_1$ und $\lambda_2$ werden mit der folgenden Formel zu einem Wert $R$ zu
 $\kappa$ ist dabei ein empirisch bestimmter Wert zur Regulierung der Funktion. $R$ wird in Kombination mit Thresholding genutzt, um einen Punkt in einem Bild als Ecke zu klassifizieren.
 \nomenclature{$R \in \mathbb{R}$}{Ausgabewert der Harris Corner Detection zur Bestimmung von Ecken}
 \nomenclature{$\kappa \in \mathbb{R}$}{Regulierungsfaktor der Harris Corner Detection}
-
 Bei der Klassifizierung von Bildpixeln kommt es dazu, dass Cluster von Pixeln als Ecken erkannt werden. Aus diesen Clustern wird mittels Non-Maximum-Suppression derjenige Pixel hervorgehoben, der die größte Antwort auf die Eckenerkennung liefert. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf Null gesetzt.
 
 
@@ -181,7 +174,6 @@ Die Hough-Transformation, veröffentlicht 1962 von Paul Hough, ist ein Algorithm
 Hauptaspekt des Algorithmus ist die Transformation von Punkten im Image-Space zu Linien im Parameter-Space. Der Image-Space ist das Koordinatensystem des Bildes mit den Achsen $x$ und $y$; der Parameter-Space ist ein Koordinatensystem mit den Achsen $\rho$ und $\theta$. Linien im Image-Space sind mathematisch beschrieben als Geraden der polaren Form:
 \[ 0 = x \sin{\theta} - y \cos{\theta} + \rho \]
 \nomenclature{$(\rho, \theta) \in \mathbb{R}^2$}{Koordinaten (Abstand und Winkel) in einem polaren Koordinatensystem}
-
 Dabei sind $\rho$ und $\theta$ Winkel und Abstand einer Linie zum Koordinatenursprung, wie in \autoref{sec:polarlinien} eingeführt. Ein Punkt $(x, y)$ im Image-Space ist im Parameter-Space als Sinuswelle dargestellt, die alle Linien beschreibt, die durch den Punkt $(x, y)$ im Image-Space verlaufen. Ein Punkt $(\rho, \theta)$ im Parameter-Space beschreibt eine Linie in Image-Space.
 
 Input der Hough-Transformation ist ein durch Thresholding vorverarbeitetes Bild, in dem typischerweise Kanten oder Ecken extrahiert wurden. Die extrahierten Pixel werden im Parameter-Space akkumuliert, in dem sie sich in Form von Sinuswellen überschneiden. Liegen demnach mehrere Punkte im Image-Space in einer Linie, so überschneiden sich ihre korrespondieren Sinus-Darstellungen im Parameter-Space in einem Punkt. Dieser Punkt liegt an den Koordinaten $(\rho, \theta)$ und beschreibt die Parameter der Geraden, die durch die Punkte verläuft. Das Identifizieren von Peaks im Parameter-Space führt analog zur Identifizierung von Linien im Image-Space.
@@ -202,13 +194,13 @@ Punkte im 2D-Raum besitzen eine $x$- und eine $y$-Koordinate, sodass $P = (x, y)
 \nomenclature{$\widetilde{P} \in \mathbb{R}^3$}{Homogene Position $(\widetilde{x}, \widetilde{y}, \widetilde{z})$ in kartesischem Koordinatensystem}
 \nomenclature{$\widetilde{P}' \in \mathbb{R}^3$}{Transformierte homogene Position in kartesischem Koordinatensystem}
 \nomenclature{$M_{i \in \mathbb{N}} \in \mathbb{R}^{3 \times 3}$}{Transformationsmatrix}
-
 Die unterschiedlichen Einträge der Transformationsmatrizen bestimmen die Art der Transformation. Durch Aneinanderreihung mehrerer Transformationsmatrizen aneinander können mehrere Transformationen in einer einzelnen Transformation zusammengefasst werden. Dabei ist die rechts-Assoziativität der Matrixmultiplikation zu beachten, durch die eine Anwendung der Matrizen von rechts nach links geschieht. Darüber hinaus ist die Kommutativität bei Matrixmultiplikationen nicht gegeben, sodass die Reihenfolge der Anwendungen relevant ist:
+{\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
     \widetilde{P}' & = M_n \times \dots \times M_2 \times M_1 \times \widetilde{P}   \\
                    & = (M_n \times \dots \times M_2 \times M_1) \times \widetilde{P} \\
-                   & = M_{n, \dots, 2, 1} \times \widetilde{P}                       \\
-\end{align*}
+                   & = M_{n, \dots, 2, 1} \times \widetilde{P}
+\end{align*}}
 
 \subsubsection{Affine Transformationsmatrizen}
 \label{sec:affine_transformations_matrizen}
@@ -218,6 +210,7 @@ Die unterschiedlichen Einträge der Transformationsmatrizen bestimmen die Art de
 
 Die Translationsmatrix verschiebt Punkte um gegebene Distanzen. $x$- und $y$-Verschiebungen werden mit $t_x$ und $t_y$ beschrieben und sind wie folgt aufgebaut:
 
+{\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
     M_\text{trans} \times \threedvec{x}{y}{1}
      & =
@@ -228,10 +221,10 @@ Die Translationsmatrix verschiebt Punkte um gegebene Distanzen. $x$- und $y$-Ver
             0 & 0 & 1   \\
         \end{array}
         \right]
-    \threedvec{x}{y}{1}             \\
+    \threedvec{x}{y}{1} \\
      & =
-    \threedvec{x + t_x}{y + t_y}{1} \\
-\end{align*}
+    \threedvec{x + t_x}{y + t_y}{1}
+\end{align*}}
 \nomenclature{$M_\text{trans} \in \mathbb{R}^{3 \times 3}$}{Translationsmatrix}
 
 \paragraph{Skalierung}
@@ -239,6 +232,7 @@ Die Translationsmatrix verschiebt Punkte um gegebene Distanzen. $x$- und $y$-Ver
 
 Die Skalierungsmatrix zeichnet sich durch ihre horizontale Skalierung $c_x$ und vertikale Skalierung $c_y$ aus und ist wie folgt aufgebaut:
 
+{\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
     M_\text{scl} \times \threedvec{x}{y}{1}
      & =
@@ -249,17 +243,18 @@ Die Skalierungsmatrix zeichnet sich durch ihre horizontale Skalierung $c_x$ und 
             0   & 0   & 1 \\
         \end{array}
         \right]
-    \threedvec{x}{y}{1}                     \\
+    \threedvec{x}{y}{1} \\
      & =
-    \threedvec{s_x \cdot x}{s_y \cdot y}{1} \\
-\end{align*}
+    \threedvec{s_x \cdot x}{s_y \cdot y}{1}
+\end{align*}}
 \nomenclature{$M_\text{scl} \in \mathbb{R}^{3 \times 3}$}{Skalierungsmatrix}
 
 \paragraph{Scherung}
 \label{par:scherung}
 
-Ber der Scherung werden Punkte parallel zur $x$-Achse mit $c_x$ und parallel zur $y$-Achse mit $c_y$ geschert.
+Ber der Scherung werden Punkte parallel zur $x$-Achse mit $c_x$ und parallel zur $y$-Achse mit $c_y$ geschert:
 
+{\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
     M_\text{shr} \times \threedvec{x}{y}{1}
      & =
@@ -270,17 +265,18 @@ Ber der Scherung werden Punkte parallel zur $x$-Achse mit $c_x$ und parallel zur
             0   & 0   & 1 \\
         \end{array}
         \right]
-    \threedvec{x}{y}{1}                             \\
+    \threedvec{x}{y}{1} \\
      & =
-    \threedvec{x + c_x \cdot y}{c_y \cdot x + y}{1} \\
-\end{align*}
+    \threedvec{x + c_x \cdot y}{c_y \cdot x + y}{1}
+\end{align*}}
 \nomenclature{$M_\text{shr} \in \mathbb{R}^{3 \times 3}$}{Scherungsmatrix}
 
 \paragraph{Rotation}
 \label{par:rotation}
 
-Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch positiver Richtung um den Koordinatenursprung rotiert. Sie zugehörigen Rotationsmatrizen nutzen diesen Winkel zur Konstruktion einer Rotationsmatrix. Anzumerken ist dabei, dass eine Rotationsmatrix als Kombination aus Skalierungen $s_x = s_y = \cos(\alpha)$ und Scherungen $-c_x = c_y = \sin(\alpha)$ konstruiert werden kann.
+Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch positiver Richtung um den Koordinatenursprung rotiert. Sie zugehörigen Rotationsmatrizen nutzen diesen Winkel zur Konstruktion einer Rotationsmatrix. Anzumerken ist dabei, dass eine Rotationsmatrix als Kombination aus Skalierungen $s_x = s_y = \cos(\alpha)$ und Scherungen $-c_x = c_y = \sin(\alpha)$ konstruiert werden kann:
 
+{\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
     M_\text{rot} \times \threedvec{x}{y}{1}
      & =
@@ -291,10 +287,10 @@ Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch p
             0            & 0             & 1 \\
         \end{array}
         \right]
-    \threedvec{x}{y}{1}                                                                                     \\
+    \threedvec{x}{y}{1} \\
      & =
-    \threedvec{\cos(\alpha) \cdot x - \sin(\alpha) \cdot y}{\sin(\alpha) \cdot x + \cos(\alpha) \cdot y}{1} \\
-\end{align*}
+    \threedvec{\cos(\alpha) \cdot x - \sin(\alpha) \cdot y}{\sin(\alpha) \cdot x + \cos(\alpha) \cdot y}{1}
+\end{align*}}
 \nomenclature{$M_\text{rot} \in \mathbb{R}^{3 \times 3}$}{Rotationsmatrix}
 
 \todo{Matrizen ggf. besser beschreiben}
@@ -336,6 +332,7 @@ Die log-polare Darstellung eines Bildes wird durch eine Transformation des Koord
 In dieser Thesis wird die log-polare Darstellung eines Bildes in \autoref{sec:orientierungspunkte_finden} genutzt, um Dartscheiben um ihren Mittelpunkt abzuwickeln. Der Effekt dieser Entzerrung ist die Transformation der Dartfelder von Kreisabschnitten zu Rechtecken.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Farbräume}
 \label{sec:farbräume}
 
@@ -344,6 +341,7 @@ Farbinformationen in Bildern werden auf unterschiedliche Arten gespeichert. Dies
 Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nachteilen in Verbindung. In dieser Arbeit werden die aufgezählten Farbräume zur Identifizierung von Farben und Hervorhebung von Merkmalen in Bildern genutzt. Die Verwendung von Farbraumtransformationen geschieht in \autoref{sec:orientierungspunkte_klassifizieren}.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Structural Similarity (SSIM)}
 \label{sec:ssim}
 
@@ -352,6 +350,7 @@ Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeaut
 Diese Handhabung der Informationsverarbeitung sorgt für Robustheit gegenüber visuell geringer Änderungen, die jedoch starke Auswirkungen auf die zugrundeliegenden Daten besitzen. Ein Beispiel ist das Weichzeichnen eines Bildes oder das Hinzufügen von Rauschen. Diese Operationen ändern die Pixelwerte der Eingabebilder stark, jedoch sind sie visuell unauffällig.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{RANSAC}
 \label{sec:ransac}
 

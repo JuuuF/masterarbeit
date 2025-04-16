@@ -9,7 +9,31 @@ Hier steht die Diskussion.
 \section{Datenerstellung}
 \label{sec:diskussion:daten}
 
-.
+- Umfang der Daten
+- - keine Daten ohne Dartpfeile
+- - keine Daten mit Dartschrank
+- - Fehler bei der Datenerstellung. Möglicherweise Verzerrung der Daten oder nicht ausgeschöpftes Potenzial
+- nicht fotorealistisch, aber für Training mit KI reicht es
+- - Grundkonzept ist klar
+- - out-of-distribution-Training funktioniert (wie gut?)
+- - Augmentierung so stark, dass Unterschied zwischen echten und generierten Daten verschwimmt (sollte man denken)
+- Anzahl unterschiedlicher Dartpfeile stark limitiert
+- - Barrels + Shafts stark limitiert -> ggf. Overfitting bei KI-Training
+- prozedurale Texturen vs. Scans
+- - Flexibilität vs. Realismus
+- Entzerrung nicht 100\% genau
+- -> keine *perfekten* Trainingsdaten
+- Umgebungen könnten variabler sein
+- - Mehr Hintergründe
+- - unterschiedlichere Beleuchtungen
+- - Aufnahmewinkel teilweise nicht realistisch
+- Statisches Compositing sorgt für Bias
+- - Könnte mit Parametern ausgestattet werden
+- Umgebungen nicht realistisch
+- - andere Objekte auf Dartscheibe / stark beschädigte Dartscheibe / Verzierungen bzw. Dekoration an und um Scheibe / ...
+- - kein direkter Hintergrund der Dartscheibe
+- - - keine Reflexionen des Lichts
+- - - keine Umgebungsbeleuchtung, nur direkt
 
 Referenz von \autoref{sec:berechnung_entzerrung}: Ungenauigkeit bei Entzerrung durch Maske -> Kameraperspektive, Diskretisierung, 3D-Objekt-Pixelcluster nicht exakt.
 
@@ -17,10 +41,34 @@ Referenz von \autoref{sec:berechnung_entzerrung}: Ungenauigkeit bei Entzerrung d
 \section{Normalisierung}
 \label{sec:diskussion:cv}
 
-.
+
+- Dauert lange im Gegensatz zu DD-System / einfacher KI-Inferenz
+- - unfairer Vergleich, da KI auf Graphen kompiliert und optimiert ist; CV ist interpretierter Python-Code
+- nicht 100\%, aber ganz gut, wenn es klappt
+- durch RANSAC nicht deterministisch
+- klappt nicht immer
+- - Parameter können angepasst werden
+- relativ robust gegen Outlier
+- robust gegen Verdeckung der Dartscheibe
+- ist keine KI
+- - man weiß, wie es funktioniert
+- - man kann es debuggen
+
+\todo{Ausformulieren}
 
 % -------------------------------------------------------------------------------------------------
 \section{Dartpfeil-Erkennung}
 \label{sec:diskussion:ki}
 
-. 
+
+- kein bereits trainiertes Modell genutzt
+- - YOLOv8 wurde mit PyTorch erstellt
+- - eigene Expertise liegt in TensorFlow
+- größeres Modell als Referenz-Paper
+- - ~6M vs. ~17M Parameter
+- - Aufgabe ist aber auch komplexer
+- - - DD-KI unterliegt massivem Daten-Bias und ist stark overfitted
+- striktes Out-of-distribution-Training möglicherweise nicht optimal
+- - sichtbarer Unterschied in unterschiedlichen Quellen aus Validierungsdaten
+- - generierte Validierungsdaten deutlich besser erkannt als echte Aufnahmen
+- - sichtbare Schwachpunkte von Out-of-distribution-Training

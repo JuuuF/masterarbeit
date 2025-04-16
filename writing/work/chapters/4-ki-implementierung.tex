@@ -6,7 +6,29 @@
 Implementierung hier.
 
 % -------------------------------------------------------------------------------------------------
-\subsection{KI-Implementierung}
-\label{sec:ki_implementierung}
 
-.
+\subsection{Implementierung der YOLOv8*-Architektur}
+\label{sec:yolov8_implementierung}
+
+- YOLOv8: TensorFlow statt PyTorch
+- eigene Implementierung
+- Grundlage: YOLOv8-Docs (eigentlich vom Bild, aber das stammt von Config-Datei aus Repo)
+- Abänderung der Architektur an Aufgabe
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Training des Netzwerks}
+\label{sec:training}
+
+- Rahmenbedingungen:
+* GPUs: NVIDIA GeForce RTX 4090
+* Batch Size
+* Learning Rate
+* Epochen
+* Datenmengen (Training + Validierung)
+* Augmentierungsparameter
+
+- Batch-Sizes, Datenmenge, Epochen, Augmentierungsparameter, Learning Rate
+- tf.data-Pipeline:
+* Optimierung durch Auslagerung von Berechnungen auf GPU
+* Paralleles Laden von Daten

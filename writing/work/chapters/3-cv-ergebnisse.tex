@@ -6,6 +6,7 @@
 Hier die Ergebnisse.
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Metriken}
 \label{sec:cv_metriken}
 
@@ -21,17 +22,16 @@ Für die Messung der Entzerrungsgenauigkeit des entwickelten Algorithmus werden 
 
 Die zweite Metrik $\Lambda(\widetilde{H}, \widehat{H})$ bestimmt die Genauigkeit der ermittelten Entzerrungs-Homographie $\widehat{H}$, gegeben einer Ziel-Homographie $\widetilde{H}$. Da ein trivialer Vergleich der Zahlenwerte der ermittelten Homographien wenig Aufschluss über die konkrete Genauigkeit der Entzerrung liefert, ist eine komplexere Metrik notwendig. Für die verwendete Metrik $\Lambda$ werden $N_\text{OP, max}=61$ unterschiedliche Orientierungspunkte verwendet. Diese befinden sich entlang der Feldlinien radial verteilt in den Ringen der äußeren Bulls, des äußeren Triple-Rings und des äußeren Double-Rings. Zusätzlich ist der Mittelpunkt als weiterer Orientierungspunkt mit aufgenommen. Die Positionen $P_{i \in [N_\text{OP}]}$ aller Orientierungspunkte im Zielbild sind durch die Definition der Entzerrung festgelegt. Diese Punkte werden durch die inverse Ziel-Homographie an ihre Ursprungspositionen $\widetilde{P}_i = \mathrm{inv}(\widetilde{H}) \times P_i$ transformiert und von dort durch die ermittelte Homographie zu den vorhergesagten Zielpositionen $\widehat{P}_i = \widehat{H} \times \widetilde{P}_i$ rücktransformiert. Der Wert der Metrik ist definiert durch:
 \nomenclature{$\Lambda: (\left(\mathbb{R}^{3 \times 3}\right)^2 \mapsto \mathbb{R})$}{CV-Metrik zur Identifizierung der Ähnlichkeiten von Homographien}
-
 \[ \Lambda(\widetilde{H}, \widehat{H}) = \frac{1}{N_\text{OP}} \sum_{i = 1}^{N_\text{OP}} \left\lVert P_i - \widehat{H} \times \mathrm{inv}(\widetilde{H}) \times P_i \right\rVert _2  \]
 \nomenclature{$\widehat{H} \in \mathbb{R}^{3 \times 3}$}{Ermittelte Entzerrungstransformation}
 \nomenclature{$N_\text{OP, max}$}{Maximale Anzahl der Orientierungspunkte in einem Bild}
 \nomenclature{$N_\text{OP}$}{Anzahl Identifizierter Orientierungspunkte in einem Bild}
 \nomenclature{$P_{i \in [N_\text{OP}]} \in \mathbb{R}^2$}{Positionen der identifizierten Orientierungspunkte}
-
 Durch diese Metrik ist eine Quantifizierung der Ähnlichkeit zweier Homographien zur Entzerrung einer Dartscheibe möglich. Zu sehen ist bei dieser Definition, dass $\Lambda(\widetilde{H}, \widehat{H}) = 0\,\text{px}$, wenn $\widetilde{H} = \widehat{H}$, da $\widehat{H} \times \mathrm{inv}(\widetilde{H}) = \text{Id}$, die Identitätsmatrix.
 \nomenclature{$\text{Id} \in \mathbb{R}^{3 \times 3}$}{Identitäts-Transformation}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Verwendete Daten}
 \label{sec:cv_ergebnisse_daten}
 
@@ -57,6 +57,7 @@ Die Daten beinhalten lediglich positive Datensätze, indes in jedem Bild eine Da
 \end{table}
 
 % -------------------------------------------------------------------------------------------------
+
 \subsection{Quantitative Auswertung}
 \label{sec:cv_quantitative_auswertung}
 

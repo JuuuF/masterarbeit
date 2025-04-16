@@ -4,3 +4,52 @@
 \label{cha:ausblick}
 
 Hier steht der Ausblick.
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Ausblick der Datenerstellung}
+\label{sec:ausblick_data}
+
+- Implementierung von PBR in Datenerstellung
+- Verbesserung der Datengenerierung, um realistischer zu werden und mehr Umgebungsbedingungen zu simulieren
+- Datenerstellung auf weitere Farben und Formen der Dartscheibe erweitern
+- - z.B. blau-rote Felder
+- - ist aber meist nicht in Steeldarts gegeben, sondern eher in elektronischen Dartscheiben
+- - und bei elektronischen Dartscheiben ist dieses System ohnehin überflüssig
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Ausblick der Normalisierung}
+\label{sec:ausblick_cv}
+
+- Verbesserung der Erkennung / Klassifizierung von Orientierungspunkten
+- - aktuell: pessimistische Klassifizierung, um Outlier zu minimieren, siehe \autoref{img:orientierung} (3)
+- - Problem: Einige Punkte werden nicht korrekt erkannt
+- - Lösung: Durch Überarbeitung der Klassifizierung genauer klassifizieren (ggf. mit kleinem CNN, das Surroundings / Farben klassifiziert)
+
+- Kompilierung der CV-Pipeline
+- - entweder Cython \cite{cython} / Numba \cite{numba} oder Implementierung in kompilierter Sprache (C/C++/Rust)
+
+- Ellipsen-Erkennung in CV einbauen (\cite{ellipse_detection_algorithm})
+- - Möglichkeit zur Identifizierung von 
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Ausblick der Dartpfeilerkennung}
+\label{sec:ausblick_ki}
+
+- neues Trainieren des Systems auf mehr echten Daten
+- - Arbeit spezifisch hinsichtlich Aufnahme und Annotation neuer Daten
+
+- Quantisierung der Netzwerke
+- - Verbesserung der Geschwindigkeit
+- - Verringerung der Ressourcennutzung (insbesondere hinsichtlich mobilem Deployment)
+
+- KI-Prediction auf Grundlage einer leeren Dartscheibe
+- - Kalibrierungs-Bild schließen und als Referenz nutzen
+- - Wenn bekannt ist, dass keine Dartpfeile auf Kalibrierungs-Bild vorhanden sind, ist die Wahrscheinlichkeit von Fehlklassifikationen des Hintergrundes geringer
+
+- neue Architekturen austesten
+- - Arbeit mit Fokus spezifisch auf Auswahl des Netzwerks
+
+- Warm Restarts der Learning Rate: \cite{lr_warm_restart}

@@ -3,9 +3,9 @@
 \section{Methodik}
 \label{sec:daten:methodik}
 
-Methodik hier \autoref{img:rendering_pipeline}.
+In diesem Abschnitt wird die Methodik der automatisierten Datenerstellung thematisiert. Es werden die unterliegenden Konzepte erläutert und die Hintergründe dieser werden beschrieben. Bevor in die einzelnen Bereiche eingestiegen wird, ist es zunächst notwendig, einen Überblick über das Zusammenspiel der jeweiligen Komponenten zu gewinnen. In \autoref{img:rendering_pipeline} ist der Ablauf der Datenerstellung schematisch dargestellt.
 
-\todo{Übersicht über Aufbau des Kapitels}
+Die Datenerstellung fußt auf einer 3D-Szene, welche in \autoref{sec:3d_szene} näher beschrieben wird. In der Szene befinden sich Objekte, die für die Gestaltung der Trainingsdaten verantwortlich sind. Hintergründe zu ihrem Aufbau und der konkreten Auswahl der Objekte werden in \autoref{sec:material_licht} gegeben. Diese Objekte der Szene werden durch ein Skript hinsichtlich ihrer Existenz, ihres Aussehens, ihren Eigenschaften und ihrer Positionierung algorithmisch randomisiert. Diese Randomisierung geschieht durch ein externes Skript, welches in \autoref{sec:scripting} näher betrachtet wird. Nachdem alle Objekte vorbereitet sind, folgt das Rendering der Szene, welches mit Imperfektionen wie Rauschen und Verzerrungen, wie es in Kameras aus Mobiltelefonen vorkommt, angereichert wird, wodurch ein weiterer Schritt des Realismus der erstellten Daten erzieht wird. Zusätzlich werden binäre Masken unterschiedlicher Objekte gerendert, welche zur Extraktion relevanter Informationen in den Daten relevant sind. Zuletzt werden durch Nachverarbeitungsschritte, welche in \autoref{sec:methodik_postprocessing} detailliert beschrieben werden, in den Daten enthaltene Metainformationen extrahiert und explizit gespeichert. Im Wesentlichen umfasst dies die Lokalisierung der Dartpfeilspitzen in den gerenderten Bildern und die Ermittlung der Normalisierung durch zuvor erwähnte Masken.
 
 \begin{figure}
     \centering
@@ -15,6 +15,7 @@ Methodik hier \autoref{img:rendering_pipeline}.
 \end{figure}
 
 \subsection{3D-Szene} % ===========================================================================
+\label{sec:3d_szene}
 
 Das Fundament der Datengenerierung ist die Simulation realistischer Dartscheiben. Diese Simulation fußt auf der virtuellen 3D-Szene, deren Grundzüge in den folgenden Unterkapiteln beschrieben werden. Es werden die zentralen Objekte der Szene beschrieben, die Dreh- und Angelpunkt der Datenerstellung darstellen und die für die Varianz und Komplexität der erstellten Daten ausschlaggebend sind. An Objekten werden die Dartscheibe in \autoref{sec:dartscheibe}, die Dartpfeile in \autoref{sec:dartpfeile} und die Beleuchtungsmöglichkeiten in \autoref{sec:lichter} beschrieben, sowie die globalen Parameter der Szene in \autoref{sec:parameter}.
 
@@ -41,9 +42,69 @@ Eine weitere Beobachtung typischer Dartscheiben ist Anbringung von Dartscheiben 
 \subsubsection{Parametrisierung}
 \label{sec:parameter}
 
-Für Generierung von Zufallsvariablen stellt die Szene zwei Parameter zur Verfügung: Seed und Alter. Der Seed ist ein Wert in einem vorgegebenen Intervall, der zur deterministischen Generierung von Zufallsvariablen genutzt wird. Diese Zufallsvariablen werden in den Objekten genutzt, um Abnutzungen, Zusammensetzungen, Verschiebungen und Texturen zu beeinflussen. Auf diese Weise ist ein deterministisches Erstellen von Szenen möglich. Der Seed wird ebenfalls zur Generierung des Alters-Parameters genutzt. Dieser gibt das Alter der Objekte in der Szene an und wird verwendet, um den Grad der Abnutzung in Dartscheibe und Dartpfeilen zu bestimmen.
+Für Generierung von Zufallsvariablen stellt die Szene zwei Parameter zur Verfügung: Seed und Alter. Der Seed ist ein Wert in einem vorgegebenen Intervall, der zur deterministischen Generierung von Zufallsvariablen genutzt wird. Diese Zufallsvariablen werden in den Objekten genutzt, um Abnutzungen, Zusammensetzungen, Verschiebungen und Texturen zu beeinflussen (vgl. \autoref{sec:dartscheibe_parametrisierung}, \autoref{sec:dartpfeile_zusammensetzung}). Auf diese Weise ist ein deterministisches Erstellen von Szenen möglich. Der Seed wird ebenfalls zur Generierung des Alters-Parameters genutzt. Dieser gibt das Alter der Objekte in der Szene an und wird verwendet, um den Grad der Abnutzung in Dartscheibe und Dartpfeilen zu bestimmen.
 
-\todo{Verweise auf Implementierung einbinden}
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Material und Licht}  % ================================================================
+\label{sec:material_licht}
+
+Verweis: Details in Implementierung.
+
+Die Ausgestaltung der Objekte sowie die Arten der Beleuchtung sind essenziell für das Erstellen realistischer Daten und eine Abdeckung einer Vielzahl unterschiedlicher Szenarien. Für die Datenerstellung werden prozedurale Texturen verwendet, die in ihren Grundzügen reale Beobachtungen widerspiegeln. Die genaue Zusammensetzung und Ausgestaltung der Texturen wird in den folgenden Unterabschnitten genauer erläutert. Dazu werden insbesondere die Dartscheibe, die Dartpfeile und die Lichtquellen betrachtet.
+
+\subsubsection{Material der Dartscheibe}
+
+Die Dartscheibe besteht grundlegend aus den Darts-Feldern, der Spinne, dem Zahlenring und einer Beschriftung. Die Dartfelder sowie der Rahmen der Dartscheibe sind der Beschaffenheit von Sisal nachempfunden und werden mit unterschiedlichen Gebrauchsspuren versehen. Das Material von Sisal ist sehr diffus und wenig reflektiv. Die Oberfläche ist angeraut und weist Unebenheiten auf.
+
+Die Gebrauchsspuren des Sisals wird in Form von Abnutzung durch Kratzer, Einstichlöcher und Staubansammlung sowie durch Risse im Material. Darüber hinaus ist zur Simulation von Alterung der Dartscheibe eine Verfärbung der Felder und Verstärkung der Abnutzungen eingebaut. Die Beschaffenheiten und Vorkommen dieser Abnutzungen sind realen Dartscheiben nachempfunden und zielen darauf ab, eine möglichst große Spanne unterschiedlicher Dartscheiben abzudecken.
+
+Die Spinne der Dartscheibe ist als teilweise reflektives Metall modelliert. Die Spinne der Dartscheibe ist ebenfalls von einem Altersprozess betroffen, da beobachtet wurde, dass die Dicke und Präsenz der Spinne bei Dartscheiben zunehmenden Alters stärker ausgeprägt sind. Historisch ist dies dadurch begründet, dass der Herstellungsprozess von Dartscheiben im Laufe der Zeit fortschrittlicher wurde. Alte Spinnen
+
+Da alte Dartscheiben aktuell weiterhin in Verwendung sind, ist eine Abdeckung ihrer Geometrien in der Datenerstellung von Relevanz. Die Spinne sowie der Zahlenring unterliegen darüber hinaus einer Wahrscheinlichkeit, von Rostbildung betroffen zu sein, und werden mit steigendem Alter der Dartscheibe verformt, sodass die nicht auf den zu erwartenden Positionen liegen. Diese Verformungen wurden ebenfalls auf realen Dartscheiben beobachtet und sind potenziell für Dartpfeile, die nahe der Spinne landen, relevant.
+
+Die Beschriftung der Dartscheibe beinhaltet typischerweise den Herstellernamen der Dartscheibe sowie Symbole und Logos. Diese werden mit zufällig generierten Texten approximiert, die entlang des Randes der Dartscheibe verlaufen und zufällig platziert werden.
+
+Konkrete Informationen zur Umsetzung der Texturierung der Dartscheibe und zum Aufbau des Materials sind in \autoref{sec:dartscheibe_parametrisierung} zu finden.
+
+\subsubsection{Generierung der Dartpfeile}
+
+Obligatorische Bestandteile von Dartpfeilen beinhalten Tip, Barrel, Shaft und Flight. Aus jeweiligen Pools von Objekten werden Dartpfeile zufällig zusammengestellt, um randomisierte Dartpfeile zu generieren.
+
+Die Tips der Dartpfeile sind wenig variabel und unterscheiden sich hauptsächlich in Länge und Farbe. Trotz ihrer geringen Größe ist eine realistische Modellierung der Tips bedeutend für die Daten, da sie ausschlaggebend für die erzielte Punktzahl sind. Neben silbernen Tips sind ebenfalls schwarze oder auch bronzene Tips möglich, die in ihrer Reflektivität variieren.
+
+Die Barrels sind im Vergleich zu den Tips wesentlich komplexer, sodass einige vordefinierte Barrels generiert wurden, die zufällig hinter eine Tip gefügt werden. Darüber hinaus wird die Länge der Barrels zufällig variiert, um weitere Variationen einzubinden. Die Beschaffenheit von Barrels realer Dartpfeile ist sehr unterschiedlich, sodass eine sehr große Variabilität ihrer Erscheinungsbilder möglich ist. Um weitere Variabilitäten einzubinden, wurden teilweise Materialien verwendet, deren Farbe zufällig gesetzt wird.
+
+Auf die Barrel folgt der Shaft des Dartpfeils, der als Übergang zum Ende des Dartpfeils dient. Dieser wird ebenso wie die Barrel aus vorgefertigten Bauteilen ausgewählt, in seiner Länge modifiziert und teilweise mit zufälligen Farben versehen. Reale Dartpfeile folgen häufig einem kohärenten Farbschema während die Abstimmung von Barrels und Shafts in dieser Thesis zufällig ist. Hinsichtlich der Variabilität der Dartpfeile ist diese Herangehensweise jedoch präferiert.
+
+Das Ende der Dartpfeile bilden die Flights. Diese sind die meist aus Plastik gefertigten Flügel des Dartpfeils und ihr Erscheinungsbild variiert von allen Bestandteilen am stärksten. Farben von Flights reichen von einzelnen Farben über Flaggen und Wappen bis hin zu abstrakten Bildern. Zusätzlich ist die Form von Flights nicht vorgegeben. Diese Gegebenheiten wurden in dieser Thesis durch Projektion eines zufälligen Bereichs eines Texturatlas\footnote{Der Texturatlas beinhaltet Länderflaggen sowie geometrische Formen und zufällige Farben. Teile des Atlas wurden durch die Bilderstellungs-KI von DeepAI \cite{deepai-image} generiert.} auf eine Grundformen für Flights realisiert. Die Grundformen sind ebenfalls vorgefertigt und orientieren sich an realen Formen für Flights. Weiterhin ist eine Verformung der Flights als Gebrauchsspur von Dartpfeilen identifiziert worden, die ebenfalls in die Generierung der Dartpfeile einbezogen ist. Die Materialien der Flights variieren in ihrer Reflektivität, sind jedoch sehr glatt und dem Erscheinungsbild von Plastik nachempfunden.
+
+Die Umsetzung dieser Methodiken für die Datenerstellung wird in \autoref{sec:dartpfeile_zusammensetzung} der \nameref{sec:daten:implementierung} beschrieben.
+
+\subsubsection{Lichtquellen}
+\label{sec:lichter}
+
+Hinsichtlich ber Beleuchtungsmöglichkeiten der Szene existieren unterschiedliche Objekte, die jeweils unterschiedliche Auswirkungen der Beleuchtung mit sich ziehen. Für die Datenerstellung wurden fünf unterschiedliche Arten der Beleuchtung modelliert.
+
+\paragraph{Environment Maps}
+
+Environment Maps, auch als HDRIs bezeichnet, sind $360\degree$-Scans von realen Umgebungen. Diese können bei dem Rendern von Szenen als Hintergrund genutzt werden, sodass die Farben zur Ausleuchtung der Szene dienen. Dadurch ist die Simulation realistischer Beleuchtungen möglich, ohne die jeweilige Szene nachzustellen. Die Intensität der Environment Maps bestimmt dabei die Ausprägung der Beleuchtung, sodass eine Intensität von $\nicefrac{1}{2}$ die Helligkeit der Environment Map reduziert, sodass eine Spanne unterschiedlicher Beleuchtungen unter der Verwendung der selben Environment Map möglich ist.
+
+\paragraph{Kamerablitz}
+
+Wenige Zentimeter neben der Kamera befindet sich ein Punktlicht, das als Kamerablitz fungiert. Es kann ein- und ausgeschaltet werden und sorgt unter dessen Verwendung für eine helle Ausleuchtung der Szene. Die Farbe des Lichtes ist kaltweiß und sorgt durch sein Positionierung für harte Kanten entlang der Kanten im Bild. Besonders stark ist dieser Effekt bei Dartpfeilen zu beobachten.
+
+\paragraph{Spotlight}
+
+Bei der Aufnahme realer Daten ist die Existenz von Spotlights aufgekommen. Bei Spotlights handelt es sich um ein oder mehrere Lichter, die auf die Dartscheibe gerichtet sind und den Feldbereich ausleuchten. Diese Art der Ausleuchtung sorgt ebenfalls für einen auffälligen Schattenwurf und wird in der 3D-Szene als Flächenlicht variierender Größe modelliert. Diese Art der Beleuchtung wurde im Strongbows Pub\footnote{\url{https://www.strongbowspub.de}} in Kiel beobachtet.
+
+\paragraph{Ringlicht}
+
+Ein typisches Accessoire für Dartscheiben sind Ringlichter. Diese bestehen aus einem Gestell, das an der Dartscheibe befestigt wird und an dem LEDs in einem Ring vor dieser angeordnet, um diese direkt zu beleuchten. Ringlichter sorgen für eine uniforme Ausleuchtung der Dartscheibe und wenig Schattenwurf der Pfeile. Modelliert sind Ringlichter nach dem Vorbild der Dartscheiben in Jess Bar in Kiel. Die LEDs sind bei dieser Art des Ringlichts an der Vorderkante eines zylindrischen Korpus angebracht, in dem die Dartscheibe befestigt ist. Dieser Korpus kann unterschiedliche Farben besitzen.
+
+\paragraph{Deckenbeleuchtung}
+
+Zusätzlich zu den bereits genannten Beleuchtungsmöglichkeiten existieren Deckenleuchten in der Szene, die für eine warmweiße Beleuchtung sorgen. Diese Lichter werden unter anderem als Rückfall-Beleuchtung verwendet, sofern -- mit Ausnahme der Environment Maps -- keine andere Beleuchtung aktiviert ist. Dadurch ist sichergestellt, dass keine unbeleuchtete Szene entsteht.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -90,83 +151,29 @@ Zusätzlich zum Speichern der Bilder werden Metainformationen zu der Szene gespe
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Material und Licht}  % ================================================================
-\label{sec:material_licht}
-
-Verweis: Details in Implementierung.
-
-\todo{Einleitende Sätze}
-
-\subsubsection{Material der Dartscheibe}
-
-Die Dartscheibe besteht grundlegend aus den Darts-Feldern, der Spinne, dem Zahlenring und einer Beschriftung. Die Dartfelder sowie der Rahmen der Dartscheibe sind der Beschaffenheit von Sisal nachempfunden und werden mit unterschiedlichen Gebrauchsspuren versehen. Das Material von Sisal ist sehr diffus und wenig reflektiv. Die Oberfläche ist angeraut und weist Unebenheiten auf.
-
-Die Gebrauchsspuren des Sisals wird in Form von Abnutzung durch Kratzer, Einstichlöcher und Staubansammlung sowie durch Risse im Material. Darüber hinaus ist zur Simulation von Alterung der Dartscheibe eine Verfärbung der Felder und Verstärkung der Abnutzungen eingebaut. Die Beschaffenheiten und Vorkommen dieser Abnutzungen sind realen Dartscheiben nachempfunden und zielen darauf ab, eine möglichst große Spanne unterschiedlicher Dartscheiben abzudecken.
-
-Die Spinne der Dartscheibe ist als teilweise reflektives Metall modelliert. Die Spinne der Dartscheibe ist ebenfalls von einem Altersprozess betroffen, da beobachtet wurde, dass die Dicke und Präsenz der Spinne bei Dartscheiben zunehmenden Alters stärker ausgeprägt sind. Historisch ist dies dadurch begründet, dass der Herstellungsprozess von Dartscheiben im Laufe der Zeit fortschrittlicher wurde. Alte Spinnen
-
-Da alte Dartscheiben aktuell weiterhin in Verwendung sind, ist eine Abdeckung ihrer Geometrien in der Datenerstellung von Relevanz. Die Spinne sowie der Zahlenring unterliegen darüber hinaus einer Wahrscheinlichkeit, von Rostbildung betroffen zu sein, und werden mit steigendem Alter der Dartscheibe verformt, sodass die nicht auf den zu erwartenden Positionen liegen. Diese Verformungen wurden ebenfalls auf realen Dartscheiben beobachtet und sind potenziell für Dartpfeile, die nahe der Spinne landen, relevant.
-
-Die Beschriftung der Dartscheibe beinhaltet typischerweise den Herstellernamen der Dartscheibe sowie Symbole und Logos. Diese werden mit zufällig generierten Texten approximiert, die entlang des Randes der Dartscheibe verlaufen und zufällig platziert werden.
-
-\subsubsection{Generierung der Dartpfeile}
-
-Obligatorische Bestandteile von Dartpfeilen beinhalten Tip, Barrel, Shaft und Flight. Aus jeweiligen Pools von Objekten werden Dartpfeile zufällig zusammengestellt, um randomisierte Dartpfeile zu generieren.
-
-Die Tips der Dartpfeile sind wenig variabel und unterscheiden sich hauptsächlich in Länge und Farbe. Trotz ihrer geringen Größe ist eine realistische Modellierung der Tips bedeutend für die Daten, da sie ausschlaggebend für die erzielte Punktzahl sind. Neben silbernen Tips sind ebenfalls schwarze oder auch bronzene Tips möglich, die in ihrer Reflektivität variieren.
-
-Die Barrels sind im Vergleich zu den Tips wesentlich komplexer, sodass einige vordefinierte Barrels generiert wurden, die zufällig hinter eine Tip gefügt werden. Darüber hinaus wird die Länge der Barrels zufällig variiert, um weitere Variationen einzubinden. Die Beschaffenheit von Barrels realer Dartpfeile ist sehr unterschiedlich, sodass eine sehr große Variabilität ihrer Erscheinungsbilder möglich ist. Um weitere Variabilitäten einzubinden, wurden teilweise Materialien verwendet, deren Farbe zufällig gesetzt wird.
-
-Auf die Barrel folgt der Shaft des Dartpfeils, der als Übergang zum Ende des Dartpfeils dient. Dieser wird ebenso wie die Barrel aus vorgefertigten Bauteilen ausgewählt, in seiner Länge modifiziert und teilweise mit zufälligen Farben versehen. Reale Dartpfeile folgen häufig einem kohärenten Farbschema während die Abstimmung von Barrels und Shafts in dieser Thesis zufällig ist. Hinsichtlich der Variabilität der Dartpfeile ist diese Herangehensweise jedoch präferiert.
-
-Das Ende der Dartpfeile bilden die Flights. Diese sind die meist aus Plastik gefertigten Flügel des Dartpfeils und ihr Erscheinungsbild variiert von allen Bestandteilen am stärksten. Farben von Flights reichen von einzelnen Farben über Flaggen und Wappen bis hin zu abstrakten Bildern. Zusätzlich ist die Form von Flights nicht vorgegeben. Diese Gegebenheiten wurden in dieser Thesis durch Projektion eines zufälligen Bereichs eines Texturatlas\footnote{Der Texturatlas beinhaltet Länderflaggen sowie geometrische Formen und zufällige Farben. Teile des Atlas wurden durch die Bilderstellungs-KI von DeepAI \cite{deepai-image} generiert.} auf eine Grundformen für Flights realisiert. Die Grundformen sind ebenfalls vorgefertigt und orientieren sich an realen Formen für Flights. Weiterhin ist eine Verformung der Flights als Gebrauchsspur von Dartpfeilen identifiziert worden, die ebenfalls in die Generierung der Dartpfeile einbezogen ist. Die Materialien der Flights variieren in ihrer Reflektivität, sind jedoch sehr glatt und dem Erscheinungsbild von Plastik nachempfunden.
-
-\subsubsection{Lichtquellen}
-\label{sec:lichter}
-
-Hinsichtlich ber Beleuchtungsmöglichkeiten der Szene existieren unterschiedliche Objekte, die jeweils unterschiedliche Auswirkungen der Beleuchtung mit sich ziehen. Für die Datenerstellung wurden fünf unterschiedliche Arten der Beleuchtung modelliert.
-
-\paragraph{Environment Maps}
-
-Environment Maps, auch als HDRIs bezeichnet, sind $360\degree$-Scans von realen Umgebungen. Diese können bei dem Rendern von Szenen als Hintergrund genutzt werden, sodass die Farben zur Ausleuchtung der Szene dienen. Dadurch ist die Simulation realistischer Beleuchtungen möglich, ohne die jeweilige Szene nachzustellen. Die Intensität der Environment Maps bestimmt dabei die Ausprägung der Beleuchtung, sodass eine Intensität von $\nicefrac{1}{2}$ die Helligkeit der Environment Map reduziert, sodass eine Spanne unterschiedlicher Beleuchtungen unter der Verwendung der selben Environment Map möglich ist.
-
-\paragraph{Kamerablitz}
-
-Wenige Zentimeter neben der Kamera befindet sich ein Punktlicht, das als Kamerablitz fungiert. Es kann ein- und ausgeschaltet werden und sorgt unter dessen Verwendung für eine helle Ausleuchtung der Szene. Die Farbe des Lichtes ist kaltweiß und sorgt durch sein Positionierung für harte Kanten entlang der Kanten im Bild. Besonders stark ist dieser Effekt bei Dartpfeilen zu beobachten.
-
-\paragraph{Spotlight}
-
-Bei der Aufnahme realer Daten ist die Existenz von Spotlights aufgekommen. Bei Spotlights handelt es sich um ein oder mehrere Lichter, die auf die Dartscheibe gerichtet sind und den Feldbereich ausleuchten. Diese Art der Ausleuchtung sorgt ebenfalls für einen auffälligen Schattenwurf und wird in der 3D-Szene als Flächenlicht variierender Größe modelliert. Diese Art der Beleuchtung wurde im Strongbows Pub\footnote{\url{https://www.strongbowspub.de}} in Kiel beobachtet.
-
-\paragraph{Ringlicht}
-
-Ein typisches Accessoire für Dartscheiben sind Ringlichter. Diese bestehen aus einem Gestell, das an der Dartscheibe befestigt wird und an dem LEDs in einem Ring vor dieser angeordnet, um diese direkt zu beleuchten. Ringlichter sorgen für eine uniforme Ausleuchtung der Dartscheibe und wenig Schattenwurf der Pfeile. Modelliert sind Ringlichter nach dem Vorbild der Dartscheiben in Jess Bar in Kiel. Die LEDs sind bei dieser Art des Ringlichts an der Vorderkante eines zylindrischen Korpus angebracht, in dem die Dartscheibe befestigt ist. Dieser Korpus kann unterschiedliche Farben besitzen.
-
-\paragraph{Deckenbeleuchtung}
-
-Zusätzlich zu den bereits genannten Beleuchtungsmöglichkeiten existieren Deckenleuchten in der Szene, die für eine warmweiße Beleuchtung sorgen. Diese Lichter werden unter anderem als Rückfall-Beleuchtung verwendet, sofern -- mit Ausnahme der Environment Maps -- keine andere Beleuchtung aktiviert ist. Dadurch ist sichergestellt, dass keine unbeleuchtete Szene entsteht.
-
-% -------------------------------------------------------------------------------------------------
-
 \subsection{Nachverarbeitung und Fertigstellung der Daten}  % =====================================
 \label{sec:methodik_postprocessing}
 
 Nach dem Rendern von Bildern und Masken der Szene erfolgt eine Nachverarbeitung der Daten durch ein weiteres Skript. Durch dieses werden weitere Informationen von den gespeicherten Informationen angeleitet und für das Training eines datengestützten Systems vorbereitet.
 
-\subsubsection{Entzerrung der Dartscheibe}
+\subsubsection{Normalisierung der Dartscheibe}
 
-Die gerenderten Bilder müssen für das Training eines neuronalen Netzes, wie es in dieser Thesis verwendet wird, normalisiert werden. Diese Normalisierung besteht darin, das Bild der Dartscheibe derart durch eine Homographie zu entzerren, dass ihre Ringe von Ellipsen zu Kreisen transformiert werden und sie korrekt ausgerichtet ist.
+Für das Training des neuronalen Netzes zum Scoring von Dartsrunden wird in dieser Thesis von normalisierten Bildern ausgegangen. Da das Ziel der Datenerstellung eine Nachempfindung möglichst realistischer Daten ist, die in ihrem Umfang möglichst wenig beschränkt werden, besteht eine Diskrepanz zwischen gerenderten Bildern und Netzwerk-Inputs. In der Inferenz des in dieser Thesis entwickelten Systems wird diese durch die in \autoref{cha:cv} dargestellte Normalisierung geschlossen. Für den Schritt des Trainings wird diese Diskrepanz durch einen Nachverarbeitungsschritt in der Datenerstellung angegangen; die Ausgabe normalisierter Trainingsdaten ist daher Teil der Datenerstellung.
 
-Zur Identifizierung der Homographie wird die Maske der Orientierungspunkte verwendet. Die Orientierungspunkte befinden sich an vier Positionen in konstanten Abständen entlang der Außenseite des Double-Rings. Durch die Maske sind vier Positionen bekannt, die zur Erstellung einer eindeutigen Homographie notwendig sind. Diese Art der Entzerrung folgt dem Vorbild des DeepDarts-Systems \cite{deepdarts}.
+Die Normalisierung der Dartscheibe basiert auf Orientierungspunkten, deren Positionen relativ zur Dartscheibe bekannt sind. Diese Orientierungspunkte werden in den gerenderten Bildern durch binäre Masken ermittelt. Da die Positionen aller Punkte in den normalisierten Bildern bekannt sind, ist ein Mapping der Orientierungspunkte der gerenderten Bilder auf ihre Zielpositionen trivial zu ermitteln. Diese Herangehensweise hat sich bereits im DeepDarts-System bewährt und wird daher analog in dieser Thesis angewendet \cite{deepdarts}.
+
+Dazu werden 4 Orientierungspunkte ermittelt, die in konstanten Abständen entlang der Außenkante der Dartfelder verteilt sind. Durch diese ist eine eindeutige Entzerrung der Dartscheibe möglich, indem eine Homographie gebildet wird. Dieser Ansatz wird ebenfalls in \autoref{cha:cv} verfolgt, um eine Entzerrung zu ermitteln. Genauere Hintergrundinformationen zu den Techniken werden dort ebenfalls erläutert.
 
 \subsubsection{Identifizierung von Dartpfeil-Positionen in Bildern}
 
-Durch die Masken der Einstichstellen im gerenderten Bild sind die Positionen der Dartpfeile bekannt. Durch Überlagerung mit den Masken der Dartpfeile ist eine eindeutige Positionierung und Punktzuweisung der einzelnen Punktzahlen der Darts möglich. Die Positionen aus dem gerenderten Bild lassen sich durch die im vorherigen Unterkapitel abgeleitete Homographie auf ihre Positionen im entzerrten Bild abbilden. Dadurch ist eine fehlerfreie Positionierung der Einstichstellen möglich, obgleich diese sichtbar oder von anderen Darts verdeckt sind. Eben diese Eigenschaft der generierten Daten ist neben der automatisierten Erstellung ein wesentlicher Vorteil der Datengenerierung. Die Korrektheit der Annotationen ist durch diese Vorgehensweise garantiert.
+Beim Rendering der Bilder werden unter anderem Masken der Einstichstellen von Dartpfeilen in die Dartscheibe sowie Masken der Dartpfeile erstellt. Durch Überlagerung dieser Masken ist eine eindeutige Zuordnung von Dartpfeilen und Einstichstellen möglich, die eine Korrelation zwischen Positionen im Bild und erzielten Punktzahlen ermöglicht. Der Hintergrund der Notwendigkeit dieser Überlagerung liegt in der Speicherung der Daten: Die Punktzahlen werden anhand der Dartpfeil-Indizes sortiert während die Positionen als einzelne Maske exportiert wird. Durch die einzelnen Masken der Dartpfeile lässt sich ein korrektes Mapping herstellen.
+
+Unter Verwendung der im vorherigen Unterabschnitt erläuterte Normalisierung der Dartscheibe lassen sich die Positionen der Dartpfeile im Ausgangsbild auf normalisierte Positionen überführen. Durch die Verwendung von Masken der Einstichstellen ist eine fehlerfreie Positionierung der Einstichstellen in den Bildern möglich, obgleich diese in den Bildern sichtbar sind oder von anderen Darts verdeckt sind. Dieser Punkt ist ein wesentlicher Vorteil automatisierter Datenerstellung gegenüber manueller Annotation, da in jedem Fall davon auszugehen ist, dass keine Ungenauigkeiten oder fehlerhafte Annotationen in den Daten enthalten sind.
 
 \subsubsection{Statistiken über Sample erheben}
 
-Zusätzlich zu den minimal notwendigen Informationen werden Statistiken zu den generierten Daten abgeleitet und gespeichert. Diese dienen der Erhebung von Statistiken und dem Einblick in die Stärken und Schwächen eines Systems. Inbegriffen in diesen Daten sind ein Maß zur Überdeckung der Dartpfeile zueinander. Diese geben einen Einblick darüber, ob die Verdeckung von Dartpfeilen einen Einfluss auf die Performance des Systems hat. Darüber hinaus wird festgehalten, wie viele der Einstichlöcher durch andere Dartpfeile verdeckt sind und damit nicht eindeutig zu sehen sind.
+Zusätzlich zu den essenziellen Informationen zum Trainieren eines neuronalen Netzes werden Statistiken zu den generierten Daten abgeleitet und gespeichert. Diese dienen der Erhebung von Statistiken und ermöglichen einen potenziellen Einblick in die Stärken und Schwächen eines Systems. Inbegriffen in diesen Daten sind ein Maß zur Überdeckung der Dartpfeile zueinander. Darüber hinaus wird festgehalten, wie viele der Einstichlöcher durch andere Dartpfeile verdeckt sind und damit nicht eindeutig zu sehen sind.
 
-Durch Approximation von Ellipsen und Linien auf Grundlage der Orientierungspunkte und Dartscheiben-Maske ist eine geometrische Beschreibung der Dartscheibe möglich. Diese mathematische Darstellung der Grundformen kann genutzt werden, um Rückschlüsse auf den Einfluss der Perspektive auf die System-Performance zu ziehen.
+Durch Approximation von Ellipsen und Linien auf Grundlage der Orientierungspunkte und Dartscheiben-Maske ist eine geometrische Beschreibung der Dartscheibe möglich. Die Verwendung dieser geometrischen Beschreibung der Dartscheibe un ihrer Ausrichtung im Bild wurde im Verlaufe der Thesis verworfen, jedoch existieren die notwendigen Daten weiterhin als Relikte in den Daten. Diese Daten können potenziell genutzt werden, um unterschiedliche Herangehensweisen zur Lokalisierung der Dartscheibe zu implementieren.
 
 % -------------------------------------------------------------------------------------------------

@@ -3,7 +3,96 @@
 \chapter{Einleitung}
 \label{cha:einleitung}
 
-Hier steht die Einleitung. \autoref{img:projektstruktur}
+\todo{Einleitende Sätze}
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Projektübersicht}
+\label{sec:projektuebersicht}
+
+- Dart Scoring
+- - Nutzen des Scorings
+- - Scoring durch Single-Camera-System
+- Verwendung von KI zur Vorhersage von Dartpfeil-Positionen
+- - Was für ein Machine Learning-Problem?
+- DeepDarts-System
+- - Herangehensweise
+- - - YOLO-Netzwerk
+- - - ...
+- - Ergebnisse
+- - - ...
+- - Schwachstellen
+- - - stark limitierte Datenlage bzgl. Diversität
+- - - eher Proof-of-Concept als einsetzbares System
+- - - keine Generalisierbarkeit durch Overfitting
+
+\todo{Projektübersicht}
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Warum synthetische Datenerstellung}
+\label{sec:warum_daten}
+
+- KI-Training basiert auf Daten
+- Korrektheit von Daten relevant
+- Generierung von Daten als Mittel zur Erstellung ausreichender Menge
+- viele Daten erstellen mit wenig Aufwand
+- Umfang der Daten klar definiert: Dartpfeile auf Dartscheibe verteilen
+- - schematische Beschreibung der Daten möglich
+- - Generierung von Trainingsdaten für KI nicht unüblich: \cite{synth_data,synth_data_blender_defects,synth_data_cars_with_cam_aug,synth_data_importance_2,synth_data_pose_estimation,synth_data_procedural}
+
+\todo{Warum synth. Daten?}
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Related Work}
+\label{sec:related_work}
+
+- Prozedurale Datenerstellung für Spiele:
+- - \cite{proc_data_games_1,proc_data_games_2,proc_data_games_3}
+- - Erstellung zufälliger Spielumgebungen auf Grundlage zufälliger Generation
+- - hier: zufällige Generierung von Darts-Runden statt Welten
+- - Konzept gleich, wird bereits genutzt
+- - PGD-G: Procedural Data Generation for Games
+
+- Dart-Scoring-Systeme
+- - GitHub-Projekte
+- - - \cite{darts_project_1,darts_project_2,darts_project_3,darts_proect_4}
+- - - Dart-scoring mittels Webcams + vorherigem Setup
+- - Multi-Cam system
+- - - 5 Kameras
+- - - \cite{dart_scoring_multicam}
+- - Mikrofon-System
+- - - akustische Triangulierung
+- - - \cite{dart_scoring_microphone}
+
+\todo{Related Work}
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Aufbau der Arbeit}
+\label{sec:aufbau}
+
+- Aufbau der Arbeit beschreiben
+- Start: Datengenerierung
+- Danach: CV-Verarbeitung
+- - Entzerrung / Normalisierung
+- Danach: KI-Training
+- - Dartpfeil-Erkennung
+- Jeweils: Grundlagen, Methodik, Implementierung, Ergebnisse
+- Grund für Aufbau:
+- - Projekte weitestgehend voneinander abgekapselt
+- - Schnittstellen der Systeme klar definiert
+- - Komplexes Projekt, Betrachtung der einzelnen Systeme zur Übersicht
+- - Thematische Kapselung der Arbeit
+- Danach: Diskussion der jeweiligen Systeme
+- Zuletzt: Fazit der Arbeit + Future Work
+
+\todo{Aufbau erklären}
+
+% -------------------------------------------------------------------------------------------------
+
+\autoref{img:projektstruktur}
 
 \begin{figure}
     \centering
