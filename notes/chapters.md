@@ -1,20 +1,22 @@
 # Gliederung Masterarbeit
 
-Einleitung:
-
-- Machine learning Problem: was für eins?
-- YOLO: sparse Predictions
-
 <!---------------------------------------------->
 
 ## Einleitung
 
+### Projektübersicht
+
 - Dart Scoring
   - Nutzen des Scorings
   - Scoring durch Single-Camera-System
+- Verwendung von KI zur Vorhersage von Dartpfeil-Positionen
+  - Was für ein Machine Learning-Problem?
 - DeepDarts-System
   - Herangehensweise
+    - YOLO-Netzwerk
+    - ...
   - Ergebnisse
+    - ...
   - Schwachstellen
     - stark limitierte Datenlage bzgl. Diversität
     - eher Proof-of-Concept als einsetzbares System
@@ -550,4 +552,4 @@ Einleitung:
 - KI-Prediction auf Grundlage einer leeren Dartscheibe
   - Kalibrierungs-Bild schließen und als Referenz nutzen
   - Wenn bekannt ist, dass keine Dartpfeile auf Kalibrierungs-Bild vorhanden sind, ist die Wahrscheinlichkeit von Fehlklassifikationen des Hintergrundes geringer
-- Warm Starts der Learning Rate: lr_warm_restart, lr_adamw_warm_restart
+- Warm Starts der Learning Rate: lr_warm_restart
