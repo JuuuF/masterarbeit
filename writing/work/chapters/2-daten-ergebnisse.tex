@@ -28,28 +28,16 @@ Die entzerrten Bilder befinden sich vertikal entlang der Mitte der Abbildung. Di
 \subsection{Rahmenbedingungen der Erstellung}  % ==================================================
 \label{sec:render_info}
 
-Erstellungszeit ~30s/Sample, Speichernutzung
-
-\todo{}
+Die Datenerstellung wurde parallel auf mehreren Rechnern mit unterschiedlichen Grafikkarten ausgeführt. Als Mittelwert aller Daten wurde eine Erstellungszeit von 30 Sekunden je Sample ermittelt. Die Erstellung eines Samples beinhaltet das Einlesen der Szene, Setzen von Objekten und Parametern, Rendern des Output-Bildes sowie den Binärmasken und die Nachverarbeitung der Daten zur Anreicherung der Metadaten und Normalisierung für das Training neuronaler Netze. Insgesamt wurden 24\,576 Trainingsdaten, 256 Validierungsdaten und 2048 Testdaten erstellt. Die Speichernutzung je Sample beträgt durchschnittlich 8\,MB, wobei die Datenmenge durch Entfernen von Masken, die nach der Erstellung der Daten nicht mehr verwendet werden, weiter reduziert werden kann. Insgesamt wurden für diese Arbeit Daten mit einem Umfang von etwa 216\,GB erstellt. Das Blender-Projekt beläuft sich auf eine Größe von 220\,MB, zu denen weitere 1.8\,GB durch 208 Environment-Texturen hinzukommen, die extern dynamisch in die Blender-Szene eingebunden werden.
 
 \subsection{Qualitative Auswertung: Subjektiver Unterschied zwischen generierten und echten Bildern}  % =======
 \label{sec:rendering_qualitativ}
 
-Erklärung: Quantitative Auswertung nicht möglich (SSIM wäre eine Metrik, aber die zeigt nicht die Qualität der Render)
+Da eine quantitative Auswertung im Bezug auf das Erscheinungsbild der gerenderten Bilder schwer umsetzbar ist, wird stattdessen eine qualitative Betrachtung der Daten durchgeführt. Dabei wurde auf Merkmale geachtet, die eine Unterscheidung echter und gerenderter Bilder ermöglichen. Die in \autoref{img:render_examples} dargestellten Render von Dartscheiben können als Referenz erstellter Bilder herangezogen werden, indem sie unter Vorbehalt von Verzerrungen einen Querschnitt möglicher generierter Daten darstellen.
 
-\begin{itemize}
-    \item augenscheinlich kein Fotorealismus in den Rendern
-    \item Unterscheidung zwischen echten und gerenderten Aufnahmen möglich
-    \item ...aber nah dran
-    \item Gründe dafür finden und aufzählen!
-          \begin{itemize}
-              \item Shader-Komplexität
-              \item Scans von echten Dartscheiben / Erweiterung der prozeduralen Texturen
-              \item PBR (Physically-based rendering)
-          \end{itemize}
-\end{itemize}
+Augenscheinlich ist den meisten Bildern eindeutig anzuerkennen, dass diese synthetisch erstellt wurden und keine realen Dartscheiben abbilden. Ein zentraler Punkt dieser Beobachtung ist die Umgebung der Dartscheibe. Es wurde sich bewusst gegen die Einbindung eines statischen Hintergrundes entschieden, um die unmittelbare Umgebung der Dartscheibe variabel zu halten. Diese Design-Entscheidung schlägt sich jedoch darin nieder, dass die Dartscheiben in Situationen dargestellt sind, die in realen Aufnahmen nicht existieren. Dartscheiben schweben in unüblichen Szenarien, die durch Environment-Texturen hervorgerufen sind, im Raum ohne sichtliche Befestigung. Für den menschlichen Betrachter ist dieser Umstand sehr auffällig und sorgt für eine direkte Identifikation als gerendertes Bild. Für den Einsatzbereich des Trainings und der Entzerrung ist dieser Aspekt jedoch nicht von Relevanz, da die Semantik eines möglicherweise fehlenden thematischen Kontexts um die Dartscheibe außerhalb des Interessenbereichs der algorithmischen Normalisierung sowie des Trainings eines neuronalen Netzes liegt. Für diese Systeme ist lediglich die Existenz variierender Informationen relevant, die strukturelle Ähnlichkeiten zu realen Daten aufweist.
 
-\todo{Tabelle textualisieren!}
+Insgesamt ist jedoch nach subjektivem Empfinden eine realistische Darstellung einer Dartscheibe gelungen. Die Dartscheibe weist realistische Gebrauchsspuren wie Risse, Verfärbungen, Einstichlöcher und Verformungen plastischer Elemente auf, die sich durch prozedurale Generierung in jeder Dartscheibe unterscheiden. Ebenfalls ist eine realistische Simulation möglicher Kameraparameter und -positionen abgedeckt, die eine zu erwartende Spanne möglicher Daten abdecken. Die Verteilung der Dartpfeile sowie ihre Rotation bei Eintreffen auf der Dartscheibe wirken ebenfalls realistisch und kohärent zueinander.
 
 \subsection{Quantitative Metadatenauswertung}
 \label{sec:metadaten}
@@ -95,11 +83,11 @@ Die häufigsten Winkel der Kamera befinden sich um $20\degree$ mit einem mittler
 
 \paragraph{Distanz zur Dartscheibe}
 
-\todo{Distanz}
+Bei der Erstellung der Daten wird die Kamera zufällig in einem vordefinierten Kamerabereich platziert. Die resultierenden Distanzen der Kamera in den Daten sind in \autoref{fig:cam_dist} dargestellt. Es ist zu erkennen, dass ein geringes Aufkommen kurzer Distanzen unter $50\,\text{cm}$ zu verzeichnen ist, da der Bereich, in dem sich die Kamera für derartige Distanzen befinden muss, verhältnismäßig klein ist. Die mittlere Distanz der Kamera beträgt $\sim1\,\text{m}$ und die maximale Distanz $\sim160\,\text{cm}$. Diese Verteilungen spiegeln nach subjektivem Empfinden Verteilungen wider, die in realen Szenarien zu erwarten sind. Geringere Aufnahmen sowie Aufnahmen mit größerer Entfernung als die verzeichneten wurden bereits bei der Parametrisierung des Kamerabereichs als unwahrscheinlich eingestuft und kategorisch ausgeschlossen, da die Dartscheibe in den Fällen unter Umständen nicht in einem Maße zu identifizieren ist, in welchem eine sinngemäße Verarbeitung der Daten möglich ist.
 
 \paragraph{Brennweite der Kamera}
 
-\todo{Brennweite}
+Die Brennweiten der Kamera richten sich nach der in \autoref{fig:brennweiten} dargestellten Verteilung auf Grundlage der Kameradistanzen zur Dartscheibe. Die resultierenden Brennweiten in \autoref{fig:cam_focal} sind im Einklang mit einer zu erwartenden Verteilung indes sie approximativ die Breite der möglichen Distanzen je Brennweite darstellen, welche bei einer uniform verteilten Kameradistanz zu erwarten wäre. Ein Zuschnüren der geringwertigen Brennweiten durch die Unterrepräsentation geringer Distanzen, wie im vorherigen Abschnitt identifiziert, ist zu erkennen. Die minimale Brennweite in den Daten beträgt $\sim10\,\text{mm}$, die maximale Brennweite $\sim60\,\text{mm}$. Die mittlere Brennweite der Daten beträgt $\sim38\,\text{mm}$ und ist damit wertgleich zu dem oberen Brennweiten-Grenzwert minimaler Abstände sowie zu der unteren Grenze maximaler Abstände zur Dartscheibe.
 
 \subsubsection{Beleuchtung und Objekte in der Szene}
 \label{sec:beleuchtung_ergebnisse}
@@ -123,6 +111,10 @@ Die häufigsten Winkel der Kamera befinden sich um $20\degree$ mit einem mittler
     \label{img:light_dart_meta}
 \end{figure}
 
+In der Szene werden Objekte zufällig ein- und ausgeblendet, basierend auf unterschiedlichen Wahrscheinlichkeitsverteilung und Umgebungsbedingungen. Diese in den Daten aufgetretenen dynamischen Objekte sind in \autoref{fig:lights} dargestellt. Hinsichtlich der Beleuchtungsobjekte ist das Deckenlicht mit $\sim67\,\%$ am häufigsten vertreten. Diese Beobachtung beruht darauf, dass die Deckenleuchten als Rückfallbeleuchtung verwendet werden, sofern keine andere Lichtquelle vorhanden ist. Der Kamerablitz und das Spotlight sind in $\sim40\,\%$ der Daten vorhanden. Ringlicht und Dartschrank sind Objekte, die sich gegenseitig ausschließen und daher nicht zusammen auftreten können. Ihre Existenzen sind daher miteinander gekoppelt. Dass diese wesentlich geringer vertreten sind als andere dynamische Objekte ist ebenfalls durch ihre Wahrscheinlichkeitsverteilungen bedingt. Ihre Existenz sorgt für wenig diverse Umgebungen um die Dartscheiben und wurde daher gering gehalten. Mit $\sim15\,\%$ Vorkommen des Ringlichts und $\sim5\,\%$ Vorkommen des Dartschranks sind ihre Existenzen von allen dynamischen Objekten am seltensten.
+
+Neben den dynamischen Objekten wurde ebenfalls die Anzahl an Dartpfeilen in \autoref{fig:dart_counts} ausgewertet. Die Existenz jedes Dartpfeils wird während der Platzierung der Dartpfeile bestimmt und unterliegt ebenfalls einer vordefinierten Wahrscheinlichkeit. In $\sim69\,\%$ der Daten sind alle 3 Dartpfeile vorhanden, in $\sim28\,\%$ sind 2 Dartpfeile auf der Dartscheibe verteilt und in $\sim3\,\%$ aller Trainingsdaten ist lediglich 1 Dartpfeil vorhanden. Es wurden keine Bilder ohne Dartpfeile erstellt. Die Existenz von Dartpfeilen geht nicht automatisch mit einer Punktzahl $>0$ einher, da Pfeile sowohl auf der Dartscheibe als auch außerhalb platziert werden können. Die Existenz bezieht sich lediglich auf das Vorhandensein von Dartpfeilen in den gerenderten Bildern.
+
 \subsubsection{Getroffene Felder}
 \label{sec:felder_ergebnisse}
 
@@ -133,7 +125,9 @@ Die häufigsten Winkel der Kamera befinden sich um $20\degree$ mit einem mittler
     \label{img:dart_verteilung}
 \end{figure}
 
-\todo{Grafiken einfügen und beschreiben}
+Zur Platzierung der Dartpfeile wurde eine Heatmap verwendet, die zu erwartenden, realistischen Verteilungen der Dartpfeile auf der Dartscheibe nachempfunden ist. Zusätzlich wurden spezifisch Daten erstellt, in denen die Pfeile ausschließlich auf die Bereiche der Double- und Triple-Felder sowie dem Bull fokussiert sind. In \autoref{img:dart_verteilung} ist eine Auswertung der getroffenen Felder aller Pfeile in den Trainingsdaten visualisiert. Die Grafik teilt sich auf in die Felder 1-20 (links) und Bull und Fehlwürfe (rechts). Die Verteilung der Felder 1-20 entsprechen einer zu erwartenden Verteilung, in der Felder geringer Werte seltener getroffen worden als Felder mit hohen Zahlenwerten. Die Felder 20, 14 und 19 wurden am häufigsten getroffen, was typische Spielweisen widerspiegelt\footnote{Das Bespielen der 14 zieht bei Verfehlen höhere Zahlenwerte mit sich als das Verfehlen von 19 oder 20. Daher präferieren einige Spieler die 14 über 19 oder 20.}.
+
+Das Bull ist in den Daten verhältnismäßig gering vertreten in statistisch einem in 200 Bildern. Übermäßig häufig hingegen ist das Verfehlen der Dartscheibe vertreten mit etwa jedem vierten Dartpfeil. Der Bereich des Bulls und der Außenfläche der Dartscheibe sind jedoch analog sehr klein bzw. sehr groß im Verhältnis zu regulären Feldern. Daher sind diese Verteilungen hinsichtlich der Feldflächen nicht ungewöhnlich.
 
 \subsection{Korrekte Annotation der Daten}  % =====================================================
 \label{sec:korrekte_annotation}  % Danke, Bruder!

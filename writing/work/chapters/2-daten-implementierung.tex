@@ -72,8 +72,8 @@ Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass lediglich g
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{imgs/rendering/implementierung/darts_examples.png}
-    \caption{Dartpfeile}
+    \includegraphics[width=0.6\textwidth]{imgs/rendering/implementierung/darts_examples.png}
+    \caption{Auswahl zufällig erstellter Dartpfeile des Systems.}
     \label{img:dartpfeile}
 \end{figure}
 
@@ -139,7 +139,7 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{imgs/rendering/implementierung/camera_space.png}
+    \includegraphics[width=0.7\textwidth]{imgs/rendering/implementierung/camera_space.png}
     \caption{Darstellung des Kamerabereichs, der zur Erstellung der Daten verwendet wurde.}
     \label{img:camera_space}
 \end{figure}
@@ -147,7 +147,6 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 \subsubsection{Brennweite}
 
 Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von 18mm bis 60mm. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
-
 \begin{align*}
     l_\text{lower} & = l_\text{min} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}                          \\
     l_\text{upper} & = \frac{l_\text{max} - l_\text{min}}{2} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}
@@ -156,7 +155,6 @@ Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kame
 \nomenclature{$l_\text{min}$, $l_\text{max}$}{Minimale und maximale Brennweite der Kamera}
 \nomenclature{$d_\text{Kamera}$}{Abstand der Kamera zur Dartscheibe}
 \nomenclature{$l_\text{Kamera}$}{Brennweite der Kamera}
-
 Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen Ober- und Untergrenze werden zufällig uniform gewählt. Auf diese Weise wird eine Korrelation zwischen verwendeter Brennweite und Abstand zur Dartscheibe gewonnen unter Beibehaltung der Variabilität der Daten und Einfluss von Zufallswerten.
 
 \begin{center}
