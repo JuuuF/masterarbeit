@@ -10,38 +10,97 @@
 \section{Projektübersicht}
 \label{sec:projektuebersicht}
 
-- Dart Scoring
-- - Nutzen des Scorings
-- - Scoring durch Single-Camera-System
-- Verwendung von KI zur Vorhersage von Dartpfeil-Positionen
-- - Was für ein Machine Learning-Problem?
-- DeepDarts-System
-- - Herangehensweise
-- - - YOLO-Netzwerk
-- - - ...
-- - Ergebnisse
-- - - ...
-- - Schwachstellen
-- - - stark limitierte Datenlage bzgl. Diversität
-- - - eher Proof-of-Concept als einsetzbares System
-- - - keine Generalisierbarkeit durch Overfitting
+Darts ist ein in beliebtes Spiel mit vielerlei Spielvariationen und geringer Einstiegsschwelle für neue Spieler. Es ist allseits bekannt und weit verbreitet. Während für den Heimgebrauch sowie für Gaststätten elektronische Dartscheiben mit eingespeicherten Spielvarianten und automatischem Scoring existieren werden in professionellen Kreisen weiterhin analoge Dartscheiben ohne integrierte Mechanismen verwendet, die ein automatisches Scoring ermöglichen. Das Ermitteln der erzielten Punktzahlen kann im Steeldarts entweder manuell oder automatisch geschehen. Manuelles Errechnen der erzielten Punktzahlen erfordert Konzentration und Übung, um die finale Punktzahl korrekt und schnell zu berechnen:
+\[ \text{Score} = \sum_{i=1}^{3} \text{mult}_i \cdot \text{Feld}_i \]
+Automatisierte Techniken zur Bestimmung der Punktzahl unterscheiden sich in ihren Herangehensweisen. Die zuverlässigste und in professionellen Kreisen am weitesten verbreitete Herangehensweise ist der Einsatz eines Multi-Camera-Systems. In diesem werden mehrere kalibrierte Kameras um die Dartscheibe platziert und aufeinander abgestimmt, sodass eine akkurate Rekonstruktion der Dartscheibe möglich ist. Durch diese Rekonstruktion ist eine Bestimmung der Dartpfeilpositionen und folglich eine Bestimmung des Scorings ermöglicht. Diese Systeme sind gewerblich erhältlich, jedoch ist ihr Einsatz für den gelegentlichen Heimgebrauch nicht im Einklang mit ihren Preisen.
+\todo{Quelle für Darts-Ringe (ggf. aus Proposal)}
 
-\todo{Projektübersicht}
+In \autoref{sec:related_work} werden weitere Herangehensweisen des automatisierten Dart-Scorings aufgelistet, jedoch setzen diese Systeme allesamt spezielle Infrastruktur oder gesonderte Kalibrierung voraus. Ziel dieser Masterarbeit ist die Erarbeitung eines Systems, in welchem ein zuverlässiges Dart-Scoring ohne spezielle Hardware und ohne feine Kalibrierung ermöglicht wird. Dazu werden Techniken der herkömmlichen Computer Vision und neuronale Netze in einer Art und Weise miteinander kombiniert, die im Einklang mit der Ausführung auf mobilen Endgeräten ist.
+
+Dieses System basiert auf Aufnahmen von Mobiltelefonen, in denen Dartscheiben abgebildet sind. In diesen Aufnahmen wird die Dartscheibe in einem ersten Verarbeitungsschritt algorithmisch identifiziert und es wird eine Entzerrung des Bildes durchgeführt, die die Dartscheibe normalisiert und ihre runde Grundform wiederherstellt. Diese normalisierten Bilddaten werden in einem zweiten Schritt durch ein neuronales Netz verarbeitet, welches die Spitzen der Dartpfeile sowie die Feldfarbe durch Klassifizierung identifiziert und durch eine Regression spezifisch lokalisiert. Durch die ermittelten Positionen in dem normalisierten Bild und die zusätzlichen Informationen der jeweiligen Feldfarben ist eine Zuordnung der getroffenen Felder und folglich eine Ermittlung der erzielten Punktzahl möglich.
+
+Durch die Verwendung eines neuronalen Netzes besteht eine Notwendigkeit einer ausreichenden Anzahl an korrekt annotierten Trainingsdaten. Diese Daten werden durch ein ebenfalls in dieser Arbeit enthaltenes System der Datengenerierung bezogen, in welchem realistische Aufnahmen von Dartscheiben simuliert werden. Die Generierung der Trainingsdaten basiert auf einer Kombination aus prozeduraler Datenerstellung und Zufallsprozessen, durch die eine nahezu unendliche Anzahl unterschiedlicher Daten erstellt werden kann.
+
+\todo{Forschungsfrage!}
+
+% - Was ist das Projekt?
+% - - Ziel des Projekts (high level)
+% - Was ist der Sinn dieses Projekts?
+% - - Nur 1 Kamera zum Scoring -> Single-Camera-System
+% - - Verweis: Related Work
+% - Herangehensweise: Hybrides System aus CV und NN
+% - - Lokalisierung + Normalisierung -> CV
+% - - - herkömmliche CV, nicht CNNs / NN
+% - - Identifizierung Dartpfeile -> NN
+% - - - Was für ein Machine Learning-Problem? -> Klassifikation (sparse + herkömmlich) + Regression
+% - - Benötigt (Trainings-) Daten
+% - - - Werden synthetisch erstellt
+% - - Vorverarbeitung der Bilder
+% - - - Lokalisierung + Normalisierung durch CV
+% - - Dart-Scoring durch Nachverarbeitungsschritte
+
+% \todo{Projektübersicht}
 
 % -------------------------------------------------------------------------------------------------
 
-\section{Verwendung synthetischer Datenerstellung}
+\section{DeepDarts}
+\label{sec:deepdarts}
+
+Der Anstoß dieses Projekts wurde durch ein Paper gegeben, in dem ein System zur Identifizierung von Dartpfeilen in Bildern mit anschließendem Scoring vorgestellt wurde \cite{deepdarts}. Das als DeepDarts bezeichnete System ist ebenfalls ein Single-Camera-System, welches auf der Verwendung eines neuronalen Netzes fußt, um ein Dart-Scoring umzusetzen.
+
+DeepDarts verwendet ein YOLOv4-tiny-Netzwerk, welches auf einem Datensatz, bestehend aus etwa 16\,000 händisch annotierten Bildern von Dartscheiben, trainiert wurde \cite{deepdarts-data}. Das System wurde durch die Implementierung einer eigenen Loss-Funktion zur Beurteilung der Vorhersagen umgesetzt und konnte auf den gegebenen Daten teils sehr gute Ergebnisse erzielen.
+
+Die Arbeitsweise von Deepdarts verfolgt einen Single-Shot-Approach, indem in einem Eingabebild bis zu 7 Punkte identifiziert werden, die sich aufteilen in 4 Orientierungspunkte und bis zu 3 Dartpfeilspitzen. Die Orientierungspunkte sind festgelegte Positionen auf der Dartscheibe, die eine Entzerrung dieser ermöglichen. Durch die relativen Positionen der Dartpfeilspitzen zu den Orientierungspunkten werden die getroffenen Felder anhand von nahezu standardisierten Werten der Dartscheibengeometrie abgeleitet.
+
+Die Qualität der Vorhersagen der erzielten Punktzahl wurde durch eine eigene Metrik, dem \ac{pcs}, ausgewertet. Dieser setzt die Anzahl der korrekt vorhergesagten Punktzahlen in Verhältnis zur Anzahl aller präsentierter Daten:
+\[ \text{PCS} = \frac{100}{N} \sum_{i=1}^{N} \delta \left(\left(\sum \hat{S}_i - \sum S_i\right) = 0\right)\% \]
+In dieser Formel steht $N$ für die Anzahl der vorhergesagten Daten, $\sum S_i$ ist die erzielte Punktzahl und $\sum \hat{S}_i$ die vorhergesagte Punktzahl des Datensamples $i$.
+
+Das System wurde mit unterschiedlichen Aufteilungen der gegebenen Daten trainiert. Zusammenfassend konnte DeepDarts auf Validierungs- und Testdaten Auswertungen mit Werten von $\text{PCS} = 84.0\%$ bis $\text{PCS} = 94.7\%$ erzielen. Als zentrale Schwachstelle des Systems wurde das Identifizieren der Orientierungspunkte aufgelistet, welches für fehlerhafte Erkennungen sorgte.
+
+Bei genauer Betrachtung und Inferenz des Systems auf eigenen Daten kristallisierte sich jedoch ein anderes Bild der tatsächlichen Performance heraus. Das System konnte auf Bildern außerhalb der IEEE-Daten wenig Erfolge verzeichnen, wodurch ein starkes Overfitting des Netzwerks naheliegt. Die zum Training verwendete Datenlage war aufgrund der verwendeten Aufnahmetechniken stark limitiert. Etwa 14\,000 der 16\,000 Trainingsdaten wurden frontal aufgenommen und zeigten die selbe Ausrichtung der selben Dartscheibe. Die restlichen 2\,000 Daten wurden mit einer zweiten Dartscheibe und zu Teilen aus unterschiedlichen Winkeln aufgenommen. Zudem wurde die Korrektheit der gelabelten Daten in Frage gestellt. Laut eigener Auswertung wurde für 1\,200 ausgewählte Daten eine Deckungsgleichheit der notierten und annotierten Punktzahlen von $97.6\%$ ermittelt; 29 Bilder wurden folglich nicht korrekt annotiert.
+
+Durch diese Datenlage ist keine Abdeckung zu erwartender Aufnahmen in einem realen Einsatz des Systems dar, was bei der Inferenz auf eigenen Aufnahmen zu erkennen war. DeepDarts leidet unter massivem Overfitting und ist nicht in der Lage, zuverlässig auf unabhängigen Daten zu generalisieren. Diese Beobachtung wurde als zentrale Erkenntnis vermerkt und hat die Form der Arbeit stark geprägt.
+
+Ziel dieser Masterarbeit ist es, die identifizierten Schwachpunkte sowie die eingesetzten Techniken von DeepDarts in einem neuen Ansatz zusammenzuführen und auf den gewonnenen Erkenntnissen aufzubauen. Der Aufbau dieser Arbeit ergibt sich aus den zentralen Fehlerquellen von DeepDarts.
+
+% - Anstoß dieses Projekts
+% - Paper für System zu Darts-Scoring in Single-Cam-System
+% - Herangehensweise
+% - - YOLO-Netzwerk
+% - - ...
+% - Ergebnisse
+% - - ...
+% - Schwachstellen
+% - - stark limitierte Datenlage bzgl. Diversität
+% - - eher Proof-of-Concept als einsetzbares System
+% - - keine Generalisierbarkeit durch Overfitting
+% -> Ziel dieser Arbeit: Erkenntnisse aus DeepDarts verwenden, um robusteres System aufzubauen
+
+% \todo{DeepDarts}
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Einsatz synthetischer Datenerstellung}
 \label{sec:warum_daten}
 
-- KI-Training basiert auf Daten
-- Korrektheit von Daten relevant
-- Generierung von Daten als Mittel zur Erstellung ausreichender Menge
-- viele Daten erstellen mit wenig Aufwand
-- Umfang der Daten klar definiert: Dartpfeile auf Dartscheibe verteilen
-- - schematische Beschreibung der Daten möglich
-- - Generierung von Trainingsdaten für KI nicht unüblich: \cite{synth_data,synth_data_blender_defects,synth_data_cars_with_cam_aug,synth_data_importance_2,synth_data_pose_estimation,synth_data_procedural}
+Eine wichtige Erkenntnis des DeepDarts-Systems ist der Mangel qualitativ hochwertiger Trainingsdaten. Die manuelle Aufnahme und Annotation von Daten ist sowohl zeitaufwändig als auch fehleranfällig. Fehlerhafte Annotationen in den Daten werden ebenfalls von dem Netzwerk während des Trainings erlernt und beeinträchtigen die Qualität der Inferenz. Zudem zeichnet sich ein robustes Training durch eine möglichst uniforme Abdeckung aller zu erwartender Eingaben aus. In Hinsicht auf Bilder von Dartscheiben beinhaltet dies die Einbindung einer Vielzahl unterschiedlicher Dartscheiben sowie Umgebungen. Eine reale Umsetzung dieser Bedingungen in Kombination mit einer ausreichenden Anzahl an Daten für ein geeignetes Training würde sehr viel Zeit in Anspruch nehmen, was nicht nicht dem Rahmen und dem Schwerpunkt dieser Arbeit entspricht.
 
-\todo{Warum synth. Daten?}
+Stattdessen wurde sich für die synthetische Erstellung von Trainingsdaten unter Verwendung von 3D-Modellierungssoftware entschieden. Auf diese Weise ist eine automatisierte Datenerstellung ermöglicht, die durch den Einsatz zeitgemäßer Technik prozedural und fotorealistisch erstellt werden kann. Durch einen anfänglichen Mehraufwand des Aufsetzen dieses Systems können anschließend beliebige Datenmengen erstellt werden, ohne dass manuelle Eingriffe notwendig sind. Zusätzlich sind alle relevanten Informationen der gerenderten Szene zugänglich, sodass eine korrekte Annotation garantiert werden kann.
+
+Die Vorgehensweise synthetischer Datenerstellung zur Generierung von Trainingsdaten wurde bereits in unterschiedlichen Systemen eingesetzt \cite{synth_data}. Die Art der synthetisch erstellten Daten umfasst dabei eine große Spanne unterschiedlicher Szenarien. So wurde bereits die Effektivität der Nutzung von 3D-Modellen in der Datengenerierung erfolgreich eingesetzt \cite{synth_data_procedural,synth_data_cars_with_cam_aug,synth_data_pose_estimation}. Mit der Verwendung von 3D-Software zur Generierung von Trainingsdaten konnten ebenfalls positive Ergebnisse erzeugt werden \cite{synth_data_blender_defects,data_gen_importance,synth_data_importance_2}. Obwohl Unterschiede zwischen generierten Daten und echten Daten bestehen, konnte gezeigt werden, dass selbst durch reines Out-of-distribution-Training Systeme trainiert werden konnten, die auf echte Daten generalisieren konnten \cite{ood_simulated_training}.
+
+% - KI-Training basiert auf Daten
+% - Korrektheit von Daten relevant
+% - Generierung von Daten als Mittel zur Erstellung ausreichender Menge
+% - viele Daten erstellen mit wenig Aufwand
+% - Umfang der Daten klar definiert: Dartpfeile auf Dartscheibe verteilen
+% - - schematische Beschreibung der Daten möglich
+% - - Generierung von Trainingsdaten für KI nicht unüblich: \cite{synth_data,synth_data_blender_defects,synth_data_cars_with_cam_aug,synth_data_importance_2,synth_data_pose_estimation,synth_data_procedural}
+
+% \todo{Warum synth. Daten?}
+
+\todo{Abschnitte zu CV + NN?}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -73,33 +132,30 @@
 \section{Aufbau der Arbeit}
 \label{sec:aufbau}
 
-- Aufbau der Arbeit beschreiben
-- Start: Datengenerierung
-- Danach: CV-Verarbeitung
-- - Entzerrung / Normalisierung
-- Danach: KI-Training
-- - Dartpfeil-Erkennung
-- Jeweils: Grundlagen, Methodik, Implementierung, Ergebnisse
-- Grund für Aufbau:
-- - Projekte weitestgehend voneinander abgekapselt
-- - Schnittstellen der Systeme klar definiert
-- - Komplexes Projekt, Betrachtung der einzelnen Systeme zur Übersicht
-- - Thematische Kapselung der Arbeit
-- Danach: Diskussion der jeweiligen Systeme
-- Zuletzt: Fazit der Arbeit + Future Work
-
-\todo{Aufbau erklären}
-
-% -------------------------------------------------------------------------------------------------
-
-\autoref{img:projektstruktur}
+Diese Masterarbeit setzt sich aus den Themen der Datengenerierung, Normalisierung und Training eines neuronalen Netzes zusammen. Ihr Zusammenspiel ist in \autoref{img:projektstruktur} dargestellt. Zunächst wird in \autoref{cha:daten} auf die synthetische Datengenerierung eingegangen. Danach wird in \autoref{cha:cv} ein Algorithmus dargestellt und erklärt, durch den eine Normalisierung von Bildern mit Dartscheiben ermöglicht wird. \autoref{cha:ki} schließt die Themenbereiche dieser Masterarbeit mit dem Konzept und Training eines neuronalen Netzes zur Identifizierung und Lokalisierung von Dartpfeilspitzen in normalisierten Bildern ab. Diese Kapitel sind jeweils unterteilt in die Abschnitte Grundlagen, Methodik, Implementierung und Ergebnisse. Im Abschnitt der Grundlagen werden Themen und Konzepte eingeführt, die für das Verständnis des Kapitels notwendig sind und nicht im erwarteten Wissensgebiet der Audienz liegt. In den Abschnitten der Methodik werden die Konzepte und Herangehensweisen der Kapitel dargestellt. Auf Details zur Umsetzung dieser Methodiken werden in dem jeweiligen Implementierungsabschnitt eingegangen. Abschließend innerhalb der Kapitel werden die jeweiligen Ergebnisse und Auswertungen präsentiert. Im Anschluss an die Themenbezogenen Kapitel folgt eine gemeinsame Diskussion der Ergebnisse in \autoref{cha:diskussion}. Danach folgt in \autoref{cha:fazit} das Fazit dieser Masterarbeit. Zuletzt werden in \autoref{cha:ausblick} Themenbereiche angerissen, die als Einstiegspunkte zur Erweiterung bzw. Verbesserung dieser Masterarbeit identifiziert wurden.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/ma_project_structure.pdf}
-    \caption{Überblick über die Projektstruktur. (1) Datenerstellungs-Pipeline Aus der Datengenerierung werden Bilder und Masken erstellt und automatisch normalisiert. (2) Inferenz-Pipeline. Beliebige Bilder werden mittels CV-Algorithmen normalisiert. (3) Dartpfeil-Erkennung und Scoring. Die Erkennung geschieht durch ein neuronales Netz und das Scoring verläuft durch Nachverarbeitung der Outputs.}
+    \caption{Überblick über die Projektstruktur. (1) Datenerstellungs-Pipeline; bei der Datengenerierung werden Bilder, Masken und Annotationen erstellt und automatisch normalisiert. (2) Inferenz-Pipeline; beliebige Bilder von Dartscheiben werden algorithmisch normalisiert. (3) Dartpfeil-Erkennung und Scoring; die Erkennung geschieht durch ein neuronales Netz, das Scoring durch Nachverarbeitung der Outputs.}
     \label{img:projektstruktur}
 \end{figure}
+
+% - Aufbau der Arbeit beschreiben
+% - Start: Datengenerierung
+% - Danach: CV-Verarbeitung
+% - - Entzerrung / Normalisierung
+% - Danach: KI-Training
+% - - Dartpfeil-Erkennung
+% - Jeweils: Grundlagen, Methodik, Implementierung, Ergebnisse
+% - Grund für Aufbau:
+% - - Projekte weitestgehend voneinander abgekapselt
+% - - Schnittstellen der Systeme klar definiert
+% - - Komplexes Projekt, Betrachtung der einzelnen Systeme zur Übersicht
+% - - Thematische Kapselung der Arbeit
+% - Danach: Diskussion der jeweiligen Systeme
+% - Zuletzt: Fazit der Arbeit + Ausblick
+
 
 % Datenquellen
 % Die Datengrundlage für dieses Projekt setzt sich aus drei verschiedenen Quellen zusammen. Die erste Quelle sind die bereits annotierten Daten von \citeauthor{deepdarts} \cite{deepdarts-data}, die für das Training des DeepDarts-Systems verwendet wurden. Zur Aufnahme dieser Daten wurden zum einen ein fest montiertes und konstant ausgerichtetes iPhone verwendet, zum anderen eine auf einem Stativ aufgestellte DSLR-Kamera. Diese Daten zeigen zwei unterschiedliche Dartscheiben in wenig variierten Umgebungen und unterliegen daher einer Starken Einseitigkeit (Bias). Aus diesem Grund wurde sich dazu entschieden, für diese Arbeit weitere Daten aufzunehmen.

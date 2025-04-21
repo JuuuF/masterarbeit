@@ -15,9 +15,9 @@
 \usepackage{subcaption}
 \usepackage{nameref}
 \usepackage{svg}
-\usepackage[sorting=none]{biblatex}
+\usepackage[backend=biber,sorting=none]{biblatex}
 \usepackage{titling}
-\usepackage{microtype}
+\usepackage[activate={true,nocompatibility},tracking=true, kerning=true, spacing=true,factor=1100,stretch=10, shrink=10]{microtype}
 
 \addbibresource{bibliography/bibliography.bib}
 \addbibresource{bibliography/foundations.bib}
@@ -34,7 +34,7 @@
 
 % Tiefe der Nummerierung der Kapitel
 \setcounter{secnumdepth}{3}
-\setcounter{tocdepth}{3}
+\setcounter{tocdepth}{2}
 
 % Kapitelbeginn
 % \newcommand{\pagediff}{\clearpage}
@@ -164,6 +164,11 @@
 \DeclareAcronym{ki}{
   short=KI ,
   long=Künstliche Intelligenz ,
+}
+
+\DeclareAcronym{pcs}{
+  short=PCS ,
+  long=Percent Correct Score ,
 }
 
 % -----------------------------------------------
