@@ -82,7 +82,7 @@ Ziel dieser Masterarbeit ist es, die identifizierten Schwachpunkte sowie die ein
 % -------------------------------------------------------------------------------------------------
 
 \section{Einsatz synthetischer Datenerstellung}
-\label{sec:warum_daten}
+\label{sec:einsatz_daten}
 
 Eine wichtige Erkenntnis des DeepDarts-Systems ist der Mangel qualitativ hochwertiger Trainingsdaten. Die manuelle Aufnahme und Annotation von Daten ist sowohl zeitaufwändig als auch fehleranfällig. Fehlerhafte Annotationen in den Daten werden ebenfalls von dem Netzwerk während des Trainings erlernt und beeinträchtigen die Qualität der Inferenz. Zudem zeichnet sich ein robustes Training durch eine möglichst uniforme Abdeckung aller zu erwartender Eingaben aus. In Hinsicht auf Bilder von Dartscheiben beinhaltet dies die Einbindung einer Vielzahl unterschiedlicher Dartscheiben sowie Umgebungen. Eine reale Umsetzung dieser Bedingungen in Kombination mit einer ausreichenden Anzahl an Daten für ein geeignetes Training würde sehr viel Zeit in Anspruch nehmen, was nicht nicht dem Rahmen und dem Schwerpunkt dieser Arbeit entspricht.
 
@@ -100,7 +100,50 @@ Die Vorgehensweise synthetischer Datenerstellung zur Generierung von Trainingsda
 
 % \todo{Warum synth. Daten?}
 
-\todo{Abschnitte zu CV + NN?}
+% -------------------------------------------------------------------------------------------------
+
+\section{Einsatz herkömmlicher Computer Vision}
+\label{sec:einsatz_cv}
+
+Die Erkennung der Dartscheibe geschieht in DeepDarts durch das selbe neuronale Netz, welches zugleich die Dartpfeile identifiziert. Das neuronale Netz ist darauf trainiert, spezifische Keypoints entlang der Außenseite der Dartscheibe zu identifizieren, anhand derer die Dartscheibe entzerrt wird. Während diese Herangehensweise für gute Ergebnisse in positiven Fällen gesorgt hat, ist sie an einfacher Verdeckung eben dieser spezifischen Positionen gescheitert. Diese Verdeckungen können sowohl durch Fremdobjekte wie einen Dartschrank als auch durch die Dartpfeile selbst verursacht sein. Sind die Punkte nicht eindeutig zu erkennen, werden sie nicht erkannt und die Entzerrung sowie alle nachfolgenden Identifizierungen schlagen fehl. Zusätzlich kann sich eine verschobene Erkennung der Orientierungspunkte auf die Genauigkeit der Vorhersage ausschlagen.
+
+Zur Lösung dieses Problems wurde die Idee unterbreitet, Redundanz durch das Einbinden weiterer Orientierungspunkte zu schaffen. Dieser Ansatz wurde in dieser Masterarbeit verfolgt, jedoch nicht unter der Verwendung eines neuronalen Netzes. Ein zentrales Problem neuronaler Netze ist das Training, welches viele Ressourcen beansprucht und mit seinen Trainingsdaten steht und fällt. Es ist eine Blackbox, in der die in den Trainingsdaten vorhandenen Informationen auf eine Art und Weise verarbeitet werden, die nicht nachvollziehbar ist. Hintergründe fehlerhafter Erkennungen können nicht eingesehen werden und eine Adaption des Systems auf neue Gegebenheiten ist mit weiterem Training und der Notwendigkeit einer ausreichenden Menge korrekt annotierter Daten verbunden.
+
+Aus diesen Gründen wurde sich für diese Thesis dazu entschieden, einen Schritt zurück zu gehen, indem die Verwendung eines neuronalen Netzes für diese Aufgabe wurde infrage gestellt wurde. Dartscheiben verbindet ein gemeinsamer Grundaufbau, der in allen Dartscheiben vorhanden ist und durch Richtlinien offizieller Regelwerke mit etwaigen Toleranzen festgelegt ist \cite{wdf-rules,pdc_rules}. Dieser Aufbau der Dartscheiben ist begünstigend für eine Verarbeitung mit herkömmlichen Techniken der \ac{cv}. Kontrastreiche Farbgebung und festgelegte, markante Geometrien sind ideale Merkmale, an denen CV-Algorithmen ansetzen.
+
+Der Ablauf der Entzerrung der Dartscheiben läuft in mehreren Schritten ab. Zuerst wird die Position einer Dartscheibe in einem Bild bestimmt. Diese unterliegt o.\,B.\,d.\,A. einer perspektivischen Verzerrung, die in den folgenden Schritten entzerrt wird. Dazu werden die Winkel der Felder radial um den Mittelpunkt bestimmt und ausgeglichen, sodass alle gleichwertig sind. Abschließend wird eine Vielzahl an Orientierungspunkten identifiziert, anhand derer eine perspektivische Entzerrung vorgenommen wird, die zu einer Normalisierung der Dartscheibe führt.
+
+Durch diesen Algorithmus ist die Identifizierung sowie Entzerrung von Dartscheiben in Bildern beliebiger Größen möglich. Da dieser Algorithmus weitestgehend deterministisch agiert und die Arbeitsweise zu jeder Zeit transparent einsehbar ist, ist das Identifizieren von spezifischer Fehlerquellen und eine Adaption der Arbeitsweise mit weitaus weniger Aufwand verbunden als das Trainieren eines neuronalen Netzes. Zudem können neue Datenlagen anhand einer geringen Anzahl von Beispielbildern in den Algorithmus aufgenommen werden, beispielsweise die Integration neuer Farbschemata von Dartscheiben.
+
+Der Umsetzung dieses Algorithmus ist \autoref{cha:cv} zugewiesen. In diesem werden Grundlagen der \ac{cv}, die Methodik und Hintergründe zu dem Algorithmus sowie Details spezifischer Implementierungen dargestellt. Die Ergebnisse dieses Algorithmus werden zuletzt ebenfalls dargestellt und erläutert.
+
+% - ein Problem bei DD: Entzerrung
+% - - Finden von Orientierungspunkten durch NN
+% - - Punkte verdeckt = nicht erkennbar
+% - Problempunkt NN:
+% - - muss trainiert werden
+% - - ist eine Blackbox
+% - - Fehlschlagen kann nicht debuggt werden
+% - Lösung dieser Arbeit: CV
+% - - gemeinsamer Grundaufbau bei allen Dartscheiben vorhanden
+% - - - keine Abweichungen durch unterschiedlichen Aufbau
+% - - - Geometrie weitestgehend vereinheitlicht -> WDF Rules
+% - - Dartscheiben sehr markante Farben und Formen
+% - - algorithmische Erkennung dadurch möglich
+% - Ablauf:
+% - - Erkennung
+% - - Entzerrung der Winkel
+% - - Orientierungspunkte finden
+% - - Entzerrung der restlichen Geometrie
+
+% \todo{}
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Einsatz neuronaler Netze}
+\label{sec:einsatz_nn}
+
+\todo{}
 
 % -------------------------------------------------------------------------------------------------
 

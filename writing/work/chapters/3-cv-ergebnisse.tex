@@ -25,7 +25,6 @@ Die zweite Metrik $\Lambda(\widetilde{H}, \widehat{H})$ bestimmt die Genauigkeit
 \[ \Lambda(\widetilde{H}, \widehat{H}) = \frac{1}{N_\text{OP}} \sum_{i = 1}^{N_\text{OP}} \left\lVert P_i - \widehat{H} \times \mathrm{inv}(\widetilde{H}) \times P_i \right\rVert _2  \]
 \nomenclature{$\widehat{H} \in \mathbb{R}^{3 \times 3}$}{Ermittelte Entzerrungstransformation}
 \nomenclature{$N_\text{OP, max}$}{Maximale Anzahl der Orientierungspunkte in einem Bild}
-\nomenclature{$N_\text{OP}$}{Anzahl Identifizierter Orientierungspunkte in einem Bild}
 \nomenclature{$P_{i \in [N_\text{OP}]} \in \mathbb{R}^2$}{Positionen der identifizierten Orientierungspunkte}
 Durch diese Metrik ist eine Quantifizierung der Ähnlichkeit zweier Homographien zur Entzerrung einer Dartscheibe möglich. Zu sehen ist bei dieser Definition, dass $\Lambda(\widetilde{H}, \widehat{H}) = 0\,\text{px}$, wenn $\widetilde{H} = \widehat{H}$, da $\widehat{H} \times \mathrm{inv}(\widetilde{H}) = \text{Id}$, die Identitätsmatrix.
 \nomenclature{$\text{Id} \in \mathbb{R}^{3 \times 3}$}{Identitäts-Transformation}

@@ -14,6 +14,8 @@ Normalisierung von Daten für ein neuronales Netz kann auf unterschiedliche Arte
 
 Ebenfalls war die Verwendung von Computer Vision aufgrund der auffälligen Geometrie einer Dartscheibe naheliegend, da sie Ähnlichkeiten mit Schachbrettern aufweist, welche in der Computer Vision zur Identifizierung von Kameraparametern verwendet werden. Da die Nutzung bekannter Geometrien eine zentrale Arbeitsweise der Computer Vision darstellt, war die Intuition gegeben, dass auch eine Erkennung eines ähnlich markanten Objektes in einem Bild möglich ist. Aus dieser Intuition heraus wurde der in diesem Abschnitt beschriebene Algorithmus entwickelt.
 
+\todo{Dieser Part ist teilweise in der Einleitung vorhanden. Gegenchecken!}
+
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Vorverarbeitung}
@@ -225,13 +227,12 @@ Nach diesem Prozess sind Start- und Zielpunkte bekannt und damit einhergehend di
 \subsubsection{Entzerrung}
 \label{sec:entzerrung}
 
-Die finale Entzerrung der Dartscheibe geschieht nicht durch die Nutzung aller Orientierungspunkte. Es besteht die Möglichkeit, dass sich unter den identifizierten Punkten Outlier befinden, die irrtümlicherweise als Orientierungspunkte identifiziert wurden, oder dass Fehler bei der Identifizierung der Zielpunkte gemacht wurden. Ist dies der Fall, ist die Generierung einer Homographie aus allen Punkten möglicherweise durch diese Outlier verzerrt und die finale Normalisierung scheitert. Um diesem Fall zu entgegnen, wird eine RANSAC-basierte Homographiefindung durchgeführt.
+Die finale Entzerrung der Dartscheibe geschieht durch Anwendung des RANSAC-Algorithmus. Hintergrund ist die Möglichkeit der Existenz von Outliern in den identifizierten Orientierungspunkten. Als Outlier werden fehlerhaft erkannte Orientierungspunkte bezeichnet, deren Positionen entweder falsch zugeordnet wurden oder die sich nicht an Positionen von Orientierungspunkten befinden. Bei der Ableitung einer Entzerrungshomographie auf der Grundlage aller identifizierter Orientierungspunkte sorgen Outlier für Artefakte in der Entzerrung.
 
-Dazu werden 16 Durchläufe der Homographiefindung durchgeführt, in denen jeweils zufällig $75\%$ der Orientierungspunkte ausgewählt werden. Die endgültige Homographie wird aus dem Median aller Durchläufe gebildet. Existieren Outlier in den Orientierungspunkten, fallen diese nicht so sehr ins Gewicht, da sie durch das zufällige Auswählen der Orientierungspunkte einen geringeren Einfluss auf die Gesamtheit der Homographien haben.
+Für die Implementierung von RANSAC werden $3 N_\text{OP}$ Homographiefindungen durchgeführt, wobei $N_\text{OP}$ die Anzahl der identifizierten Orientierungspunkte angibt. Für jedem Durchlauf werden zufällig 5 Orientierungspunkte ausgewählt, zu denen der Dartscheibenmittelpunkt hinzugefügt wird. Anhand dieser Punkte wird eine Entzerrungshomographie identifiziert. Nach der Anwendung dieser Homographie werden die Distanzen aller identifizierten Orientierungspunkte zu ihren Zielpositionen bestimmt. Als finale Homographie wird diejenige gewählt, die die geringste Distanzsumme aller Homographien aufweist.
+\nomenclature{$N_\text{OP}$}{Anzahl Identifizierter Orientierungspunkte in einem Bild}
 
-\todo{RANSAC-Anpassung einbeziehen!}
-
-Es bleibt festzuhalten, dass der Algorithmus durch diesen Schritt nicht deterministisch ist und unterschiedliche Durchläufe des Algorithmus zu unterschiedlichen Ergebnissen führen können.
+Es bleibt festzuhalten, dass der Determinismus der Ausgaben durch die Verwendung von RANSAC nicht mehr gegeben ist. Mehrfaches Ausführen des Algorithmus auf den selben Eingaben kann zu unterschiedlichen Ergebnissen führen.
 
 \subsection{Zusammenführen aller Komponenten}
 \label{sec:zusammenfuehrung_aller_komponenten_cv}
