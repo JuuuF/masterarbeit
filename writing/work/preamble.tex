@@ -17,7 +17,7 @@
 \usepackage{svg}
 \usepackage[backend=biber,sorting=none]{biblatex}
 \usepackage{titling}
-\usepackage{microtype}  % [activate={true,nocompatibility},tracking=true, kerning=true, spacing=true,factor=1100,stretch=10, shrink=10]
+\usepackage{microtype}
 
 \addbibresource{bibliography/bibliography.bib}
 \addbibresource{bibliography/foundations.bib}
@@ -126,9 +126,26 @@
 \definecolor{ai_primary}{HTML}{FF8C00}
 \definecolor{ai_secondary}{HTML}{FFB459}
 
-% TODO-Notes
-\usepackage[textsize=small]{todonotes}
-\presetkeys{todonotes}{inline,backgroundcolor=yellow!50!white}{}
+% TODO-Notes -------------------------------------------------------------
+\newcounter{todo}
+\newcommand\todo[1]{
+  \refstepcounter{todo}
+  {\reversemarginpar
+    \marginpar{
+      \color{red}{#1}
+    }
+  }
+  \addcontentsline{tod}{subsection}{
+    \thetodo~#1
+  }
+}
+
+\makeatletter
+\newcommand\todoname{todo}
+\newcommand\listtodoname{List of todos}
+\newcommand\listoftodos{%
+  \section*{\listtodoname}\@starttoc{tod}}
+\makeatother
 
 \AtBeginDocument{%
   %   \renewcommand*{\subsectionautorefname}{\sectionautorefname}%
@@ -149,7 +166,19 @@
 % -----------------------------------------------
 % Acronyms
 
+% \usepackage{tocloft}
+% \usepackage[nottoc,notlot,notlof]{tocbibind}
 \usepackage{acro}
+
+% \SetupAcroTemplate[list]{lof}{
+%   \setlength\cftfignumwidth{6em}  % <— change “6em” to whatever you need
+% }
+
+\acsetup{
+  trailing/activate = dash,
+  % pages/display = first,
+  % pages/fill = \acrodotfill
+}
 
 \DeclareAcronym{wdf}{
   short = WDF ,
@@ -169,6 +198,11 @@
 \DeclareAcronym{pcs}{
   short=PCS ,
   long=Percent Correct Score ,
+}
+
+\DeclareAcronym{ood}{
+  short=OOD ,
+  long=out-of-distribution ,
 }
 
 % -----------------------------------------------

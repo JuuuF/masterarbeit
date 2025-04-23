@@ -3,7 +3,7 @@
 \section{Methodik}
 \label{sec:ki:methodik}
 
-Methodik hier.
+\todo{Methodik hier beschreiben.}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -43,12 +43,12 @@ Eine grundlegende Änderung der YOLOv8-Architektur ist das Hinzufügen von Trans
 
 Für diese Thesis wurden die Konfigurationen YOLOv8*-n und YOLOv8*-x trainiert, um einen Überblick über die Fähigkeiten der Modellarchitektur zu erlangen. Nano-Varianten der Modelle sind für die Ausführen in Echtzeitumgebungen und in Szenarien mit begrenzter Rechenleistung, beispielsweise in Mobiltelefonen, ausgelegt. Ihre Inferenzzeit ist durch ihre geringe Größe gering im Vergleich zu anderen Konfigurationen. Die Extra-Large-Varianten der Modelle werden für maximale Performance hinsichtlich der Ergebnisse verwendet. Sie werden in Systemen verwendet, in denen Rechenleistung kein Bottleneck darstellt.
 
-\todo{Tatsächliche Konfiguration aufzeigen.}
-
 YOLOv8-n bzw. YOLOv8-x
 Konfiguration erklären -> woher kommen die Varianten?
 Anzahl Parameter
 Vergleich mit DeepDarts-Netzwerk
+
+\todo{Tatsächliche Konfiguration aufzeigen.}
 
 \subsubsection{Aufbau der Architektur}
 
@@ -75,39 +75,31 @@ Die Bestandteile der Architektur sind in \autoref{img:yolov8_parts} dargestellt.
 \subsection{Loss-Funktionen}
 \label{sec:losses}
 
-\todo{Einleitende Sätze}
+Die Loss-Funktion, die für das Training der YOLOv8*-Architektur verwendet wurde, wurde nach dem Vorbild bereits existierender Loss-Funktionen für Netzwerke der YOLO-Familie konstruiert. Die Loss-Funktion setzt sich aus unterschiedlichen Teil-Losses zusammen, die zu einem gemeinsamen Loss kombiniert werden. Der Aufbau des gemeinsamen Losses durch die untergeordneten Losses folgt dabei der Architektur des Netzwerks.
 
 \subsubsection{Zusammensetzung des Losses}
 
 Die Loss-Funktion zum Trainieren der YOLOv8*-Architektur folgt dem Aufbau dieser. Sie ist definiert als gewichtete Summe aus Existenz-Loss, Klassen-Loss und Positions-Loss:
 \[ \mathcal{L}(y, \hat{y}) = \omega_\text{xst} \mathcal{L}_\text{xst}(y, \hat{y}) + \omega_\text{cls} \mathcal{L}_\text{cls}(y, \hat{y}) + \omega_\text{pos} \mathcal{L}_\text{pos}(y, \hat{y}) \]
-\paragraph{Existenz-Loss}
+\paragraph{Existenz-Loss $\mathcal{L}_\text{xst}$}
 
 Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge aller Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und 3 Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0.16\% $. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts.
 
-\paragraph{Klassen-Loss}
+\paragraph{Klassen-Loss $\mathcal{L}_\text{cls}$}
 
-Der Klassen-Loss beruht ebenso wie der Existenz-Loss auf dem Focal-Loss. Zur Berechnung des Losses werden die Regionen in Betracht gezogen, die einen Dartpfeil enthalten. Regionen ohne Dartpfeil werden nicht betrachtet, da diesen keine eindeutige Klasse zugeordnet werden kann. Es wird die kategorische Focal-Kreuzentropie (Categorical Focal Cross-Entropy) \cite{focal_loss} verwendet, um den Loss der den Dartpfeilen zugeordneten Klassen und den vorhergesagten Klassen in den jeweiligen Ziel-Regionen zu bestimmen. Die Klassen stehen für die Farben schwarz, weiß, rot und grün sowie einer Klasse zur Identifizierung des Außenbereichs, in dem keine Punkte erzielt werden (vgl. \autoref{img:datenformat}).
+Der Klassen-Loss $\mathcal{L}_\text{cls}$ beruht ebenso wie der Existenz-Loss auf dem Focal-Loss. Zur Berechnung des Losses werden die Regionen in Betracht gezogen, die einen Dartpfeil enthalten. Regionen ohne Dartpfeil werden nicht betrachtet, da diesen keine eindeutige Klasse zugeordnet werden kann. Es wird die kategorische Focal-Kreuzentropie (Categorical Focal Cross-Entropy) \cite{focal_loss} verwendet, um den Loss der für die Dartpfeile zugeteilten Klassen und den vorhergesagten Klassen in den jeweiligen Ziel-Regionen zu bestimmen. Die Klassen stehen für die Farben schwarz, weiß, rot und grün sowie einer Klasse zur Identifizierung des Außenbereichs, in dem keine Punkte erzielt werden (vgl. \autoref{img:datenformat}).
 
-Dies, das, class.
+\paragraph{Positions-Loss $\mathcal{L}_\text{pos}$}
 
-\todo{}
-
-\paragraph{Positions-Loss}
-
-Position, yo ho.
-
-\todo{}
+Die Bestimmung des Positions-Losses $\mathcal{L}_\text{pos}$ geschieht ebenso wie die Bestimmung von $\mathcal{L}_\text{cls}$ unter Berücksichtigung der annotierten Existenzen. Je Region werden Positionen normalisiert relativ zur oberen linken Ecke angegeben. Die Differenz der normalisierten, lokalen Positionen der Vorhersagen und Wahrheitswerte werden in je $x$- und $y$-Komponente berechnet und aufsummiert. Diese kombinierte Summe wird durch die Anzahl der vorhandenen Dartpfeile geteilt, um einen Mittelwert der Positionsabweichung zu berechnen. Existieren keine Positionen, beträgt der Loss-Wert 0.
 
 \paragraph{Gewichtung}
 
-Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position resultieren unterschiedliche Bildbereiche der Loss-Werte. Die Loss-Gewichte $\omega_\text{xst}$, $\omega_\text{cls}$ und $\omega_\text{pos}$ gewichten die Loss-Outputs derart, dass kein Loss wesentlich überwiegt und eine Reduktion des Losses $\mathcal{L}$ eine uniforme Reduktion der Losses $\mathcal{L}_\text{xst}$, $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$ mit sich zieht. Zum Anpassen der Losses aneinander für eine gleichwertige Konvergenz wurden die gewichte $\omega_\text{xst} = 400$, $\omega_\text{cls} = 850$ und $\omega_\text{pos} = 0.5$ verwendet.
+Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position resultieren unterschiedliche Bildbereiche der Loss-Werte. Die Loss-Gewichte $\omega_\text{xst}$, $\omega_\text{cls}$ und $\omega_\text{pos}$ gewichten die Loss-Outputs derart, dass kein Loss wesentlich überwiegt und eine Reduktion des Losses $\mathcal{L}$ eine uniforme Reduktion der Losses $\mathcal{L}_\text{xst}$, $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$ mit sich zieht. Zum Anpassen der Losses aneinander für eine gleichwertige Konvergenz wurden die gewichte $\omega_\text{xst} = 400$, $\omega_\text{cls} = 2000$ und $\omega_\text{pos} = 0.5$ verwendet.
 
 \subsubsection{Hintergründe und Zielsetzung}
 
-Targeting bestimmter Bereiche des Netzwerks
-
-\todo{}
+Der Hintergrund der Aufteilung des Losses in Existenz, Klasse und Position liegt in der Netzwerkarchitektur. Diese ist auf die Vorhersage von Existenz, Klasse und Position ausgelegt, um Dartpfeile für eine Punktzahlbestimmung zu lokalisieren. Durch die Kombination unterschiedlicher Losses mit eigenen Gewichten für je einen thematischen Bereich des Netzwerks ermöglicht ein ausgeglichenes und kontextbezogenes Training des gesamten Netzwerks. Auf diese Weise wird die Überschattung eines Teil-Losses durch einen anderen mit weitaus größerem Wert entgegengewirkt. Ein Overfitting eines Bereichs ist dadurch wahrscheinlicher in dem kombinierten Loss widergespiegelt, sodass auf diesen dynamisch während des Trainings eingegangen werden kann.
 
 \subsubsection{Abweichung von DIoU-Loss}
 

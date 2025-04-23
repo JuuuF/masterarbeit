@@ -392,7 +392,7 @@
   - Warum nicht DIoU?
     - Einbindung von Klassen schwierig
     - ansonsten ähnlich zu Positions-Loss
-    - Komzept ambivalent/komplex; Mehrwert im Training war nicht sichtbar
+    - Konzept ambivalent/komplex; Mehrwert im Training war nicht sichtbar
 
 - Training
   - Welches Ziel? Wie wurde trainiert?

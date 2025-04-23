@@ -12,16 +12,13 @@
 
 Darts ist ein in beliebtes Spiel mit vielerlei Spielvariationen und geringer Einstiegsschwelle für neue Spieler. Es ist allseits bekannt und weit verbreitet. Während für den Heimgebrauch sowie für Gaststätten elektronische Dartscheiben mit eingespeicherten Spielvarianten und automatischem Scoring existieren werden in professionellen Kreisen weiterhin analoge Dartscheiben ohne integrierte Mechanismen verwendet, die ein automatisches Scoring ermöglichen. Das Ermitteln der erzielten Punktzahlen kann im Steeldarts entweder manuell oder automatisch geschehen. Manuelles Errechnen der erzielten Punktzahlen erfordert Konzentration und Übung, um die finale Punktzahl korrekt und schnell zu berechnen:
 \[ \text{Score} = \sum_{i=1}^{3} \text{mult}_i \cdot \text{Feld}_i \]
-Automatisierte Techniken zur Bestimmung der Punktzahl unterscheiden sich in ihren Herangehensweisen. Die zuverlässigste und in professionellen Kreisen am weitesten verbreitete Herangehensweise ist der Einsatz eines Multi-Camera-Systems. In diesem werden mehrere kalibrierte Kameras um die Dartscheibe platziert und aufeinander abgestimmt, sodass eine akkurate Rekonstruktion der Dartscheibe möglich ist. Durch diese Rekonstruktion ist eine Bestimmung der Dartpfeilpositionen und folglich eine Bestimmung des Scorings ermöglicht. Diese Systeme sind gewerblich erhältlich, jedoch ist ihr Einsatz für den gelegentlichen Heimgebrauch nicht im Einklang mit ihren Preisen.
-\todo{Quelle für Darts-Ringe (ggf. aus Proposal)}
+Automatisierte Techniken zur Bestimmung der Punktzahl unterscheiden sich in ihren Herangehensweisen. Die zuverlässigste und in professionellen Kreisen am weitesten verbreitete Herangehensweise ist der Einsatz von Multi-Camera-Systemen. In diesem werden mehrere kalibrierte Kameras um die Dartscheibe platziert und aufeinander abgestimmt, sodass eine akkurate Rekonstruktion der Dartscheibe möglich ist. Durch diese Rekonstruktion ist eine Bestimmung der Dartpfeilpositionen und folglich eine Bestimmung des Scorings ermöglicht. Diese Systeme sind gewerblich erhältlich, jedoch ist ihr Einsatz für den gelegentlichen Heimgebrauch nicht im Einklang mit ihren Preisen. Beispiele etablierter Systeme sind AutoDarts \cite{autodarts} und Scolia \cite{scoliadarts}.
 
 In \autoref{sec:related_work} werden weitere Herangehensweisen des automatisierten Dart-Scorings aufgelistet, jedoch setzen diese Systeme allesamt spezielle Infrastruktur oder gesonderte Kalibrierung voraus. Ziel dieser Masterarbeit ist die Erarbeitung eines Systems, in welchem ein zuverlässiges Dart-Scoring ohne spezielle Hardware und ohne feine Kalibrierung ermöglicht wird. Dazu werden Techniken der herkömmlichen Computer Vision und neuronale Netze in einer Art und Weise miteinander kombiniert, die im Einklang mit der Ausführung auf mobilen Endgeräten ist.
 
 Dieses System basiert auf Aufnahmen von Mobiltelefonen, in denen Dartscheiben abgebildet sind. In diesen Aufnahmen wird die Dartscheibe in einem ersten Verarbeitungsschritt algorithmisch identifiziert und es wird eine Entzerrung des Bildes durchgeführt, die die Dartscheibe normalisiert und ihre runde Grundform wiederherstellt. Diese normalisierten Bilddaten werden in einem zweiten Schritt durch ein neuronales Netz verarbeitet, welches die Spitzen der Dartpfeile sowie die Feldfarbe durch Klassifizierung identifiziert und durch eine Regression spezifisch lokalisiert. Durch die ermittelten Positionen in dem normalisierten Bild und die zusätzlichen Informationen der jeweiligen Feldfarben ist eine Zuordnung der getroffenen Felder und folglich eine Ermittlung der erzielten Punktzahl möglich.
 
 Durch die Verwendung eines neuronalen Netzes besteht eine Notwendigkeit einer ausreichenden Anzahl an korrekt annotierten Trainingsdaten. Diese Daten werden durch ein ebenfalls in dieser Arbeit enthaltenes System der Datengenerierung bezogen, in welchem realistische Aufnahmen von Dartscheiben simuliert werden. Die Generierung der Trainingsdaten basiert auf einer Kombination aus prozeduraler Datenerstellung und Zufallsprozessen, durch die eine nahezu unendliche Anzahl unterschiedlicher Daten erstellt werden kann.
-
-\todo{Forschungsfrage!}
 
 % - Was ist das Projekt?
 % - - Ziel des Projekts (high level)
@@ -54,7 +51,7 @@ Die Arbeitsweise von Deepdarts verfolgt einen Single-Shot-Approach, indem in ein
 
 Die Qualität der Vorhersagen der erzielten Punktzahl wurde durch eine eigene Metrik, dem \ac{pcs}, ausgewertet. Dieser setzt die Anzahl der korrekt vorhergesagten Punktzahlen in Verhältnis zur Anzahl aller präsentierter Daten:
 \[ \text{PCS} = \frac{100}{N} \sum_{i=1}^{N} \delta \left(\left(\sum \hat{S}_i - \sum S_i\right) = 0\right)\% \]
-In dieser Formel steht $N$ für die Anzahl der vorhergesagten Daten, $\sum S_i$ ist die erzielte Punktzahl und $\sum \hat{S}_i$ die vorhergesagte Punktzahl des Datensamples $i$.
+In dieser Formel steht $N$ für die Anzahl der vorhergesagten Daten, $\sum S_i$ ist die erzielte Punktzahl und $\sum \hat{S}_i$ die vorhergesagte Punktzahl des Datensamples $i$. Die simple Aussage hinter dieser kompliziert ausgedrückten Formel ist, dass die Anzahl korrekt vorhergesagter Gesamtpunktzahlen ins Verhältnis zu der Gesamtzahl der vorhergesagten Daten gesetzt wird.
 
 Das System wurde mit unterschiedlichen Aufteilungen der gegebenen Daten trainiert. Zusammenfassend konnte DeepDarts auf Validierungs- und Testdaten Auswertungen mit Werten von $\text{PCS} = 84.0\%$ bis $\text{PCS} = 94.7\%$ erzielen. Als zentrale Schwachstelle des Systems wurde das Identifizieren der Orientierungspunkte aufgelistet, welches für fehlerhafte Erkennungen sorgte.
 
@@ -84,11 +81,11 @@ Ziel dieser Masterarbeit ist es, die identifizierten Schwachpunkte sowie die ein
 \section{Einsatz synthetischer Datenerstellung}
 \label{sec:einsatz_daten}
 
-Eine wichtige Erkenntnis des DeepDarts-Systems ist der Mangel qualitativ hochwertiger Trainingsdaten. Die manuelle Aufnahme und Annotation von Daten ist sowohl zeitaufwändig als auch fehleranfällig. Fehlerhafte Annotationen in den Daten werden ebenfalls von dem Netzwerk während des Trainings erlernt und beeinträchtigen die Qualität der Inferenz. Zudem zeichnet sich ein robustes Training durch eine möglichst uniforme Abdeckung aller zu erwartender Eingaben aus. In Hinsicht auf Bilder von Dartscheiben beinhaltet dies die Einbindung einer Vielzahl unterschiedlicher Dartscheiben sowie Umgebungen. Eine reale Umsetzung dieser Bedingungen in Kombination mit einer ausreichenden Anzahl an Daten für ein geeignetes Training würde sehr viel Zeit in Anspruch nehmen, was nicht nicht dem Rahmen und dem Schwerpunkt dieser Arbeit entspricht.
+Eine wichtige Erkenntnis des DeepDarts-Systems ist der Mangel qualitativ hochwertiger Trainingsdaten. Die manuelle Aufnahme und Annotation von Daten ist sowohl zeitaufwändig als auch fehleranfällig. Fehlerhafte Annotationen in den Daten werden von dem Netzwerk während des Trainings erlernt und beeinträchtigen die Qualität der Inferenz. Zudem zeichnet sich ein robustes Training durch eine möglichst uniforme Abdeckung aller zu erwartender Eingabedaten aus. In Hinsicht auf Bilder von Dartscheiben beinhaltet dies die Einbindung einer Vielzahl unterschiedlicher Dartscheiben sowie Umgebungsbedingungen. Eine reale Umsetzung dieser Anforderungen in Kombination mit einer ausreichenden Anzahl an Daten für ein geeignetes Training würde sehr viel Zeit in Anspruch nehmen, was weder dem Umfang noch dem Schwerpunkt dieser Arbeit entspricht.
 
-Stattdessen wurde sich für die synthetische Erstellung von Trainingsdaten unter Verwendung von 3D-Modellierungssoftware entschieden. Auf diese Weise ist eine automatisierte Datenerstellung ermöglicht, die durch den Einsatz zeitgemäßer Technik prozedural und fotorealistisch erstellt werden kann. Durch einen anfänglichen Mehraufwand des Aufsetzen dieses Systems können anschließend beliebige Datenmengen erstellt werden, ohne dass manuelle Eingriffe notwendig sind. Zusätzlich sind alle relevanten Informationen der gerenderten Szene zugänglich, sodass eine korrekte Annotation garantiert werden kann.
+Stattdessen wurde sich für die synthetische Erstellung von Trainingsdaten unter Verwendung von 3D-Modellierungssoftware entschieden. Auf diese Weise ist eine automatisierte Datenerstellung ermöglicht, die durch den Einsatz zeitgemäßer Technik prozedural und fotorealistisch erstellt werden kann. Durch einen anfänglichen Mehraufwand des Aufsetzen dieses Systems können anschließend beliebige Datenmengen erstellt werden, ohne dass manuelle Eingriffe notwendig sind. Zusätzlich sind alle relevanten Informationen der Szene zugänglich, sodass eine korrekte Annotation ermöglicht ist.
 
-Die Vorgehensweise synthetischer Datenerstellung zur Generierung von Trainingsdaten wurde bereits in unterschiedlichen Systemen eingesetzt \cite{synth_data}. Die Art der synthetisch erstellten Daten umfasst dabei eine große Spanne unterschiedlicher Szenarien. So wurde bereits die Effektivität der Nutzung von 3D-Modellen in der Datengenerierung erfolgreich eingesetzt \cite{synth_data_procedural,synth_data_cars_with_cam_aug,synth_data_pose_estimation}. Mit der Verwendung von 3D-Software zur Generierung von Trainingsdaten konnten ebenfalls positive Ergebnisse erzeugt werden \cite{synth_data_blender_defects,data_gen_importance,synth_data_importance_2}. Obwohl Unterschiede zwischen generierten Daten und echten Daten bestehen, konnte gezeigt werden, dass selbst durch reines Out-of-distribution-Training Systeme trainiert werden konnten, die auf echte Daten generalisieren konnten \cite{ood_simulated_training}.
+Die Vorgehensweise synthetischer Datenerstellung zur Generierung von Trainingsdaten wurde bereits in unterschiedlichen Systemen eingesetzt \cite{synth_data}. Die Art der synthetisch erstellten Daten umfasst dabei eine große Spanne unterschiedlicher Szenarien. So wurde bereits die Effektivität der Nutzung von 3D-Modellen in der Datengenerierung erfolgreich eingesetzt \cite{synth_data_procedural,synth_data_cars_with_cam_aug,synth_data_pose_estimation}. Mit der Verwendung von 3D-Software zur Generierung von Trainingsdaten konnten ebenfalls positive Ergebnisse erzeugt werden \cite{synth_data_blender_defects,data_gen_importance,synth_data_importance_2}. Obwohl Unterschiede zwischen generierten Daten und echten Daten bestehen, konnte gezeigt werden, dass selbst durch reines \ac{ood}-Training Systeme trainiert werden konnten, die auf echte Daten generalisieren konnten \cite{ood_simulated_training}.
 
 % - KI-Training basiert auf Daten
 % - Korrektheit von Daten relevant
@@ -102,14 +99,14 @@ Die Vorgehensweise synthetischer Datenerstellung zur Generierung von Trainingsda
 
 % -------------------------------------------------------------------------------------------------
 
-\section{Einsatz herkömmlicher Computer Vision}
+\section{Einsatz herkömmlicher \acl{cv}}
 \label{sec:einsatz_cv}
 
-Die Erkennung der Dartscheibe geschieht in DeepDarts durch das selbe neuronale Netz, welches zugleich die Dartpfeile identifiziert. Das neuronale Netz ist darauf trainiert, spezifische Keypoints entlang der Außenseite der Dartscheibe zu identifizieren, anhand derer die Dartscheibe entzerrt wird. Während diese Herangehensweise für gute Ergebnisse in positiven Fällen gesorgt hat, ist sie an einfacher Verdeckung eben dieser spezifischen Positionen gescheitert. Diese Verdeckungen können sowohl durch Fremdobjekte wie einen Dartschrank als auch durch die Dartpfeile selbst verursacht sein. Sind die Punkte nicht eindeutig zu erkennen, werden sie nicht erkannt und die Entzerrung sowie alle nachfolgenden Identifizierungen schlagen fehl. Zusätzlich kann sich eine verschobene Erkennung der Orientierungspunkte auf die Genauigkeit der Vorhersage ausschlagen.
+Die Erkennung der Dartscheibe geschieht in DeepDarts durch das selbe neuronale Netz, welches zugleich die Dartpfeile identifiziert. Das neuronale Netz ist darauf trainiert, spezifische Keypoints entlang der Außenseite der Dartscheibe zu identifizieren, anhand derer die Dartscheibe entzerrt wird. Während diese Herangehensweise für gute Ergebnisse in positiven Fällen gesorgt hat, ist sie an einfacher Verdeckung eben dieser spezifischen Positionen gescheitert. Diese Verdeckungen können sowohl durch Fremdobjekte wie einen Dartschrank als auch durch die Dartpfeile selbst verursacht sein. Sind die Punkte nicht eindeutig zu erkennen, werden sie nicht lokalisiert und die Entzerrung sowie alle nachfolgenden Identifizierungen schlagen fehl. Zusätzlich kann sich eine verschobene Erkennung der Orientierungspunkte auf die Genauigkeit der Vorhersage ausschlagen.
 
-Zur Lösung dieses Problems wurde die Idee unterbreitet, Redundanz durch das Einbinden weiterer Orientierungspunkte zu schaffen. Dieser Ansatz wurde in dieser Masterarbeit verfolgt, jedoch nicht unter der Verwendung eines neuronalen Netzes. Ein zentrales Problem neuronaler Netze ist das Training, welches viele Ressourcen beansprucht und mit seinen Trainingsdaten steht und fällt. Es ist eine Blackbox, in der die in den Trainingsdaten vorhandenen Informationen auf eine Art und Weise verarbeitet werden, die nicht nachvollziehbar ist. Hintergründe fehlerhafter Erkennungen können nicht eingesehen werden und eine Adaption des Systems auf neue Gegebenheiten ist mit weiterem Training und der Notwendigkeit einer ausreichenden Menge korrekt annotierter Daten verbunden.
+Zur Lösung dieses Problems wurde von \citeauthor{deepdarts} die Idee unterbreitet, Redundanz durch das Einbinden weiterer Orientierungspunkte zu schaffen. Dieser Ansatz wurde in dieser Masterarbeit verfolgt, jedoch nicht unter der Verwendung eines neuronalen Netzes. Ein zentrales Problem neuronaler Netze ist das Training, welches viele Ressourcen beansprucht und abhängig von den Trainingsdaten ist. Ihre Arbeitsweisen basieren auf den ihnen präsentierten Trainingsdaten und sind weder bekannt noch nachvollziehbar. Hintergründe fehlerhafter Erkennungen können daher nicht eingesehen werden und eine Adaption des Systems auf neue Gegebenheiten kann ausschließlich unter Verwendung einer ausreichenden Anzahl korrekt annotierter Daten ablaufen.
 
-Aus diesen Gründen wurde sich für diese Thesis dazu entschieden, einen Schritt zurück zu gehen, indem die Verwendung eines neuronalen Netzes für diese Aufgabe wurde infrage gestellt wurde. Dartscheiben verbindet ein gemeinsamer Grundaufbau, der in allen Dartscheiben vorhanden ist und durch Richtlinien offizieller Regelwerke mit etwaigen Toleranzen festgelegt ist \cite{wdf-rules,pdc_rules}. Dieser Aufbau der Dartscheiben ist begünstigend für eine Verarbeitung mit herkömmlichen Techniken der \ac{cv}. Kontrastreiche Farbgebung und festgelegte, markante Geometrien sind ideale Merkmale, an denen CV-Algorithmen ansetzen.
+Aus diesen Gründen wurde sich für diese Thesis dazu entschieden, einen Schritt zurück zu gehen und die Verwendung eines neuronalen Netzes für diese Aufgabe auszuschließen. Dartscheiben verbindet ein gemeinsamer Grundaufbau, der durch Richtlinien offizieller Regelwerke mit etwaigen Toleranzen festgelegt ist \cite{wdf-rules,pdc_rules}. Dieser Aufbau der Dartscheiben ist begünstigend für eine Verarbeitung mit herkömmlichen Techniken der \ac{cv}. Kontrastreiche Farbgebung und festgelegte, markante Geometrien sind ideale Merkmale, an denen \ac{cv}-Algorithmen ansetzen.
 
 Der Ablauf der Entzerrung der Dartscheiben läuft in mehreren Schritten ab. Zuerst wird die Position einer Dartscheibe in einem Bild bestimmt. Diese unterliegt o.\,B.\,d.\,A. einer perspektivischen Verzerrung, die in den folgenden Schritten entzerrt wird. Dazu werden die Winkel der Felder radial um den Mittelpunkt bestimmt und ausgeglichen, sodass alle gleichwertig sind. Abschließend wird eine Vielzahl an Orientierungspunkten identifiziert, anhand derer eine perspektivische Entzerrung vorgenommen wird, die zu einer Normalisierung der Dartscheibe führt.
 
@@ -143,11 +140,66 @@ Der Umsetzung dieses Algorithmus ist \autoref{cha:cv} zugewiesen. In diesem werd
 \section{Einsatz neuronaler Netze}
 \label{sec:einsatz_nn}
 
-\todo{}
+Trotz zuvor aufgezählter Schwachpunkte neuronaler Netze sind sie algorithmischen Techniken in vielerlei Hinsicht überlegen. In dieser Arbeit werden neuronale Netze zur Lokalisierung von Dartpfeilspitzen in normalisierten Bildern genutzt. Das Ziel dieses Teils der Thesis ist die korrekte Lokalisierung von Dartpfeilen in Bildern zur Ermittlung der erzielten Punktzahl nach einer Dartsrunde.
+
+Die von \citeauthor{deepdarts} geleistete Vorarbeit durch DeepDarts hat bereits die Fähigkeit neuronaler Netze gezeigt, diese Aufgabe zu bewältigen. Obwohl durch starkes Overfitting keine Generalisierbarkeit des Systems gezeigt werden konnte, ist die Möglichkeit der Bewältigung dieser Aufgabe ermittelt worden. In dieser Arbeit gilt es daher, auf den gewonnenen Erkenntnissen aufzubauen und ein System zu entwickeln, welches in der Lage ist, auf unbekannten Daten angewandt zu werden.
+
+In dieser Arbeit wird daher der Ansatz verfolgt, ein neuronales Netz basierend auf der selben Modell-Familie zu verwenden, wie es in DeepDarts genutzt wurde. Seit der Veröffentlichung von DeepDarts \citeyear{deepdarts} wurden neue Architekturen der YOLO-Familie vorgestellt, deren Performance über der der verwendeten Architektur liegen. Zudem werden diese Architekturen als Grundgerüst genutzt, um durch Adaptionen ihres Aufbaus ein auf diese Aufgabe zugeschnittenes neuronales Netz zu etablieren.
+
+Eine wesentliche Änderung ist eine Veränderung der Netzwerkausgaben. DeepDarts verwendet die herkömmlichen Ausgaben der Modellarchitektur, in der Existenzen, Positionen mit Bounding Boxen und Klassen ausgegeben werden. Die Bounding Boxen werden in DeepDarts lediglich im Training verwendet, jedoch nicht bei der Inferenz. Die verwendeten Klassen setzen sich zusammen aus je einer Klasse pro Orientierungspunkt und einer Klasse zur Annotation eines Dartpfeils. Für diese Arbeit wurden die Ausgaben derart angepasst, dass keine Bounding Boxes vorhergesagt werden und die vorhergesagten Klassen die Farben der getroffenen Feldern codieren.
+
+Diese Adaptionen der Ausgaben sorgen dafür, dass keine irrelevanten Informationen in den Ausgaben enthalten sind und eine robustere Rückrechnung der Punktzahl ermöglicht ist. Wohingegen die Punktzahl bei DeepDarts durch relative Positionen zu den Orientierungspunkten ermittelt wird, wird in dieser Arbeit ein System verwendet, welches Positionen und Feldfarben auf einer normalisierten Dartscheibe kombiniert, um eine Punktzahl zu ermitteln. Der wesentliche Vorteil dieser Herangehensweise liegt in der Robustheit gegenüber Verschiebungen in der Normalisierung: Wird ein Dartpfeil an der Grenze zweier Felder erkannt, ist die Vorhersage trotz ungenauer Normalisierung möglich, da eine Ermittlung des Feldes durch die bestimmte Feldfarbe unterstützt wird.
+
+% - Ziel: Erkennung von Dartpfeilspitzen in normalisierten Bildern
+% - DD hat gezeigt, dass es möglich ist
+% - - trotz Overfitting konnte Fähigkeit des Erlernens gezeigt werden
+% - - Generalisierbarkeit noch nicht
+% - verfolgter Ansatz
+% - - Verwendung gleicher Modell-Familie wie DD
+% - - aber neue Version
+% - - und mit Adaptionen
+% - neue Strukturierung der Netzwerk-Outputs
+% - - DD: Existenz + Position (mit Bounding Box) + Typ (Orientierungspunkt 1,2,3,4 + Dartpfeil)
+% - - - Rückrechnung der Punktzahlen durch relative Positionen zu Orientierungspunkten
+% - - hier: Existenz + Position + getroffene Feldfarbe (schwarz, weiß, rot, grün, außerhalb)
+% - - - Ermittlung der Punktzahl durch Position + Farbe
+% - - Vorteile dieses Ansatzes:
+% - - - keine irrelevanten Informationen durch Bounding Boxes in den Outputs
+% - - - robustere Ermittlung der Punktzahl
+% - - - - leichte Verschiebungen der Dartpfeile durch Normalisierung hat keinen Einfluss auf Edge-Cases
+
+% \todo{}
 
 % -------------------------------------------------------------------------------------------------
 
-\section{Related Work}
+\section{Forschungsfragen}
+\label{sec:forschungsfragen}
+
+In dieser Masterarbeit werden mehrere Systeme erarbeitet, die sich zu einem Gesamtkonzept zusammensetzen. Die zu behandelnden Forschungsfragen ergeben sich aus den jeweiligen Teilprojekten dieser Arbeit. Aus diesem Grund für für jeden Teil dieser Thesis eine Forschungsfrage aufgestellt und das Zusammenspiel aller Bestandteile wird in einer weiteren Forschungsfrage kombiniert.
+
+\subsection*{1. Ist es möglich, eine Pipeline zur automatischen Erstellung annotierter, realistischer und variabler Bilder von Dartscheiben zu erstellen?}
+
+Diese Fragestellung bezieht sich inhaltlich auf die Ausarbeitung der synthetischen Datenerstellung, welche den ersten Teil dieser Arbeit ausmacht. Diese Frage umfasst in erster Instanz die Umsetzbarkeit der automatisierten Erstellung von Bildern mit Dartscheiben. Anschließend ist diese Datenerstellung mit einer Randomisierung von Parametern verbunden und anschließender Annotation der Daten hinsichtlich der Position der Dartpfeilspitzen in den Bildern. Zuletzt gilt es, diese Datenerstellung in eine automatisierte Pipeline einzubinden, mit der eine autonome Erstellung einer Vielzahl unterschiedlicher Daten ermöglicht wird.
+
+Diese Daten unterliegen zusätzlich der Bedingung, ein möglichst realistisches Erscheinungsbild aufzuweisen und eine große Spanne unterschiedlicher Aussehen und Beleuchtungen abzudecken, sodass die Wahrscheinlichkeit der Datenverzerrung durch einseitige Darstellung minimiert wird.
+
+\subsection*{2. Zu welchem Grad lässt sich eine zuverlässige algorithmische Erkennung und Normalisierung von Dartscheiben in Bildern ohne den Einsatz neuronaler Netze umsetzen?}
+
+Ziel dieser Forschungsfrage ist die Untersuchung des zweiten Teilprojekts dieser Arbeit. Die algorithmische Identifizierung und Normalisierung hinsichtlich der Dartscheibengeometrie ist in dieser Arbeit als Vorverarbeitungsschritt eingebunden und geschieht ohne den Einsatz von Systemen, deren Arbeitsweise auf Daten basierend automatisiert erlernt werden. Jegliche Arbeitsschritte und Parameter des Systems unterliegen der sorgfältigen Analyse zu erwartender Daten.
+
+Zur Beantwortung dieser Forschungsfrage wird eine Analyse auf Daten unterschiedlicher Quellen durchgeführt, die Einblicke in die Arbeitsweise und Vielseitigkeit des erarbeiteten Systems liefern.
+
+\subsection*{3. Wie zuverlässig agiert ein durch \ac{ood}-Training mit synthetischen Daten trainiertes neuronales Netz auf echten Daten?}
+
+Die für die Beantwortung der ersten Forschungsfrage erstellten Daten dienen dem Training eines neuronalen Netzes. Durch die Verwendung synthetischer Daten als Datenlage für das Training sind Unterscheide zwischen Trainings- und Inferenzdaten zu erwarten. Der Grad des Unterschieds unterliegt der Qualität der Datenerstellung, kann jedoch als nicht unerheblich eingestuft werden. Diese Forschungsfrage untersucht die Fähigkeit eines neuronalen Netzes, zuverlässige Vorhersagen auf realen Daten trotz dieser Differenzen zu erbringen.
+
+\subsection*{4. Wie kann sich das erarbeitete Gesamtsystem dieser Arbeit im Vergleich zu DeepDarts hinsichtlich Performance und Genauigkeit behaupten?}
+
+Anstoß dieser Thesis ist die Arbeit von \citeauthor{deepdarts}, in der ein System mit dem Namen DeepDarts vorgestellt wurde \cite{deepdarts}. Dieses System konnte sehr gute Ergebnisse auf eigenen Daten erzielen und gilt damit als Maßstab für Genauigkeit und Geschwindigkeit. Die Konfigurationen und Gewichte, die für die Auswertung von DeepDarts verwendet wurden, sind in dieser Arbeit genutzt wurden, um Vergleichswerte zu setzen. Da dieses System als Erweiterung von DeepDarts vorgesehen ist, ist ein Übertreffen des Systems hinsichtlich unterschiedlicher Metriken das zentrale Ziel dieser Arbeit, auf das alle vorgestellten Systeme dieser Thesis ausgelegt sind.
+
+% -------------------------------------------------------------------------------------------------
+
+\section{Themenbezogene Arbeiten}
 \label{sec:related_work}
 
 - Prozedurale Datenerstellung für Spiele:
@@ -168,14 +220,14 @@ Der Umsetzung dieses Algorithmus ist \autoref{cha:cv} zugewiesen. In diesem werd
 - - - akustische Triangulierung
 - - - \cite{dart_scoring_microphone}
 
-\todo{Related Work}
+\todo{Related Work beschreiben}
 
 % -------------------------------------------------------------------------------------------------
 
 \section{Aufbau der Arbeit}
 \label{sec:aufbau}
 
-Diese Masterarbeit setzt sich aus den Themen der Datengenerierung, Normalisierung und Training eines neuronalen Netzes zusammen. Ihr Zusammenspiel ist in \autoref{img:projektstruktur} dargestellt. Zunächst wird in \autoref{cha:daten} auf die synthetische Datengenerierung eingegangen. Danach wird in \autoref{cha:cv} ein Algorithmus dargestellt und erklärt, durch den eine Normalisierung von Bildern mit Dartscheiben ermöglicht wird. \autoref{cha:ki} schließt die Themenbereiche dieser Masterarbeit mit dem Konzept und Training eines neuronalen Netzes zur Identifizierung und Lokalisierung von Dartpfeilspitzen in normalisierten Bildern ab. Diese Kapitel sind jeweils unterteilt in die Abschnitte Grundlagen, Methodik, Implementierung und Ergebnisse. Im Abschnitt der Grundlagen werden Themen und Konzepte eingeführt, die für das Verständnis des Kapitels notwendig sind und nicht im erwarteten Wissensgebiet der Audienz liegt. In den Abschnitten der Methodik werden die Konzepte und Herangehensweisen der Kapitel dargestellt. Auf Details zur Umsetzung dieser Methodiken werden in dem jeweiligen Implementierungsabschnitt eingegangen. Abschließend innerhalb der Kapitel werden die jeweiligen Ergebnisse und Auswertungen präsentiert. Im Anschluss an die Themenbezogenen Kapitel folgt eine gemeinsame Diskussion der Ergebnisse in \autoref{cha:diskussion}. Danach folgt in \autoref{cha:fazit} das Fazit dieser Masterarbeit. Zuletzt werden in \autoref{cha:ausblick} Themenbereiche angerissen, die als Einstiegspunkte zur Erweiterung bzw. Verbesserung dieser Masterarbeit identifiziert wurden.
+Diese Masterarbeit setzt sich aus den Themen der Datengenerierung, Normalisierung und Training eines neuronalen Netzes zusammen. Ihr Zusammenspiel ist in \autoref{img:projektstruktur} dargestellt. Zunächst wird in \autoref{cha:daten} auf die synthetische Datengenerierung eingegangen. Danach wird in \autoref{cha:cv} ein Algorithmus dargestellt und erklärt, durch den eine Normalisierung von Bildern mit Dartscheiben ermöglicht wird. \autoref{cha:ki} schließt die Themenbereiche dieser Masterarbeit mit dem Konzept und Training eines neuronalen Netzes zur Identifizierung und Lokalisierung von Dartpfeilspitzen in normalisierten Bildern ab. Diese Kapitel sind jeweils unterteilt in die Abschnitte Grundlagen, Methodik, Implementierung und Ergebnisse. Im Abschnitt der Grundlagen werden Themen und Konzepte eingeführt, die für das Verständnis des Kapitels notwendig sind und nicht im erwarteten Wissensgebiet der Audienz liegt. In den Abschnitten der Methodik werden die Konzepte und Herangehensweisen der Kapitel dargestellt. Auf Details zur Umsetzung dieser Methodiken werden in dem jeweiligen Implementierungsabschnitt eingegangen. Abschließend innerhalb der Kapitel werden die jeweiligen Ergebnisse und Auswertungen präsentiert. Im Anschluss an die Themenbezogenen Kapitel folgt eine gemeinsame Diskussion der Ergebnisse in \autoref{cha:diskussion}. Danach wird in \autoref{cha:fazit} das Fazit dieser Masterarbeit gezogen. Zuletzt werden in \autoref{cha:ausblick} Themenbereiche angerissen, die als Einstiegspunkte zur Erweiterung und Verbesserung dieser Masterarbeit identifiziert wurden.
 
 \begin{figure}
     \centering

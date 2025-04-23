@@ -45,6 +45,7 @@ data/cache/
 *.latexmkrc
 *.md5
 *.auxlock
+*.tod
 
 # nomenclature files
 *.ilg

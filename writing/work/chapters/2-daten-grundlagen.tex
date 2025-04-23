@@ -3,7 +3,7 @@
 \section{Grundlagen}
 \label{sec:daten:grundlagen}
 
-Grundlagen hier.
+\todo{Einleitende Sätze der Grundlagen}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -23,9 +23,11 @@ Der Vorteil prozeduraler Datenerstellung ist die enorme Komplexität der erstell
 \subsection{3D-Rendering}
 \label{sec:3d_rendering}
 
-Kurz Ray-Tracing anreißen.
+Die Erstellung von fotorealistischen Bildern aus 3D-Szenen wird eine Technik verwendet, die als Ray Tracing bezeichnet wird. Beim Ray Tracing wird die Farbe von Pixeln einer Kamerafläche durch von dieser ausgehenden Strahlen bestimmt \cite{ray_tracing,ray_tracing_distributed,ray_tracing_equations}. Treffen diese Strahlen auf Objekte, werden sie in Abhängigkeit von dessen Oberflächenbeschaffenheit modifiziert. Auf diese Weise geschieht eine rekursive Aussendung weiterer Strahlen, bis ein Abbruchkriterium erreicht ist. Durch diese von der Kamera ausgesandten Strahlen wird die Farbgebung der entsprechenden Pixel bestimmt, indem Strahlen durch Auftreffen auf Materialien und Lichtquellen Farbinformationen sammeln.
 
-\todo{}
+Die verteilte Anwendung dieser Technik für alle Pixel der Kamera sorgen für eine realistische Ausleuchtung einer modellierten Szene. Die weitgehende Unabhängigkeit der Pixel des Bildes ermöglicht eine verteilte Ausführung dieses Algorithmus auf Grafikkarten, um Rendering-Zeiten durch parallele Ausführungen zu optimieren.
+
+Ray Tracing ist der Industriestandard bezüglich der Erstellung realistischer Bilder und findet seinen Einsatz beispielsweise in Videospielen oder bei der Generierung realistischer Aufnahmen sowohl für Momentaufnahmen als auch für Bewegtbilder. In dieser Arbeit wird Ray Tracing zur Generierung realistischer Bilder von Dartscheiben verwendet, indem eine 3D-Szene erstellt wird, aus welcher Bilder erstellt werden. Diese Bilder werden im Kontext dieser Arbeit als Grundlage des Trainings eines neuronalen Netzes verwendet.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -40,11 +42,11 @@ Die Brennweite einer Kamera -- bzw. eines Objektives -- bestimmt die Lichtbrechu
 
 \paragraph{Öffnungswinkel}
 
-\todo{}
+\todo{Öffnungnswinkel der Kamera beschreiben}
 
 \paragraph{Belichtungsdauer und Bewegungsunschärfe}
 
-\todo{}
+\todo{Belichtungsdauer und Bewegungsunschärfe beschreiben}
 
 \paragraph{ISO und Rauschen}
 
@@ -61,7 +63,7 @@ Kameralinsen bestehen aus Glas mit einem Refraktionsindex, der von der Wellenlä
 
 Was bringt die Erstellung von Masken? -> Informationsgewinn / -erhaltung / -extraktion -> mehr Informationen als in Render-Bild
 
-\todo{}
+\todo{Binärbilder und Masken beschreiben}
 
 % -------------------------------------------------------------------------------------------------
 
