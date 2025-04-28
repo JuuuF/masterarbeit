@@ -60,36 +60,171 @@ Die Daten beinhalten lediglich positive Datensätze, indes in jedem Bild eine Da
 \subsection{Quantitative Auswertung}
 \label{sec:cv_quantitative_auswertung}
 
-\subsubsection{Geschwindigkeit der Vorhersagen}
+Die quantitative Auswertung ist unterteilt in die Abschnitte Geschwindigkeit, Render-Ergebnisse, DeepDarts-Ergebnisse und Zusammenfassung. Die Aufteilung der Ergebnisse in Render-Daten und DeepDarts-Daten ergibt sich aus den Unterschieden der Daten. Während die DeepDarts-Daten derart vorverarbeitet sind, dass sie die Dartscheibe weitestgehend zentriert in Bildern fester Dimensionen zeigt, sind die Render-Daten wesentlich offener hinsichtlich der Darstellung der Dartscheiben. Diese Vorverarbeitung der DeepDarts-Daten soll zu keiner unvorhergesehenen Verzerrung der Daten führen.
 
-- Zeit pro Vorhersage
-- absolute Zeit nur bedingt relevant, da systemabhängig
-- gibt aber grobe Richtung vor, wie schnell das System sein kann
-- Vergleich mit DD, um Unterschied klar zu machen
+Die Auswertungen sind jeweils unterteilt in das in dieser Thesis erarbeiteten System und das DeepDarts-System, um die Unterschiede der Genauigkeiten darzustellen. Da das DeepDarts-System ein Single-Shot-Neural-Network ist, in welchem die Normalisierung und die Lokalisierung der Dartpfeile nicht voneinander getrennt betrachtet werden können, wird die Geschwindigkeit der Normalisierung gleichgesetzt mit der Gesamtdauer der Vorhersage.
 
-\todo{Geschwindigkeit auswerten.}
+Ausgeführt wurde die Auswertung auf einer \textbf{XXX HIER CPU EINSETZEN XXX}. Es wurde trotz der Möglichkeit einer GPU-Ausführung des DeepDarts-Systems keine Grafikkarte verwendet, um die Vergleichbarkeit der Systeme unter der Verwendung der selben Hardware zu gewährleisten.
 
-\subsubsection{Auswertung auf Render-Daten}
+\todo{CPU-Modell von Rechner herausfinden un aufschreiben.}
 
-- Metriken MA + DD
+\subsubsection{Geschwindigkeit der Vorhersagen} % -------------------------------------------------
 
-\todo{Render-Daten auswerten}
+\pgfplotstableread[col sep=comma]{
+    system,       Render-Daten, d1-val, d1-test, d2-val, d2-test
+    Thesis,       0.637,        0.545,  0.562,   0.525,  0.514
+    DeepDarts-d1, 0.242,        0.132,  0.136,   0.124,  0.137
+    DeepDarts-d2, 0.236,        0.132,  0.133,   0.119,  0.133
+}\ExecutionTimes
 
-\subsubsection{Auswertung auf DeepDarts-Daten}
+Die Ausführungszeiten der jeweiligen Systeme sind in \autoref{fig:cv_dauer} dargestellt. Die Ausführungszeiten von DeepDarts liegen mit durchschnittlich $131\,\text{ms}$ auf den DeepDarts-Datensätzen und $239\,\text{ms}$ auf den gerenderten Daten weitaus unter den Zeiten des Systems dieser Thesis. Die Ausführungszeiten des Systems dieser Thesis liegen bei durchschnittlich $537\,\text{ms}$ für die DeepDarts-Daten und $637\,\text{ms}$ für die Render-Daten. Die Unterschiede der Inferenzzeiten der Datenquellen ergeben sich aus den Abmessungen der Bilder. Die DeepDarts-Daten sind bereits vorverarbeitet, sodass sie ein quadratisches Seitenverhältnis mit einer Auflösung von $800 \times 800\,\text{px}$ aufweisen. Die gerenderten Daten hingegen sind für diese Auswertung in keinerlei Weise vorverarbeitet und werden den Systemen in den originalen Auflösungen präsentiert. Die Seitenlängen von Bildern der Render-Daten betragen mindestens \textbf{XXX}, maximal \textbf{XXX} und die durchschnittliche Seitenlänge beträgt \textbf{XXX}.
 
-- Metriken MA + DD
+\todo{Seitenlängen eintragen.}
 
-\todo{DD-Daten auswerten}
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=\textwidth, height=6cm,
+                ybar,
+                bar width=0.35cm,
+                enlarge x limits=0.15,
+                ylabel={Zeit (s/Sample)},
+                symbolic x coords={Thesis,DeepDarts-d1,DeepDarts-d2},
+                xtick=data,
+            ]
+            \addplot table[x=system,y=Render-Daten] {\ExecutionTimes};
+            \addplot table[x=system,y=d1-val]       {\ExecutionTimes};
+            \addplot table[x=system,y=d1-test]      {\ExecutionTimes};
+            \addplot table[x=system,y=d2-val]       {\ExecutionTimes};
+            \addplot table[x=system,y=d2-test]      {\ExecutionTimes};
+            \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Dauer der Normalisierung auf unterschiedlichen Datensätzen, gruppiert nach Systemen.}
+    \label{fig:cv_dauer}
+\end{figure}
 
-\subsubsection{Auswertung auf echten Daten}
+Die tatsächlichen Ausführungszeiten der Systeme sind stark abhängig von der Infrastruktur, auf der die Systeme ausgeführt werden. Daher ist ihnen keine zu starke Bedeutung zuzusprechen. Die relativen Ausführungszeiten lassen sich jedoch miteinander vergleichen, um eine Einschätzung der Performance der Systeme zueinander zu erlangen. Die Inferenz des DeepDarts-Systems ist auf den DeepDarts-Daten un einen Faktor $4$ schneller und bei den gerenderten Daten um den Faktor $2,6$. Die Unterschiede liegen in den Arbeitsweisen der Systeme: DeepDarts verwendet ein neuronales Netz, dessen Ausführungszeit proportional zu den Eingabedaten skaliert, während die Bilddaten in dieser Thesis in einem Vorverarbeitungsschritt skaliert werden, um nahezu unabhängig von der Eingabegröße der Bilder zu sein. Die unterschiedlichen Ausführungszeiten zwischen DeepDarts-Daten und Render-Daten dieses Systems ergeben sich aus der minimalen Bildgröße dieses Vorverarbeitungsschritts, in welchem die Bilder zwischen $800$ und $1600\,\text{px}$ skaliert werden und damit über den Abmessungen der DeepDarts-Daten liegen.
 
-- Metriken MA + DD
+\subsubsection{Findung einer Normalisierung} % ----------------------------------------------------
 
-\todo{Echte Daten auswerten}
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \matrix (m) [
+            matrix of nodes,
+            nodes in empty cells,
+            row sep=0.5cm,
+            column sep=0.5cm,
+            nodes={anchor=center}
+        ]
+        {
+                         & Diese Thesis & DeepDarts-$d_1$ & DeepDarts-$d_2$ \\
+            % -----------------------------------
+            Render-Daten &
+            \drawpie{97/my_green, 3/my_red}
+                         &
+            \drawpie{100/my_red, 0/my_green}
+                         &
+            \drawpie{98/my_red, 2/my_green}                                 \\
 
-\subsubsection{Zusammenfassung der Daten}
+            % -----------------------------------
+            $d_1$-val    &
+            \drawpie{99/my_green, 1/my_red}
+                         &
+            \drawpie{100/my_green, 0/my_red}
+                         &
+            \drawpie{37/my_green, 63/my_red}                                \\
+
+
+            % -----------------------------------
+            $d_1$-test   &
+            \drawpie{100/my_green, 0/my_red}
+                         &
+            \drawpie{100/my_green, 0/my_red}
+                         &
+            \drawpie{83/my_green, 17/my_red}                                \\
+
+            % -----------------------------------
+            $d_2$-val    &
+            \drawpie{99/my_green, 1/my_red}
+                         &
+            \drawpie{100/my_red, 0/my_green}
+                         &
+            \drawpie{100/my_green, 0/my_red}                                \\
+
+            % -----------------------------------
+            $d_2$-test   &
+            \drawpie{98/my_green, 2/my_red}
+                         &
+            \drawpie{100/my_red, 0/my_green}
+                         &
+            \drawpie{100/my_green, 0/my_red}                                \\
+        };
+    \end{tikzpicture}
+    \caption{Auswertung der Findung von Normalisierungen auf Daten. Grüne Bereiche stehen für erfolgreiche Normalisierungen, rote Bereiche für fehlgeschlagene Normalisierungen.}
+    \label{fig:cv_normalisierung}
+\end{figure}
+
+In diesem Teil der Auswertung wird die Fähigkeit der Systeme betrachtet, eine Normalisierung der Bilder durchzuführen. Eine erfolgreiche Normalisierung bezieht sich für diese Auswertung lediglich darauf, ob ausreichend Orientierungspunkte für eine Normalisierung identifiziert werden konnten. Das DeepDarts-System muss dafür in der Lage sein, drei Orientierungspunkte zu identifizieren, da das System einem fehlenden Orientierungspunkt durch Interpolation ergänzt. Für das System dieser Thesis beinhaltet diese Anforderung die Lokalisierung des Mittelpunkts und mindestens drei weiterer Orientierungspunkte. Die Wahl der Orientierungspunkte ist dabei bei dem DeepDarts-System auf vier vordefinierte Punkte festgelegt während das hier erarbeitete System 60 mögliche Punkte erkennen kann.
+
+Die Ergebnisse dieser Auswertung sind in \autoref{fig:cv_normalisierung} in Form von Kuchendiagrammen dargestellt. Die Auswertung ist sowohl hinsichtlich der Systeme als auch hinsichtlich der Datensätze aufgeteilt. Der Algorithmus dieser Thesis ist auf allen Datensätzen in der Lage, in mindestens $97\%$ der Bilder eine Normalisierung zu ermitteln. Die Performance ist dabei weitestgehend unabhängig von dem Ursprung der Daten. Demgegenüber steht die Performance der DeepDarts-Systeme $d_1$ und $d_2$. Während $d_1$ zwar Auswertungen von $100\%$ auf den eigenen Validierungs- und Test-Daten erzielt, ist es nicht in der Lage, positive Ergebnisse auf anderen Daten zu erzielen. Die Auswertung von $d_2$ auf den eigenen Daten liegt ebenfalls bei $100\%$ und zumindest die Findung der Entzerrung der Test-Daten aus $d_1$ deckt sich mit $83.4\%$ mit den Beobachtungen aus dem eigenen Paper. Jedoch ist die Auswertung auf den Validierungs-Daten von $d_1$ mit $36.8\%$ nicht annähernd auf diesem Niveau und auf den gerenderten Daten konnten lediglich für $2.2\%$ der Daten normalisiert werden.
+
+Diese Auswertung stärkt die Erkenntnis des Overfittings des DeepDarts-Systems und zeigt gleichzeitig die Fähigkeit dieses Systems, zumindest ausreichend Orientierungspunkte zu finden, um eine Normalisierung zu ermöglichen.
+
+\todo{Diesen Satz evtl. in die Diskussion}
+
+\subsubsection{Genauigkeit gefundener Normalisierungen} % -----------------------------------------
+
+\pgfplotstableread[col sep=comma]{
+    system,       Render-Daten, d1-val, d1-test, d2-val, d2-test
+    Thesis,       17.234,       3.104,  3.148,   3.181,  3.690
+    DeepDarts-d1, ,             0.289,  0.549,   ,       
+    DeepDarts-d2, 1568.744,     1.499,  1.591,   0.828,  1.305
+}\Similarities
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=\textwidth,
+                height=10cm,
+                ymode=log,
+                ybar,
+                bar width=0.35cm,
+                enlarge x limits=0.15,
+                ylabel={Genauigkeit [px]},
+                symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
+                xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
+                legend style={at={(0.5,0.98)}, anchor=north},
+            ]
+            \addplot table[x=system,y=Render-Daten]  {\Similarities};
+            \addplot table[x=system,y=d1-val]        {\Similarities};
+            \addplot table[x=system,y=d1-test]       {\Similarities};
+            \addplot table[x=system,y=d2-val]        {\Similarities};
+            \addplot table[x=system,y=d2-test]       {\Similarities};
+            \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Genauigkeiten der Normalisierungen auf unterschiedlichen Datensätzen, gruppiert nach Systemen. Sofern keine Normalisierung möglich war, existiert kein Balken. Aufgrund der Darstellung in logarithmischer Form ist die Grundlinie der Baken bei $y=1$. Balken für Werte kleiner als 1 werden daher nach unten ausgerichtet dargestellt.}
+    \label{fig:cv_genauigkeit}
+\end{figure}
+
+Die Genauigkeit der Normalisierungen wird mit der in \autoref{sec:cv_metriken} eingeführten Metrik durchgeführt und die Ergebnisse sind in \autoref{fig:cv_genauigkeit} dargestellt. Es ist zu erkennen, dass signifikante Unterschiede zwischen den Systemen vorherrschen. DeepDarts' System $d_2$ erzielt auf seinen eigenen Daten ausgesprochen gute Ergebnisse mit durchschnittlich $0.419\,\text{px}$ Abweichung erzielt während es auf anderen Daten keine Ergebnisse erzielen kann. $d_2$ hingegen kann auf allen Datensätzen Ergebnisse erzielen, jedoch sind deutliche Unterschiede zwischen den Quellen der Datensätzen zu erkennen. Auf DeepDarts-Daten können sehr gute Ergebnisse mit durchschnittlich $1.545\,\text{px}$ Abweichung auf den $d_1$-Daten und $1.067\,\text{px}$ auf den $d_2$-Daten erzielt werden. Weit davon abweichend ist jedoch die Auswertung auf den gerenderten Daten, auf denen lediglich eine mittlere Abweichung von $1568.744\,\text{px}$ Abweichung möglich war.
+Diese Beobachtung lässt darauf schließen, dass eine zuverlässige Normalisierung nicht mit diesem System möglich war, da die Bilder lediglich eine Größe von $800 \times 800\,\text{px}$ besaßen.
+Das in dieser Thesis erarbeitete System war jedoch in der Lage, auf allen Datensätzen Ergebnisse zu erzielen, die sich etwa in gleichen Größenbereichen befinden.
+
+\todo{Absatz beenden.}
+
+\subsubsection{Zusammenfassung der Daten} % -------------------------------------------------------
 
 - DD schneller
 - MA besser
 
 \todo{Daten zusammenfassen}
+
+Die Systeme agieren auf unterschiedliche Weisen indes DeepDarts Ergebnisse durch ein neuronales Netz mit möglicher Beschleunigung durch GPU-Ausführung erlangt während das System dieser Arbeit single-threaded auf einer CPU ausgeführt wird.
+DeepDarts verwendet ein mit PyTorch erstelltes und in TensorFlow verwendetes neuronales Netz, bei welchem die Ausführung als kompilierter Maschinencode umgesetzt ist. Dies ermöglicht die Parallelisierung der Ausführung für eine optimierte Laufzeit.
+Demgegenüber steht die Implementierung des Systems dieser Thesis, in der zur Umsetzung hauptsächlich interpretierter Python-Code unter der Verwendung er Frameworks NumPy, Scikit-Learn und OpeCV verwendet wurden. Diese Frameworks sind ebenfalls teilweise unter Einbindung von kompiliertem Maschinencode verwendet worden, jedoch ist der Bottleneck der Ausführung durch die Geschwindigkeit der Implementierung von Logik in Python-Code limitiert.
+Der direkte Vergleich der Systeme ist daher plattformabhängig und möglicherweise nicht belastbar. Er gibt jedoch einen groben Überblick über die Arbeitsweisen und Performances der unterschiedlichen Systeme.
