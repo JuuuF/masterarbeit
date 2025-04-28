@@ -3,7 +3,9 @@
 \section{Grundlagen}
 \label{sec:daten:grundlagen}
 
-\todo{Einleitende Sätze der Grundlagen}
+Bevor in die Methodik der Datenerstellung eingestiegen werden kann, ist die Klärung von Grundlagen notwendig. Diese ermöglichen ein Verständnis der Thematik und der verwendeten Methodik.
+
+Die Grundlagen der Datenerstellung sind thematisch geordnet in die Abschnitte der generellen Datenerstellung, Darts und Texturierung. Die generelle Datenerstellung umfasst prozedurale Datenerstellung in \autoref{sec:prozedurale_datenerstellung} und Grundlagen des 3D-Renderings in \autoref{sec:3d_rendering} sowie Kameraparameter in \autoref{sec:kameras} und Binärbilder und Masken in \autoref{sec:masken}. Der Darts-Abschnitt beginnt mit der Geometrie einer Dartscheibe in \autoref{sec:dartscheiben_geometrie}, gefolgt von für diese Thesis relevante Darts-Terminologie in \autoref{sec:dart_terminologie}. Danach folgt in \autoref{sec:steeldarts} die Unterscheidung zwischen Soft- und Steeldarts. Zuletzt folgt der Abschnitt der Texturierung, in dem mit der Klärung der Funktionsweise von Material und Texturen in \autoref{sec:material_texturen} eingestiegen wird. Darauf folgt eine Übersicht über Noise-Texturen in \autoref{sec:noise} und Seeding von Zufallsvariablen in \autoref{sec:seeding}. Abschließend werden die Begriffe Thresholding und Maskierung in \autoref{sec:thresholding_maskierung} erklärt und die Hintergründe prozeduraler Texturen in \autoref{sec:was_prozedurale_texturen} erläutert.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -36,17 +38,15 @@ Ray Tracing ist der Industriestandard bezüglich der Erstellung realistischer Bi
 
 Bei der Datenerstellung mittels 3D-Software und Ray-Tracing ist die Präsenz einer Kamera unabdingbar. Ursprüngliche Kameramodelle begonnen mit einer Pinhole-Kamera, die als Projektion eines 3D-Raumes in einen 2D-Raum vornimmt \cite{pinhole_camera}. Auf diesem Modell aufbauend wurden weitere Kameraparameter modelliert, bis die Simulation echter Kameras ermöglicht wurde. In aktuellen 3D-Softwares zum Rendern von Szenen sind eine Vielzahl an Kameraparametern implementiert und modifizierbar, sodass fotorealistische Aufnahmen simuliert werden können. Die Unterschiede zwischen der Verwendung einer simulierten und einer Echten Kamera sind daher für das ungeschulte Auge verschwindend gering und für das Erstellen von Trainingsdaten für ein neuronales Netz ideal geeignet. Die wichtigsten Parameter einer Kameraaufnahme werden in diesem Unterabschnitt grob erläutert, um ein oberflächliches Verständnis der Arbeitsweise einer Kamera zu erlangen.
 
-\paragraph{Brennweite}
+\paragraph{Brennweite und Öffnungswinkel}
 
-Die Brennweite einer Kamera -- bzw. eines Objektives -- bestimmt die Lichtbrechung bei der Aufnahme eines Bildes. Diese Lichtbrechung resultiert in einem unterschiedlich großen Bereich, der von der Kamera eingefangen wird. Optisch ist die Brennweite für den Zoom des Bildes zuständig. Eine Brennweite von 50mm ist eine typische Brennweite, die dem menschlichen Blickwinkel nahe kommt. Geringere Brennweiten sorgen für ein größeres Sichtfeld während größere Brennweiten mit einem größeren Zoom einhergehen. \cite{focal_lentgh}.
+Die Brennweite einer Kamera -- bzw. eines Objektives -- bestimmt die Lichtbrechung bei der Aufnahme eines Bildes. Diese Lichtbrechung resultiert in einem unterschiedlich großen Bereich, der von der Kamera eingefangen wird. Optisch ist die Brennweite für den Zoom des Bildes zuständig. Eine Brennweite von 50mm ist eine typische Brennweite, die dem menschlichen Blickwinkel nahe kommt. Geringere Brennweiten sorgen für ein größeres Sichtfeld während größere Brennweiten mit einem größeren Zoom einhergehen \cite{focal_lentgh}.
 
-\paragraph{Öffnungswinkel}
-
-\todo{Öffnungnswinkel der Kamera beschreiben}
+Die Brennweite bestimmt den Öffnungswinkel der Kamera. Bei einer geringen Brennweite ist der Öffnungswinkel groß und analog ist er bei einer großen Brennweite klein.
 
 \paragraph{Belichtungsdauer und Bewegungsunschärfe}
 
-\todo{Belichtungsdauer und Bewegungsunschärfe beschreiben}
+Für die Aufnahme von Bildern wird Licht auf einem Sensor eingefangen. Die Dauer, über die das Licht eingefangen wird, wird als Belichtungsdauer bezeichnet. Während dieser treffen Photonen auf den Sensor, welche für die Helligkeit des Bildes verantwortlich sind. Eine lange Belichtungsdauer resultiert in mehr eingefangenen Photonen und einem helleren Bild. Wird die Kamera während der Belichtung des Sensors bewegt, treffen Photonen unterschiedlicher Ursprünge auf die selbe Position des Sensors und es entsteht Bewegungsunschärfe. In einem Bild äußert sich diese durch verzogene Linien und unscharfe Aufnahmen \cite{motion_blur}.
 
 \paragraph{ISO und Rauschen}
 
@@ -127,6 +127,7 @@ Wesentlicher unterschied zwischen Soft- und Steeldarts ist neben der unterschied
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Material und Texturen}  % TEXTURIERUNG ================================================
+\label{sec:material_texturen}
 
 Materialien und Texturen finden ihren Einsatz in der Erstellung von 3D-Szenen. Objekten sind Materialien zugewiesen, die das Aussehen und Verhalten der Objekte bei Lichteinfall bestimmen. Eine Textur beschreibt die Farbgebung eines Materials, das Material beschreibt die Interaktion der Textur mit Licht. Beim Eintreffen von Licht auf ein Material kann dieses unterschiedlich abgeändert werden. Wesentliche Eigenschaften von Materialien sind der Grad der Diffusität, Reflektivität und Absorption. Ein diffuses Material strahlt eingehende Lichtstrahlen in zufällige Richtungen; reflektive Materialien spiegeln eingehende Lichtstrahlen; absorbierende Materialien haben keine Reaktion auf einfallendes Licht. Jedes Material gewichtet diese Parameter unterschiedlich, um eine charakteristische Lichtreaktion hervorzurufen.
 
@@ -159,10 +160,12 @@ Der Detailgrad von Perlin Noise wird durch Überlagerung mehrerer Schichten erzi
 \end{figure}
 
 \subsection{Seeding}
+\label{sec:seeding}
 
 Die algorithmische Generierung von Zufallszahlen ist nicht ohne Verzerrung möglich. Daher werden von Computern generierte Zufallszahlen auch als pseudo-zufällig bezeichnet. Die Generierung von Zufallszahlen beruht auf deterministischen Algorithmen, die üblicherweise einen Seed verwenden, um Zahlen zu generieren. Durch die Verwendung des selben Seeds ist das Ziehen von Zufallszahlen deterministisch wiederholbar, wodurch die Generierung von Daten reproduzierbar und nachvollziehbar ist.
 
 \subsection{Thresholding und Maskierung}
+\label{sec:thresholding_maskierung}
 
 Warum braucht man das? Wozu macht man das? -> Thresholding zur Kombination von Texturen miteinander / Layering mehrerer Texturen
 
