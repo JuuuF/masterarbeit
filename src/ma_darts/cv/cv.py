@@ -278,6 +278,9 @@ def undistort_img(img: np.ndarray, profile: bool = False) -> np.ndarray:
         src_pts, dst_pts, int(cy_undistort), int(cx_undistort)
     )
     profiler.profile("orientation.get_alignment_matrix")
+    if M_align is None:
+        print("ERROR: Could not find undistortion homography.")
+        return None
 
     # Combine all matrices
     scale = img.shape[0] / img_full.shape[0]

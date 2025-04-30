@@ -10,8 +10,9 @@ def get_alignment_matrix(
     cx: int,
 ):
     # If there are not enough points, we return
-    if len(src_pts) < 4:
-        return np.eye(3)
+    if len(src_pts) < 5:
+        print("ERROR: Too few orientation points.")
+        return None
 
     n_tries = len(src_pts) * 3
     use_top_n = 1
@@ -57,7 +58,7 @@ def get_alignment_matrix(
 
     if len(Ms) == 0:
         print("ERROR: Could not find alignment homography.")
-        return np.eye(3)
+        return None
 
     # Sort by distances
     sort_ids = np.argsort(total_dists)
