@@ -85,15 +85,12 @@ Eine wichtige Erkenntnis des DeepDarts-Systems ist der Mangel qualitativ hochwer
 
 Stattdessen wurde sich für die synthetische Erstellung von Trainingsdaten unter Verwendung von 3D-Modellierungssoftware entschieden. Auf diese Weise ist eine automatisierte Datenerstellung ermöglicht, die durch den Einsatz zeitgemäßer Technik prozedural und fotorealistisch erstellt werden kann. Durch einen anfänglichen Mehraufwand des Aufsetzen dieses Systems können anschließend beliebige Datenmengen erstellt werden, ohne dass manuelle Eingriffe notwendig sind. Zusätzlich sind alle relevanten Informationen der Szene zugänglich, sodass eine korrekte Annotation ermöglicht ist.
 
-Die Vorgehensweise synthetischer Datenerstellung zur Generierung von Trainingsdaten wurde bereits in unterschiedlichen Systemen eingesetzt \cite{synth_data}. Die Art der synthetisch erstellten Daten umfasst dabei eine große Spanne unterschiedlicher Szenarien. So wurde bereits die Effektivität der Nutzung von 3D-Modellen in der Datengenerierung erfolgreich eingesetzt \cite{synth_data_procedural,synth_data_cars_with_cam_aug,synth_data_pose_estimation}. Mit der Verwendung von 3D-Software zur Generierung von Trainingsdaten konnten ebenfalls positive Ergebnisse erzeugt werden \cite{synth_data_blender_defects,data_gen_importance,synth_data_importance_2}. Obwohl Unterschiede zwischen generierten Daten und echten Daten bestehen, konnte gezeigt werden, dass selbst durch reines \ac{ood}-Training Systeme trainiert werden konnten, die auf echte Daten generalisieren konnten \cite{ood_simulated_training}.
-
 % - KI-Training basiert auf Daten
 % - Korrektheit von Daten relevant
 % - Generierung von Daten als Mittel zur Erstellung ausreichender Menge
 % - viele Daten erstellen mit wenig Aufwand
 % - Umfang der Daten klar definiert: Dartpfeile auf Dartscheibe verteilen
 % - - schematische Beschreibung der Daten möglich
-% - - Generierung von Trainingsdaten für KI nicht unüblich: \cite{synth_data,synth_data_blender_defects,synth_data_cars_with_cam_aug,synth_data_importance_2,synth_data_pose_estimation,synth_data_procedural}
 
 % \todo{Warum synth. Daten?}
 
@@ -202,25 +199,44 @@ Anstoß dieser Thesis ist die Arbeit von \citeauthor{deepdarts}, in der ein Syst
 \section{Themenbezogene Arbeiten}
 \label{sec:related_work}
 
-- Prozedurale Datenerstellung für Spiele:
-- - \cite{proc_data_games_1,proc_data_games_2,proc_data_games_3}
-- - Erstellung zufälliger Spielumgebungen auf Grundlage zufälliger Generation
-- - hier: zufällige Generierung von Darts-Runden statt Welten
-- - Konzept gleich, wird bereits genutzt
-- - PGD-G: Procedural Data Generation for Games
+Diese Arbeit weist mehrere Schwerpunkte auf, hinsichtlich derer verwandte Arbeiten betrachtet werden können. In den folgenden Unterabschnitten werden unterschiedliche Bereiche beleuchtet, in denen verwandte Arbeiten veröffentlicht wurden.
 
-- Dart-Scoring-Systeme
-- - GitHub-Projekte
-- - - \cite{darts_project_1,darts_project_2,darts_project_3,darts_proect_4}
-- - - Dart-scoring mittels Webcams + vorherigem Setup
-- - Multi-Cam system
-- - - 5 Kameras
-- - - \cite{dart_scoring_multicam}
-- - Mikrofon-System
-- - - akustische Triangulierung
-- - - \cite{dart_scoring_microphone}
+\subsection{Prozedurale Datenerstellung}
 
-\todo{Related Work beschreiben}
+Das prozedurale Erstellen von Daten für eine vielfältige Auswahl unterschiedlicher Szenarien ist kein Themengebiet, dessen spezifischer Einsatz im Bereich des Trainings neuronaler Netze verankert ist. Im Fachgebiet der Spieleindustrie wird diese Technik verwendet, gesteuerten Zufall in das Spielerlebnis einfließen zu lassen \cite{proc_data_games_1,proc_data_games_2,proc_data_games_3}. Die Brücke zu dieser Arbeit wird dabei durch die zufällige Erstellung von Welten geschlagen, die analog zu der Randomisierung der Umgebung und dem Aussehen der Dartscheibe zu sehen sind, wie prozedurale Datenerstellung in dieser Arbeit verwendet wird. Diese Umsetzungen basieren auf dem gleichen Konzept, jedoch ist die Art der Umsetzung unterschiedlich gehandhabt.
+
+% - Prozedurale Datenerstellung für Spiele:
+% - - \cite{proc_data_games_1,proc_data_games_2,proc_data_games_3}
+% - - Erstellung zufälliger Spielumgebungen auf Grundlage zufälliger Generation
+% - - hier: zufällige Generierung von Darts-Runden statt Welten
+% - - Konzept gleich, wird bereits genutzt
+% - - PGD-G: Procedural Data Generation for Games
+
+\subsection{Synthetische Datenerstellung für das Training neuronaler Netze}
+
+Die Vorgehensweise synthetischer Datenerstellung zur Generierung von Trainingsdaten wurde bereits in unterschiedlichen Systemen eingesetzt \cite{synth_data}. Die Art der synthetisch erstellten Daten umfasst dabei eine große Spanne unterschiedlicher Szenarien. So wurde bereits die Effektivität der Nutzung von 3D-Modellen in der Datengenerierung erfolgreich eingesetzt \cite{synth_data_procedural,synth_data_cars_with_cam_aug,synth_data_pose_estimation}. Mit der Verwendung von 3D-Software zur Generierung von Trainingsdaten konnten ebenfalls positive Ergebnisse erzeugt werden \cite{synth_data_blender_defects,data_gen_importance,synth_data_importance_2}. Obwohl Unterschiede zwischen generierten Daten und echten Daten bestehen, konnte gezeigt werden, dass selbst durch reines \ac{ood}-Training Systeme trainiert werden konnten, die auf echte Daten generalisieren konnten \cite{ood_simulated_training}.
+In Hinsicht auf das Darts-Scoring existieren bereits
+
+% - - Generierung von Trainingsdaten für KI nicht unüblich: \cite{synth_data,synth_data_blender_defects,synth_data_cars_with_cam_aug,synth_data_importance_2,synth_data_pose_estimation,synth_data_procedural}
+
+\subsection{Dart-Scoring}
+
+Neben bereits etablierten Multi-Camera-Systemen wie Scolia und Autodarts \cite{,scoliadarts,autodarts} existieren weitere Herangehensweisen an diese Aufgabe. Scolia und Autodarts verwenden jeweils 3 Kameras, um eine 3D-Rekonstruktion der Dartscheibe und den auf ihr eingetroffenen Pfeilen zu ermöglichen. Diese Systeme sind jedoch kostspielig und nicht für Amateurnutzung vorgesehen. Um diese Hürden zu umgehen wurde eine Arbeit um einen Algorithmus zur Nutzung günstiger Kameras für ein kostengünstiges, jedoch ebenfalls akkurates, System mit fünf Kameras veröffentlicht \cite{dart_scoring_multicam}.
+
+Die Idee des einfacher zugänglichen und erschwinglichen Dart-Scorings hat in einigen Hobbyprojekten Anklang gefunden, sodass einige Systeme mit unterschiedlichen Herangehensweisen der Ermittlung eines Scorings entstanden sind. Diese Systeme reichen von der Verwendung von Mikrofonen zur akustischen Triangulation der Einstichstellen \cite{dart_scoring_microphone} über die Verwendung von fünf kostengünstigen Kameras in Kombination mit ausgeklügelter Kalibrierung \cite{dart_scoring_multicam}, stereoskopische Rekonstruktion der Dartscheibe mittels zweier Kameras \cite{darts_project_3,darts_project_4} bis hin zu Single-Camera-Systemen \cite{darts_project_1,darts_project_2}. Für alle diese Systeme ist jedoch mindestens einer der folgenden Schwachpunkte zutreffend: Komplexes oder sehr genaues Setup, Notwendigkeit besonderer Hardware oder mangelhafte Genauigkeit des Systems. Basieren die Systeme auf Differenzbildern, ist eine Verschiebung der Kamera verheerend; ebenso bei der Verwendung von Kameras, deren Positionen zueinander kalibriert werden müssen.
+
+Der Schwachpunkt eines vorherigen Aufbaus oder der Kalibrierung ist durch ein System, wie es mit DeepDarts erhoben wurde, hinfällig, indem ein Scoring auf Grundlage eines beliebigen Kameramodells und ohne weitreichende Ansprüche an die benötigte Infrastruktur als Zielsetzung verfolgt wurde \cite{deepdarts}. Die Verwendung neuronaler Netze für Verarbeitung von Bilddaten ist dabei ein neuer Schritt der Einbindung aktueller Technologien in dieses Forschungsfeld. Dieser Ansatz wird mit dieser Arbeit weiter verfolgt mit der Zielsetzung, neue Technologien in dem Bereich des Dart-Scorings einzusetzen, um ein simples Dart-Scoring mit geringen Anforderungen an den Benutzer zu erzielen.
+
+% - Dart-Scoring-Systeme
+% - - GitHub-Projekte
+% - - - \cite{darts_project_1,darts_project_2,darts_project_3,darts_proect_4}
+% - - - Dart-scoring mittels Webcams + vorherigem Setup
+% - - Multi-Cam system
+% - - - 5 Kameras
+% - - - \cite{dart_scoring_multicam}
+% - - Mikrofon-System
+% - - - akustische Triangulierung
+% - - - \cite{dart_scoring_microphone}
 
 % -------------------------------------------------------------------------------------------------
 
