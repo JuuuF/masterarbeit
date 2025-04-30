@@ -108,9 +108,9 @@ class Utils:
         lr = tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss",
             factor=np.power(0.1, 1 / 4),
-            patience=50,
+            patience=100,
             verbose=1,
-            min_lr=1e-6,
+            min_lr=1e-4,
         )
         callbacks.append(lr)
 
