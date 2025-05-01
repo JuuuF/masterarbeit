@@ -401,12 +401,12 @@ def yolo_v8_model(
     x_16 = Conv(x_15, k=3, s=2, p=True, c=round(256 * w), dropout=dropout_head)  # P3
     x_17 = Concat([x_12, x_16])
     x_18 = C2f(
-        x_17, shortcut=False, n=round(3 * d), c=round(512 * w), dropout=dropout_head
+        x_17, shortcut=False, n=round(3 * d), c=round(256 * w), dropout=dropout_head  # c=round(512 * w)
     )  # P4
-    x_19 = Conv(x_18, k=3, s=2, p=True, c=round(512 * w), dropout=dropout_head)
+    x_19 = Conv(x_18, k=3, s=2, p=True, c=round(256 * w), dropout=dropout_head)  # c=round(512 * w)
     x_20 = Concat([x_9, x_19])
     x_21 = C2f(
-        x_20, shortcut=False, n=round(3 * d), c=round(512 * w * r), dropout=dropout_head
+        x_20, shortcut=False, n=round(3 * d), c=round(256 * w * r), dropout=dropout_head  # c=round(512 * w * r)
     )  # P5
     x_21t = TransitionBlock(x_21, dropout=dropout_head)
 
