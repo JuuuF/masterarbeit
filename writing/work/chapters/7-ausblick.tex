@@ -3,21 +3,35 @@
 \chapter{Ausblick}
 \label{cha:ausblick}
 
-Hier steht der Ausblick.
+Diese Arbeit stellt ein System vor, mit welchem ein automatisches Dart-Scoring durch die Verwendung herkömmlicher Computer Vision sowie ein aktuelles neuronales Netz, welches durch automatisch und synthetisch erstellte Daten trainiert wurde. Das Potenzial dieser Systeme ise nicht vollkommen ausgeschöpft und kann auf unterschiedliche Arten weitergeführt werden. Dieses Kapitel gibt einen Überblick über mögliche Ausgestaltungen und Verbesserungen dieser Systeme. Es wird begonnen mit dem Ausblick der Datenerstellung in \autoref{sec:ausblick_data}, gefolgt von dem Ausblick der Pipeline zur Normalisierung in \autoref{sec:ausblick_cv}. Abschließend wird in \autoref{sec:ausblick_ki} ein Überblick über weitere mögliche Arbeit an der Dartpfeilerkennung gegeben.
 
 % -------------------------------------------------------------------------------------------------
 
 \section{Ausblick der Datenerstellung}
 \label{sec:ausblick_data}
 
-- Implementierung von PBR in Datenerstellung
-- Verbesserung der Datengenerierung, um realistischer zu werden und mehr Umgebungsbedingungen zu simulieren
-- Datenerstellung auf weitere Farben und Formen der Dartscheibe erweitern
-- - z.B. blau-rote Felder
-- - ist aber meist nicht in Steeldarts gegeben, sondern eher in elektronischen Dartscheiben
-- - und bei elektronischen Dartscheiben ist dieses System ohnehin überflüssig
+\paragraph{Integration von \ac{pbr}}
 
-\todo{Ausblick Daten}
+Ein wesentlicher Bestandteil der Datenerstellung ist die prozedurale Erstellung von Materialien. Diese ist aktuell nicht standardisiert und bedarf der Integration von \ac{pbr}. In diesem werden unterschiedliche Texturen zur Steuerung verschiedener Parameter wie Glanz und Oberflächenbeschaffenheit strikt getrennt voneinander definiert, um realistische Texturen zu erstellen.
+
+% - Implementierung von PBR in Datenerstellung
+
+\paragraph{Mehr Objekte in der Szene}
+
+Die Szene umfasst aktuell fünf Objekte, die dynamisch ein- und ausgeblendet werden können, lediglich zwei dieser Objekte -- Lichtring und Dartschrank -- sind in den Aufnahmen zu sehen; die restlichen Objekte sind Lichtquellen. Durch Hinzufügen weiterer Objekte in die Szene, beispielsweise Wände und Dekoration, können mehr Bedingungen und Störfaktoren in die Daten aufgenommen werden, die in echten Aufnahmen zu erwarten sind. Die Aufnahmen können durch das gezielte Hinzufügen weiterer Objekte realistischer werden.
+
+% - Verbesserung der Datengenerierung, um realistischer zu werden und mehr Umgebungsbedingungen zu simulieren
+
+\paragraph{Aussehen der Dartscheibe}
+
+Das Aussehen der Dartscheibe ist konform der Regelwerke der \ac{wdf} und der Professional Darts Corporation gestaltet \cite{wdf-rules,pdc_rules}. Diese gibt Form und Farben der Dartscheibe mit etwaigen Toleranzen weitestgehend vor. Für die aktuelle Datenerstellung wurden lediglich diese und ähnliche Dartscheiben als Vorlagen in Betracht gezogen, wodurch Möglichkeiten weiterer Dartscheiben ausgeschlossen wurden. Durch Hinzufügen von Parametern zur Steuerung der Art der Dartscheibe können ebenfalls Dartscheiben mit anderen Farbgebungen und Geometrien in die Datenerstellung eingebunden werden, beispielsweise Dartscheiben mit blauen und roten Feldern statt schwarzer und weißer Felder.
+
+Ebenfalls ist eine Adaption der unmittelbaren Ausgestaltung der Dartscheibe durch Zahlenring und Texte denkbar. In der hier vorgestellten Dartscheibengenerierung werden Beschriftungen und Logos um die Dartfelder herum durch Textbausteine abstrahiert. Bei der Identifizierung von Dartpfeilen auf echten Dartscheiben hat sich jedoch gezeigt, dass diese Abstraktion von Logos durch Texte nicht ausreichend ist, um diese im nicht als Dartpfeile klassifizieren. Eine weitergehende Ausgestaltung dieser Bereiche der Dartscheibe ist daher notwendig.
+
+% - Datenerstellung auf weitere Farben und Formen der Dartscheibe erweitern
+% - - z.B. blau-rote Felder
+% - - ist aber meist nicht in Steeldarts gegeben, sondern eher in elektronischen Dartscheiben
+% - - und bei elektronischen Dartscheiben ist dieses System ohnehin überflüssig
 
 % -------------------------------------------------------------------------------------------------
 

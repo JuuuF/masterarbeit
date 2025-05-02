@@ -3,76 +3,163 @@
 \chapter{Diskussion}
 \label{cha:diskussion}
 
-\todo{Einleitende Sätze für Diskussion.}
+In diesem Kapitel werden die Ergebnisse und Beobachtungen der Unterprojekte dieser Thesis aufgefasst. Diese werden miteinander diskutiert und mögliche Schwachstellen sowie Ungereimtheiten werden aufgezeigt. Es wird mit der Diskussion der synthetischen Datenerstellung in \autoref{sec:diskussion:daten} begonnen, gefolgt von der Diskussion zur Normalisierung der Dartscheiben in \autoref{sec:diskussion:cv}. Zuletzt folgt die Diskussion der Verwendung neuronaler Netze zur Identifizierung von Dartpfeilspitzen in normalisierten Bildern in \autoref{sec:diskussion:ki}.
 
 % -------------------------------------------------------------------------------------------------
-\section{Datenerstellung}
+
+\section{Diskussion der Datenerstellung}
 \label{sec:diskussion:daten}
 
-- Umfang der Daten
-- - keine Daten ohne Dartpfeile
-- - keine Daten mit Dartschrank
-- - Fehler bei der Datenerstellung. Möglicherweise Verzerrung der Daten oder nicht ausgeschöpftes Potenzial
-- nicht fotorealistisch, aber für Training mit KI reicht es
-- - Grundkonzept ist klar
-- - out-of-distribution-Training funktioniert (wie gut?)
-- - Augmentierung so stark, dass Unterschied zwischen echten und generierten Daten verschwimmt (sollte man denken)
-- Anzahl unterschiedlicher Dartpfeile stark limitiert
-- - Barrels + Shafts stark limitiert -> ggf. Overfitting bei KI-Training
-- prozedurale Texturen vs. Scans
-- - Flexibilität vs. Realismus
-- Entzerrung nicht 100\% genau
-- -> keine *perfekten* Trainingsdaten
-- Umgebungen könnten variabler sein
-- - Mehr Hintergründe
-- - unterschiedlichere Beleuchtungen
-- - Aufnahmewinkel teilweise nicht realistisch
-- Statisches Compositing sorgt für Bias
-- - Könnte mit Parametern ausgestattet werden
-- Umgebungen nicht realistisch
-- - andere Objekte auf Dartscheibe / stark beschädigte Dartscheibe / Verzierungen bzw. Dekoration an und um Scheibe / ...
-- - kein direkter Hintergrund der Dartscheibe
-- - - keine Reflexionen des Lichts
-- - - keine Umgebungsbeleuchtung, nur direkt
+Mit der Pipeline zur automatischen Datenerstellung ist die Möglichkeit gegeben, realitätsnahe Bilder von Dartscheiben zu erstellen, die zudem korrekt annotiert sind hinsichtlich der Dartpfeilpositionen im Bild sowie der Metainformationen zu dem Bild. Trotz der erzielten Erfolge sind im Verlauf der Arbeit einige Punkte aufgekommen, anhand derer die Datenerstellung erweitert und optimiert werden kann.
 
-Referenz von \autoref{sec:berechnung_entzerrung}: Ungenauigkeit bei Entzerrung durch Maske -> Kameraperspektive, Diskretisierung, 3D-Objekt-Pixelcluster nicht exakt.
+\subsection{Datenumfang}
 
-\todo{Diskussion: Datenerstellung}
+Der Umfang der Daten im Bezug auf ihre Variabilität ist ein relevanter Aspekt der Datenerstellung, da dieser einen wesentlichen Aspekt zur Generalisierung der von dem neuronalen Netz erlernten Charakteristiken auf echte Bilder darstellt.
+
+Ein wesentlicher Kritikpunkt im Bezug auf die Variabilität der Daten ist die Anzahl der möglichen Dartpfeile. Wie in \autoref{sec:dartpfeile_zusammensetzung} beschrieben ist, werden Dartpfeile aus vorgefertigten Bestandteilen zusammengesetzt. Die Anzahl der möglichen Dartpfeile ergibt sich aus der Multiplikation der Anzahlen existierender Ausprägungen der Bestandteile. Es wurden 4 Tips, 7 Barrels, 8 Shafts und 15 Flights modelliert, wodurch sich eine Gesamtzahl von $3360$ möglichen Dartpfeilen ergibt, jedoch ist der limitierende Faktor die Wiederverwendung existierender Pfeile. Das neuronale Netz erfährt während des Trainings nicht mehr als 7 Barrels, wodurch eine Verzerrung der Datenlage nicht auszuschließen ist. Diese Beobachtung kann ein Indiz für ein unterliegendes Overfitting der Erscheinungsbilder der Dartpfeile sein, welches nicht ausgeschöpftes Potenzial der Datenerstellung überschatten kann.
+
+% - Anzahl unterschiedlicher Dartpfeile stark limitiert
+% - - Barrels + Shafts stark limitiert -> ggf. Overfitting bei KI-Training
+
+Weiterhin ist die Anzahl der Dartpfeile je Bild ein Aspekt, der strengere Betrachtung vermag. Wie in \autoref{fig:dart_counts} zu sehen ist, verzeichnet die Verteilung der Dartpfeilanzahl je Bild keinerlei Bilder ohne einen Dartpfeil. Die Notwendigkeit von Bildern ohne Dartpfeile liegt in der Fähigkeit des neuronalen Netzes, eben diese Gegebenheit zu erlernen. Aufgrund der Architektur ist die Ausgabe keiner Dartpfeile möglich, ohne dass dieses Phänomen in den Trainingsdaten liegt, jedoch kann diese Fähigkeit durch explizites Training mit Bildern, die keine Dartpfeile enthalten, weiter vertieft werden.
+
+% - Umfang der Daten
+% - - keine Daten ohne Dartpfeile
+% - - Fehler bei der Datenerstellung. Möglicherweise Verzerrung der Daten oder nicht ausgeschöpftes Potenzial
+
+Ein weiterer Aspekt des Datenumfangs ist die Verwendung ovn Hintergründen. Für die Datenerstellung dieser Arbeit wurde ein Pool, bestehend aus 208 Umgebungstexturen, verwendet, aus dem für jedes Bild ein zufälliges Bild ausgewählt wurde und in seiner Rotation und Helligkeit randomisiert wurde. Durch Einbindung weiterer Datenquellen ist eine Vervielfältigung der Hintergründe möglich, die für eine diversere Datenlage sorgen. Ebenso ist die Auswahl der möglichen Beleuchtungen der Szene durch lediglich 5 unterschiedliche Lichtquellen stark limitiert. Obgleich diese Lichtquellen in ihrer Zusammensetzung kombiniert und modifiziert werden, kann die Anzahl der Beleuchtungsmöglichkeiten eine Verzerrung bzw. Einseitigkeit in die Daten einfließen lassen.
+
+% - Umgebungen könnten variabler sein
+% - - Mehr Hintergründe
+% - - unterschiedlichere Beleuchtungen
+
+Zuletzt wird ein statisches Compositing verwendet, in welchem Imperfektionen der Kamera, Kontrast und Rauschen auf das Kamerabild gelegt wird, um es an das Aussehen von Aufnahmen aus Handykameras anzupassen. Die Parameter dieser Nachverarbeitung sind statisch und für alle generierten Daten gleich. Durch Einbindung zufälliger Änderungen kann die Variabilität der Nachverarbeitung erweitert werden, um eine größere Variabilität der Daten zu erzielen. In der Datenerstellung für diese Thesis wurde jedoch eine generelle Nachverarbeitung vorgenommen, durch die ebenfalls eine Einseitigkeit in das Aussehen der Daten eingeflossen sein kann.
+
+% - Statisches Compositing sorgt für Bias
+% - - Könnte mit Parametern ausgestattet werden
+
+\subsection{Realismus der Daten}
+
+Bei der qualitativen Betrachtung der synthetischen Daten ist eine Differenzierung zwischen echten Daten und synthetischen Daten mit geringer Unsicherheit möglich. Die Aufnahmen der synthetischen sind ohne Probleme als synthetische Aufnahmen zu identifizieren. Zwar ist gezeigt worden, dass diese Daten den Kern der Datenlage echter Aufnahmen einfangen und diese für ein Training eines neuronalen Netzes ausreichen, jedoch ist die Generalisierung der gelernten Charakteristiken und Merkmale auf echte Bilder nicht fehlerfrei möglich. Durch starke Augmentierung der Bilder, beispielsweise Kontrastanpassung und Hinzufügen von Rauschen, werden diese Bilder derart verzerrt, dass die Diskrepanz zwischen augmentierten echten und augmentierten synthetischen Bildern geringer wird, jedoch kann sie auch nicht durch diese Technik gänzlich geschlossen werden.
+
+Für die Texturierung der Objekte wurden vor dem Hintergrund der Variabilität weitestgehend prozedurale Materialien verwendet. Diese bieten den Vorteil, eine beliebige Anzahl unterschiedlicher Erscheinungsbilder darzustellen. Diese Flexibilität wirkt sich jedoch auf den Realismus der Daten aus. Am anderen Ende des Spektrums liegt die Verwendung von Scans echter Objekte. Diese weisen fotorealistische Charakteristiken auf, jedoch minimale bis keine Variabilität. Die Vereinigung von Prozeduralität und Realismus ist ein komplexes Thema, welche viel Zeit und Ressourcen beansprucht. Eine Optimierung der Materialien ist jedoch ein Aspekt, mit dem die Qualität der Daten weiter gehoben werden kann.
+
+Wie bereits in \autoref{sec:rendering_qualitativ} erwähnt ist die Umgebung der Dartscheiben ein wesentlicher Aspekt, der den Grad des Realismus stark einschränkt. Bei der Existenz von Objekten wie Lichtring oder Dartschrank im unmittelbaren Hintergrund der Dartscheibe ist ein starker subjektiver Unterschied mit Hinsicht auf den Realismus der Bilder zu erkennen. Das Zusammenspiel von Lichtreflexionen des Hintergrunds und umliegenden Objekten um die Dartscheibe ist ein Aspekt, der in der Datenerstellung kaum vorhanden ist. In Aufnahmen echter Dartscheiben ist dieser Unterschied deutlich zu sehen, indem Dartscheibe und Dartpfeile durch die umliegenden Objekte indirekt beleuchtet wurden.
+
+% Realismus
+% - nicht fotorealistisch, aber für Training mit KI reicht es
+% - - Grundkonzept ist klar
+% - - out-of-distribution-Training funktioniert (wie gut?)
+% - - Augmentierung so stark, dass Unterschied zwischen echten und generierten Daten verschwimmt (sollte man denken)
+% - prozedurale Texturen vs. Scans
+% - - Flexibilität vs. Realismus
+% - Umgebungen nicht realistisch
+% - - andere Objekte auf Dartscheibe / stark beschädigte Dartscheibe / Verzierungen bzw. Dekoration an und um Scheibe / ...
+% - - kein direkter Hintergrund der Dartscheibe
+% - - - keine Reflexionen des Lichts
+% - - - keine Umgebungsbeleuchtung, nur direkt
+
+\subsection{Genauigkeit der Datenerstellung}
+
+In \autoref{sec:berechnung_entzerrung} wurde die Herangehensweise der Lokalisierung von Orientierungspunkten der Dartscheibe in dem gerenderten Bild erklärt. Diese beinhaltet das Identifizieren von Pixelclustern, die aus einer binären Maske des Bildes extrahiert werden. Durch die Kameraperspektive und Diskretisierung der Maskenerstellung stimmt der Mittelpunkt der jeweiligen Cluster nicht notwendigerweise mit dem gesuchten Punkt überein, sodass eine minimale Verschiebung weniger Pixel resultieren kann. Da für die Lokalisierung der Dartscheibe 4 Orientierungspunkte verwendet wurden, welches die minimale Anzahl notwendiger Punkte zur Berechnung einer Entzerrung sind, herrscht keine Redundanz für Fehlerkorrektur. Diese Schwachstelle ist bereits bei der Normalisierung der Bilddaten durch DeepDarts kritisiert worden. In diesem Fall beläuft sich der mögliche systematische Fehler jedoch auf wenige Pixel. Die extrahierten Trainingsdaten sind daher nicht makellos.
+
+Die selbe Technik der Mittelpunktfindung von Pixelclustern in Maskenbildern wird zur Lokalisierung der Dartpfeile verwendet. Das Herunterbrechen einer Fläche, in diesem Fall die Schnittfläche der Dartpfeilspitzen und der Dartscheibe, auf einen Punkt ist grundlegend fehleranfällig, da eine Dimensionsreduktion von 2 Dimensionen (Fläche) auf 0 Dimensionen (Punkt) geschieht.
+
+% Genauigkeit
+% - Entzerrung nicht 100\% genau
+% - -> keine *perfekten* Trainingsdaten
+% Referenz von \autoref{sec:berechnung_entzerrung}: Ungenauigkeit bei Entzerrung durch Maske -> Kameraperspektive, Diskretisierung, 3D-Objekt-Pixelcluster nicht exakt.
+
+\subsection{Effizienz der Datenerstellung}
+
+Die Geschwindigkeit der Datenerstellung wurde mit 30 Sekunden je Sample errechnet. Dazu wurden die Daten jedoch parallel headless ohne Nutzeroberfläche auf mehreren Grafikkarten erstellt. Die Auslastung der GPUs wurde trotz Erkennung und Einbindung in die Pipeline nicht in der Art ausgeschöpft wie es unter Verwendung der Nutzeroberfläche der Fall war. Scheinbar wurden viele Berechnungen auf die CPU verlagert, die von der GPU hätten übernommen werden können. Durch dieses Bottleneck wurden wesentliche Einbußen in der Geschwindigkeit verzeichnet.
+
+Darüber hinaus ist die Art und Weise des Einlesens und der Berechnung der Randomisierung weitestgehend sequenziell. Parallelisierung der Ausführungsschritte durch vorgezogene Erstellung von Szenenparametern und Ermittlung von Objektparametern während des Renderns von Szenen können für eine Optimierung der Datenerstellung sorgen. Ebenso ist das sequenzielle Rendern der Maskenbilder ein sehr zeitaufwendiger Prozess, der durch Parallelisierung optimiert werden kann.
+
+Darüber hinaus sorgt ein Memory Leak in der Implementierung der Bibliothek \textit{bpy} für zunehmende Speichernutzung bei subsequentem Rendern mehrerer Sample. Zur Umgehung dieses Problems wird die Datenerstellung für jedes Sample neu gestartet, indem das Projekt neu eingelesen wird und jegliche Einstellungen redundant ausgeführt werden müssen. Dadurch ist mit deutlichem Overhead zu rechnen im Vergleich zu sukzessivem Erstellen von Daten.
+
+% Effizienz
+% - Erstellung der Bilder könnte schneller verlaufen
+% - - Optimierungen bezüglich GPU-Nutzung
+% - - keine volle Auslastung der GPU
+% - - Parallelisierung / Optimierung der Verwendung der Szene
+% - - - aktuell: erneutes Einlesen des gesamten Projekts für jedes Sample + Einstellungen je Sample vornehmen
+% - - - Verbesserung: System mit Checkpoints für einfaches Zurücksetzen der Szene, Verringerung von Overhead
+
+% \todo{Diskussion: Datenerstellung}
 
 % -------------------------------------------------------------------------------------------------
-\section{Normalisierung}
+
+\section{Diskussion der algorithmischen Normalisierung von Dartscheiben}
 \label{sec:diskussion:cv}
 
+Die Erkennung und die Normalisierung der Dartscheiben in Bildern dient als Vorverarbeitungsschritt und ist in dieser Arbeit als gesonderter Schritt in der Inferenz gehandhabt. Bei dieser Vorverarbeitung der Daten sind im Verlauf der Arbeit Aspekte aufgekommen, die in diesem Unterkapitel diskutiert werden.
 
-- Dauert lange im Gegensatz zu DD-System / einfacher KI-Inferenz
-- - unfairer Vergleich, da KI auf Graphen kompiliert und optimiert ist; CV ist interpretierter Python-Code
-- nicht 100\%, aber ganz gut, wenn es klappt
-- durch RANSAC nicht deterministisch
-- klappt nicht immer
-- - Parameter können angepasst werden
-- relativ robust gegen Outlier
-- robust gegen Verdeckung der Dartscheibe
-- ist keine KI
-- - man weiß, wie es funktioniert
-- - man kann es debuggen
+\subsection{Verwendete Technik}
 
-\todo{Diskussion: CV}
+DeepDarts hat ein System vorgestellt, welches durch die Verwendung neuronaler Netze zuverlässige Ergebnisse auf ihren Daten erzielen konnte. Von diesem Ansatz wurde sich aus Gründen der Flexibilität und des vorhandenen Hintergrundwissens im Bereich der herkömmlichen Computer Vision gelöst, indem der Prozess zweigeteilt wurde. Die resultierende Aufteilung in algorithmische Normalisierung und trainierte Dartpfeilerkennung zieht sowohl Vorteile als auch Nachteile mit sich.
+
+Da die Schritte der Normalisierung algorithmisch durchgeführt werden und die Funktionsweise dadurch bekannt ist, kann Fehlerfällen gezielt nachgegangen werden und das System kann gezielt erweitert werden. Aus dieser Herkunft stammt jedoch das relevanteste Performance-Problem dieses Ansatzes: die Ausführungszeit. Neuronale Netze verwenden eine Vielzahl abstrakter Informationen parallel, um zu einem Ergebnis zu gelangen wohingegen algorithmische Methoden eine geringe Zahl konkreter Informationen verwenden. Durch die massive Parallelität neuronaler Netze ist die Verarbeitung der Daten effizient während die algorithmische Verarbeitung der Daten weitestgehend in sequenziellen Stufen abläuft. Trotz der geringeren Datenmenge ist die Ausführungszeit durch die sequenzielle Natur der Herangehensweise limitiert. Zudem ist die hauptsächliche Implementierung des Algorithmus dieser Thesis in Python implementiert, welches trotz der Verwendung kompilierter Bibliotheken eine interpretierte Sprache ist und daher weitaus längere Ausführungszeiten aufweist als in kompilierten Programmiersprachen zu erwarten ist. Neuronale Netze werden hingegen weitestgehend kompiliert und parallel ausgeführt.
+
+% Technik
+% - ist keine KI
+% - - man weiß, wie es funktioniert
+% - - man kann es debuggen
+% - Dauert lange im Gegensatz zu DD-System / einfacher KI-Inferenz
+% - - unfairer Vergleich, da KI auf Graphen kompiliert und optimiert ist; CV ist interpretierter Python-Code
+
+\subsection{Zuverlässigkeit des Systems}
+
+Durch die Analysen in \autoref{sec:cv:ergebnisse} konnte ein hoher Grad der Genauigkeit und Robustheit des Systems aufgezeigt werden. Mitverantwortlich für diesen hohen Grad der Robustheit ist ein durchweg geringes Vertrauen in die Resultate und großzügiges Thresholding von Daten. Zur Identifizierung einer Entzerrung der Dartscheibe ist ein Minimum von 3 Punkten notwendig, welche aus bis zu 60 Kandidaten erkannt werden können. Es sind daher lediglich $5\%$ der möglichen Orientierungspunkte zwingend notwendig. Weiterhin wird RANSAC verwendet, um einen robusten Umgang mit Outliern zu gewährleisten. Die Kombination dieser Techniken sorgt jedoch in speziellen Fällen für fehlerhafte Identifizierungen und kann durch optimierte Prozesse in der Findung der Orientierungspunkte optimiert werden. Ist eine zuverlässige Findung vieler Orientierungspunkte möglich, ist der Einsatz von RANSAC weniger fehleranfällig und es können bessere Entzerrungen gefunden werden.
+
+Ebenfalls wird Nichtdeterminismus durch die Verwendung von RANSAC in das System eingeführt, da RANSAC auf zufälligem Samplen von Datenpunkten basiert. Der Algorithmus produziert daher keine eindeutigen Resultate, sodass unterschiedliche Durchläufe auf dem selben Bild zu unterschiedlichen Ergebnissen und im Extremfall sogar teilweise fehlschlagen können. Dieser Nichtdeterminismus sorgt für Ungewissheiten der Vorhersagen des Algorithmus.
+
+Zuletzt ist die Art der Vorverarbeitung der Bilder für den Algorithmus ein Problempunkt, an dem potenziell relevante Informationen verworfen werden. Wie in \autoref{sec:vorverarbeitung} beschrieben, werden Bilder auf eine maximale Seitenlänge von $1600\,\text{px}$ iterativ um Faktor 2 verkleinert. Der Hintergrund dieser Skalierung ist der Zeitaufwand der Operationen. Sowohl Genauigkeit als auch Berechnungsdauer der Algorithmen skaliert mit der Größe der Bilder. Um eine zeitliche Obergrenze der Berechnungsdauer zu setzen wurde sich für eine Vorverarbeitung zur Reduktion der Bildgröße entschieden. Der mit dieser einhergehenden Informationsverlust im Bild sorgt potenziell für Ungenauigkeiten bei der Berechnung der Normalisierung.
+
+% Zuverlässigkeit
+% - nicht 100\%, aber ganz gut, wenn es klappt
+% - durch RANSAC nicht deterministisch
+% - - dadurch aber relativ robust gegen Outlier
+% - arbeitet auf skalierten Eingabebildern
+% - - Informationsverlust für Zeitgewinn
 
 % -------------------------------------------------------------------------------------------------
-\section{Dartpfeil-Erkennung}
+
+\section{Diskussion der Dartpfeil-Erkennung durch neuronale Netze}
 \label{sec:diskussion:ki}
 
+Die Erkennung der Dartpfeile geschieht durch ein neuronales Netz, welches in einer eigenen Implementierung durch synthetische Daten trainiert wurde. Dieses neuronale Netz basiert auf einer etablierten Architektur, der spezifische Änderungen unterzogen wurden, um sie auf die zu lösende Aufgabe anzupassen. In den folgenden Unterkapiteln werden Aspekte des Modells und des Trainings diskutiert.
 
-- kein bereits trainiertes Modell genutzt
-- - YOLOv8 wurde mit PyTorch erstellt
-- - eigene Expertise liegt in TensorFlow
-- größeres Modell als Referenz-Paper
-- - ~6M vs. ~17M Parameter
-- - Aufgabe ist aber auch komplexer
-- - - DD-KI unterliegt massivem Daten-Bias und ist stark overfitted
-- striktes Out-of-distribution-Training möglicherweise nicht optimal
-- - sichtbarer Unterschied in unterschiedlichen Quellen aus Validierungsdaten
-- - generierte Validierungsdaten deutlich besser erkannt als echte Aufnahmen
-- - sichtbare Schwachpunkte von Out-of-distribution-Training
+\subsection{Eigene Implementierung des Modells}
 
-\todo{Diskussion: NN}
+Die übliche Handhabung des Trainings einer bereits etablierten Architektur beinhaltet die Verwendung der bereits trainierten Gewichte. Durch die eigene Implementierung in einem anderen Framework zur Adaption der Architektur ist das Zurückgreifen auf diese vortrainierten Gewichte des offiziellen Modells nicht möglich. YOLOv8 wurde mit Hilfe von PyTorch entwickelt und implementiert während TensorFlow in dieser Arbeit verwendet wurde. Vortrainierte Modelle beherbergen den Vorteil, deutlich mehr Bildern ausgesetzt gewesen zu sein, sodass die Parameter des Netzwerks in derartigem Einklang miteinander sind, dass universelle Strukturen erkannt werden können. Dieser Startpunkt des Trainings ist im Vergleich zu einem nicht vortrainierten Netzwerk vorteilhaft, da eine generelle Strukturerkennung bereits antrainiert ist und ein erheblicher Teil des Trainings bereits vollzogen ist.
+
+Auch hinsichtlich der Generalisierbarkeit auf neue Situationen ist die Verwendung vortrainierter Netzwerke von Vorteil, da mehr Wissen über nicht in den Trainingsdaten zur Adaption auf die eigene Aufgabe vorhandene Objekte in den Parametern des Netzwerks eingebettet und abrufbar sind. Wird ausschließlich auf eigenen Daten trainiert, ist die Spanne der Generalisierbarkeit durch die Variabilität der eigenen Daten vorgegeben.
+
+% - kein bereits trainiertes Modell genutzt
+% - - YOLOv8 wurde mit PyTorch erstellt
+% - - eigene Expertise liegt in TensorFlow
+
+\subsection{Training des Modells}
+
+Für diese Arbeit wurde sich für ein nahezu ausschließliches \ac{ood}-Training entschieden. Der Hintergrund liegt in der Beschaffung qualitativ hochwertiger und korrekter Daten. Trotz Salting weniger realer Daten besteht der Großteil der Daten aus synthetisch erstellten Bildern. In \autoref{sec:rendering_qualitativ} wurden sichtbare Unterschiede zwischen synthetischen und echten Daten bereits hervorgehoben. Für ein \ac{ood}-Training ist diese Beobachtung ein Indiz dafür, dass ein systematischer Fehler in die Trainingsdaten einfließt, der Einfluss auf die Fähigkeit zur Generalisierung des Netzwerks auf echte Daten haben kann.
+
+Bei Auswertung der Netzwerkgenauigkeit auf Validierungs- sowie Testdaten aus je unterschiedlichen Quellen konnte eine deutliche Differenz zwischen synthetischen und echten Daten beobachtet werden. Während die synthetischen Daten nahezu perfekt identifiziert werden konnten und in den meisten Fällen lediglich geringe Abweichungen zu vermerken waren verlief die Erkennung der Dartpfeile in echten Bildern in vielen Fällen unter deutlich größerer Unsicherheit. Nicht nur wurden teilweise systematisch Markierungen als wahrscheinliche Kandidaten für Dartpfeile verzeichnet, sondern auch wurden die Farben der Felder teilweise nicht korrekt identifiziert.
+
+Der systematische Fehler durch ein \ac{ood}-Training ist in den Auswertungen des Netzwerks manifestiert und nicht von der Hand zu weisen. Trotz dessen ist die Fähigkeit der Übertragung erlernter Charakteristiken synthetischer Daten auf reale Daten gezeigt worden.
+
+% - striktes Out-of-distribution-Training möglicherweise nicht optimal
+% - - sichtbarer Unterschied in unterschiedlichen Quellen aus Validierungsdaten
+% - - generierte Validierungsdaten deutlich besser erkannt als echte Aufnahmen
+% - - sichtbare Schwachpunkte von Out-of-distribution-Training
+
+\subsection{Vergleich mit DeepDarts}
+
+Das für DeepDarts trainierte Modell beläuft sich auf eine Größe von ca. 6 Millionen Parametern; das in dieser Thesis trainierte Netzwerk umfasst etwa 10.5 Millionen Parameter. Die Modellgrößen weichen stark voneinander ab. Der Aufgabenbereich des Modells von DeepDarts umfasst das Identifizieren von Dartpfeilen sowie von Orientierungspunkten in nicht normalisierten Bildern. Die Anforderung an das neuronale Netz in dieser Thesis beinhaltet die Identifizierung von Dartpfeilen und den Farben der getroffenen Felder in normalisierten Bildern. Sowohl die Anzahlen der Parameter als auch die zu bewältigenden Aufgaben der Netzwerke weichen signifikant voneinander ab. Während die Aufgaben für DeepDarts mehr Komplexität umfassen und zugleich weniger Parameter für die Umsetzung vorhanden sind ist die Wahl von mehr Parametern für dieses System und seine Aufgaben nicht unbegründet. Mit DeepDarts konnte durch massives Overfitting lediglich eine untere Schranke im Bezug auf die Parameterzahl stark limitierter Daten ermittelt werden. Die wesentlich diversere Datenlage dieser Thesis erfordert ebenfalls mehr Parameter in einem Netzwerk, um ähnliche Ergebnisse zu erzielen.
+
+% - größeres Modell als Referenz-Paper
+% - - ~6M vs. ~17M Parameter
+% - - Aufgabe ist aber auch komplexer
+% - - - DD-KI unterliegt massivem Daten-Bias und ist stark overfitted
+
+% \todo{Diskussion: NN}

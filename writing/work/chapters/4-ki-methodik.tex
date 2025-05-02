@@ -179,6 +179,7 @@ Entgegen der Pixel-Manipulation nimmt die Transformation Einfluss auf die Output
 Diese Augmentierungen werden dynamisch beim Einlesen der Daten angewandt, sodass jedes Sample in jeder Epoche des Trainings unterschiedlich augmentiert wird. Durch diese Technik wird Overfitting durch Auswendiglernen der Daten entgegengewirkt und die Fähigkeit des neuronalen Netzes zur Generalisierung der Problemstellung wird verstärkt. Das Augmentieren ermöglicht das Fokussieren auf die Extraktion relevanter Kerninformationen in den Daten anstelle oberflächlicher Erscheinungsbilder.
 
 \subsubsection{Dynamisches Training}
+\label{sec:dynamisches_training}
 
 Die Geschwindigkeit des Trainings wird durch die Learning Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning Rate sorgt für rapide und starke Änderungen während eine geringe Learning Rate eine geringe Änderung und langsame Konvergenz der Parameterwerte mit sich zieht. Für das Training in dieser Thesis wurde eine adaptive Learning Rate verwendet, die dynamisch auf den Verlauf des Trainings reagiert und für eine gezielte Konvergenz sorgt \cite{adaptive_lr_schedule}.
 
@@ -205,7 +206,7 @@ Es wurden Parameterbelegungen $\text{lr}_0 = 0.001$, $\text{lr}_\text{min} = 10^
 
 Für das Training wurden die erwähnten Techniken und Optimierungen eingesetzt. Als Optimizer wurde sich für AdamW entschieden, der sich durch adaptive Gradientenanpassung auszeichnet und empirisch für solide Generalisierungsfähigkeiten bekannt ist \cite{adamw, adamw_good, adamw_good2, adamw_good3, adamw_good4}.
 
-\todo{Daten zum Training, Graphen etc}
+\todo{Daten zum Training, Graphen etc - EDIT: Das ist teils in Implementierung schon. Überdenken!}
 
 % -------------------------------------------------------------------------------------------------
 

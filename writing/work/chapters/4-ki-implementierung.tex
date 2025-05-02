@@ -10,29 +10,48 @@
 \subsection{Implementierung der YOLOv8*-Architektur}
 \label{sec:yolov8_implementierung}
 
-- YOLOv8: TensorFlow statt PyTorch
-- eigene Implementierung
-- Grundlage: YOLOv8-Docs (eigentlich vom Bild, aber das stammt von Config-Datei aus Repo)
-- Abänderung der Architektur an Aufgabe
+Vortrainierte neuronale Netze der YOLO-Familie werden als Modelle veröffentlicht, die mit dem Framework PyTorch erstellt sind. Für diese Thesis wurde TensorFlow als Framework für neuronale Netze verwendet, welches nicht reibungslos mit PyTorch vereinbar ist. Die Frameworks arbeiten auf unterschiedliche Arten, wodurch eine Übersetzung der verwendeten Schichten und vortrainierten Gewichten zwischen diesen lediglich bedingt möglich ist. Durch die Abwandlung von YOLOv8 zu YOLOv8* ist eine eigene Implementierung notwendig und eine Einbettung vortrainierter Gewichte in diese Architektur nicht trivial möglich. Auf Grundlage der offiziellen Dokumentation sowie des Quelltexts und Konfigurationsdateien wurde die YOLOv8-Architektur in TensorFlow übersetzt und implementiert. Atomare Bestandteile wie Convolution-Schichten, Batch-Normalisierung, Pooling-Operationen und Aktivierungsschichten sind analog von PyTorch zu TensorFlow zu übertragen. Schichten, die nicht als Schicht in TensorFlow verfügbar sind -- beispielsweise die Split-Operation -- werden als TensorFlow-Operationen in dem Netzwerk ausgeführt.
 
-\todo{YOLOv8*-Architektur-Implementierung beschreiben!}
+Nachdem alle grundlegenden Bestandteile verfügbar sind, werden aus diesen zusammengesetzt Netzwerkbestandteile, zu sehen in \autoref{img:yolov8_parts}, zusammengesetzt. Die Dimensionierungen der jeweiligen Schichten sowie die verwendeten Parameter konnten aus der Dokumentation der Architektur entnommen werden und analog übertragen werden. Nachdem alle Bestandteile der Architektur implementiert waren, konnte eine generische Implementierung der Architektur vorgenommen werden, in der die bereitgestellten Parameter für unterschiedliche Größenvariationen von YOLOv8 mit einbezogen wurden. Durch Vergleich der Anzahl der Netzwerkparameter unterschiedlicher Größenkonfigurationen sowie der Analyse des Netzwerkaufbaus durch Schichtenverbindungen konnte sichergestellt werden, dass die TensorFlow-Implementierung von YOLOv8 der vorgestellten Architektur entsprach.
+
+Nachdem die grundlegende Architektur in TensorFlow verfügbar war, konnte sie durch eigene Adaptionen erweitert werden. Eine wesentliche Änderung ist das Hinzufügen von Dropout-Schichten, welche nicht in der Dokumentation erwähnt wurden, jedoch die Stabilität des Trainings erhöhen und die Wahrscheinlichkeit des Overfittings senken. Das Hinzufügen dieser Schichten konnte durch den modularen Aufbau der Architektur einfach vollzogen werden.
+
+Eine weitere Adaption ist das Hinzufügen des Transition-Blocks, welcher eine residuale Fully-Connected-Schicht ist. In diesem Block wird der Eingabetensor durch einen Tensor moduliert, der den globalen Kontext des Eingabetensors durch eine Fully-Connected-Schicht einfängt. Die Implementierung dieses Blocks reiht sich in die Implementierungen der restlichen Blöcke ein, indem auf die Grundbausteine zugreift. Lediglich die Fully-Connected-Schicht wurde als Grundbaustein ergänzt, da diese aufgrund des Fully-Convolutional-Paradigmas nicht in der YOLOv8-Architektur vorkommt.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Training des Netzwerks}
+\subsection{Training von YOLOv8* zur Identifizierung von Dartpfeilen}
 \label{sec:training}
 
-- Rahmenbedingungen:
-- - GPUs: NVIDIA GeForce RTX 4090
-- - Batch Size
-- - Learning Rate
-- - Epochen
-- - Datenmengen (Training + Validierung)
-- - Augmentierungsparameter
+In diesem Unterabschnitt wird das Training des neuronalen Netzes thematisiert. Es wird begonnen mit der verwendeten Infrastruktur und Rahmenbedingungen des Trainings. Danach folgt eine detaillierte Betrachtung der verwendeten Augmentierungsparameter. Zuletzt wird der Verlauf des Trainings erläutert.
 
-- Batch-Sizes, Datenmenge, Epochen, Augmentierungsparameter, Learning Rate
-- tf.data-Pipeline:
-- - Optimierung durch Auslagerung von Berechnungen auf GPU
-- - Paralleles Laden von Daten
+\subsubsection{Infrastruktur und Rahmenbedingungen}
 
-\todo{Trainings-Implementierung beschreiben}
+Das Training von YOLOv8* wurde auf einer NVIDIA GeForce RTX 4090 aus einem TensorFlow-Docker-Container ausgeführt. Es wurde eine Batch-Size von 16 verwendet mit dem AdamW-Optimizer und einer adaptiven Learning Rate, wie in \autoref{sec:dynamisches_training} erläutert. Für das Training wurden $24\,960$ Trainings- und $544$ Validierungsdaten verwendet. Die Trainingsdaten setzen sich zusammen aus $24\,576$ generierten Daten, $256$ Daten des DeepDarts-Trainings-Datensatzes und $128$ Daten, die privat aufgenommen wurden. Die Validierungsdaten sind zusammengesetzt aus $256$ synthetischen Daten, $128$ Daten des DeepDarts-Validierungs-Datensatzes sowie $160$ manuell aufgenommen Daten.
+
+\subsubsection{Augmentierungsparameter}
+
+Die Daten wurden vektorisiert als TensorFlow Datasets eingelesen, wodurch ein effizientes und parallelisiertes Laden der Daten ermöglicht wird. Teil der Pipeline zum Einlesen der Daten ist die Augmentierung der Trainingsdaten. Die Augmentierung wird dynamisch auf jedes Bild der Trainingsdaten mit zufälligen Parametern angewendet. Die Farbkanäle für rot, grün und blau werden unabhängig voneinander mit einem zufälligen, uniform gewählten Gewicht $A_{\text{cha}, \{r,g,b\}} \in [0.5, 1]$ moduliert. Die Helligkeit des Bildes wird durch den Parameter $A_b$ bestimmt, der die mittlere Helligkeit des Bildes zufällig uniform verteilt in dem Intervall $[\text{min}(0.1, b_\text{img}-b_\text{adj}), b_\text{img} + b_\text{adj}]$ setzt, wobei $b_\text{img}$ die mittlere Helligkeit des Bildes ist und $b_\text{adj} = 0.03$ die maximale Änderung der Helligkeit vorgibt. Der Kontrast des Bildes wird durch den zufällig uniform gewählten Parameter $A_\text{cont} \in [0.7, 1.3]$ bestimmt und die Farbsättigung wird um einen ebenfalls uniform verteilten Faktor $A_\text{sat} \in [0.8, 1.2]$ moduliert. Das Hinzufügen von normalverteiltem Rauschen auf jeden Pixel jedes Farbkanals findet mit einer Normalverteilung $\sigma_\text{noise} = 0.15$ statt. Hinsichtlich der transformativen Augmentierungsparameter wird das Bild je horizontal und vertikal mit einer Wahrscheinlichkeit von $50\%$ gespiegelt. Eine Rotation um den Mittelpunkt des Bildes erfolgt zufällig um einen Winkel aus der Menge $A_\text{rot} \in \{i \in \mathbb{N} ~\vert~ i = n \cdot 18\degree, n \in \mathbb{N}_{<20}\}$. Zuletzt erfolgt eine normalverteilte Translation des Bildes $A_\text{trans} \in \mathbb{R}^2$ mit einer Standardabweichung von $\sigma\text{trans} = 5\,\text{px}$.
+\nomenclature{$A_{\text{cha}, \{r,g,b\}}$}{Augmentierungsgewichte für rot-, grün- unb blau-Kanäle.}
+\nomenclature{$A_\text{cont}$}{Augmentierungsgewicht der Kontraständerung.}
+\nomenclature{$A_\text{sat}$}{Augmentierungsgewicht der Sättigungsänderung.}
+\nomenclature{$A_\text{rot}$}{Augmentierungsgewicht der Rotation.}
+\nomenclature{$b_\text{img}$}{Mittlere Helligkeit eines Bildes.}
+\nomenclature{$b_\text{adj}$}{Maximale Helligkeitsänderung der Augmentierung.}
+\nomenclature{$\sigma_\text{noise}$}{Standardabweichung der Rausch-Augmentierung.}
+\nomenclature{$\sigma_\text{trans}$}{Standardabweichung der Translations-Augmentierung.}
+
+\subsubsection{Verlauf des Trainings}
+
+\todo{Trainings-Epochen eintragen}
+Das Training mit einer unbestimmten Anzahl an Epochen gestartet und dynamisch nach \textbf{XXX} Epochen abgebrochen, nachdem keine weitere Verbesserung des Validierungs-Losses verzeichnet werden konnte. der Verlauf des Trainings ist in \autoref{img:training_verlauf} dargestellt. Die Abbildung ist unterteilt in die Teil-Losses der Existenz, Klassen und Positionen sowie den kombinierten Loss. Die Graphen der Trainings- und Validierungs-Losses fallen gemeinsam, jedoch besteht eine Diskrepanz zwischen diesen Werten. Der Verlauf der Validierungs-Losses deuten weder auf Over- noch Underfitting hin.
+\todo{Trainings-Verlauf als Bild darstellen}
+
+\begin{figure}
+    \centering\
+    \includegraphics[width=\textwidth]{imgs/ai/ergebnisse/training.png}
+    \caption{Trainingsverlauf der YOLOv8*-Architektur. Die Graphen sind (von oben nach unten) aufgeteilt in Existenz-Loss, Klassen-Loss, Positions-Loss und kombinierter Gesamt-Loss. Die Loss-Werte sind als Punkte dargestellt, welche durch eine Linie der entsprechenden Farbe geglättet dargestellt sind. Trainings-Losses werden in \textbf{XXX} dargestellt, Validierungs-Losses in \textbf{XXX}.}
+    \label{img:training_verlauf}
+\end{figure}
+
+\todo{Farben der Losses korrekt eintragen}

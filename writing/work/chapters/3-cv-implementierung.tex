@@ -10,11 +10,14 @@
 \subsection{Winkelfindung aus gefilterten Linien}
 \label{sec:winkelfindung_impl}
 
-- Adaption der Hough-Transformation
+Die Aufgabe der Winkelfindung gefilterter Linien ist die Identifizierung von Winkel-Clustern. Die Winkel für diese Berechnung stammen aus Linien, deren unendliche Verlängerung nahe dem Dartscheibenmittelpunkt verläuft.
 
-- Codebeispiel: get-rough-line-angles
+Für die Bewältigung dieser Aufgabe wird eine Adaption der Hough-Transformation implementiert. Eingabe in diesen Teilalgorithmus ist ein binäres Bild, auf dem die gefilterten Linien eingezeichnet sind. Für jegliche Pixel, die in diesem Bild eingezeichnet sind, wird der Winkel $\varphi_i$ zum Mittelpunkt bestimmt:
+\[\varphi_i = \arctan2\left( y_i - m_\text{Dart, y}, x_i - m_\text{Dart, x} \right)\]
+\nomenclature{$\varphi_i$}{Winkel eines Pixels zum Mittelpunkt der Dartscheibe.}
+Für die Implementierung dieser Berechnung wurde die von NumPy zur Verfügung gestellte vektorisierte Funktion \textit{np.arctan2} verwendet. Diese Funktion, wie auch weitere Funktionen der Bibliothek, zeichnet sich durch eine effiziente und vektorisierte Berechnung von einer Eingabeliste aus. Unter der Verwendung dieser vektorisierter und zusätzlich kompilierter Funktionen ist eine schnelle Ausführung aufwändiger Berechnungen trotz der Ausführung mit Python möglich.
 
-\todo{Winkelfindungs-Implementierung}
+% - Codebeispiel: get-rough-line-angles
 
 % -------------------------------------------------------------------------------------------------
 
