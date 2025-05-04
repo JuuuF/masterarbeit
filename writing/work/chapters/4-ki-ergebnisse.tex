@@ -10,12 +10,41 @@
 \subsection{Metriken}
 \label{sec:ki_metriken}
 
-- Anzahl korrekter Dartpfeile identifiziert
-- Anteil korrekte Felder identifiziert
-- PCS (DeepDarts-Metrik) als Vergleich zur System-Performance
-- Abstand korrekter Positionen
+Für die Auswertung der Genauigkeit der jeweiligen Systeme werden mehrere Metriken verwendet. Zur Auswertung von DeepDarts wurde \ac{pcs} verwendet, um die relative Anzahl korrekt ausgewerteter Scores zu bestimmen. Diese Metrik ist jedoch dahingehend fehleranfällig, dass positive Ergebnisse trotz Fehlklassifikationen zustande kommen können. \ac{pcs} misst die Fähigkeit, die korrekte Punktzahl vorherzusagen, statt der Fähigkeit, die Dartpfeile korrekt zu ermitteln. Um Einblick in dieser Fähigkeiten der Systeme zu gewinnen, werden in dieser Arbeit drei weitere Metriken verwendet: Existenz $\mu_X$, Klasse $\mu_K$ und Position $\mu_P$.
+\nomenclature{$\mu_X$}{Existenz-Metrik zur Bestimmung korrekter Anzahl der Dartpfeile je Bild.}
+\nomenclature{$\mu_K$}{Klassen-Metrik zur Bestimmung korrekter Klassen der Dartpfeile je Bild.}
+\nomenclature{$\mu_P$}{Positions-Metrik zur Bestimmung der Abweichungen der Dartpfeilpositionen.}
 
-\todo{Metriken beschreiben}
+\subsubsection{Existenz-Metrik $\mu_X$}
+
+Mit dieser Metrik wird bestimmt, ob die korrekte Anzahl der Dartpfeile bestimmt wurde. $\mu_X$ ist definiert als:
+\begin{equation*}
+    \mu_X = \frac{1}{N} \sum_{i=1}^{N}1 - \frac{1}{3} \vert~N_\text{Dart, i} - \widehat{N}_\text{Dart, i}~\vert
+\end{equation*}
+\nomenclature{$N_\text{Dart, i} \in \mathbb{N}$}{Anzahl vorhandener Dartpfeile in dem Bild mit Index $i$.}
+\nomenclature{$\widehat{N}_\text{Dart, i} \in \mathbb{N}$}{Anzahl vorhergesagter Dartpfeile in dem Bild mit Index $i$.}
+In dieser Formel stehen $N_\text{Dart, i} \in \mathbb{N}$ und $\widehat{N}_\text{Dart, i} \in \mathbb{N}$ für die Anzahl vorhandener und vorhergesagter Dartpfeile je Bild mit Index $i$. Anhand des Werts von $\mu_X$ wird ermittelt, wie die Anzahl der zu ermittelnden Dartpfeile zu der Vorhersage der Dartpfeile vergleichbar ist.
+
+Ohne weiteren Kontext gibt diese Metrik keinen Aufschluss über die Korrektheit der Vorhersagen der Dartpfeile aus. Eine Korrelation zwischen Dartpfeil-Existenz und Dartpfeil-Position wird in dieser Metrik nicht festgehalten.
+
+\subsubsection{Klassen-Metrik $\mu_K$}
+
+$\mu_K$ betrachtet die Korrektheit der vorhergesagten Klassen der Dartpfeile. Für diese Metrik wird ein Matching vorgenommen, anhand dessen die Klassen vorhergesagter Dartpfeile mit den Klassen existierender Dartpfeile verglichen werden:
+\begin{equation*}
+    \mu_K = \frac{1}{N}\sum_{i=1}^{N} \frac{1}{3} N_{K, \text{correct}, i}
+\end{equation*}
+\nomenclature{$N_{K, \text{correct}, i} \in \mathbb{N}$}{Anzahl korrekt vorhergesagter Klassen in dem Bild mit Index $i$.}
+$N_{K, \text{correct}, i} \in \mathbb{N}$ beschreibt die Anzahl korrekt vorhergesagter Klassen in dem Bild mit Index $i$. Das Matching der Klassen wird mit einem Greedy-Matching durchgeführt, in welchem zusätzlich erkannte Klassen verworfen werden. Diese Ungenauigkeit der Metrik wird durch die Kombination mit der Metrik $\mu_X$ ausgeglichen.
+
+\subsubsection{Positions-Metrik $\mu_P$}
+
+Ziel dieser Metrik ist es, die durchschnittlichen Abweichungen der Dartpfeilspitzen einzufangen. Die Dartpfeilspitzen werden analog zu $\mu_K$ durch ein Greedy-Matching korreliert, indem die vorhandenen und vorhergesagten Dartpfeilpositionen mit den je geringsten Abständen zueinander gepaart werden, sofern sie noch nicht gepaart wurden. Diese Metrik gibt einen Einblick in die Fähigkeit, mit welcher Präzision Dartpfeilspitzen erkannt werden. Der Wert von $\mu_P$ ergibt sich aus:
+\begin{equation*}
+    \mu_P = \frac{1}{N} \sum_{i=1}^{N} \sum_{d=1}^{3} \left\Vert P_{i, d} - \widehat{P}_{i, d} \right\Vert _2
+\end{equation*}
+\nomenclature{$P_{i, d} \in \mathbb{R}^2$}{Position des Dartpfeils mit Index $d$ in Bild $i$.}
+\nomenclature{$\widehat{P}_{i, d} \in \mathbb{R}^2$}{Vorhergesagte Position des Dartpfeils mit Index $d$ in Bild $i$.}
+$P_{i, d} \in \mathbb{R}^2$ und $\widehat{P}_{i, d} \in \mathbb{R}^2$ sind die gegebenen und vorhergesagten Positionen der Dartpfeile mit dem Index $d$ in dem Bild mit dem Index $i$. Vorhergesagte Positionen für nicht vorhandene Dartpfeile haben keinen Einfluss auf diese Metrik. Diese Eigenschaft der Metrik wird analog zu $\mu_K$ durch die Auswertung von $\mu_X$ abgebildet.
 
 % -------------------------------------------------------------------------------------------------
 

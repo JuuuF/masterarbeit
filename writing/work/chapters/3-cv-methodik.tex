@@ -10,11 +10,9 @@ In diesem Unterkapitel wird die Methodik des Algorithmus zur Lokalisierung und N
 \subsection{Warum Computer Vision?}
 \label{sec:warum_cv}
 
-Normalisierung von Daten für ein neuronales Netz kann auf unterschiedliche Arten umgesetzt werden. Bei der Herangehensweise von \citeauthor{deepdarts} für DeepDarts werden Normalisierung von Dartscheibe und Lokalisierung von Dartpfeilen in einem Durchlauf von einem neuronalen Netz ausgeführt. Dazu werden Orientierungspunkte auf der Dartscheibe identifiziert, deren Positionen in der entzerrten Darstellung der Dartscheibe bekannt sind. Auf diese Weise konnte eine Homographie zur Normalisierung abgeleitet werden. In dieser Arbeit wird auf herkömmliche Techniken der Computer Vision zurückgegriffen, um etwaige Nachteile eines neuronalen Netzes gezielt anzugehen. Der wichtigste Aspekt der algorithmischen Normalisierung ist die Nachvollziehbarkeit der Arbeitsweise und Wartung bzw. Anpassung des Systems an neue Gegebenheiten. Wohingegen ein neuronales Netz eine Black-Box ist, deren Arbeitsweise nicht bekannt ist, und die lediglich durch aufwändiges Training neu eingestellt werden kann, kann bei einem Algorithmus nachvollzogen werden, wo er scheitert und er kann gezielt erweitert oder adaptiert werden.
+Normalisierung von Daten für ein neuronales Netz kann auf unterschiedliche Arten umgesetzt werden. Bei der Herangehensweise von \citeauthor{deepdarts} für DeepDarts werden Normalisierung von Dartscheibe und Lokalisierung von Dartpfeilen in einem einzigen Durchlauf von einem neuronalen Netz ausgeführt. Dazu werden Orientierungspunkte auf der Dartscheibe identifiziert, deren Positionen in der entzerrten Darstellung der Dartscheibe bekannt sind. Auf diese Weise kann eine Homographie zur Normalisierung abgeleitet werden. In dieser Arbeit wird auf herkömmliche Techniken der Computer Vision zurückgegriffen, um etwaige Nachteile eines neuronalen Netzes gezielt anzugehen. Der wichtigste Aspekt der algorithmischen Normalisierung ist die Nachvollziehbarkeit der Arbeitsweise und Wartung bzw. Anpassung des Systems an neue Gegebenheiten. Wohingegen ein neuronales Netz eine Black-Box ist, deren Arbeitsweise nicht bekannt ist, und die lediglich durch aufwändiges Training neu eingestellt werden kann, kann bei einem Algorithmus nachvollzogen werden, wo er scheitert und er kann gezielt erweitert oder adaptiert werden.
 
-Ebenfalls war die Verwendung von Computer Vision aufgrund der auffälligen Geometrie einer Dartscheibe naheliegend, da sie Ähnlichkeiten mit Schachbrettern aufweist, welche in der Computer Vision zur Identifizierung von Kameraparametern verwendet werden. Da die Nutzung bekannter Geometrien eine zentrale Arbeitsweise der Computer Vision darstellt, war die Intuition gegeben, dass auch eine Erkennung eines ähnlich markanten Objektes in einem Bild möglich ist. Aus dieser Intuition heraus wurde der in diesem Abschnitt beschriebene Algorithmus entwickelt.
-
-\todo{Dieser Part ist teilweise in der Einleitung vorhanden. Gegenchecken!}
+Ebenfalls war die Verwendung von Computer Vision aufgrund der auffälligen Geometrie einer Dartscheibe naheliegend, da sie Ähnlichkeiten mit Schachbrettern aufweist, welche in der Computer Vision zur Identifizierung von Kameraparametern verwendet werden \cite{cv_general}. Da die Nutzung bekannter Geometrien eine zentrale Arbeitsweise der Computer Vision darstellt, war die Intuition gegeben, dass auch eine Erkennung eines ähnlich markanten Objekts -- konkret: einer Dartscheibe -- in einem Bild möglich ist. Aus dieser Intuition heraus wurde der in diesem Abschnitt beschriebene Algorithmus entwickelt.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -103,8 +101,7 @@ Hinsichtlich der Robustheit dieses Algorithmus ist der Fall hervorzuheben, dass 
 
 Visualisiert ist die Extraktion des Mittelpunkts in \autoref{img:linienverarbeitung} (2). Linien gleicher Bins wurden in der Visualisierung mit gleichen Farben dargestellt. Zu erkennen ist ein Highlight im Bulls Eye der Dartscheibe, in der sich die Linien der unterschiedlichen Bins überschneiden. Dieses Highlight ist der Mittelpunkt der Dartscheibe.
 
-Eine Untersuchung zur Änderung der Robustheit durch Variation der Anzahl an Bins bleibt aus, da die Identifizierung des Mittelpunktes mit 10 Bins in den durchgeführten Tests auf Bildern unterschiedlicher Quellen zuverlässig und erfolgreich war.
-\todo{Den Teil evtl. in Diskussion}
+% Eine Untersuchung zur Änderung der Robustheit durch Variation der Anzahl an Bins bleibt aus, da die Identifizierung des Mittelpunktes mit 10 Bins in den durchgeführten Tests auf Bildern unterschiedlicher Quellen zuverlässig und erfolgreich war.
 
 \subsubsection{Linienfilterung}
 \label{sec:linienfilterung}

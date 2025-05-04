@@ -7,18 +7,23 @@
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{YOLOv8}
+\subsection{Die YOLOv8*-Architektur}
 \label{sec:warum_yolov8}
 
-\todo{Einleitende Sätze für YOLOv8, steht teilweise schon unten.}
+Die Vorhersagen der Dartpfeilpositionen in normalisierten Bildern geschieht durch ein neuronales Netz der YOLOv8*-Architektur. Diese Architektur basiert auf YOLOv8 \cite{yolov8_paper}, welche für den Einsatz der Dartpfeilerkennung umstrukturiert wurde.
 
-\subsubsection{Warum dieses Modell?}
+Dieses Unterkapitel thematisiert zunächst die Hintergründe der Wahl von YOLOv8 als Basismodell in \autoref{sec:hintergrund_yolov8}. Danach werden in \autoref{sec:yolo_adaption} vorgenommene Adaptionen an der Architektur aufgezeigt. Im Anschluss wird der konkrete Aufbau von YOLOv8* in \autoref{sec:yolov8_aufbau} dargestellt.
 
-Die YOLOv8-Architektur wurde analog zur restlichen Familie der YOLO-Netzwerke für effiziente und genaue Identifizierung von Objekten in Bilddaten entwickelt \cite{yolov8_paper,adamw_yolo}. Zudem werden YOLO-Architekturen in unterschiedlichen Konfigurationen bereitgestellt, die dir Komplexität der Modelle bestimmen. So wurden für die YOLOv8-Architektur die Konfigurationen n (nano), s (small), m (medium), l (large) und x (extra large) bereitgestellt, wobei die Nano-Varianten die geringste Parameterzahl besitzen und die Extra-Large-Varianten die größte. Die Trainingserfolge sind typischerweise proportional zur Parameterzahl der Netzwerke.
+\subsubsection{Hintergründe zur Wahl von YOLOv8 als Basismodell}
+\label{sec:hintergrund_yolov8}
 
-\todo{Dieser Absatz ist Grütze.}
+Mit YOLOv8 wurde eine Netzwerkarchitektur vorgestellt, die in der Lage ist, Objekterkennung durch Single-Shot-Vorhersagen effizient und mit hoher Genauigkeit auszuführen \cite{yolov8_paper}. Die vorgestellte Netzwerkarchitektur ist in der Lage, in Echtzeit ausgeführt zu werden und selbst in ressourcenbegrenzten Umgebungen hohe Genauigkeiten zu erlangen.
 
-YOLOv8 ist ein State-of-the-Art Single-Shot CNN, welches in der Lage ist, selbst unter Verwendung weniger Parameter und in ressourcenbegrenzten Umgebungen in Echtzeit verwendet zu werden. Darüber hinaus wurde mit YOLOv4 die Vorgängerversion dieser Netzwerkarchitektur im DeepDarts-System zur Vorhersage von Dartpfeilpositionen verwendet. Durch die Arbeit des DeepDarts-Systems wurde die Fähigkeit des Erlernens dieser Aufgabe durch Netzwerke der YOLO-Familie bereits erarbeitet und es kann in dieser Thesis auf diesem Wissen aufgebaut werden.
+Die Architektur von YOLOv8 ist derart parametrisiert, dass unterschiedliche Netzwerkgrößen als Varianten vorgegeben sind. Die Größe und Komplexität des Netzwerks ist aufgeteilt in die Klassen n (nano), s (small), m (medium), l (large) und x (extra large). Diese Varianten unterscheiden sich in der Anzahl den Größen und Anzahlen der verwendeten Schichten und sind für unterschiedliche Einsatzsituationen ausgelegt. Während l- und x-Modelle für Umgebungen ausgelegt sind, in denen vorhandene Rechenleistung keinen Engpass darstellt, sind die s- und n-Modelle für den Einsatz in mobilen Geräten oder Edge-Devices vorgesehen, in denen die Ressourcen begrenzt sind. Die Verwendung von Netzwerken geringerer Größen geht mit Einbußen in der Qualität der Vorhersagen einher.
+
+Zusätzlich zu den genannten Charakteristiken ist YOLOv8 ein optimierter Nachfolger der für DeepDarts verwendeten YOLOv4-Architektur. Durch den Einsatz von YOLOv4 in DeepDarts konnte die Fähigkeit dieser Familie der Netzwerkarchitekturen hinsichtlich der Erkennung von Dartpfeilen gezeigt werden.
+
+Aufgrund des vorgesehenen Einsatzbereichs des Systems dieser Arbeit in mobilen Endgeräten ist die flexible Netzwerkgröße in Kombination mit einer hohen Qualität der Vorhersagen ausschlaggebend für die Entscheidung, diese Netzwerkarchitektur als Basismodell für die Ausarbeitung dieser Arbeit zu verwenden.
 
 \subsubsection{Adaption des Modells}
 \label{sec:yolo_adaption}
@@ -41,20 +46,10 @@ Die YOLOv8*-Architektur unterteilt das Eingabebild in Regionen und bestimmt die 
 
 Eine grundlegende Änderung der YOLOv8-Architektur ist das Hinzufügen von Transition-Blocks. Diese befinden sich an den Übergängen zwischen Backbone und Head sowie Head und Detect. Sie brechen den Fully-Convolutional-Approach der YOLO-Netzwerke durch Einbindung von Dense-Schichten. Die Eigenschaft von Fully-Connected-CNNs, Bilder beliebiger Eingabegrößen verarbeiten zu können, geht mit der Einschränkung einher, keinen direkten globalen Kontext des Bildes einzufangen. Da die Eingabegrößen der Bilder der in dieser Thesis erarbeiteten Systems durch die Vorverarbeitung vorgegeben sind, liefert die Verarbeitung beliebiger Eingabegrößen keinen Mehrwert und ermöglicht damit die Lockerung dieses Paradigmas. Folglich ist eine Einbindung von Fully-Connected-Schichten architektonisch möglich und ermöglicht einen globalen Überblick über das Eingabebild, anhand derer Informationen der gesamten Dartscheibe in untergeordnete Abschnitte des Netzwerks einfließen können. Die Einschränkung auf lokale Kontextfenster wird dadurch in der YOLOv8*-Architektur aufgehoben.
 
-\subsubsection{Konfiguration des Netzwerks}
-
-Für diese Thesis wurden die Konfigurationen YOLOv8*-n und YOLOv8*-x trainiert, um einen Überblick über die Fähigkeiten der Modellarchitektur zu erlangen. Nano-Varianten der Modelle sind für die Ausführen in Echtzeitumgebungen und in Szenarien mit begrenzter Rechenleistung, beispielsweise in Mobiltelefonen, ausgelegt. Ihre Inferenzzeit ist durch ihre geringe Größe gering im Vergleich zu anderen Konfigurationen. Die Extra-Large-Varianten der Modelle werden für maximale Performance hinsichtlich der Ergebnisse verwendet. Sie werden in Systemen verwendet, in denen Rechenleistung kein Bottleneck darstellt.
-
-YOLOv8-n bzw. YOLOv8-x
-Konfiguration erklären -> woher kommen die Varianten?
-Anzahl Parameter
-Vergleich mit DeepDarts-Netzwerk
-
-\todo{Tatsächliche Konfiguration aufzeigen.}
-
 \subsubsection{Aufbau der Architektur}
+\label{sec:yolov8_aufbau}
 
-Der Aufbau des in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{img:yolov8_architektur} dargestellt. Sie ist unterteilt in die Bereiche Backbone, Head und Detect. Das Backbone und der Head sind im wesentlichen analog zur YOLOv8-Architektur strukturiert. Jedoch wurde die Detection in einen eigenen Bereich überführt und adaptiert indes durch die Eliminierung des Multi-Scale-Outputs lediglich eine Verbindung zwischen Head und Detection besteht. Der Detection-Bereich ist unterteilt in drei parallele Stränge, die Existenz, Position und Klasse vorhersagen und zu einem gemeinsamen Output konkateniert werden. Dieser Output besitzt eine Größe von $25 \times 25 \times 8 \times 3$.
+Der Aufbau des in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{img:yolov8_architektur} dargestellt. Sie ist unterteilt in die Bereiche Backbone, Head und Detect. Das Backbone und der Head sind weitestgehend analog zur YOLOv8-Architektur strukturiert. Der Detection wurde ein gesonderter Netzwerkabschnitt zugeteilt, in welchem die Eliminierung des Multi-Scale-Outputs sowie die gesonderte Handhabung der Outputs manifestiert ist. Der Detection-Bereich ist dazu unterteilt in drei parallele Stränge, in welchen Auswertungen zu Existenz, Position und Klasse abgeleitet und zu einem gemeinsamen Output konkateniert werden. Dieser Output besitzt eine Größe von $25 \times 25 \times 8 \times 3$, wie in \autoref{img:datenformat} dargestellt.
 
 \begin{figure}
     \centering
@@ -63,7 +58,9 @@ Der Aufbau des in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{
     \label{img:yolov8_architektur}
 \end{figure}
 
-Die Bestandteile der Architektur sind in \autoref{img:yolov8_parts} dargestellt. Es wurden 4 zusammengesetzte Blöcke definiert, die unterliegende Funktionen im Aufbau von YOLOv8* übernehmen.
+Die Netzwerkarchitektur setzt sich aus unterschiedlichen Blöcken zusammen. Grundlegende Blöcke sind: Faltung (Conv2d), Max-Pooling (MaxPool2d), Addition (Add), zweidimensionale Normalisierung (BatchNorm2d), SiLU-Aktivierungsfunktion (SiLU) sowie Zweiteilung von Feature-Maps (Split) und Konkatenation von Feature Maps (Concat). Zusätzlich zu diesen bereits in YOLOv8 vorhandenen Grundblöcken werden Fully-Connected-Schichten (Dense), Dropout-Schichten (Dropout) und explizite Formänderungen der Tensoren (Reshape) ergänzt.
+
+Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengesetzt, aus der die YOLOv8*-Architektur aufgebaut ist. Bereits in YOLOv8 enthaltene Blöcke sind SPPF, C2f und Bottleneck mit und ohne Shortcut. Adaptiert wurde der Conv-Block, indem eine Dropout-Schicht hinzugefügt wurde. Als neuer Block ist der Transition-Block aufgenommen worden, der ähnlich zu dem Bottleneck-Block mit Shortcut aufgebaut ist, jedoch mit der Addition eines Dense-Layers. Die zusammengesetzten Blöcke der YOLOv8*-Architektur sind in \autoref{img:yolov8_parts} dargestellt.
 
 \begin{figure}
     \centering
@@ -71,6 +68,24 @@ Die Bestandteile der Architektur sind in \autoref{img:yolov8_parts} dargestellt.
     \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3, 4) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (5) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (6) Transition-Block; Residualer Fully-Connected layer zum Einfangen globaler Informationen.}
     \label{img:yolov8_parts}
 \end{figure}
+
+\subsubsection{Verwendete Konfiguration von YOLOv8*}
+\label{sec:yolov8_konfiguration}
+
+\begin{table}[t]
+    \begin{tabular}{c||c|c|c}
+        Konfiguration & Anzahl der Schichten & Trainierbare Parameter & Gesamtparameter \\ \hline
+        n             & 188                  & 3,21 M                 & 3,23 M          \\
+        s             & 188                  & 10,48 M                & 10,51 M         \\
+        m             & 234                  & 18,24 M                & 18,27 M         \\
+        l             & 280                  & 25,06 M                & 25,10 M         \\
+        x             & 280                  & 38,70 M                & 38,75 M
+    \end{tabular}
+    \caption{Parameter- und Schichtzahlen unterschiedlicher Konfigurationen der YOLOv8*-Architektur.}
+    \label{tab:yolov8_params}
+\end{table}
+
+Die variable Größe von YOLOv8 ist analog in YOLOv8* übernommen worden, sodass die Konfigurationen n, s, m, l und x möglich sind. Die verwendete Architektur dieser Thesis orientiert sich in ihrer Größenordnung an der in DeepDarts verwendeten Architektur YOLOv4-tiny, welche ca. 6 Millionen Parameter beinhaltete. Die Größenordnungen der Parametrisierungen sind in \autoref{tab:yolov8_params} dargestellt. Aufgrund der in Vergleich zu DeepDarts komplexeren Daten wurde sich für die Verwendung von YOLOv8*-s entschieden, welche mit etwa $10,5 \text{Millionen}$ Parametern etwa $40\%$ mehr Parameter als YOLOv4-tiny besitzt.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -188,9 +203,9 @@ Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn de
 \begin{equation*}
     \text{lr}(e) =
     \begin{cases}
-        \frac{\text{lr}_0}{e+1},                            & \text{wenn\,} e < e_\text{warmup},                                                     \\
+        \frac{\text{lr}_0}{e+1},                                      & \text{wenn\,} e < e_\text{warmup},                                                               \\
         \min(\text{lr}_\text{min}, \text{lr}(e-1) \cdot f_\text{lr}), & \text{wenn\,} \min(\text{val\_loss}) \notin \{\text{val\_loss}_i \mid i \in [0,e-w_\text{lr}]\}, \\
-        \text{lr}(e-1),                                     & \text{ansonsten.}
+        \text{lr}(e-1),                                               & \text{ansonsten.}
     \end{cases}
 \end{equation*}
 \nomenclature{$e \in \mathbb{N}$}{Aktuelle Trainingsepoche}

@@ -12,13 +12,11 @@ Die Grundlagen der Datenerstellung sind thematisch geordnet in die Abschnitte de
 \subsection{Prozedurale Datenerstellung}  % DATENERSTELLUNG =======================================
 \label{sec:prozedurale_datenerstellung}
 
-Prozedurale Datenerstellung findet seinen Einsatz in vielen unterschiedlichen Bereichen. In dieser Arbeit wird prozedurale Datenerstellung verwendet, um Trainingsdaten zum Trainieren Neuronaler Netze zu erstellen. In diesem Unterabschnitt wird die Frage geklärt, was prozedurale Datenerstellung ist und was die Vorteile ihrer Nutzung sind.
+Prozedurale Datenerstellung kommt in einer Vielzahl unterschiedlicher Anwendungsbereiche zum Einsatz. In dieser Arbeit dient die prozedurale Datenerstellung der Generierung von Trainingsdaten für neuronale Netze. Dieser Unterabschnitt erläutert, was unter prozeduraler Datenerstellung zu verstehen ist und welche Vorteile sich aus ihrer Anwendung ergeben.
 
-Die Erstellung von Daten kann sowohl manuell als auch automatisch geschehen. Prozedurale Datenerstellung beschreibt eine Technik zur automatisierten Datenerstellung durch den Einsatz von Zufallswerten. Für die Generierung von Daten werden Rahmenbedingungen festgelegt, innerhalb derer Zufallswerte generiert werden, welche zur Steuerung von Parametern eingesetzt werden. Die Art der Zufallswerte ist dabei je nach Einsatzbereich unterschiedlich; für diese Thesis finden hauptsächlich 1- und 2-dimensionale Zufallswerte ihren Einsatz. Die Verwendung von 1-dimensionalen Zufallswerten wird beispielsweise verwendet, um Parameter von Texturfarben zu bestimmen, z.~B.Sättigung oder Helligkeit von Farbwerten. 2-dimensionale Zufallswerte werden in Form von Noise-Texturen eingebunden, die beispielsweise die Oberflächenbeschaffenheit von Objekten beeinflussen können. Die Wertebereiche dieser Zufallswerte können durch Skalierung, Clipping oder sonstige Techniken der Nachverarbeitung auf ihren Einsatzbereich angepasst werden. Durch diese Art der Parametrisierung durch Zufallswerte ist das automatisierte Erstellen einer Vielzahl unterschiedlicher Daten möglich.
+Die Erstellung von Daten kann sowohl manuell als auch automatisch geschehen. Prozedurale Datenerstellung bezeichnet eine Methode zur automatisierten Generierung von Daten unter Verwendung zufälliger Werte. Zur Datengenerierung werden zunächst Rahmenbedingungen definiert, innerhalb derer Zufallswerte erzeugt werden, die wiederum zur Steuerung relevanter Parameter dienen. Die Art der Zufallswerte ist dabei je nach Einsatzbereich unterschiedlich; für diese Thesis finden hauptsächlich 1- und 2-dimensionale Zufallswerte ihren Einsatz. Eindimensionale Zufallswerte werden beispielsweise genutzt, um Parameter wie Sättigung oder Helligkeit von Texturfarben zu bestimmen. Zweidimensionale Zufallswerte finden Anwendung in Form von Rauschtexturen, die beispielsweise die Oberflächenbeschaffenheit von Objekten beeinflussen. Die Wertebereiche dieser Zufallsgrößen lassen sich durch Skalierung, Clipping oder andere Verfahren der Nachverarbeitung an den jeweiligen Einsatzzweck anpassen. Durch diese Art der Parametrisierung durch Zufallswerte ist das automatisierte Erstellen einer Vielzahl variierender Daten möglich.
 
-Der Vorteil prozeduraler Datenerstellung ist die enorme Komplexität der erstellen Daten, die durch Kombination einer Vielzahl von Zufallsparametern erzielt werden kann. Die verwendeten Zufallsparameter eines erstellten Datensamples beschreiben seine Position im vieldimensionalen Parameter-Raum und ermöglichen eine deterministische Reproduktion des Samples.
-
-\todo{Überarbeiten: Dieser Abschnitt ist nicht gut.}
+Ein wesentlicher Vorteil der prozeduralen Datenerstellung liegt in der hohen Komplexität der erzeugten Daten, die durch die Kombination zahlreicher Zufallsparameter erreicht wird. Die für ein Datensample verwendeten Zufallsparameter definieren dessen Position im hochdimensionalen Parameterraum. Durch diese Positionierung ist der Aufbau eines Samples eindeutig beschrieben und eine deterministische Reproduktion dessen ist durch diese ermöglicht.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -61,9 +59,9 @@ Kameralinsen bestehen aus Glas mit einem Refraktionsindex, der von der Wellenlä
 \subsection{Binärbilder und Masken}
 \label{sec:masken}
 
-Was bringt die Erstellung von Masken? -> Informationsgewinn / -erhaltung / -extraktion -> mehr Informationen als in Render-Bild
+Binärbilder und Masken sind Bilddaten, in denen die Pixelwerte entweder 0 oder 1 sind. Mit dieser Art von Bilddaten können Informationen in Bildern gezielt hervorgehoben werden. Zur Hervorhebung eines Objektes in einem Bild wird eine Maske erstellt, deren Pixelwerte aller Pixel im Originalbild 0 sind, an denen das Objekt nicht vorhanden ist; alle Pixel, die im Originalbild Teil des Zielobjekts sind, werden durch eine 1 dargestellt. Auf diese Weise wird eine binäre Maske erstellt, die Informationen zu einem Objekt in dem Bild anzeigt und die für die weitere Extraktion von Informationen verwendet werden kann.
 
-\todo{Binärbilder und Masken beschreiben}
+In dieser Arbeit werden binäre Maskenbilder bei der Erstellung synthetischer Daten verwendet, um die Position und Orientierung von Objekten in gerenderten Bildern darzustellen. Dazu werden diejenigen Pixel hervorgehoben, die gewisse Eigenschaften aufweisen. Diese Eigenschaften reichen von der Existenz der Dartpfeile bis zur exakten Bestimmung der Einstichstellen der Dartpfeile in die Dartscheibe.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -167,13 +165,15 @@ Die algorithmische Generierung von Zufallszahlen ist nicht ohne Verzerrung mögl
 \subsection{Thresholding und Maskierung}
 \label{sec:thresholding_maskierung}
 
-Warum braucht man das? Wozu macht man das? -> Thresholding zur Kombination von Texturen miteinander / Layering mehrerer Texturen
+Im Rahmen der Datengenerierung dieser Thesis werden Thresholding und Maskierung verwendet, um Texturen gezielt miteinander zu kombinieren. Beim Thresholding wird in der vorliegenden Arbeit ein definierter Schwellenwert genutzt, um zu bestimmen, ob ein bestimmter Farbwert einer Textur berücksichtigt wird. Liegt die Pixelintensität über dem festgelegten Schwellenwert, wird der entsprechende Pixel einbezogen; andernfalls wird er verworfen. Alternativ kann auch das Gegenteil umgesetzt werden. Ein typischer Anwendungsfall des Thresholdings in dieser Arbeit besteht in der Begrenzung von Noise-Texturen auf Bereiche mit den höchsten Pixelintensitäten oberhalb eines definierten Schwellenwerts.
 
-In der Datengenerierung dieser Thesis wird Thresholding und Maskierung verwendet, um Texturen gezielt miteinander zu kombinieren. Im Bezug auf die Verwendung in der Datengenerierung wird  für Thresholding ein Schwellwert verwendet, der die Farbwerte einer Textur bestimmen. Ist die Pixelintensität oberhalb des Schwellwerts, wird dieser entweder verwendet, andernfalls nicht; das selbe ist umgekehrt möglich. Typische Einsätze von Thresholding in dieser Arbeit ist die Eingrenzung von Noise-Texturen auf die größten Pixelintensitäten oberhalb eines Schwellwerts.
+Thresholding ist definiert durch \cite{cv_general}:
+\[\Phi(f, t) = \begin{cases}
+    1, &wenn f \geq t,\\
+    0 &sonst
+\end{cases}\]
 
-Wird dieses globale Thresholding aller Pixel lokalisiert, sodass jedem Pixel ein dedizierter Threshold zugeordnet wird, spricht man von Maskierung. Eine Maske bestimmt die Grenzwerte, die zur Einblendung der modulierten Textur notwendig sind. Neben binärer Ein- und Ausblendung von Pixeln ermöglichen Masken durch Verwendung von Pixelwerten im Intervall $[0, 1]$ anteiliges Anzeigen der Quelltextur. Diese Arbeitsweise wird in dieser Thesis zur Erstellung einer realistischen Dartscheibe durch Überlagerung unterschiedlicher maskierter Texturen verwendet.
-
-\todo{Dieser Text ist nicht gut, gerne überarbeiten. Mehr Zahlen und Definitionen. Und eine Quelle wäre wohl nicht verkehrt.}
+Wird dieses globale Thresholding aller Pixel lokalisiert, sodass jedem Pixel ein dedizierter Threshold zugeordnet wird, spricht man von Maskierung. Eine Maske definiert die Schwellenwerte, die für die Einblendung einer modulierten Textur erforderlich sind. Neben der binären Ein- oder Ausblendung von Pixeln ermöglichen Masken durch kontinuierliche Werte im Intervall $[0, 1]$ eine anteilige Darstellung der Quelltextur. Diese Methode findet in dieser Thesis Anwendung bei der Erstellung einer realistischen Dartscheibe, indem mehrere maskierte Texturen überlagert werden.
 
 % -------------------------------------------------------------------------------------------------
 

@@ -22,10 +22,13 @@ Festzuhalten ist, dass Start- und Endpunkte der Linie durch diese Art der polare
 \subsection{Thresholding}
 \label{sec:thresholding}
 
-Als Thresholding wird in der Datenverarbeitung die Einteilung von Werten eines Definitionsbereichs $D$ in zwei Kategorien verstanden. Dabei wird ein Grenzwert $t \in D$, der Threshold, definiert, anhand dessen die Kategorie eines Wertes festgelegt wird. Üblich sind in der Bildverarbeitung Definitionsbereiche $D \in \{\mathbb{R}, \mathbb{N}\}$ und die Einteilung $v \leq t$ bzw. $v > t$ mit $v \in D$.
-\todo{Kombination + Nutzung in Farbräumen}
+Als Thresholding wird in der Datenverarbeitung die Einteilung von Werten eines Definitionsbereichs $D$ in zwei Kategorien verstanden. Dabei wird ein Grenzwert $T \in D$, der Threshold, definiert, anhand dessen die Kategorie eines Wertes festgelegt wird. Üblich sind in der Bildverarbeitung Definitionsbereiche $D \in \{\mathbb{R}, \mathbb{N}\}$ und die Einteilung $v \leq T$ bzw. $v > T$ mit $v \in D$.
+\nomenclature{$D$}{Generischer Definitionsbereich}
+\nomenclature{$T$}{Generischer Threshold}
 
-In dieser Thesis wird Thresholding in vielerlei Hinsicht verwendet, unter anderem in \autoref{sec:filterung} zur Unterscheidung zwischen Kante und Hintergrund oder in \autoref{sec:linienfilterung} zur Filterung von Linien anhand einer Abstandsmetrik.
+Thresholding findet seine Verwendung im Kontext dieser Masterarbeit in der Extraktion relevanter Informationen auf Bildern durch die Betrachtung von Pixeln innerhalb bestimmter Grenzwerte in Bildern. Diese Technik ermöglicht beispielsweise das Identifizieren von Merkmalen anhand von Farben, die in bestimmten Farbräumen besonders hervorgehoben sind und durch Thresholding eindeutig identifiziert werden können. Durch Kombination mehrerer Thresholds können komplexe Sachverhalte und Charakteristiken aus Bildern extrahiert werden.
+
+In dieser Thesis wird Thresholding in vielerlei Hinsicht verwendet, unter anderem in \autoref{sec:filterung} zur Differenzierung zwischen Kante und Hintergrund oder in \autoref{sec:linienfilterung} zur Filterung von Linien anhand einer Abstandsmetrik.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -45,7 +48,7 @@ Binning wird in dieser Thesis unter anderem in \autoref{sec:mittelpunktextraktio
 \subsection{Faltung}
 \label{sec:was_filterung}
 
-Die Faltung, auch Convolution genannt, ist eine mathematische Operation, die ihren Ursprung in der Signalverarbeitung hat. Die Faltung nimmt zwei Funktionen $f$ und $g$ und berechnet eine resultierende Funktion $h = (f * g)$. Die Definition einer Faltung ist \cite{convolution}:
+Die Faltung, auch Convolution genannt, ist eine mathematische Operation, die ihren Ursprung in der Signalverarbeitung hat. Die Faltung nimmt zwei Funktionen $f$ und $g$ und berechnet eine resultierende Funktion $h = (f * g)$. Die Definition einer Faltung ist \cite{convolution,cv_general}:
 \[ (f*g)(x) = \int_{-\infty}^{-\infty} f(t) g(x-t) dt\]
 In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die Extraktion von Merkmalen aus Bildern ermöglicht. Die diskrete 2D-Faltung funktioniert, indem ein Kernel auf jede Position eines Bildes angewandt wird. Mathematisch ist sie wie folgt beschrieben \cite{discrete_convolution}:
 \[ I[x, y] = \sum_{i=0}^{x_k} \sum_{j=0}^{y_k} I[x - \lfloor\frac{x_k}{2}\rfloor + i - 1, y - \lfloor \frac{y_k}{2} \rfloor + j - 1] \times k[i, j] \]
@@ -66,7 +69,7 @@ Diese allgemeine Formel lässt sich auf die Verwendung unter mehrerer Kanäle an
 
 Nachdem die Prinzipien der Faltung bekannt sind, wird in diesem Abschnitt auf die konkrete Anwendung der Faltung in der Bildverarbeitung eingegangen.
 
-Anhängig von den Werten eines Kernels werden unterschiedliche Charakteristiken eines Bildes hervorgehoben. So können mit einem Kantenerkennungsfilter hochfrequente Bestandteile in einem Bild hervorgehoben werden während ein Bild mit mit einem Glättungsfilter weichgezeichnet wird und hochfrequente Anteile herausgefiltert werden. Der Sobel-Filter ist ein in der Computer Vision etablierter Filter zur robusten Kantenerkennung\cite{sobel}. Der Sobel-Filter kombiniert die Prinzipien der Glättung und Kantenerkennung, indem das Bild in einer Richtung geglättet wird und in der anderen eine Kantenerkennung durchgeführt wird. Die Kantenerkennung ist durch diesen Filter robust hinsichtlich Rauschen im Bild. Exemplarische Filter für Kantenerkennung und Weichzeichnung sowie ein Sobel-Filter sind in \autoref{fig:filter} dargestellt.
+Anhängig von den Werten eines Kernels werden unterschiedliche Charakteristiken eines Bildes hervorgehoben. So können mit einem Kantenerkennungsfilter hochfrequente Bestandteile in einem Bild hervorgehoben werden während ein Bild mit mit einem Glättungsfilter weichgezeichnet wird und hochfrequente Anteile herausgefiltert werden. Der Sobel-Filter ist ein in der Computer Vision etablierter Filter zur robusten Kantenerkennung\cite{sobel,cv_general}. Der Sobel-Filter kombiniert die Prinzipien der Glättung und Kantenerkennung, indem das Bild in einer Richtung geglättet wird und in der anderen eine Kantenerkennung durchgeführt wird. Die Kantenerkennung ist durch diesen Filter robust hinsichtlich Rauschen im Bild. Exemplarische Filter für Kantenerkennung und Weichzeichnung sowie ein Sobel-Filter sind in \autoref{fig:filter} dargestellt.
 
 \begin{figure}
     \centering
@@ -119,7 +122,7 @@ Filterung und Kantenerkennung werden in dieser Thesis ausgiebig genutzt. So wird
 \subsection{Harris Corner Detection}
 \label{sec:harris_corners}
 
-Die Harris Corner Detection ist ein Algorithmus, der 1988 von C. Harris und M. Stephens vorgestellt wurde, und ist ein etablierter Algorithmus in der Computer Vision \cite{harris_corners}. Ziel des Algorithmus ist es, Ecken in einem Eingabebild zu identifizieren und auszugeben. In dieser Sektion wird auf die grundlegende Arbeitsweise des Algorithmus eingegangen, um ein Verständnis seiner Arbeitsweise zu erlangen.
+Die Harris Corner Detection ist ein Algorithmus, der 1988 von C. Harris und M. Stephens vorgestellt wurde, und ist ein etablierter Algorithmus in der Computer Vision \cite{harris_corners,cv_general}. Ziel des Algorithmus ist es, Ecken in einem Eingabebild zu identifizieren und auszugeben. In dieser Sektion wird auf die grundlegende Arbeitsweise des Algorithmus eingegangen, um ein Verständnis seiner Arbeitsweise zu erlangen.
 
 Der Kerngedanke hinter der Harris Corner Detection basiert auf der Beobachtung, dass eine Ecke dadurch spezifiziert ist, dass sie der Endpunkt zweier aufeinandertreffender Kanten ist. Durch Kombination von Kanteninformationen und Thresholding werden Ecken in einem Bild identifiziert.
 
@@ -169,7 +172,7 @@ Bei der Klassifizierung von Bildpixeln kommt es dazu, dass Cluster von Pixeln al
 \subsection{Hough-Transformation}
 \label{sec:hough_transformation}
 
-Die Hough-Transformation, veröffentlicht 1962 von Paul Hough, ist ein Algorithmus zur Identifizierung von simplen Strukturen in Kantenbildern \cite{hough_transform}. In diesem Abschnitt wird die Erkennung von Linien mit der Hough-Transformation beschrieben, wie sie in \autoref{sec:linienerkennung} verwendet wird.
+Die Hough-Transformation, veröffentlicht 1962 von Paul Hough, ist ein Algorithmus zur Identifizierung von simplen Strukturen in Kantenbildern \cite{hough_transform,hough_transform}. In diesem Abschnitt wird die Erkennung von Linien mit der Hough-Transformation beschrieben, wie sie in \autoref{sec:linienerkennung} verwendet wird.
 
 Hauptaspekt des Algorithmus ist die Transformation von Punkten im Image-Space zu Linien im Parameter-Space. Der Image-Space ist das Koordinatensystem des Bildes mit den Achsen $x$ und $y$; der Parameter-Space ist ein Koordinatensystem mit den Achsen $\rho$ und $\theta$. Linien im Image-Space sind mathematisch beschrieben als Geraden der polaren Form:
 \[ 0 = x \sin{\theta} - y \cos{\theta} + \rho \]
@@ -183,7 +186,7 @@ Input der Hough-Transformation ist ein durch Thresholding vorverarbeitetes Bild,
 \subsection{Transformationsmatrizen}
 \label{sec:transformations_matrizen}
 
-Transformationen von Bildern in der Computer Vision basieren auf der Grundlage von Transformationsmatrizen \cite{transformationen_1} \cite{transformationen_2}.
+Transformationen von Bildern in der Computer Vision basieren auf der Grundlage von Transformationsmatrizen \cite{transformationen_1,transformationen_2,cv_general}.
 
 \subsubsection{Homogene Koordinaten}
 \label{sec:homogene_koordinaten}
@@ -205,7 +208,7 @@ Die unterschiedlichen Einträge der Transformationsmatrizen bestimmen die Art de
 \subsubsection{Affine Transformationsmatrizen}
 \label{sec:affine_transformations_matrizen}
 
-\todo{Ein paar Sätze zu affinen Transformationsmatrizen.}
+Affine Transformationen zeichnen sich durch die Aufrechterhaltung von Punkten, geraden Linien und Flächen aus. Nach einer affinen Transformation verbleiben parallele Linien weiterhin parallel \cite{cv_general}. Es gibt unterschiedliche Arten affiner Transformationen, die in diesem Unterabschnitt vorgestellt werden.
 
 \paragraph{Translation}
 \label{par:translation}
@@ -295,8 +298,6 @@ Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch p
 \end{align*}}
 \nomenclature{$M_\text{rot} \in \mathbb{R}^{3 \times 3}$}{Rotationsmatrix}
 
-\todo{Matrizen ggf. besser beschreiben}
-
 \subsubsection{Homographien}
 \label{sec:homographien}
 
@@ -314,7 +315,6 @@ Im Gegensatz zu affinen Transformationen können Matrixeinträge in Homographien
 \end{align*}
 \nomenclature{$H \in \mathbb{R}^{3 \times 3}$}{Homographie}
 \nomenclature{$h_{i, j \in [0, 2]} \in \mathbb{R}$}{Parameter einer Homographie}
-
 
 Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je 2 Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:entzerrung} genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten und entzerrten Bildern zu mappen.
 
@@ -338,7 +338,7 @@ In dieser Thesis wird die log-polare Darstellung eines Bildes in \autoref{sec:or
 \subsection{Farbräume}
 \label{sec:farbräume}
 
-Farbinformationen in Bildern werden auf unterschiedliche Arten gespeichert. Diese unterschiedlichen Arten der Darstellungen von Farben werden als Farbräume bezeichnet \cite{color_space}. Zu den am weitesten verbreiteten Farbräumen zählen unter anderem der RGB- Farbraum und der HSV-Farbraum. Im RGB-Farbraum werden Farbinformationen analog zum menschlichen Auge in designierten Kanälen für rote, grüne und blaue Bestandteile des Bildes unterteilt; im HSV-Farbraum stehen die Kanäle H, S und V für Färbung (\quotes{hue}), Sättigung (\quotes{saturation}) und Helligkeit (\quotes{value}). Visuell nähere Verbundenheit zwischen der menschlichen Farbwahrnehmung wird durch die Farbräume YCbCr und Lab erzielt. Diese Farbräume nutzen ebenfalls drei Farbkanäle, die jedoch abstrakter gestaltet sind und Farbinformationen auf eine Art encodieren, dass eine Interpolation von Farben zueinander mit visuellem Einklang ermöglichen, der in RGB und HSV nicht trivial erzielbar ist.
+Farbinformationen in Bildern werden auf unterschiedliche Arten gespeichert. Diese unterschiedlichen Arten der Darstellungen von Farben werden als Farbräume bezeichnet \cite{color_space,cv_general}. Zu den am weitesten verbreiteten Farbräumen zählen unter anderem der RGB- Farbraum und der HSV-Farbraum. Im RGB-Farbraum werden Farbinformationen analog zum menschlichen Auge in designierten Kanälen für rote, grüne und blaue Bestandteile des Bildes unterteilt; im HSV-Farbraum stehen die Kanäle H, S und V für Färbung (\quotes{hue}), Sättigung (\quotes{saturation}) und Helligkeit (\quotes{value}). Visuell nähere Verbundenheit zwischen der menschlichen Farbwahrnehmung wird durch die Farbräume YCbCr und Lab erzielt. Diese Farbräume nutzen ebenfalls drei Farbkanäle, die jedoch abstrakter gestaltet sind und Farbinformationen auf eine Art encodieren, dass eine Interpolation von Farben zueinander mit visuellem Einklang ermöglichen, der in RGB und HSV nicht trivial erzielbar ist.
 
 Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nachteilen in Verbindung. In dieser Arbeit werden die aufgezählten Farbräume zur Identifizierung von Farben und Hervorhebung von Merkmalen in Bildern genutzt. Die Verwendung von Farbraumtransformationen geschieht in \autoref{sec:orientierungspunkte_klassifizieren}.
 
@@ -347,7 +347,7 @@ Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nac
 \subsection{Structural Similarity (SSIM)}
 \label{sec:ssim}
 
-Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeauthor{ssim} eine Metrik entwickelt, die über das triviale Vergleichen von Farbinformationen hinaus geht \cite{ssim}. Grundprinzip der SSIM-Metrik ist das Einfangen und Vergleichen visuell auffälliger Änderungen im Bild und Unterdrückung von Effekten wie Weichzeichnung und lokaler Verschiebungen von Pixeln. Es werden Informationen zu Luminanz, Kontrast und Struktur auf Eingabebildern identifiziert und jeweils miteinander verglichen. Eine gewichtetes Produkt der jeweiligen Ähnlichkeitsfaktoren bestimmt schließlich den SSIM-Wert.
+Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeauthor{ssim} eine Metrik entwickelt, die über das triviale Vergleichen von Farbinformationen hinaus geht \cite{ssim,cv_general}. Grundprinzip der SSIM-Metrik ist das Einfangen und Vergleichen visuell auffälliger Änderungen im Bild und Unterdrückung von Effekten wie Weichzeichnung und lokaler Verschiebungen von Pixeln. Es werden Informationen zu Luminanz, Kontrast und Struktur auf Eingabebildern identifiziert und jeweils miteinander verglichen. Eine gewichtetes Produkt der jeweiligen Ähnlichkeitsfaktoren bestimmt schließlich den SSIM-Wert.
 
 Diese Handhabung der Informationsverarbeitung sorgt für Robustheit gegenüber visuell geringer Änderungen, die jedoch starke Auswirkungen auf die zugrundeliegenden Daten besitzen. Ein Beispiel ist das Weichzeichnen eines Bildes oder das Hinzufügen von Rauschen. Diese Operationen ändern die Pixelwerte der Eingabebilder stark, jedoch sind sie visuell unauffällig.
 
@@ -356,7 +356,7 @@ Diese Handhabung der Informationsverarbeitung sorgt für Robustheit gegenüber v
 \subsection{RANSAC}
 \label{sec:ransac}
 
-Nicht-ideale Daten beinhalten häufig Outlier. Outlier sind Datenpunkte, die nicht der zu erwartenden oder gewünschten Datenstruktur folgen, sondern als fehlerhafte Aufnahmen in den Daten vorhanden sind. Triviale Least-Squares-Approximationen aller Datenpunkte ist für diese Anomalien in Daten anfällig, wodurch die Ergebnisse dieser Methoden beeinflusst werden. Um mit dieser Art der Anomalien umzugehen, stellten \citeauthor{ransac} 1981 den RANSAC-Algorithmus vor \cite{ransac}.
+Nicht-ideale Daten beinhalten häufig Outlier. Outlier sind Datenpunkte, die nicht der zu erwartenden oder gewünschten Datenstruktur folgen, sondern als fehlerhafte Aufnahmen in den Daten vorhanden sind. Triviale Least-Squares-Approximationen aller Datenpunkte ist für diese Anomalien in Daten anfällig, wodurch die Ergebnisse dieser Methoden beeinflusst werden. Um mit dieser Art der Anomalien umzugehen, stellten \citeauthor{ransac} 1981 den RANSAC-Algorithmus vor \cite{ransac,cv_general}.
 
 RANSAC steht für \quotes{\underline{Ran}dom \underline{Sa}mple \underline{C}onsensus} und beruht auf dem zufälligen Auswählen eines Subsets von Datenpunkten zur Approximation einer akkuraten Beschreibung der Daten. Nach dem Auswählen zufälliger Punkte und Approximieren einer Zielverteilung wird jeder Punkt anhand von Grenzbedingungen als Inlier oder Outlier klassifiziert. Das Verhältnis von Inliern zu Outliern wird als Metrik zur Bewertung der Approximation genutzt. Durch wiederholtes Auswählen zufälliger Datenpunkte und Klassifizierung der Approximation ist eine Identifizierung einer Approximation möglich, auf die Outlier in den Datenpunkten wenig Einfluss nehmen.
 

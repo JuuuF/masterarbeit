@@ -3,7 +3,7 @@
 \section{Ergebnisse}
 \label{sec:cv:ergebnisse}
 
-\todo{Einleitende Sätze der CV-Ergebnisse.}
+In diesem Abschnitt werden die Ergebnisse der algorithmischen Normalisierung von Dartscheiben aufgezeigt. Dazu werden die verwendeten Metriken in \autoref{sec:cv_metriken} vorgestellt. Anschließend werden die Datenquellen in \autoref{sec:cv_ergebnisse_daten} aufgezeigt, anhand derer die Auswertung stattgefunden hat. In \autoref{sec:cv_quantitative_auswertung} wird eine quantitative Auswertung vorgenommen. Es werden die Ergebnisse, die mit dem in dieser Arbeit vorgestellten Algorithmus erzielt werden konnten, hinsichtlich der aufgezeigten Metriken sowie weiteren Merkmalen analysiert und mit den durch DeepDarts auf den selben Daten erzielten Ergebnissen verglichen.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -174,9 +174,7 @@ In diesem Teil der Auswertung wird die Fähigkeit der Systeme betrachtet, eine N
 
 Die Ergebnisse dieser Auswertung sind in \autoref{fig:cv_normalisierung} in Form von Kuchendiagrammen dargestellt. Die Auswertung ist sowohl hinsichtlich der Systeme als auch hinsichtlich der Datensätze aufgeteilt. Der Algorithmus dieser Thesis ist auf allen Datensätzen in der Lage, in mindestens $97\%$ der Bilder eine Normalisierung zu ermitteln. Die Performance ist dabei weitestgehend unabhängig von dem Ursprung der Daten. Demgegenüber steht die Performance der DeepDarts-Systeme $d_1$ und $d_2$. Während $d_1$ zwar Auswertungen von $100\%$ auf den eigenen Validierungs- und Test-Daten erzielt, ist es nicht in der Lage, positive Ergebnisse auf anderen Daten zu erzielen. Die Auswertung von $d_2$ auf den eigenen Daten liegt ebenfalls bei $100\%$ und zumindest die Findung der Entzerrung der Test-Daten aus $d_1$ deckt sich mit $83.4\%$ mit den Beobachtungen aus dem eigenen Paper. Jedoch ist die Auswertung auf den Validierungs-Daten von $d_1$ mit $36.8\%$ nicht annähernd auf diesem Niveau und auf den gerenderten Daten konnten lediglich für $2.2\%$ der Daten normalisiert werden.
 
-Diese Auswertung stärkt die Erkenntnis des Overfittings des DeepDarts-Systems und zeigt gleichzeitig die Fähigkeit dieses Systems, zumindest ausreichend Orientierungspunkte zu finden, um eine Normalisierung zu ermöglichen.
-
-\todo{Diesen Satz evtl. in die Diskussion}
+Diese Auswertung stärkt die Erkenntnis des Overfittings von DeepDarts und zeigt zugleich die Fähigkeit dieses Systems, ausreichend Orientierungspunkte zu finden, um eine Normalisierung zu ermöglichen.
 
 \subsubsection{Genauigkeit gefundener Normalisierungen} % -----------------------------------------
 

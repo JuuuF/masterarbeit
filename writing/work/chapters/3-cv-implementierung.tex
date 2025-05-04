@@ -21,25 +21,43 @@ Für die Implementierung dieser Berechnung wurde die von NumPy zur Verfügung ge
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Winkelentzerrung}
-\label{sec:winkelentzerrung_impl}
-
-- undistort-by-lines
-
-- Verwendung von Matrizen und Transformation
-
-- Auswirkungen auf Winkel
-
-\todo{Winkelentzerrungs-Implementierung}
-
-% -------------------------------------------------------------------------------------------------
-
 \subsection{Farben-Identifizierung}
 \label{sec:farbidentifizierung_impl}
 
-CrYV-Farben: Funktionen is-black, is-white, is-color
+Für die Identifizierung von Orientierungspunkten werden die Farben der Umgebungen der Kandidaten der Orientierungspunkte klassifiziert. Der Kontext, in welchem diese Verarbeitung stattfindet, ist in \autoref{img:orientierung} (3) dargestellt: Die Dartscheibe ist log.polar um ihren Mittelpunkts abgerollt und die Kandidaten sind identifiziert. Durch diese Form der Darstellung sind korrekte Orientierungspunkte derart positioniert, dass ihre Surrounding die vier unterschiedlichen Farben der Dartscheibenfelder in je einer Ecke enthält. Zur Klassifizierung werden Funktionen verwendet, die die mittleren Farben dieser Eckbereiche der Surroundings in schwarz, weiß und farbig klassifizieren.
 
-\todo{Farbidentifizierungs-Implementierung}
+\paragraph{CrYV-Farbraum}
+
+Die Farben der Surroundings werden zur Einordnung in den CrYV-Farbraum umgewandelt. Der CrYV-Farbraum ist derart gestaltet, dass eine gezielte Isolation für die Unterscheidung relevanter Farbcharakteristiken durch gezieltes Thresholding durchgeführt werden kann. Die Farbkanäle der CrYV-Bilder werden separatem Thresholding unterzogen, um Farbeinflüsse spezifisch zu untersuchen und auszumachen, ob eine gewisse Farbgebung vorhanden ist.
+
+\paragraph{Klassifizierung schwarzer und weißer Bereiche}
+
+Die durchschnittliche Farben schwarzer und weißer Felder der Dartscheibe sind durch bereits vollzogene Vorverarbeitungsschritte bekannt. Zur Einordnung, ob ein Feld schwarz oder weiß ist, wird der zu überprüfende Bereich der Surrounding (Patch) mit der schwarzen bzw. weißen Farbe analysiert. In einem ersten Schritt wird die mittlere Farbe des Patches bestimmt. Die absoluten Differenzen der jeweiligen Farbkanäle des PAtches sowie der Ziel-Farbe werden berechnet und die Summe dieser Kanäle wird berechnet. Anhand eines empirisch ermittelten Schwellwerts wird ein Thresholding durchgeführt, durch welches eine Klassifizierung in \quotes{schwarz} oder \quotes{nicht schwarz} (und analog für weiß) geschieht:
+\begin{equation*}
+    \text{is\_bw}(C_p, C_r, T_C) =
+    \begin{cases}
+        1, & \text{wenn} ~\sum_{i=0}^{2} \vert~ C_r[i] - C_p[i] ~\vert < T_C \\
+        0  & \text{sonst}
+    \end{cases}
+\end{equation*}
+\nomenclature{$C_p \in \mathbb{R}^3$}{CrYV-Farbe eines Patches.}
+\nomenclature{$C_r \in \mathbb{R}^3$}{CrYV-Referenzfarbe.}
+\nomenclature{$T_C \in \mathbb{R}$}{Threshold zur Klassifizierung von CrYV-Farbdifferenzen.}
+In dieser Berechnung stehen $C_p \in \mathbb{R}^3$ und $C_r \in \mathbb{R}^3$ für 3-Kanal CrYV-Farben von Patch und Referenzfarbe. $T_C \in \mathbb{R}$ ist der Farb-Threshold, der unterschritten werden muss, um als die Referenzfarbe klassifiziert zu werden.
+
+\paragraph{Klassifizierung roter und grüner Bereiche}
+
+Im Gegensatz zur Einordnung schwarzer und weißer Farben stehen für die Einordnung roter und grüner Farben aus technischen Gründen keine Referenzfarben zur Verfügung. Vor der Hintergrund dieser Herausforderung ist der CrYV-Farbraum derart konzipiert, dass rote und grüne Farben entsprechend markant sind und durch Thresholding gezielt identifiziert werden können. Die Farbinformationen $C_p$ eines Patches werden anhand ihres Cr-Kanals analysiert und mit Referenzwerten typischer roter und grüner Kanalwerte verglichen:
+\begin{equation*}
+    \text{is\_color}(C_p, T_C, t_\text{red}, t_\text{green}) =
+    \begin{cases}
+        1 , & \text{wenn} ~\min\left( \vert~ t_\text{red} - C_p[0] ~\vert, \vert~ t_\text{green} - C_p[0]~\vert \right) < T_C, \\
+        0, & \text{sonst}
+    \end{cases}
+\end{equation*}
+\nomenclature{$t_\text{red} \in \mathbb{R}$}{Cr-Kanal-Referenzwert für rote Farbe.}
+\nomenclature{$t_\text{green} \in \mathbb{R}$}{Cr-Kanal-Referenzwert für grüne Farbe.}
+In dieser Gleichung stehen $t_\text{red}$ und $t_\text{green}$ für zu erwartende Referenzwerte roter und grüner Felder.
 
 % -------------------------------------------------------------------------------------------------
 
