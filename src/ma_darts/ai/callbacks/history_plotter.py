@@ -20,6 +20,7 @@ class HistoryPlotter(Callback):
         smooth_curves: bool = True,
         dark_mode: bool = True,
         log_scale: bool = False,
+        normalize: bool = False,
     ):
         super().__init__()
 
@@ -54,6 +55,7 @@ class HistoryPlotter(Callback):
         self.dividers = []
         self.epoch = 0
         self.log_scale = log_scale
+        self.normalize = normalize
 
         if dark_mode:
             plt.style.use("dark_background")
@@ -160,6 +162,12 @@ class HistoryPlotter(Callback):
             elif self.log_scale:
                 axs[i].set_yscale("log")
                 axs[i].yaxis.set_major_formatter(ticker.ScalarFormatter())
+
+            if self.normalize:
+                if  log_key == "loss":
+                    axs[i].set_ylim((min(train_log) * 0.9, 3 * 1.1))
+                else:
+                    axs[i].set_ylim((min(train_log) * 0.9, 1 * 1.1))
 
             # Draw train log
             draw_single_loss(axs[i], train_log, "train", "blue")
