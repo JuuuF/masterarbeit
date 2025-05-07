@@ -3,7 +3,7 @@
 \section{Implementierung}
 \label{sec:daten:implementierung}
 
-Nachdem die grundlegende Methodik zur Datenerstellung erläutert ist, widmet sich dieser Abschnitt einem Einblick in relevante Details der Implementierung. Diese dienen dem tiefgehenden Verständnis der Umsetzung der Datenerstellung. Es wird in einem ersten Unterabschnitt betrachtet, wie die Implementierung der Parameter in der Dartscheibe realisiert ist und wie die Texturen 
+Nachdem die grundlegende Methodik zur Datenerstellung erläutert ist, widmet sich dieser Abschnitt einem Einblick in relevante Details der Implementierung. Diese dienen dem tiefgehenden Verständnis der Umsetzung der Datenerstellung. Es wird in einem ersten Unterabschnitt betrachtet, wie die Implementierung der Parameter in der Dartscheibe realisiert ist und wie die Texturen
 
 % -------------------------------------------------------------------------------------------------
 
@@ -80,9 +80,9 @@ Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass lediglich g
 \subsection{Generierung von Dartpfeil-Positionen}  % ==============================================
 \label{sec:wie_dartpfeil_positionen}
 
-\todo{Einleitende Sätze: Generierung von Dartpfeil-Positionen}
+Die Positionierung der Dartpfeile auf der Dartscheibe ist ausschlaggebend für die Variabilität der Daten. In der Umsetzung der Platzierung werden unterschiedliche Techniken verwendet, um realistische Verteilungen und Erscheinungsbilder zu erzielen. \autoref{sec:dartpfeil_positionierung} thematisiert die Positionierung der Dartpfeile auf der Dartscheibe während die Bestimmung der Existenz von Dartpfeilen zur Variation der Anzahlen der Dartpfeile in \autoref{sec:dartpfeile_existenz} erklärt wird. Nachdem die Existenz und Position der Dartpfeile gesetzt ist, wird die Rotation in \autoref{sec:dartpfeile_rotation} erklärt. Zuletzt wird die Bestimmung der erzielten Punktzahl in \autoref{sec:dartpfeile_punktzahl} erläutert.
 
-\subsubsection{Positionierung}
+\subsubsection{Positionierung Der Dartpfeile auf der Dartscheibe}
 \label{sec:dartpfeil_positionierung}
 
 Eine Uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartsrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese wurden in Form von Heatmaps in die Szene eingearbeitet.
@@ -100,17 +100,20 @@ Bei der Findung von Positionen der Dartpfeile geschieht der Platzierung auf Grun
 
 Nach der Positionierung der Pfeile auf der Dartscheibe wird eine Nachverarbeitung vorgenommen, bei der Dartpfeile, die eine Überschneidung mit der Spinne aufweisen, von dieser entfernt werden. So wird sichergestellt, dass keine ambivalenten Dartpfeile existieren, die auf der Grenze zweier Felder eintreffen.
 
-\subsubsection{Existenz}
+\subsubsection{Bestimmung der Existenz von Dartpfeilen}
+\label{sec:dartpfeile_existenz}
 
 Die Existenz von Dartpfeilen wird durch zwei Faktoren gesteuert. Vor der Positionierung eines Dartpfeils wird für jeden Pfeil entschieden, ob dieser existiert oder nicht. Anhand einer Wahrscheinlichkeitsverteilung werden die Dartpfeile zufällig ausgeblendet. Durch diese Zufallsentscheidung wird eine dynamische Anzahl an Dartpfeilen generiert.
 
 Eine weitere Gegebenheit, unter der ein Dartpfeil ausgeblendet wird, ist die zu geringe Entfernung zu anderen Dartpfeilen. Liegt die Position eines Dartpfeils zu nahe an einem bereits platzierten Dartpfeil, wird dieser ausgeblendet. Es wurde sich gegen eine Adaption der Position entschieden, um zu starke Abweichung von Heatmaps und erneute Überschneidung der Spinne zu vermeiden; eine neue Positionierung des Dartpfeils wurde nicht eingesetzt, da die Möglichkeit besteht, dass die verwendete Heatmap nicht ausreichend Bereiche zur korrekten Platzierung aller Dartpfeile zur Verfügung stellt.
 
-\subsubsection{Rotation}
+\subsubsection{Rotation der Dartpfeile}
+\label{sec:dartpfeile_rotation}
 
-Alle verbleibenden Dartpfeile auf der Dartscheibe werden im Anschluss rotiert. Die Rotation des Dartpfeils entlang der horizontalen Achse verläuft uniform im Intervall $[-5\degree, 35\degree]$. Diese Rotation bestimmt den Einschlagswinkel des Dartpfeils. Entlang der vertikalen Achse erfahren die Dartpfeile eine normalverteilte Rotation mit einer Standardabweichung von $\sigma = \frac{15\degree}{3}$ um $0\degree$ mit einem Clipping einer maximalen Rotation von $\pm\,15\degree$. Die Rotation entlang ihrer eigenen Achse ist uniform im Intervall $[0\degree, 360\degree]$.
+Alle Dartpfeile, die nicht ausgeblendet wurden, werden nach ihrer Positionierung rotiert. Die Rotation erfolgt unabhängig voneinander entlang ihrer $x$- $y$- und $z$-Achse. Die Rotation des Dartpfeils entlang der horizontalen $x$-Achse verläuft uniform im Intervall $[-5\degree, 35\degree]$. Diese Rotation bestimmt den Einschlagswinkel des Dartpfeils. Entlang der vertikalen $y$-Achse erfahren die Dartpfeile eine normalverteilte Rotation mit einer Standardabweichung von $\sigma = \frac{15\degree}{3}$ um $0\degree$ mit einem Clipping einer maximalen Rotation von $\pm\,15\degree$. Die Rotation entlang ihrer $z$-Achse ist uniform im Intervall $[0\degree, 360\degree]$.
 
-\subsubsection{Scoring}
+\subsubsection{Ermittlung der Punktzahl}
+\label{sec:dartpfeile_punktzahl}
 
 Nachdem die Dartpfeile Positioniert und rotiert sind wird das Scoring der Szene vorgenommen. An diesem Punkt sind die Position der Dartscheibe $p_\text{Dartscheibe} \in \mathbb{R}^3$ und die Positionen aller Dartpfeile $p_{\text{Pfeil}, i} \in \mathbb{R}^3$ bekannt. Durch ihre Winkel und Abstände lassen sich die Dartfelder identifizieren, in denen die Dartpfeile eingetroffen sind. Auf diese Weise lässt sich für jeden Dartpfeil ermitteln, in welchem Feld dieser eingetroffen ist und welche Punktzahl durch ihn erzielt wurde.
 \nomenclature{$p_\text{Dartscheibe}$}{Position der Dartscheibe im Raum}
@@ -119,9 +122,10 @@ Nachdem die Dartpfeile Positioniert und rotiert sind wird das Scoring der Szene 
 \subsection{Ermittlung von Kameraparametern}  % ===================================================
 \label{sec:ermittlung_kameraparamater}
 
-\todo{Einleitende Sätze: Ermittlung von Kameraparametern}
+Die Kamera ist durch eine Vielzahl intrinsischer wie extrinsischer Parameter charakterisiert. Während einige Parameter statisch gesetzt oder durch einfache Wahrscheinlichkeitsverteilungen modelliert sind, zeigen andere Parameter wesentlich komplexere Erscheinungsbilder auf. Dieser Unterabschnitt ist dafür vorgesehen, die Umsetzungen der komplexen Parameter genauer darzustellen. Es wird begonnen mit der Betrachtung der Kamerapositionierung in \autoref{sec:kameraraum}. Das Setzen der Brennweite der Kamera wird in \autoref{sec:brennweite} beschrieben und die Wahl von Seitenverhältnis und Auflösung des exportierten Bildes wird in \autoref{sec:aufloesung} beschrieben. Danach folgt in \autoref{sec:fokus} die Wahl des Fokuspunkts und abschließend wird in \autoref{sec:motion_blur} die Umsetzung von verwackelten Bildern dargestellt.
 
 \subsubsection{Kameraraum}
+\label{sec:kameraraum}
 
 Für die Positionierung der Kamera in der Szene existiert ein Objekt, das den Bereich umfasst, innerhalb dessen die Kamera platziert werden kann. Dieser kegelförmige Kameraraum ist ausgehend vom Mittelpunkt der Dartscheibe platziert und durch verschiedene Parameter definiert:
 
@@ -149,6 +153,7 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 \end{figure}
 
 \subsubsection{Brennweite}
+\label{sec:brennweite}
 
 Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von 18mm bis 60mm. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
 \begin{align*}
@@ -189,14 +194,17 @@ Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen
 \end{center}
 
 \subsubsection{Seitenverhältnis und Auflösung}
+\label{sec:aufloesung}
 
 Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in dieser Arbeit berücksichtigt. So wird aus unterschiedlichen Seitenverhältnissen, die von Kameras in Mobiltelefonen verwendet werden, ausgewählt. Mögliche Seitenverhältnisse sind $4:3$, $16:9$, $1:1$, $3:2$, $2:1$, $21:9$ und $5:4$. Die Ausrichtung der Kamera ist in $\nicefrac{2}{3}$ der Aufnahmen vertikal und in $\nicefrac{1}{3}$ der Aufnahmen horizontal. Die Auflösung der Kamera wird uniform im Intervall $[1000\,\text{px}, 4000\,\text{px}]$ gewählt, welches die Pixelzahl entlang der längeren Seite angibt.
 
 \subsubsection{Fokuspunkt}
+\label{sec:fokus}
 
 Der Fokuspunkt der Kamera ist in der Szene durch ein eigenes Objekt definiert, sodass die Kamera den Ursprung dieses Objektes fokussiert. Dieses Objekt wird im Umfeld um die Dartscheibe platziert. Ausgehend vom Dartscheibenmittelpunkt wird es normalverteilt mit den Standardabweichungen $\sigma_x = \sigma_z = \frac{r_\text{D}}{3}$ und $\sigma_y = 2\,\text{cm}$ platziert. $x$- und $z$-Positionen liegen dabei auf der Dartscheibe, die $y$-Achse verläuft parallel zur Normalen der Dartscheibe und $r_\text{D}$ ist der Gesamtdurchmesser der Dartscheibe. Der Kamerafokus ist damit grob auf den Mittelpunkt der Dartscheibe gerichtet, jedoch nicht deterministisch.
 
 \subsubsection{Verwackelungen}
+\label{sec:motion_blur}
 
 Zuletzt werden Verwackelte Kamerabilder simuliert. Mit einer Wahrscheinlichkeit von $10\%$ wird die Kamera während der Aufnahme bewegt, wodurch verschwommene Bilder aufgenommen werden. Die Kamera wird normalverteilt mit einer Standardabweichung von $\frac{2\,\text{cm}}{3}$ in $x$-, $y$- und $z$-Position verschoben. Durch diese Verschiebung entstehen Aufnahmen, die teilweise verschwommen sind.
 

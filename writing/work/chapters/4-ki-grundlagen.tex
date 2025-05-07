@@ -92,11 +92,12 @@ Beispiele für Augmentierung von Bilddaten sind die Anwendung affiner Transforma
 \subsection{Die YOLOv8-Architektur}
 \label{sec:was_yolov8}
 
-- Anwendungsbereich
-- Multi-Scale-Output
-- Bounding Boxes
-- Non-Maximum-Suppression
+YOLOv8 ist eine Netzwerkarchitektur, die 2023 durch Ultralytics außerhalb des Rahmens einer gesonderten wissenschaftlichen Aufarbeitung veröffentlicht wurde\footnote{Siehe: \url{https://github.com/ultralytics/ultralytics/issues/2572}}.Mit YOLOv8 wurde eine Netzwerkarchitektur vorgestellt, die Objekterkennung durch Anchor-Free-Erkennungsmechanismen in Echtzeit und in hoher Genauigkeit ermöglicht \cite{yolov1_to_yolov8}. Sie wurde als Verbesserung der YOLOv5-Architektur vorgestellt und ist für den Einsatz in Edge-Devices optimiert \cite{yolov8_comparison}.
 
-\todo{YOLOv8-Architektur beschreiben}
+Der Aufbau von YOLOv8 folgt einem Design, welches in Backbone, Neck und Head unterteilt ist. Als Backbone wird eine erweiterte Version des CSPDarknet-Backbones verwendet während derNeck auf dem \ac{pan} basiert. Mit dem Aufbau von YOLOv8 wird das Fully-Convolutional-Paradigma neuronaler Netze verfolgt, welches die Verarbeitung von Bilddaten beliebiger Dimensionen ermöglicht.
+
+Die Ausgaben des Netzwerks verfolgen einen Multi-Scale-Ansatz, durch welchen die Erkennung von Objekten unterschiedlicher Größen durch Rasterung der Eingabebilder in unterschiedliche Größen geschieht. Das Bild wird in Zellen unterschiedlicher Skalierungen unterteilt und es werden Vorhersagen für jede Zelle hinsichtlich Mittelpunkt eines Objekts, seiner Klasse und der Ausdehnung des Objekte über das Bild durch die Angabe einer Bounding Box. Die Ausgaben des Netzwerks werden durch etablierte \ac{nms} nachverarbeitet.
+
+Der Einsatzbereich von YOLOv8 spezifiziert sich auf Echtzeitanwendungen, in welchen robuste und akkurate Objekterkennung notwendig ist und in welchen die zur Verfügung stehenden Ressourcen für das Deployment dieses Netzwerks begrenzt sind. Beispiele solcher Anwendungen sind der Einsatz in autonomen Fahrzeugen unt der Objekterkennung in Drohnen \cite{yolov8_car,yolov8_drone}.
 
 % -------------------------------------------------------------------------------------------------
