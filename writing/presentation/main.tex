@@ -1,0 +1,71 @@
+\documentclass[10pt, aspectratio=169]{beamer}
+
+\usetheme[
+	titleformat=regular,		% regular*,smallcaps,allsmallcaps,allcaps
+	sectionpage=progressbar,	% none,simple,progressbar*
+	subsectionpage=none,		% none*,simple,progressbar
+	numbering=counter,			% none,counter*,fraction
+	progressbar=frametitle,		% none*,head,frametitle,foot
+	block=fill,					% transparent*,fill
+	background=light			% dark,light*
+]{metropolis}
+
+\usepackage[ngerman]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+% \usepackage{microtype}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{setspace} % set spacing
+
+\usepackage{caption}
+\captionsetup{font=small}
+
+% \usepackage{enumitem}
+% \newcommand\labelitemi{--}
+
+\definecolor{cau-purple}{HTML}{98007D}
+\setbeamercolor{progress bar}{fg=cau-purple}
+\setbeamercolor{alerted text}{fg=cau-purple}
+\setbeamercolor{background canvas}{bg=white}
+
+\setbeamertemplate{frame footer}{CAU Kiel}
+
+% =================================================================================================
+    
+\title{Nutzung von realitätsnahen, synthetisch erzeugten Daten zur Verbesserung des KI-gestützten Scorings von Steeldarts in einem Single-Camera-System}
+\subtitle{Präsentation zur Masterarbeit}
+\author{Justin Fürstenwerth}
+\institute[CAU Kiel]{
+    Christian-Albrechts-Universität zu Kiel\\
+    Arbeitsgruppe Intelligente Systeme\\
+    Betreuer: Simon Reichhuber
+}
+\date{15. Mai 2025}
+
+% =================================================================================================
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Aufbau der Präsentation}
+    \tableofcontents
+\end{frame}
+
+\input{chapters/uebersicht}
+\input{chapters/daten}
+\input{chapters/cv}
+\input{chapters/nn}
+\input{chapters/ergebnisse}
+\input{chapters/diskussion}
+\input{chapters/fazit}
+
+\begin{frame}[standout]
+    Fragen?
+\end{frame}
+
+\end{document}
