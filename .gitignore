@@ -47,6 +47,7 @@ data/cache/
 *.auxlock
 *.tod
 *.nav
+*.snm
 
 # nomenclature files
 *.ilg
