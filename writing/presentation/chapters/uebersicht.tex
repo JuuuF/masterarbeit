@@ -16,7 +16,7 @@
             \begin{itemize}
                 \item automatisches Dart-Scoring von Steeldarts-Runden
                 \item Eingabe: Einzelnes Bild der Dartscheibe
-                \item Ausgabe: Getroffene Felder + erzielte Punktzahl
+                \item Ausgabe: getroffene Felder + erzielte Punktzahl
             \end{itemize}
 
         \end{column}
@@ -27,19 +27,19 @@
 
     \begin{columns}
         \begin{column}{0.6\linewidth}
-            
-            \textbf{DeepDarts}: System für automatisches Dartscoring
+
+            \textbf{DeepDarts}: System für automatisches Dart-Scoring
             \begin{itemize}
-                \item verspricht gute Ergebnisse ($\ge 80\%$ Korrektheit der Vorhersagen)
+                \item verspricht gute Ergebnisse ($>80\%$ Korrektheit)
                 \item Einsatz neuronaler Netze zur Erkennung von Keypoints (Dartscheibe + Dartpfeile)
             \end{itemize}
 
         \end{column}
         \begin{column}{0.4\linewidth}
-            
+
             \begin{figure}
                 \centering
-                \includegraphics[height=0.45\textheight]{imgs/dd_keypoints.pdf}
+                \includegraphics[width=0.8\linewidth]{imgs/dd_keypoints.pdf}
                 \vspace*{-0.2cm}
                 \caption{Keypoint-Detection von DeepDarts}
             \end{figure}
@@ -50,31 +50,26 @@
     \vspace*{-0.2cm}
 
     \visible<2->{
-        \begin{block}{Ursprünglicher Anstoß}
-            Verbesserung der Erkennung von Edge-Cases
+        \begin{block}{Problem}
+            Einseitige Datenlage + massives Overfitting $\rightarrow$ keine Generalisierbarkeit
         \end{block}
     }
 
-    \visible<3->{
-        \begin{block}{Realität}
-            Neuinterpretation des gesamten Systems aufgrund von Overfitting
-        \end{block}
-    }
 \end{frame}
 
 \begin{frame}{Projektübersicht}
     \begin{figure}
         \centering
-        \includegraphics[height=0.8\textheight]{imgs/ma_project_structure.pdf}
+        \includegraphics[width=\linewidth]{imgs/ma_project_structure.pdf}
         \caption{Visualisierung der Projektstruktur}
     \end{figure}
 \end{frame}
 
 \begin{frame}{Forschungsfragen}
     \begin{itemize}
-        \item<1-> In welcher Qualität lassen sich automatisch Daten erstellen?
-        \item<2-> Wie zuverlässig kann eine algorithmische Normalisierung der Dartscheiben erarbeitet werden?
-        \item<3-> Wie zuverlässig ist ein auf den synthetischen Daten trainiertes neuronales Netz?
-        \item<4-> Kann durch die erarbeiteten Systeme eine Verbesserung gegenüber DeepDarts erreicht werden?
+        \item<2-> In welcher Qualität lassen sich automatisch Daten erstellen?
+        \item<3-> Wie zuverlässig kann eine algorithmische Normalisierung der Dartscheiben erarbeitet werden?
+        \item<4-> Wie zuverlässig ist ein auf den synthetischen Daten trainiertes neuronales Netz?
+        \item<5-> Kann durch die erarbeiteten Systeme eine Verbesserung gegenüber DeepDarts erreicht werden?
     \end{itemize}
 \end{frame}

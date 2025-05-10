@@ -5,7 +5,7 @@
         \begin{column}{0.6\linewidth}
 
             \begin{block}{Ziel}
-                Vielzahl korrekt annotierter Daten für das Training eines neuronalen Netzes
+                Automatische Datenerstellung mit Annotationen
             \end{block}
 
             \begin{block}{Herangehensweise}
@@ -25,76 +25,136 @@
     \end{columns}
 \end{frame}
 
+% \begin{frame}{Datenerstellung}
+%     \begin{figure}
+%         \centering
+%         \includegraphics[height=0.7\textheight]{imgs/blender.png}
+%         \caption{Blender-Szene}
+%     \end{figure}
+% \end{frame}
 
-\begin{frame}{Datenerstellung}
+\begin{frame}{Zusammensetzung der Szene}
+    \begin{columns}
+        \begin{column}{0.6\linewidth}
+
+            Objekte in der 3D-Szene:
+            \begin{itemize}\footnotesize
+                \setlength\itemsep{0em}
+                \item<2-> Dartscheibe
+                      \vspace*{-0.1cm}
+                      \begin{itemize}\footnotesize
+                          \item Prozedurale Materialien
+                          \item Simulation von Alter und Abnutzung
+                      \end{itemize}
+                      \vspace*{-0.15cm}
+                \item<3-> Dartpfeile
+                      \vspace*{-0.1cm}
+                      \begin{itemize}\footnotesize
+                          \item Zufällige Zusammensetzung aus unterschiedlichen Bestandteilen
+                          \item Positionierung anhand von Heatmaps
+                      \end{itemize}
+                      \vspace*{-0.15cm}
+                \item<4-> Kamera
+                      \vspace*{-0.1cm}
+                      \begin{itemize}\footnotesize
+                          \item Zufällige Position in gegebenem Raum
+                          \item Randomisierung von Brennweite, Fokuspunkt, Auflösung, ISO etc.
+                      \end{itemize}
+                \item<5-> Beleuchtung:
+                      \vspace*{-0.1cm}
+                      \begin{itemize}\footnotesize
+                          \item $>200$ Environment Maps
+                          \item Kamerablitz, Deckenbeleuchtung, Spotlight, Ringlicht
+                      \end{itemize}
+                      \vspace*{-0.15cm}
+            \end{itemize}
+
+        \end{column}
+        \begin{column}{0.4\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.75\textheight]{imgs/blender.png}
+                \caption{3D-Szene}
+            \end{figure}
+
+        \end{column}
+    \end{columns}
+
+\end{frame}
+
+% \begin{frame}{Datenerstellung}
+%     \begin{columns}
+%         \begin{column}{0.33\linewidth}
+%             \begin{figure}
+%                 \centering
+%                 \includegraphics[width=\textwidth]{imgs/dartscheibe_a=0.png}
+%                 \caption{Dartscheibe mit geringem Alter}
+%             \end{figure}
+%         \end{column}
+%         \begin{column}{0.33\linewidth}
+%             \begin{figure}
+%                 \centering
+%                 \includegraphics[width=\textwidth]{imgs/dartscheibe_a=1.png}
+%                 \caption{Dartscheibe mit hohem Alter}
+%             \end{figure}
+%         \end{column}
+%         \begin{column}{0.33\linewidth}
+%             \begin{figure}
+%                 \centering
+%                 \includegraphics[width=\textwidth]{imgs/darts_examples.png}
+%                 \caption{Erstellte Dartpfeile}
+%             \end{figure}
+%         \end{column}
+%     \end{columns}
+% \end{frame}
+
+\begin{frame}{Ergebnisse: Beispiele}
     \begin{figure}
         \centering
-        \includegraphics[height=0.6\textheight]{imgs/blender.png}
-        \caption{Blender-Szene}
+        \includegraphics[height=0.75\textheight]{imgs/example_renders.pdf}
+        \caption{Exemplarische Render-Ergebnisse}
     \end{figure}
 \end{frame}
 
-\begin{frame}{Zusammensetzung der Szene}
-    Weitreichende Randomisierung der Szene
-    \begin{itemize}\footnotesize
-        \setlength\itemsep{0em}
-        \item Dartscheibe
-              \vspace*{-0.1cm}
-              \begin{itemize}\footnotesize
-                  \item Prozedurale Materialien
-                  \item Simulation von Alter und Abnutzung
-              \end{itemize}
-              \vspace*{-0.15cm}
-        \item Dartpfeile
-              \vspace*{-0.1cm}
-              \begin{itemize}\footnotesize
-                  \item Zufällige Zusammensetzung aus unterschiedlichen Bestandteilen
-                  \item Positionierung anhand von Heatmaps
-              \end{itemize}
-              \vspace*{-0.15cm}
-        \item Beleuchtung:
-              \vspace*{-0.1cm}
-              \begin{itemize}\footnotesize
-                  \item $>200$ Environment Maps
-                  \item Kamerablitz, Deckenbeleuchtung, Spotlight, Ringlicht
-              \end{itemize}
-              \vspace*{-0.15cm}
-        \item Kamera
-              \vspace*{-0.1cm}
-              \begin{itemize}\footnotesize
-                  \item Zufällige Position in gegebenem Raum
-                  \item Randomisierung von Brennweite, Fokuspunkt, Auflösung, ISO etc.
-              \end{itemize}
-    \end{itemize}
-
-\end{frame}
-
-\begin{frame}{Datenerstellung}
+\begin{frame}{Ergebnisse: Auswertung}
     \begin{columns}
-        \begin{column}{0.33\linewidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{imgs/dartscheibe_a=0.png}
-                \caption{Dartscheibe mit geringem Alter}
-            \end{figure}
+        \begin{column}{0.7\linewidth}
+
+            Quantitative Auswertung nicht aussagekräftig möglich
+
+            \vspace*{1em}
+
+            \visible<2->{
+                Qualitative Auswertung:
+                \begin{itemize}
+                    \item Realistische Simulation von Dartscheiben + Dartpfeilen
+                    \item Variable Darstellungen
+                    \item Annähernd realistisches Aussehen
+                    \item Nicht fotorealistisch
+                \end{itemize}
+            }
+
+            \vspace*{1em}
+
+            \visible<3->{
+                Korrektheit:
+                \begin{itemize}
+                    \item Korrekte Normalisierung der Bilder
+                    \item Korrekte Annotationen der Dartpfeile
+                    \item Metainformationen über Positionen + Parameter
+                \end{itemize}
+            }
+
         \end{column}
-        \begin{column}{0.33\linewidth}
+        \begin{column}{0.3\linewidth}
+
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{imgs/dartscheibe_a=1.png}
-                \caption{Dartscheibe mit hohem Alter}
+                \includegraphics[height=0.75\textheight]{imgs/exmaple_renders_2.pdf}
+                \caption{Auswahl gerenderter Bilder}
             \end{figure}
-        \end{column}
-        \begin{column}{0.33\linewidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{imgs/darts_examples.png}
-                \caption{Erstellte Dartpfeile}
-            \end{figure}
+
         \end{column}
     \end{columns}
-\end{frame}
-
-\begin{frame}{Ergebnisse}
-    
 \end{frame}

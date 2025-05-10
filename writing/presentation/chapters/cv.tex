@@ -1,9 +1,78 @@
 \section{Thema II: Normalisierung durch herkömmliche Computer Vision}
 
-\begin{frame}{Test}
-    test
+\begin{frame}{Motivation}
+
+    \begin{columns}
+        \begin{column}{0.6\linewidth}
+
+            Geometrie der Dartscheibe:
+            \begin{itemize}
+                \item Kontrastreiche Felder
+                \item Homogener Aufbau
+            \end{itemize}
+
+            \begin{block}{Ziel}
+                Normalisierung der Dartscheibe
+            \end{block}
+
+            \begin{block}{Herangehensweise}
+                Verarbeitungsschritte: Kanten, Linien, Orientierung
+            \end{block}
+
+        \end{column}
+        \begin{column}{0.4\linewidth}
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.75\textheight]{imgs/cv_target.pdf}
+                \caption{Ziel der Normalisierung}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Herangehensweise: Kantenerkennung}
+    \begin{figure}
+        \centering
+        \includegraphics[height=0.75\textheight]{../work/imgs/cv/methodik/edges.pdf}
+        \caption{Kantenerkennung der CV-Pipeline}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Herangehensweise: Linienverarbeitung}
+    \begin{figure}
+        \centering
+        \includegraphics[height=0.75\textheight]{../work/imgs/cv/methodik/lines.pdf}
+        \caption{Linienverarbeitung der CV-Pipeline}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Herangehensweise: Orientierung}
+    \begin{figure}
+        \centering
+        \includegraphics[height=0.75\textheight]{imgs/orientation.pdf}
+        \caption{Orientierung der CV-Pipeline}
+    \end{figure}
 \end{frame}
 
 \begin{frame}{Ergebnisse}
-    
+    \begin{columns}
+        \begin{column}{0.5\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.75\textheight]{imgs/cv_sucess.pdf}
+                \caption{Erfolge der Normalisierung}
+            \end{figure}
+
+        \end{column}
+        \begin{column}{0.5\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.5\textheight]{imgs/cv_accuracy.pdf}
+                \caption{Genauigkeit der Normalisierung}
+            \end{figure}
+
+        \end{column}
+    \end{columns}
 \end{frame}
