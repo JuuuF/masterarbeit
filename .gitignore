@@ -46,6 +46,7 @@ data/cache/
 *.md5
 *.auxlock
 *.tod
+*.nav
 
 # nomenclature files
 *.ilg
