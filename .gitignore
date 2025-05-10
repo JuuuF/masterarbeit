@@ -52,6 +52,9 @@ data/cache/
 *.nlo
 *.nls
 
+# Work PDFs
+!writing/work/out/main.pdf
+
 # GIMP
 *.xcf
 
