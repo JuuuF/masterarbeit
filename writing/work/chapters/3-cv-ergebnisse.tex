@@ -39,20 +39,20 @@ Durch diese Metrik ist eine Quantifizierung der Ähnlichkeit zweier Homographien
 - es geht darum, Dartscheiben zu entzerren, nicht darum, sie zu identifizieren
 - dass Dartscheiben in den Bilden vorhanden sind, wird als Voraussetzung für die Verwendung des Systems angesehen
 
-Zur Evaluierung des Algorithmus werden Daten benötigt. Die Daten dieser Auswertung stammen aus 5 unterschiedlichen Quellen und werden voneinander getrennt gehalten. Dies dient der Identifizierung von einerseits Verzerrungen auf Daten und andererseits Schwachstellen in dem getesteten System. Die Datenquellen sind in \autoref{tab:datenquellen} aufgelistet und stellen sich zusammen aus synthetischen Daten sowie Daten des DeepDarts-Systems.
+Zur Evaluierung des Algorithmus werden Daten benötigt. Die Daten dieser Auswertung stammen aus 5 unterschiedlichen Quellen und werden voneinander getrennt gehalten. Dies dient der Identifizierung von einerseits Verzerrungen auf Daten und andererseits Schwachstellen in dem getesteten System. Die Datenquellen sind in \autoref{tab:datenquellen_cv} aufgelistet und stellen sich zusammen aus synthetischen Daten sowie Daten des DeepDarts-Systems.
 
 Die Daten beinhalten lediglich positive Datensätze, indes in jedem Bild eine Dartscheibe vorhanden ist. Aufgabe der Systems ist nicht die Identifizierung von Dartscheiben, sondern die Entzerrung dieser, sodass eine Existenz einer Dartscheibe in den Bildern vorausgesetzt wird.
 
 \begin{table}
     \centering
     \begin{tabular}{r||c|cc|cc}
-        \multirow{2}{*}{Datenquelle} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Gerenderte\\ Bilder\end{tabular}} & \multicolumn{2}{c|}{DeepDarts-D1} & \multicolumn{2}{c}{DeepDarts-D2}                        \\
+        \multirow{2}{*}{Datenquelle} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Gerenderte\\ Bilder\end{tabular}} & \multicolumn{2}{c|}{DeepDarts-d1} & \multicolumn{2}{c}{DeepDarts-d2}                        \\
                                      &                                                                              & Validierung                       & Test                             & Validierung & Test   \\ \hline
         Anzahl Bilder                & 2048                                                                         & 1000                              & 2000                             & 70          & 150    \\
         Automatische Annotation      & \cmark                                                                       & \xmark                            & \xmark                           & \xmark      & \xmark
     \end{tabular}
     \caption{Datenquellen für die Auswertung der Dartscheibenentzerrungen.}
-    \label{tab:datenquellen}
+    \label{tab:datenquellen_cv}
 \end{table}
 
 % -------------------------------------------------------------------------------------------------
@@ -64,36 +64,43 @@ Die quantitative Auswertung ist unterteilt in die Abschnitte Geschwindigkeit, Re
 
 Die Auswertungen sind jeweils unterteilt in das in dieser Thesis erarbeiteten System und das DeepDarts-System, um die Unterschiede der Genauigkeiten darzustellen. Da das DeepDarts-System ein Single-Shot-Neural-Network ist, in welchem die Normalisierung und die Lokalisierung der Dartpfeile nicht voneinander getrennt betrachtet werden können, wird die Geschwindigkeit der Normalisierung gleichgesetzt mit der Gesamtdauer der Vorhersage.
 
-Ausgeführt wurde die Auswertung auf einer AMD Ryzen 3 3100 CPU. Es wurde trotz der Möglichkeit einer GPU-Ausführung des DeepDarts-Systems keine Grafikkarte verwendet, um die Vergleichbarkeit der Systeme unter der Verwendung der selben Hardware zu gewährleisten.
+Ausgeführt wurde die Auswertung auf einer AMD Ryzen 3 3100 CPU. Es wurde trotz der Möglichkeit einer GPU-Ausführung des DeepDarts-Systems keine Grafikkarte verwendet, um die Vergleichbarkeit der Systeme unter der Verwendung der selben Hardware zu gewährleisten. Aufgrund des Nichtdeterminismus des Algorithmus durch die Verwendung von RANSAC wurden 5 Durchläufe der Auswertung vorgenommen, deren Mittelwerte zur Evaluation verwendet wurden.
 
 \subsubsection{Geschwindigkeit der Vorhersagen} % -------------------------------------------------
 
 \pgfplotstableread[col sep=comma]{
     system,       Render-Daten, d1-val, d1-test, d2-val, d2-test
-    Thesis,       0.637,        0.545,  0.562,   0.525,  0.514
+    Thesis,       0.433,        0.341,  0.358,   0.321,  0.310
     DeepDarts-d1, 0.242,        0.132,  0.136,   0.124,  0.137
     DeepDarts-d2, 0.236,        0.132,  0.133,   0.119,  0.133
 }\ExecutionTimes
 
-Die Ausführungszeiten der jeweiligen Systeme sind in \autoref{fig:cv_dauer} dargestellt. Die Ausführungszeiten von DeepDarts liegen mit durchschnittlich $131\,\text{ms}$ auf den DeepDarts-Datensätzen und $239\,\text{ms}$ auf den gerenderten Daten weitaus unter den Zeiten des Systems dieser Thesis. Die Ausführungszeiten des Systems dieser Thesis liegen bei durchschnittlich $537\,\text{ms}$ für die DeepDarts-Daten und $637\,\text{ms}$ für die Render-Daten. Die Unterschiede der Inferenzzeiten der Datenquellen ergeben sich aus den Abmessungen der Bilder. Die DeepDarts-Daten sind bereits vorverarbeitet, sodass sie ein quadratisches Seitenverhältnis mit einer Auflösung von $800 \times 800\,\text{px}$ aufweisen. Die gerenderten Daten hingegen sind für diese Auswertung in keinerlei Weise vorverarbeitet und werden den Systemen in den originalen Auflösungen präsentiert. Die Seitenlängen von Bildern der Render-Daten betragen mindestens $434\,\text{px}$, maximal $3998\,\text{px}$ und die durchschnittliche Seitenlänge beträgt $2147\,\text{px}$. Verteilungen der Seitenverhältnisse sind in \autoref{img:cv_render_seiten} dargestellt.
+Die Ausführungszeiten der jeweiligen Systeme sind in \autoref{fig:cv_dauer} dargestellt. Die Ausführungszeiten von DeepDarts liegen mit durchschnittlich $131\,\text{ms}$ auf den DeepDarts-Datensätzen und $239\,\text{ms}$ auf den gerenderten Daten weitaus unter den Zeiten des Systems dieser Thesis. Die Ausführungszeiten des Systems dieser Thesis liegen bei durchschnittlich $333\,\text{ms}$ für die DeepDarts-Daten und $433\,\text{ms}$ für die Render-Daten. Die Ausführungszeiten des in dieser Thesis erarbeiteten Algorithmus belaufen sich im Mittel etwa auf die doppelte Dauer des DeepDarts-Ansatzes, jedoch variiert dieser Faktor stark basierend auf der Datenquelle.
+
+Die Unterschiede der Inferenzzeiten der Datenquellen ergeben sich aus den Abmessungen der Bilder. Die DeepDarts-Daten sind bereits vorverarbeitet, sodass sie ein quadratisches Seitenverhältnis mit einer Auflösung von $800 \times 800\,\text{px}$ aufweisen. Die gerenderten Daten hingegen sind für diese Auswertung in keinerlei Weise vorverarbeitet und werden den Systemen in den originalen Auflösungen präsentiert. Die Seitenlängen von Bildern der Render-Daten betragen mindestens $434\,\text{px}$, maximal $3998\,\text{px}$ und die durchschnittliche Seitenlänge beträgt $2147\,\text{px}$. Verteilungen der Seitenverhältnisse sind in \autoref{img:cv_render_seiten} dargestellt.
 
 \begin{figure}
     \centering
     \begin{tikzpicture}
         \begin{axis}[
-                width=\textwidth, height=6cm,
+                width=0.8\textwidth,
+                height=6cm,
                 ybar,
-                bar width=0.35cm,
-                enlarge x limits=0.15,
-                ylabel={Zeit (s/Sample)},
+                bar width=0.4cm,
+                enlarge x limits=0.25,
+                ylabel={Zeit [s/Sample]},
                 symbolic x coords={Thesis,DeepDarts-d1,DeepDarts-d2},
-                xtick=data,
+                xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
+                legend style={at={(1.02, 1.00)}, anchor=north west},
+                every axis plot/.append style={
+                        single ybar legend,
+                    },
             ]
-            \addplot table[x=system,y=Render-Daten] {\ExecutionTimes};
-            \addplot table[x=system,y=d1-val]       {\ExecutionTimes};
-            \addplot table[x=system,y=d1-test]      {\ExecutionTimes};
-            \addplot table[x=system,y=d2-val]       {\ExecutionTimes};
-            \addplot table[x=system,y=d2-test]      {\ExecutionTimes};
+            \addplot+[draw=black, fill=bar_1]      table[x=system,y=Render-Daten] {\ExecutionTimes};
+            \addplot+[draw=black, fill=bar_3]      table[x=system,y=d1-val]       {\ExecutionTimes};
+            \addplot+[draw=black, fill=bar_3!60]   table[x=system,y=d1-test]      {\ExecutionTimes};
+            \addplot+[draw=black, fill=bar_4]      table[x=system,y=d2-val]       {\ExecutionTimes};
+            \addplot+[draw=black, fill=bar_4!60]   table[x=system,y=d2-test]      {\ExecutionTimes};
             \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
         \end{axis}
     \end{tikzpicture}
@@ -112,63 +119,101 @@ Die tatsächlichen Ausführungszeiten der Systeme sind stark abhängig von der I
 
 \subsubsection{Findung einer Normalisierung} % ----------------------------------------------------
 
-\begin{figure}[ht]
+\pgfplotstableread[col sep=comma]{
+    system,         Render-Daten,   d1-val,     d1-test,    d2-val,     d2-test
+    Thesis,         97.17,          100,        99.8,       100,        99.33
+    DeepDarts-d1,   0,              100,        100,        0,          0
+    DeepDarts-d2,   1.03,           36.8,       90.85,      100,        100
+}\CVNorm
+
+\begin{figure}
     \centering
     \begin{tikzpicture}
-        \matrix (m) [
-            matrix of nodes,
-            nodes in empty cells,
-            row sep=0.5cm,
-            column sep=0.5cm,
-            nodes={anchor=center}
-        ]
-        {
-                         & Diese Thesis & DeepDarts-$d_1$ & DeepDarts-$d_2$ \\
-            % -----------------------------------
-            Render-Daten &
-            \drawpie{97/my_green, 3/my_red}
-                         &
-            \drawpie{100/my_red, 0/my_green}
-                         &
-            \drawpie{98/my_red, 2/my_green}                                 \\
-
-            % -----------------------------------
-            $d_1$-val    &
-            \drawpie{100/my_green, 0/my_red}
-                         &
-            \drawpie{100/my_green, 0/my_red}
-                         &
-            \drawpie{37/my_green, 63/my_red}                                \\
-
-
-            % -----------------------------------
-            $d_1$-test   &
-            \drawpie{100/my_green, 0/my_red}
-                         &
-            \drawpie{100/my_green, 0/my_red}
-                         &
-            \drawpie{83/my_green, 17/my_red}                                \\
-
-            % -----------------------------------
-            $d_2$-val    &
-            \drawpie{100/my_green, 0/my_red}
-                         &
-            \drawpie{100/my_red, 0/my_green}
-                         &
-            \drawpie{100/my_green, 0/my_red}                                \\
-
-            % -----------------------------------
-            $d_2$-test   &
-            \drawpie{99/my_green, 1/my_red}
-                         &
-            \drawpie{100/my_red, 0/my_green}
-                         &
-            \drawpie{100/my_green, 0/my_red}                                \\
-        };
+        \begin{axis}[
+                width=0.8\textwidth,
+                height=6cm,
+                ybar,
+                ymin=1,
+                ymax=110,
+                bar width=0.4cm,
+                enlarge x limits=0.25,
+                ylabel={Normalisierungen [\%]},
+                symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
+                xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
+                legend style={at={(1.02, 1.00)}, anchor=north west},
+                every axis plot/.append style={
+                        single ybar legend,
+                    },
+            ]
+            \addplot+[draw=black, fill=bar_1]      table[x=system,y=Render-Daten]  {\CVNorm};
+            \addplot+[draw=black, fill=bar_3]      table[x=system,y=d1-val]        {\CVNorm};
+            \addplot+[draw=black, fill=bar_3!60]   table[x=system,y=d1-test]       {\CVNorm};
+            \addplot+[draw=black, fill=bar_4]      table[x=system,y=d2-val]        {\CVNorm};
+            \addplot+[draw=black, fill=bar_4!60]   table[x=system,y=d2-test]       {\CVNorm};
+            \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
+        \end{axis}
     \end{tikzpicture}
-    \caption{Auswertung der Findung von Normalisierungen auf Daten. Grüne Bereiche stehen für erfolgreiche Normalisierungen, rote Bereiche für fehlgeschlagene Normalisierungen.}
+    \caption{Auswertung der Fähigkeit unterschiedlicher Systeme, Normalisierungen für Daten zu finden.}
     \label{fig:cv_normalisierung}
 \end{figure}
+
+% \begin{figure}[ht]
+%     \centering
+%     \begin{tikzpicture}
+%         \matrix (m) [
+%             matrix of nodes,
+%             nodes in empty cells,
+%             row sep=0.5cm,
+%             column sep=0.5cm,
+%             nodes={anchor=center}
+%         ]
+%         {
+%                          & Diese Thesis & DeepDarts-$d_1$ & DeepDarts-$d_2$ \\
+%             % -----------------------------------
+%             Render-Daten &
+%             \drawpie{97/my_green, 3/my_red}
+%                          &
+%             \drawpie{100/my_red, 0/my_green}
+%                          &
+%             \drawpie{98/my_red, 2/my_green}                                 \\
+
+%             % -----------------------------------
+%             $d_1$-val    &
+%             \drawpie{100/my_green, 0/my_red}
+%                          &
+%             \drawpie{100/my_green, 0/my_red}
+%                          &
+%             \drawpie{37/my_green, 63/my_red}                                \\
+
+
+%             % -----------------------------------
+%             $d_1$-test   &
+%             \drawpie{100/my_green, 0/my_red}
+%                          &
+%             \drawpie{100/my_green, 0/my_red}
+%                          &
+%             \drawpie{83/my_green, 17/my_red}                                \\
+
+%             % -----------------------------------
+%             $d_2$-val    &
+%             \drawpie{100/my_green, 0/my_red}
+%                          &
+%             \drawpie{100/my_red, 0/my_green}
+%                          &
+%             \drawpie{100/my_green, 0/my_red}                                \\
+
+%             % -----------------------------------
+%             $d_2$-test   &
+%             \drawpie{99/my_green, 1/my_red}
+%                          &
+%             \drawpie{100/my_red, 0/my_green}
+%                          &
+%             \drawpie{100/my_green, 0/my_red}                                \\
+%         };
+%     \end{tikzpicture}
+%     \caption{Auswertung der Findung von Normalisierungen auf Daten. Grüne Bereiche stehen für erfolgreiche Normalisierungen, rote Bereiche für fehlgeschlagene Normalisierungen.}
+%     \label{fig:cv_normalisierung}
+% \end{figure}
 
 In diesem Teil der Auswertung wird die Fähigkeit der Systeme betrachtet, eine Normalisierung der Bilder durchzuführen. Eine erfolgreiche Normalisierung bezieht sich für diese Auswertung lediglich darauf, ob ausreichend Orientierungspunkte für eine Normalisierung identifiziert werden konnten. Das DeepDarts-System muss dafür in der Lage sein, drei Orientierungspunkte zu identifizieren, da das System einem fehlenden Orientierungspunkt durch Interpolation ergänzt. Für das System dieser Thesis beinhaltet diese Anforderung die Lokalisierung des Mittelpunkts und mindestens drei weiterer Orientierungspunkte. Die Wahl der Orientierungspunkte ist dabei bei dem DeepDarts-System auf vier vordefinierte Punkte festgelegt während das hier erarbeitete System 60 mögliche Punkte erkennen kann.
 
@@ -180,7 +225,7 @@ Diese Auswertung stärkt die Erkenntnis des Overfittings von DeepDarts und zeigt
 
 \pgfplotstableread[col sep=comma]{
     system,       Render-Daten, d1-val, d1-test, d2-val, d2-test
-    Thesis,       17.234,       3.104,  3.148,   3.181,  3.690
+    Thesis,       32.465,       2.879,  2.963,   3.080,  3.284
     DeepDarts-d1, ,             0.289,  0.549,   ,
     DeepDarts-d2, 1568.744,     1.499,  1.591,   0.828,  1.305
 }\Similarities
@@ -189,24 +234,27 @@ Diese Auswertung stärkt die Erkenntnis des Overfittings von DeepDarts und zeigt
     \centering
     \begin{tikzpicture}
         \begin{axis}[
-                width=\textwidth,
-                height=10cm,
+                width=0.8\textwidth,
+                height=6cm,
                 ymode=log,
                 ybar,
-                bar width=0.35cm,
-                enlarge x limits=0.15,
+                bar width=0.4cm,
+                enlarge x limits=0.25,
                 ylabel={Genauigkeit [px]},
                 ymin=0.1,
                 log origin=infty,
                 symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
                 xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
-                legend style={at={(0.5,0.98)}, anchor=north},
+                legend style={at={(1.02,1.00)}, anchor=north west},
+                every axis plot/.append style={
+                        single ybar legend,
+                    },
             ]
-            \addplot table[x=system,y=Render-Daten]  {\Similarities};
-            \addplot table[x=system,y=d1-val]        {\Similarities};
-            \addplot table[x=system,y=d1-test]       {\Similarities};
-            \addplot table[x=system,y=d2-val]        {\Similarities};
-            \addplot table[x=system,y=d2-test]       {\Similarities};
+            \addplot+[draw=black, fill=bar_1]      table[x=system,y=Render-Daten]  {\Similarities};
+            \addplot+[draw=black, fill=bar_3]      table[x=system,y=d1-val]        {\Similarities};
+            \addplot+[draw=black, fill=bar_3!60]   table[x=system,y=d1-test]       {\Similarities};
+            \addplot+[draw=black, fill=bar_4]      table[x=system,y=d2-val]        {\Similarities};
+            \addplot+[draw=black, fill=bar_4!60]   table[x=system,y=d2-test]       {\Similarities};
             \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
         \end{axis}
     \end{tikzpicture}

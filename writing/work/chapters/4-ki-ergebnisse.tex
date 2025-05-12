@@ -48,21 +48,217 @@ $P_{i, d} \in \mathbb{R}^2$ und $\widehat{P}_{i, d} \in \mathbb{R}^2$ sind die g
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Vergleich mit DeepDarts}
-\label{seC:vergleich_dd}
+\subsection{Datenquellen und Herangehensweise}
+\label{sec:nn_datenquellen}
 
-- DeepDarts-Daten
-- Rendering-Daten (Validation / Test, aber nicht Training!)
-- Echte Daten
+\begin{table}
+    \centering
+    \small
+    \begin{tabular}{r||c|cc|cc|cc}
+        \multirow{2}{*}{Datenquelle} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Gerenderte\\ Bilder\end{tabular}} & \multicolumn{2}{c|}{Reale Bilder} & \multicolumn{2}{c|}{DeepDarts-d1} & \multicolumn{2}{c}{DeepDarts-d2}                             \\
+                                     &                                                                              & Validierung                       & Test                              & Validierung                      & Test & Validierung & Test \\ \hline
+        Anzahl Bilder                & 2048                                                                         & 125                               & 55                                & 1000                             & 2000 & 70          & 150
+    \end{tabular}
+    \caption{Datenquellen für die Auswertung der Dartscheibenentzerrungen.}
+    \label{tab:datenquellen_nn}
+\end{table}
 
-\todo{DeepDarts-Vergleich beschreiben}
+Für die Auswertung der Performance des neuronalen Netzes wurden Daten unterschiedlicher Quellen verwendet, aufgelistet in \autoref{tab:datenquellen_nn}. Analog zur Auswertung der algorithmischen Normalisierung der Bilder wurden die selben gerenderten Bilder sowie die Validierungs- und Test-Daten von DeepDarts einbezogen. Zusätzlich wurden Bilder echter Darts-Runden aufgenommen und händisch annotiert, um weitere unabhängige Daten einzubinden. Diese sind aufgeteilt in Daten, die zur Validierung während des Trainings verwendet wurden, und Daten, die ausschließlich zum Testen verwendet wurden.
+
+Die in den folgenden Unterabschnitten dargestellten Auswertungen stellen die Ergebnisse des gesamten Systems dar unter Einbezug der Normalisierung. Hintergrund dieses Zusammenschlusses der Verarbeitungsschritte ist die Vergleichbarkeit mit DeepDarts, in welchem die Verarbeitungsschritte miteinander verschmolzen sind und ebenfalls als Gesamtsystem evaluiert wurden. Es wird das für diese Arbeit trainierte System sowie die für DeepDarts trainierten Systeme werden ausgewertet, um einen objektiven Vergleich der Performance darzustellen und einen Vergleich der Systeme zu ermöglichen.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Vergleich unterschiedlicher Datenquellen}
-\label{sec:unterschiedliche_datenquellen}
+\subsection{Auswertung der Existenz-Metrik \texorpdfstring{$\mu_X$}{µ\_X}}
+\label{sec:auswertung_xst}
 
-- Inferenz auf generierten Daten vs. DD-Daten vs. echte Daten (nicht aus Validierungs-Set)
-- laut Trainingsanalysen ist Inferenz auf generierten Daten besser als auf anderen
+\pgfplotstableread[col sep=comma]{
+    system,         Render-Daten,   Test-Daten, Val-Daten,  d1-val,     d1-test,    d2-val,     d2-test
+    Thesis,         88.31,          78.79,      81.87,      65.24,      66.46,      74.76,      87.33
+    DeepDarts-d1,   11.08,          21.21,      18.13,      65.23,      66.45,      25.24,      12.0
+    DeepDarts-d2,   11.85,          28.48,      52.8,       46.63,      63.57,      74.76,      77.0
+}\NNXst
 
-\todo{Datenquellen beschreiben}
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=0.8\textwidth,
+                height=6cm,
+                ybar,
+                ymin=0,
+                ymax=100,
+                bar width=0.3cm,
+                enlarge x limits=0.25,
+                ylabel={$\mu_X$ [\%]},
+                symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
+                xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
+                legend style={at={(1.02,1.00)}, anchor=north west},
+                every axis plot/.append style={
+                        single ybar legend,
+                    },
+            ]
+            \addplot+[draw=black, fill=bar_1]    table[x=system,y=Render-Daten]  {\NNXst};
+            \addplot+[draw=black, fill=bar_2]    table[x=system,y=Val-Daten]     {\NNXst};
+            \addplot+[draw=black, fill=bar_2!60] table[x=system,y=Test-Daten]    {\NNXst};
+            \addplot+[draw=black, fill=bar_3]    table[x=system,y=d1-val]        {\NNXst};
+            \addplot+[draw=black, fill=bar_3!60] table[x=system,y=d1-test]       {\NNXst};
+            \addplot+[draw=black, fill=bar_4]    table[x=system,y=d2-val]        {\NNXst};
+            \addplot+[draw=black, fill=bar_4!60] table[x=system,y=d2-test]       {\NNXst};
+            \legend{Render-Daten, Val-Daten, Test-Daten, d1-val, d1-test, d2-val, d2-test}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Auswertung von $\mu_X$ der Systeme auf unterschiedlichen Datenquellen.}
+    \label{fig:nn_xst}
+\end{figure}
+
+Die Auswertungen der Existenz-Metrik $\mu_X$ sind in \autoref{fig:nn_xst} dargestellt; die Abbildung zeigt die Auswertungen der Metrik der Systeme auf den jeweiligen Datenquellen. Das neuronale Netz dieser Thesis konnte Werte zwischen $65\%$ und $88\%$ erzielt werden. Die Verteilung der Auswertungsdifferenzen ist nahezu gleichverteilt über die unterschiedlichen Datenquellen. Die größte Genauigkeit wurde mit $88\%$ auf den gerenderten Daten erzielt während die geringsten Metrik-Werte auf den Validierungs-Daten von DeepDarts-d1 mit $65\%$ erzielt wurden.
+
+Die Auswertung von DeepDarts-d1 zeigt eine signifikante Korrelation zwischen Datenquelle und Metrik-Auswertung. Die Auswertung auf den dem System zugeordneten Daten fällt mit durchschnittlich $66\%$ weitaus besser aus als auf unabhängigen Quellen, die nicht Teil des Trainings des Systems waren. Auf diesen Daten wird ein durchschnittlicher Wert von $17\%$ erzielt.
+
+DeepDarts-d2 zeigt eine weitaus bessere Auswertung als DeepDarts-d1, sodass auf DeepDarts-d1-Daten durchschnittlich $56\%$ Existenz erzielt werden konnten und bei DeepDarts-d2-Daten durchschnittlich $76\%$. Die Auswertungen auf den für diese Auswertung aufgenommenen echten Daten liegen bei $20\%$ und bei den gerenderten Daten sind es lediglich $11\%$.
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Auswertung der Klassen-Metrik \texorpdfstring{$\mu_K$}{µ\_K}}
+\label{sec:auswertung_cls}
+
+\pgfplotstableread[col sep=comma]{
+    system,         Render-Daten,   Test-Daten, Val-Daten,  d1-val,     d1-test,    d2-val,     d2-test
+    Thesis,         77.07,          66.55,      69.01,      56.54,      56.39,      63.81,      71.55
+    DeepDarts-d1,   11.08,          21.21,      18.13,      61.83,      64.38,      25.24,      12
+    DeepDarts-d2,   11.13,          20.61,      10.13,      29.87,      29.25,      71.43,      82.67
+}\NNCls
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=0.8\textwidth,
+                height=6cm,
+                ybar,
+                ymin=0,
+                ymax=100,
+                bar width=0.3cm,
+                enlarge x limits=0.25,
+                ylabel={$\mu_K$ [\%]},
+                symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
+                xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
+                legend style={at={(1.02,1.00)}, anchor=north west},
+                every axis plot/.append style={
+                        single ybar legend,
+                    },
+            ]
+            \addplot+[draw=black, fill=bar_1]     table[x=system,y=Render-Daten]  {\NNCls};
+            \addplot+[draw=black, fill=bar_2]     table[x=system,y=Val-Daten]     {\NNCls};
+            \addplot+[draw=black, fill=bar_2!60]  table[x=system,y=Test-Daten]    {\NNCls};
+            \addplot+[draw=black, fill=bar_3]     table[x=system,y=d1-val]        {\NNCls};
+            \addplot+[draw=black, fill=bar_3!60]  table[x=system,y=d1-test]       {\NNCls};
+            \addplot+[draw=black, fill=bar_4]     table[x=system,y=d2-val]        {\NNCls};
+            \addplot+[draw=black, fill=bar_4!60]  table[x=system,y=d2-test]       {\NNCls};
+            \legend{Render-Daten, Val-Daten, Test-Daten, d1-val, d1-test, d2-val, d2-test}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Auswertung von $\mu_K$ der Systeme auf unterschiedlichen Datenquellen.}
+    \label{fig:nn_cls}
+\end{figure}
+
+\todo{XST-Auswertung beschreiben}
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Auswertung der Positions-Metrik \texorpdfstring{$\mu_P$}{µ\_P}}
+\label{sec:auswertung_pos}
+
+\pgfplotstableread[col sep=comma]{
+    system,         Render-Daten,   Test-Daten, Val-Daten,  d1-val,     d1-test,    d2-val,     d2-test
+    Thesis,         47.01,          52.35,      37.83,      22.74,      28.62,      14.54,      33.79
+    DeepDarts-d1,   0,              0,          0,          22.49,      12.08,      0,          0
+    DeepDarts-d2,   8.1,            63.72,      443.29,     137.23,     260.59,     19,         22.24
+}\NNPos
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=0.8\textwidth,
+                height=6cm,
+                ybar,
+                ymode=log,
+                log origin=infty,
+                ymin=1,
+                ymax=500,
+                bar width=0.3cm,
+                enlarge x limits=0.25,
+                ylabel={$\mu_P$ [px]},
+                symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
+                xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
+                legend style={at={(1.02, 1.00)}, anchor=north west},
+                every axis plot/.append style={
+                        single ybar legend,
+                    },
+            ]
+            \addplot+[draw=black, fill=bar_1]     table[x=system,y=Render-Daten]  {\NNPos};
+            \addplot+[draw=black, fill=bar_2]     table[x=system,y=Val-Daten]     {\NNPos};
+            \addplot+[draw=black, fill=bar_2!60]  table[x=system,y=Test-Daten]    {\NNPos};
+            \addplot+[draw=black, fill=bar_3]     table[x=system,y=d1-val]        {\NNPos};
+            \addplot+[draw=black, fill=bar_3!60]  table[x=system,y=d1-test]       {\NNPos};
+            \addplot+[draw=black, fill=bar_4]     table[x=system,y=d2-val]        {\NNPos};
+            \addplot+[draw=black, fill=bar_4!60]  table[x=system,y=d2-test]       {\NNPos};
+            \legend{Render-Daten, Val-Daten, Test-Daten, d1-val, d1-test, d2-val, d2-test}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Auswertung von $\mu_P$ der Systeme auf unterschiedlichen Datenquellen.}
+    \label{fig:nn_pos}
+\end{figure}
+
+\todo{XST-Auswertung beschreiben}
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Auswertung der \acs{pcs}-Metrik}
+\label{sec:auswertung_pcs}
+
+\pgfplotstableread[col sep=comma]{
+    system,         Render-Daten,   Test-Daten, Val-Daten,  d1-val,     d1-test,    d2-val,     d2-test
+    Thesis,         66.53,          57.82,      62.08,      61.48,      56.15,      64.57,      57.47
+    DeepDarts-d1,   2.78,           5.45,       0,          90,         93.3,       1.43,       0.67
+    DeepDarts-d2,   2.78,           5.45,       0,          9.7,        24.45,      90,         84.67
+}\NNPCS
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=0.8\textwidth,
+                height=6cm,
+                ybar,
+                ymin=0,
+                ymax=100,
+                bar width=0.3cm,
+                enlarge x limits=0.25,
+                ylabel={PCS [\%]},
+                symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
+                xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
+                legend style={at={(1.02, 1.00)}, anchor=north west},
+                every axis plot/.append style={
+                        single ybar legend,
+                    },
+            ]
+            \addplot+[draw=black, fill=bar_1]     table[x=system,y=Render-Daten]  {\NNPCS};
+            \addplot+[draw=black, fill=bar_2]     table[x=system,y=Val-Daten]     {\NNPCS};
+            \addplot+[draw=black, fill=bar_2!60]  table[x=system,y=Test-Daten]    {\NNPCS};
+            \addplot+[draw=black, fill=bar_3]     table[x=system,y=d1-val]        {\NNPCS};
+            \addplot+[draw=black, fill=bar_3!60]  table[x=system,y=d1-test]       {\NNPCS};
+            \addplot+[draw=black, fill=bar_4]     table[x=system,y=d2-val]        {\NNPCS};
+            \addplot+[draw=black, fill=bar_4!60]  table[x=system,y=d2-test]       {\NNPCS};
+            \legend{Render-Daten, Val-Daten, Test-Daten, d1-val, d1-test, d2-val, d2-test}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Auswertung von PCS der Systeme auf unterschiedlichen Datenquellen.}
+    \label{fig:nn_pcs}
+\end{figure}
+
+Es zeichnet sich ein ähnliches Bild wie in \autoref{fig:cv_genauigkeit} ab, indem eine signifikant höhere Performance
+
+\todo{XST-Auswertung beschreiben}

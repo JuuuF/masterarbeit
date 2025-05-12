@@ -97,7 +97,7 @@ Die Loss-Funktion, die für das Training der YOLOv8*-Architektur verwendet wurde
 \subsubsection{Zusammensetzung des Losses}
 
 Die Loss-Funktion zum Trainieren der YOLOv8*-Architektur folgt dem Aufbau dieser. Sie ist definiert als gewichtete Summe aus Existenz-Loss, Klassen-Loss und Positions-Loss:
-\[ \mathcal{L}(y, \hat{y}) = \omega_\text{xst} \mathcal{L}_\text{xst}(y, \hat{y}) + \omega_\text{cls} \mathcal{L}_\text{cls}(y, \hat{y}) + \omega_\text{pos} \mathcal{L}_\text{pos}(y, \hat{y}) \]
+\[ \mathcal{L}(y, \hat{y}) = \omega_\text{xst}\,\mathcal{L}_\text{xst}(y, \hat{y}) + \omega_\text{cls}\,\mathcal{L}_\text{cls}(y, \hat{y}) + \omega_\text{pos}\,\mathcal{L}_\text{pos}(y, \hat{y}) \]
 \paragraph{Existenz-Loss $\mathcal{L}_\text{xst}$}
 
 Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge aller Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und 3 Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0.16\% $. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts.
