@@ -1,3 +1,5 @@
+% !TEX root = ../main.tex
+
 \section{Thema II: Normalisierung durch herkömmliche Computer Vision}
 
 \begin{frame}{Motivation}
@@ -23,7 +25,7 @@
         \begin{column}{0.4\linewidth}
             \begin{figure}
                 \centering
-                \includegraphics[height=0.75\textheight]{imgs/cv_target.pdf}
+                \includegraphics[height=0.72\textheight]{imgs/cv_target.pdf}
                 \caption{Ziel der Normalisierung}
             \end{figure}
         \end{column}
@@ -33,7 +35,7 @@
 \begin{frame}{Herangehensweise: Kantenerkennung}
     \begin{figure}
         \centering
-        \includegraphics[height=0.75\textheight]{../work/imgs/cv/methodik/edges.pdf}
+        \includegraphics[height=0.74\textheight]{../work/imgs/cv/methodik/edges.pdf}
         \caption{Kantenerkennung der CV-Pipeline}
     \end{figure}
 \end{frame}
@@ -41,7 +43,7 @@
 \begin{frame}{Herangehensweise: Linienverarbeitung}
     \begin{figure}
         \centering
-        \includegraphics[height=0.75\textheight]{../work/imgs/cv/methodik/lines.pdf}
+        \includegraphics[height=0.74\textheight]{../work/imgs/cv/methodik/lines.pdf}
         \caption{Linienverarbeitung der CV-Pipeline}
     \end{figure}
 \end{frame}
@@ -49,30 +51,57 @@
 \begin{frame}{Herangehensweise: Orientierung}
     \begin{figure}
         \centering
-        \includegraphics[height=0.75\textheight]{imgs/orientation.pdf}
+        \includegraphics[height=0.74\textheight]{imgs/orientation.pdf}
         \caption{Orientierung der CV-Pipeline}
     \end{figure}
 \end{frame}
 
 \begin{frame}{Ergebnisse}
+
     \begin{columns}
         \begin{column}{0.5\linewidth}
+
+            \begin{block}{Metrik 1}
+                \small Fähigkeit der Ermittlung einer Normalisierung
+            \end{block}
+
+        \end{column}
+        \begin{column}{0.5\linewidth}
+
+            \begin{block}{Metrik 2}
+                \small Genauigkeit der ermittelten Normalisierungen
+            \end{block}
+
+        \end{column}
+    \end{columns}
+
+    \begin{columns}
+        \begin{column}{0.45\linewidth}
 
             \visible<2->{
                 \begin{figure}
                     \centering
-                    \includegraphics[height=0.75\textheight]{imgs/cv_sucess.pdf}
+                    \includegraphics[width=\linewidth]{imgs/cv_res_norm.pdf}
                     \caption{Erfolge der Normalisierung}
                 \end{figure}
             }
 
         \end{column}
-        \begin{column}{0.5\linewidth}
+        \begin{column}{0.1\linewidth}
+            \visible<2->{
+                \begin{figure}
+                    \centering
+                    \includegraphics[width=\linewidth]{imgs/cv_legend.pdf}
+                \end{figure}
+            }
+            \vspace*{2cm}
+        \end{column}
+        \begin{column}{0.45\linewidth}
 
             \visible<3->{
                 \begin{figure}
                     \centering
-                    \includegraphics[height=0.5\textheight]{imgs/cv_accuracy.pdf}
+                    \includegraphics[width=\linewidth]{imgs/cv_res_prec.pdf}
                     \caption{Genauigkeit der Normalisierung}
                 \end{figure}
             }

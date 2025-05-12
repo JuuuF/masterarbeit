@@ -1,21 +1,147 @@
+% !TEX root = ../main.tex
+
 \section{Thema III: Lokalisierung durch neuronale Netze}
 
-\begin{frame}{Test}
-    test
+\begin{frame}{Zielsetzung}
+    \begin{columns}
+        \begin{column}{0.6\linewidth}
+
+            \begin{block}{Ausgangslage}
+                Normalisiertes Bild einer Dartscheibe
+            \end{block}
+
+            \begin{block}{Ziel}
+                Lokalisierung der Dartpfeilspitzen
+            \end{block}
+
+        \end{column}
+        \begin{column}{0.4\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{imgs/nn_target.pdf}
+                \caption{Ziel der Lokalisierung}
+            \end{figure}
+
+        \end{column}
+    \end{columns}
 \end{frame}
 
-\begin{frame}{Ergebnisse}
+\begin{frame}{Herangehensweise: YOLOv8-Abänderung}
+    \begin{columns}
+        \begin{column}{0.6\linewidth}
+
+            Grundlage: \textbf{YOLOv8}
+
+            Anpassungen:
+            \begin{itemize}
+                \item Weglassen des Multi-Scale-Outputs
+                \item Weglassen der Bounding Boxes
+                \item Einbringung des Transition-Blocks für globalen Kontext
+                \item Fokussierung auf Existenz + Position + Feldfarbe
+            \end{itemize}
+
+            $\implies \approx 10.5\,\text{M}$ Parameter
+
+        \end{column}
+        \begin{column}{0.4\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.74\textheight]{../work/imgs/ai/yolov8.pdf}
+                \caption{Netzwerkarchitektur basierend auf YOLOv8}
+            \end{figure}
+
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}{Netzwerktraining: Rahmenbedingungen}
+
+    \begin{columns}
+        \begin{column}{0.5\linewidth}
+
+            $24\,960$ Trainingsdaten:
+            \vspace*{-0.1cm}
+            \begin{itemize}
+                \setlength\itemsep{0em}
+                \item $20\,480$ Render-Daten
+                \item $4\,096$ Render-Daten (Multiplier)
+                \item $256$ DeepDarts-d1-train
+                \item $128$ reale Daten (Jess Bar)
+            \end{itemize}
+            + Augmentierung
+
+        \end{column}
+        \begin{column}{0.5\linewidth}
+
+            $672$ Validierungsdaten:
+            \vspace*{-0.1cm}
+            \begin{itemize}
+                \setlength\itemsep{0em}
+                \item $256$ Render-Daten
+                \item $256$ DeepDarts-d2-train
+                \item $160$ reale Daten (Strongbows Pub)
+            \end{itemize}
+
+        \end{column}
+    \end{columns}
+
+    \vspace*{0.5cm}
+
+    \visible<2->{
+        \begin{block}{Loss}
+            \[ \mathcal{L}(y, \hat{y}) = \omega_\text{xst}\,\mathcal{L}_\text{xst}(y, \hat{y}) + \omega_\text{cls}\,\mathcal{L}_\text{cls}(y, \hat{y}) + \omega_\text{pos}\,\mathcal{L}_\text{pos}(y, \hat{y}) \]
+        \end{block}
+    }
+
+\end{frame}
+
+\begin{frame}{Trainingsverlauf}
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.8\linewidth]{../work/imgs/ai/ergebnisse/loss.pdf}
+        \caption{Trainingsverlauf}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}{Beispiele: negativ}
     \begin{figure}
         \centering
         \includegraphics[height=0.55\textheight]{imgs/nn_results.png}
-        \caption{Visualisierung der Netzwerkvorhersagen}
+        \caption{Visualisierung fehlerhafter Netzwerkvorhersagen}
     \end{figure}
 \end{frame}
 
-\begin{frame}{Ergebnisse}
+\begin{frame}{Beispiele: positiv}
     \begin{figure}
         \centering
         \includegraphics[height=0.55\textheight]{imgs/nn_results_2.png}
         \caption{Visualisierung korrekter Netzwerkvorhersagen}
     \end{figure}
+\end{frame}
+
+\begin{frame}{Metrik: Percent Correct Score (PCS)}
+
+    \[ \text{PCS} = \frac{100}{N} \sum_{i=1}^{N} \delta \left(\left(\sum \hat{S}_i - \sum S_i\right) = 0\right)\% \]
+
+    \begin{block}{PCS}
+        DeepDarts-Metrik zur Ermittlung der Genauigkeit der Vorhersagen
+
+        $\rightarrow$ Prozentualer Anteil korrekt vorhergesagter Punktzahlen
+    \end{block}
+
+\end{frame}
+
+\begin{frame}{Ergebnisse: PCS}
+
+    \begin{figure}
+        \centering
+        \includegraphics[height=0.55\textheight]{imgs/pcs.pdf}
+        \caption{Auswertung PCS}
+    \end{figure}
+
 \end{frame}

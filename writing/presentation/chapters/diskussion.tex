@@ -1,17 +1,55 @@
+% !TEX root = ../main.tex
+
 \section{Diskussion}
 
-\begin{frame}{Datenerstellung}
-    test
+\begin{frame}{Diskussion: Datenerstellung}
+    Datenumfang:\\
+    \begin{itemize}
+        \item Wenig Lichtobjekte
+        \item Wenig vorgefertigte Bestandteile für Dartpfeile
+    \end{itemize}
+
+    Realismus:\\
+    \begin{itemize}
+        \item Kein Fotorealismus
+        \item Dartscheibe fliegt im Raum
+    \end{itemize}
+
+    Effizienz:\\
+    \begin{itemize}
+        \item System nicht $100\%$ ausgelastet $\rightarrow$ Zeitverlust
+    \end{itemize}
 \end{frame}
 
-\begin{frame}{Normalisierung}
-    test
+\begin{frame}{Diskussion: Dartscheiben-Normalisierung}
+    Geschwindigkeit:\\
+    \begin{itemize}
+        \item Algorithmisch statt KI
+        \item Implementierung in Python
+    \end{itemize}
+
+    Zuverlässigkeit:\\
+    \begin{itemize}
+        \item Skalierung der Bilder durch Vorverarbeitung $\rightarrow$ Informationsverlust
+        \item Verwendung von RANSAC $\rightarrow$ nicht deterministisch
+    \end{itemize}
 \end{frame}
 
-\begin{frame}{Lokalisierung}
-    test
-\end{frame}
+\begin{frame}{Diskussion: Dartpfeil-Lokalisierung}
+    Training:\\
+    \begin{itemize}
+        \item Synthetische Daten $\neq$ echte Daten
+        \item Manuelles Intervenieren
+    \end{itemize}
 
-\begin{frame}{Zusammenspiel}
-    test
+    Netzwerk:\\
+    \begin{itemize}
+        \item Eigene Implementierung des Netzwerks
+        \item Kein Transfer-Learning
+    \end{itemize}
+
+    Vergleich mit DeepDarts:\\
+    \begin{itemize}
+        \item Unterschiedliche Netzwerkgrößen
+    \end{itemize}
 \end{frame}
