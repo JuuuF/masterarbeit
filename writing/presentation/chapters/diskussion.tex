@@ -3,53 +3,98 @@
 \section{Diskussion}
 
 \begin{frame}{Diskussion: Datenerstellung}
-    Datenumfang:\\
-    \begin{itemize}
-        \item Wenig Lichtobjekte
-        \item Wenig vorgefertigte Bestandteile für Dartpfeile
-    \end{itemize}
+    \begin{columns}
+        \begin{column}{0.7\linewidth}
 
-    Realismus:\\
-    \begin{itemize}
-        \item Kein Fotorealismus
-        \item Dartscheibe fliegt im Raum
-    \end{itemize}
+            Datenumfang:\\
+            \begin{itemize}
+                \item Wenig Lichtobjekte
+                \item Wenig vorgefertigte Bestandteile für Dartpfeile
+            \end{itemize}
 
-    Effizienz:\\
-    \begin{itemize}
-        \item System nicht $100\%$ ausgelastet $\rightarrow$ Zeitverlust
-    \end{itemize}
+            Realismus:\\
+            \begin{itemize}
+                \item Kein Fotorealismus
+                \item Dartscheibe fliegt im Raum
+            \end{itemize}
+
+            Effizienz:\\
+            \begin{itemize}
+                \item System nicht $100\,\%$ ausgelastet $\rightarrow$ Zeitverlust
+            \end{itemize}
+
+        \end{column}
+        \begin{column}{0.3\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.74\textheight]{imgs/disc_example_render.png}
+                \caption{Render-Ergebnis}
+            \end{figure}
+
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}{Diskussion: Dartscheiben-Normalisierung}
-    Geschwindigkeit:\\
-    \begin{itemize}
-        \item Algorithmisch statt KI
-        \item Implementierung in Python
-    \end{itemize}
+    \begin{columns}
+        \begin{column}{0.7\linewidth}
 
-    Zuverlässigkeit:\\
-    \begin{itemize}
-        \item Skalierung der Bilder durch Vorverarbeitung $\rightarrow$ Informationsverlust
-        \item Verwendung von RANSAC $\rightarrow$ nicht deterministisch
-    \end{itemize}
+            Geschwindigkeit:\\
+            \begin{itemize}
+                \item Algorithmisch statt KI
+                \item Implementierung in Python
+            \end{itemize}
+
+            Zuverlässigkeit:\\
+            \begin{itemize}
+                \item Skalierung der Bilder durch Vorverarbeitung $\rightarrow$ Informationsverlust
+                \item Verwendung von RANSAC $\rightarrow$ nicht deterministisch
+            \end{itemize}
+
+        \end{column}
+        \begin{column}{0.3\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{imgs/disc_example_cv.png}
+                \caption{Normalisierungs-Ergebnis}
+            \end{figure}
+
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}{Diskussion: Dartpfeil-Lokalisierung}
-    Training:\\
-    \begin{itemize}
-        \item Synthetische Daten $\neq$ echte Daten
-        \item Manuelles Intervenieren
-    \end{itemize}
+    \begin{columns}
+        \begin{column}{0.7\linewidth}
 
-    Netzwerk:\\
-    \begin{itemize}
-        \item Eigene Implementierung des Netzwerks
-        \item Kein Transfer-Learning
-    \end{itemize}
+            Training:\\
+            \begin{itemize}
+                \item Synthetische Daten $\neq$ echte Daten
+                \item Manuelles Intervenieren
+            \end{itemize}
 
-    Vergleich mit DeepDarts:\\
-    \begin{itemize}
-        \item Unterschiedliche Netzwerkgrößen
-    \end{itemize}
+            Netzwerk:\\
+            \begin{itemize}
+                \item Eigene Implementierung des Netzwerks
+                \item Kein Transfer-Learning
+            \end{itemize}
+
+            Vergleich mit DeepDarts:\\
+            \begin{itemize}
+                \item Unterschiedliche Netzwerkgrößen
+            \end{itemize}
+
+        \end{column}
+        \begin{column}{0.3\linewidth}
+
+            \begin{figure}
+                \centering
+                \includegraphics[width=\linewidth]{imgs/disc_example_nn.png}
+                \caption{Lokalisierungs-Ergebnis}
+            \end{figure}
+
+        \end{column}
+    \end{columns}
 \end{frame}

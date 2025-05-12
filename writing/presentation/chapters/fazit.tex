@@ -6,21 +6,30 @@
 \settowidth{\blocklabelwidth}{\underline{IV}.}
 
 \begin{frame}{Forschungsfragen}
-    \begin{block}{\makebox[\blocklabelwidth][c]{\underline{I}.} Qualität der synthetischen Daten}
-        \hphantom{~~~~~~} Annähernd realistisch
-    \end{block}
+    \visible<1->{
+        \begin{block}{\makebox[\blocklabelwidth][c]{\underline{I}.} Qualität der synthetischen Daten}
+            \hphantom{~~~~~~} Annähernd realistisch
+        \end{block}
+    }
 
-    \begin{block}{\makebox[\blocklabelwidth][c]{\underline{II}.} Zuverlässigkeit der algorithmischen Normalisierung}
-        \hphantom{~~~~~~} $>97\,\%$ Erfolg\\
-        \hphantom{~~~~~~} $<20\,\text{px}$ mittlere Verschiebung
-    \end{block}
+    \visible<2->{
+        \begin{block}{\makebox[\blocklabelwidth][c]{\underline{II}.} Zuverlässigkeit der algorithmischen Normalisierung}
+            \hphantom{~~~~~~} $>97\,\%$ Erfolg\\
+            \hphantom{~~~~~~} $<35\,\text{px}$ mittlere Verschiebung ($\approxeq 5\,\%$)
+        \end{block}
+    }
 
-    \begin{block}{\makebox[\blocklabelwidth][c]{\underline{III}.} Generalisierbarkeit nach OOD-Training}
-        \hphantom{~~~~~~} Lediglich geringer Unterschied
-    \end{block}
+    \visible<3->{
+        \begin{block}{\makebox[\blocklabelwidth][c]{\underline{III}.} Generalisierbarkeit nach OOD-Training}
+            \hphantom{~~~~~~} Lediglich geringer Unterschied in PCS
+        \end{block}
+    }
 
-    \begin{block}{\makebox[\blocklabelwidth][c]{\underline{IV}.} Verbesserung von DeepDarts}
-        \hphantom{~~~~~~} Langsamere Ausführung\\
-        \hphantom{~~~~~~} Kein Overfitting
-    \end{block}
+    \visible<4->{
+        \begin{block}{\makebox[\blocklabelwidth][c]{\underline{IV}.} Verbesserung von DeepDarts}
+            \hphantom{~~~~~~} - Langsamere Ausführung\\
+            \hphantom{~~~~~~} + Kein Overfitting\\
+            \hphantom{~~~~~~} + Zuverlässigere Vorhersagen
+        \end{block}
+    }
 \end{frame}
