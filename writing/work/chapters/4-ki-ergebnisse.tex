@@ -163,7 +163,11 @@ DeepDarts-d2 zeigt eine weitaus bessere Auswertung als DeepDarts-d1, sodass auf 
     \label{fig:nn_cls}
 \end{figure}
 
-\todo{XST-Auswertung beschreiben}
+Die Auswertung der unterschiedlichen Systeme hinsichtlich der Metrik $\mu_K$ ist in \autoref{fig:nn_cls} dargestellt. Die Resultate spiegeln die Auswertung von $\mu_X$ wider indes die relativen Verteilungen ähnlicher Struktur sind. Die Auswertung des Ansatzes dieser Thesis zeigen Werte im Bereich um $70\%$ für die Daten, die für diese Arbeit erstellt wurden mit einer signifikant besseren Auswertung gerenderter Daten im Vergleich zu realen Daten. Auf den DeepDarts-d1-Datensätzen konnten mit $56\%$ die geringsten Resultate erzielt werden während auf den DeepDarts-d2-Daten im Mittel $68\%$ erzielt wurden. Mit diesen Resultaten liegen die Genauigkeiten der Findung von Feldfarben unter den Genauigkeiten der Fähigkeit, die Dartpfeile zu identifizieren.
+
+DeepDarts-d1 zeigt hinsichtlich $\mu_K$ ähnliche Auswertungen zu $\mu_X$: Es werden einzig gute Ergebnisse mit Werten um $63\%$ auf den diesem System zugeschriebenen Datensätzen erzielt. Auf Datensätzen, die nicht zum Training oder zur Auswertung des Systems verwendet wurden lag im Durchschnitt lediglich eine Klassen-Genauigkeit von $17\%$ vor.
+
+Ähnliche Züge der Evaluation hinsichtlich $\mu_K$ sind für DeepDarts-d2 zu verzeichnen: Die d2-Datensätze werden mit einer hohen Genauigkeit von durchschnittlich $77\%$ erkannt während weitere Datensätze mit durchschnittlich $20\%$ Genauigkeit ausgewertet sind. Die Fähigkeit, Feldfarben korrekt zu identifizieren, liegt bei DeepDarts-d2 deutlich unter der Fähigkeit, Dartpfeile zu identifizieren. Die Bestimmung korrekter Scores je Dartpfeil ist dadurch stark beeinträchtigt.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -208,11 +212,11 @@ DeepDarts-d2 zeigt eine weitaus bessere Auswertung als DeepDarts-d1, sodass auf 
             \legend{Render-Daten, Val-Daten, Test-Daten, d1-val, d1-test, d2-val, d2-test}
         \end{axis}
     \end{tikzpicture}
-    \caption{Auswertung von $\mu_P$ der Systeme auf unterschiedlichen Datenquellen.}
+    \caption{Auswertung von $\mu_P$ der Systeme auf unterschiedlichen Datenquellen. Je geringer die Werte, desto besser die Auswertung.}
     \label{fig:nn_pos}
 \end{figure}
 
-\todo{XST-Auswertung beschreiben}
+\todo{POS-Auswertung beschreiben}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -261,4 +265,4 @@ DeepDarts-d2 zeigt eine weitaus bessere Auswertung als DeepDarts-d1, sodass auf 
 
 Es zeichnet sich ein ähnliches Bild wie in \autoref{fig:cv_genauigkeit} ab, indem eine signifikant höhere Performance
 
-\todo{XST-Auswertung beschreiben}
+\todo{PCS-Auswertung beschreiben}
