@@ -32,7 +32,7 @@ Die Farben der Surroundings werden zur Einordnung in den CrYV-Farbraum umgewande
 
 \paragraph{Klassifizierung schwarzer und weißer Bereiche}
 
-Die durchschnittliche Farben schwarzer und weißer Felder der Dartscheibe sind durch bereits vollzogene Vorverarbeitungsschritte bekannt. Zur Einordnung, ob ein Feld schwarz oder weiß ist, wird der zu überprüfende Bereich der Surrounding (Patch) mit der schwarzen bzw. weißen Farbe analysiert. In einem ersten Schritt wird die mittlere Farbe des Patches bestimmt. Die absoluten Differenzen der jeweiligen Farbkanäle des PAtches sowie der Ziel-Farbe werden berechnet und die Summe dieser Kanäle wird berechnet. Anhand eines empirisch ermittelten Schwellwerts wird ein Thresholding durchgeführt, durch welches eine Klassifizierung in \quotes{schwarz} oder \quotes{nicht schwarz} (und analog für weiß) geschieht:
+Die durchschnittliche Farben schwarzer und weißer Felder der Dartscheibe sind durch bereits vollzogene Vorverarbeitungsschritte bekannt. Zur Einordnung, ob ein Feld schwarz oder weiß ist, wird der zu überprüfende Bereich der Surrounding (Patch) mit der schwarzen bzw. weißen Farbe analysiert. In einem ersten Schritt wird die mittlere Farbe des Patches bestimmt. Die absoluten Differenzen der jeweiligen Farbkanäle des Patches sowie der Ziel-Farbe werden berechnet und die Summe dieser Kanäle wird berechnet. Anhand eines empirisch ermittelten Schwellwerts wird ein Thresholding durchgeführt, durch welches eine Klassifizierung in \quotes{schwarz} oder \quotes{nicht schwarz} (und analog für weiß) geschieht:
 \begin{equation*}
     \text{is\_bw}(C_p, C_r, T_C) =
     \begin{cases}

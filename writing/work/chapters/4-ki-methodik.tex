@@ -40,7 +40,7 @@ In der YOLOv8-Architektur wird ein Multi-Scale-Output zur Identifizierung von Ob
 
 \paragraph{Dreiteilungen der Outputs}
 
-Die YOLOv8*-Architektur unterteilt das Eingabebild in Regionen und bestimmt die Existenz von Dartpfeilen je Region. Da eine typische Runde Darts aus 3 Würfen besteht, ist davon auszugehen, dass eine maximale Anzahl von 3 Dartpfeilen in den Bildern zu identifizieren sind. Dabei kann jedoch nicht ausgeschlossen werden, dass sich die Dartpfeilspitzen in unterschiedlichen Regionen befinden. Je Region wird daher eine feste Anzahl von 3 möglichen Dartpfeilpositionen vorhergesagt. Existiert lediglich ein Dartpfeil, so sind zwei mögliche Outputs genullt.
+Die YOLOv8*-Architektur unterteilt das Eingabebild in Regionen und bestimmt die Existenz von Dartpfeilen je Region. Da eine typische Runde Darts aus 3 Würfen besteht, ist davon auszugehen, dass eine maximale Anzahl von 3 Dartpfeilen in den Bildern zu identifizieren ist. Dabei kann jedoch nicht ausgeschlossen werden, dass sich die Dartpfeilspitzen in unterschiedlichen Regionen befinden. Je Region wird daher eine feste Anzahl von 3 möglichen Dartpfeilpositionen vorhergesagt. Existiert lediglich ein Dartpfeil, so sind zwei mögliche Outputs genullt.
 
 \paragraph{Transition-Block}
 
@@ -85,7 +85,7 @@ Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengeset
     \label{tab:yolov8_params}
 \end{table}
 
-Die variable Größe von YOLOv8 ist analog in YOLOv8* übernommen worden, sodass die Konfigurationen n, s, m, l und x möglich sind. Die verwendete Architektur dieser Thesis orientiert sich in ihrer Größenordnung an der in DeepDarts verwendeten Architektur YOLOv4-tiny, welche ca. 6 Millionen Parameter beinhaltete. Die Größenordnungen der Parametrisierungen sind in \autoref{tab:yolov8_params} dargestellt. Aufgrund der in Vergleich zu DeepDarts komplexeren Daten wurde sich für die Verwendung von YOLOv8*-s entschieden, welche mit etwa $10,5 \text{Millionen}$ Parametern etwa $40\%$ mehr Parameter als YOLOv4-tiny besitzt.
+Die variable Größe von YOLOv8 ist analog in YOLOv8* übernommen worden, sodass die Konfigurationen n, s, m, l und x möglich sind. Die verwendete Architektur dieser Thesis orientiert sich in ihrer Größenordnung an der in DeepDarts verwendeten Architektur YOLOv4-tiny, welche ca. $6\,\text{Millionen}$ Parameter beinhaltete. Die Größenordnungen der Parametrisierungen sind in \autoref{tab:yolov8_params} dargestellt. Aufgrund der in Vergleich zu DeepDarts komplexeren Daten wurde sich für die Verwendung von YOLOv8*-s entschieden, welche mit etwa $10,5\,\text{Millionen}$ Parametern etwa $40\,\%$ mehr Parameter als YOLOv4-tiny besitzt.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -100,7 +100,7 @@ Die Loss-Funktion zum Trainieren der YOLOv8*-Architektur folgt dem Aufbau dieser
 \[ \mathcal{L}(y, \hat{y}) = \omega_\text{xst}\,\mathcal{L}_\text{xst}(y, \hat{y}) + \omega_\text{cls}\,\mathcal{L}_\text{cls}(y, \hat{y}) + \omega_\text{pos}\,\mathcal{L}_\text{pos}(y, \hat{y}) \]
 \paragraph{Existenz-Loss $\mathcal{L}_\text{xst}$}
 
-Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge aller Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und 3 Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0.16\% $. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts.
+Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge aller Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und 3 Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1.875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0,16\,\%$ beträgt. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts möglich ist.
 
 \paragraph{Klassen-Loss $\mathcal{L}_\text{cls}$}
 
@@ -112,7 +112,7 @@ Die Bestimmung des Positions-Losses $\mathcal{L}_\text{pos}$ geschieht ebenso wi
 
 \paragraph{Gewichtung}
 
-Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position resultieren unterschiedliche Bildbereiche der Loss-Werte. Die Loss-Gewichte $\omega_\text{xst}$, $\omega_\text{cls}$ und $\omega_\text{pos}$ gewichten die Loss-Outputs derart, dass kein Loss wesentlich überwiegt und eine Reduktion des Losses $\mathcal{L}$ eine uniforme Reduktion der Losses $\mathcal{L}_\text{xst}$, $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$ mit sich zieht. Zum Anpassen der Losses aneinander für eine gleichwertige Konvergenz wurden die gewichte $\omega_\text{xst} = 400$, $\omega_\text{cls} = 2000$ und $\omega_\text{pos} = 0.5$ verwendet.
+Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position resultieren unterschiedliche Bildbereiche der Loss-Werte. Die Loss-Gewichte $\omega_\text{xst}$, $\omega_\text{cls}$ und $\omega_\text{pos}$ gewichten die Loss-Outputs derart, dass kein Loss wesentlich überwiegt und eine Reduktion des Losses $\mathcal{L}$ eine uniforme Reduktion der Losses $\mathcal{L}_\text{xst}$, $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$ mit sich zieht. Zum Anpassen der Losses aneinander für eine gleichwertige Konvergenz wurden die gewichte $\omega_\text{xst} = 400$, $\omega_\text{cls} = 2.000$ und $\omega_\text{pos} = 0,5$ verwendet.
 
 \subsubsection{Hintergründe und Zielsetzung}
 
@@ -138,7 +138,7 @@ Die überwiegende Mehrheit der Trainingsdaten wird durch die generierten Daten a
 
 Supervised Training setzt die Existenz sowohl von Inputs als auch korrekten Outputs voraus, um die getätigten Vorhersagen des Netzwerks auf ihre Korrektheit zu überprüfen und die Netzwerkparameter durch Backpropagation zu adaptieren. Dazu sind einheitliche In- und Outputs notwendig. Die Inputdaten bestehen aus normalisierten 3-Kanal-Farbbildern mit dem Farbformat BGR und Abmessungen von $800 \times 800\,\text{px}$\footnote{Da es sich bei dem trainierten Netzwerk um ein Fully Convolutional Neural Network handelt, ist eine Festlegung auf konkrete Bilddimensionen nicht notwendig. Zur Vereinheitlichung der Daten und zur Normalisierung der Eingaben wurde jedoch eine feste Größe verwendet.}.
 
-Die Outputdaten besitzen die Form $25 \times 25 \times 8 \times 3$. Das Input-Bild wird in $25 \times 25$ Regionen -- entsprechend $32 \times 32\,\text{px}$ je Region --, für die je eine Matrix der Größe $8 \times 3$ vorhergesagt wird. Diese Matrix enthält Informationen zu Existenz von Dartpfeilspitzen in ihrer Region, die relative Position dieser sowie die getroffene Feldfarbe. Je Region können bis zu 3 Dartpfeile identifiziert werden. Eine schematische Veranschaulichung der Datenstruktur ist in \autoref{img:datenformat} gezeigt.
+Die Outputdaten besitzen die Form $25 \times 25 \times 8 \times 3$. Das Input-Bild wird in $25 \times 25$ Regionen -- entsprechend $32 \times 32\,\text{px}$ je Region --, für die je eine Matrix der Größe $8 \times 3$ vorhergesagt wird. Diese Matrix enthält Informationen zu Existenz von Dartpfeilspitzen in ihrer Region, die relative Position dieser sowie die getroffene Feldfarbe. Je Region können bis zu 3 Dartpfeile identifiziert werden. Eine schematische Veranschaulichung der Datenstruktur wird in \autoref{img:datenformat} dargestellt.
 
 \begin{figure}
     \centering
@@ -160,7 +160,7 @@ Die Datenerstellung beruht auf der Verwendung von Heatmaps zur Positionierung de
 
 Durch das Oversampling ist ein übermäßiger Prozentsatz unterrepräsentierter Klassen in den Daten vorhanden, der zu einem ausgeglichenen Lernen aller Klassen führt \cite{oversampling}. Ohne Oversampling flächenmäßig kleiner Felder der Dartscheibe in den Trainingsdaten resultierte die Vorhersage von Double-, Triple- oder Bull-Pfeilen in Fehlklassifizierungen als schwarze bzw. weiße Felder.
 
-Trotz der Vorteile von Oversampling muss auf eine korrekte Einbindung dessen geachtet werden, um eine übermäßige Verzerrung der Datenlage zu verhindern \cite{oversampling_bad}. Für diese Thesis wurden $24\,576$ Daten erstellt, davon $20\,480$ reguläre Daten und $4096$ Oversampling-Daten. Der Prozentsatz des Oversamplings beläuft sich damit auf $16.67\%$ der generierten Daten.
+Trotz der Vorteile von Oversampling muss auf eine korrekte Einbindung dessen geachtet werden, um eine übermäßige Verzerrung der Datenlage zu verhindern \cite{oversampling_bad}. Für diese Thesis wurden $24.576$ Daten erstellt, davon $20.480$ reguläre Daten und $4.096$ Oversampling-Daten. Der Prozentsatz des Oversamplings beläuft sich damit auf $16,67\,\%$ der generierten Daten.
 
 Die Heatmaps zum Generieren der für das Oversampling genutzten Wahrscheinlichkeitsverteilungen sind in \autoref{img:heatmaps} dargestellt; Details zur Datenerstellung mittels dieser Heatmaps wurden in \autoref{sec:wie_dartpfeil_positionen} (\nameref{sec:wie_dartpfeil_positionen}) erläutert.
 
@@ -215,7 +215,7 @@ Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn de
 \nomenclature{$f_\text{lr}$}{Adaptionsfaktor der Learning Rate}
 \nomenclature{$w_\text{lr}$}{Fenstergröße des Learning Rate-Schedules}
 
-Es wurden Parameterbelegungen $\text{lr}_0 = 0.001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0.1^{0.25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
+Es wurden Parameterbelegungen $\text{lr}_0 = 0,001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,1^{0,25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
 
 \subsubsection{Trainingsablauf}
 

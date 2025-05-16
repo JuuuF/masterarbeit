@@ -34,21 +34,16 @@ Durch diese Metrik ist eine Quantifizierung der Ähnlichkeit zweier Homographien
 \subsection{Verwendete Daten}
 \label{sec:cv_ergebnisse_daten}
 
-- Gen-Daten + DD-Daten
-- keine negativen Sample, da lediglich Ergebnisse auf positiven Daten relevant sind.
-- es geht darum, Dartscheiben zu entzerren, nicht darum, sie zu identifizieren
-- dass Dartscheiben in den Bilden vorhanden sind, wird als Voraussetzung für die Verwendung des Systems angesehen
+Zur Evaluierung des Algorithmus werden vom Training unabhängige Daten benötigt. Die Daten dieser Auswertung stammen aus 5 unterschiedlichen Quellen und werden strikt voneinander getrennt gehalten. Dies dient der Identifizierung von einerseits Verzerrungen auf Daten und andererseits Schwachstellen in dem getesteten System. Die Datenquellen sind in \autoref{tab:datenquellen_cv} aufgelistet und stellen sich zusammen aus synthetischen Daten sowie Daten des DeepDarts-Systems.
 
-Zur Evaluierung des Algorithmus werden Daten benötigt. Die Daten dieser Auswertung stammen aus 5 unterschiedlichen Quellen und werden voneinander getrennt gehalten. Dies dient der Identifizierung von einerseits Verzerrungen auf Daten und andererseits Schwachstellen in dem getesteten System. Die Datenquellen sind in \autoref{tab:datenquellen_cv} aufgelistet und stellen sich zusammen aus synthetischen Daten sowie Daten des DeepDarts-Systems.
-
-Die Daten beinhalten lediglich positive Datensätze, indes in jedem Bild eine Dartscheibe vorhanden ist. Aufgabe der Systems ist nicht die Identifizierung von Dartscheiben, sondern die Entzerrung dieser, sodass eine Existenz einer Dartscheibe in den Bildern vorausgesetzt wird.
+Die Daten beinhalten lediglich positive Datensätze, in welchen ausschließlich Bilder vorhanden sind, die eine Dartscheibe abbilden. Da die Aufgabe der Systems nicht die Identifizierung von Dartscheiben ist, sondern die Entzerrung dieser, kann die Existenz von Dartscheiben in den Bildern vorausgesetzt werden. Die Ausführung des Algorithmus auf Bildern ohne Dartscheibe ist nicht von Relevanz.
 
 \begin{table}
     \centering
     \begin{tabular}{r||c|cc|cc}
-        \multirow{2}{*}{Datenquelle} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Gerenderte\\ Bilder\end{tabular}} & \multicolumn{2}{c|}{DeepDarts-d1} & \multicolumn{2}{c}{DeepDarts-d2}                        \\
+        \multirow{2}{*}{Datenquelle} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Gerenderte\\ Bilder\end{tabular}} & \multicolumn{2}{c|}{DeepDarts-$d_1$} & \multicolumn{2}{c}{DeepDarts-$d_2$}                        \\
                                      &                                                                              & Validierung                       & Test                             & Validierung & Test   \\ \hline
-        Anzahl Bilder                & 2048                                                                         & 1000                              & 2000                             & 70          & 150    \\
+        Anzahl Bilder                & 2.048                                                                         & 1.000                              & 2.000                             & 70          & 150    \\
         Automatische Annotation      & \cmark                                                                       & \xmark                            & \xmark                           & \xmark      & \xmark
     \end{tabular}
     \caption{Datenquellen für die Auswertung der Dartscheibenentzerrungen.}
@@ -77,7 +72,7 @@ Ausgeführt wurde die Auswertung auf einer AMD Ryzen 3 3100 CPU. Es wurde trotz 
 
 Die Ausführungszeiten der jeweiligen Systeme sind in \autoref{fig:cv_dauer} dargestellt. Die Ausführungszeiten von DeepDarts liegen mit durchschnittlich $131\,\text{ms}$ auf den DeepDarts-Datensätzen und $239\,\text{ms}$ auf den gerenderten Daten weitaus unter den Zeiten des Systems dieser Thesis. Die Ausführungszeiten des Systems dieser Thesis liegen bei durchschnittlich $333\,\text{ms}$ für die DeepDarts-Daten und $433\,\text{ms}$ für die Render-Daten. Die Ausführungszeiten des in dieser Thesis erarbeiteten Algorithmus belaufen sich im Mittel etwa auf die doppelte Dauer des DeepDarts-Ansatzes, jedoch variiert dieser Faktor stark basierend auf der Datenquelle.
 
-Die Unterschiede der Inferenzzeiten der Datenquellen ergeben sich aus den Abmessungen der Bilder. Die DeepDarts-Daten sind bereits vorverarbeitet, sodass sie ein quadratisches Seitenverhältnis mit einer Auflösung von $800 \times 800\,\text{px}$ aufweisen. Die gerenderten Daten hingegen sind für diese Auswertung in keinerlei Weise vorverarbeitet und werden den Systemen in den originalen Auflösungen präsentiert. Die Seitenlängen von Bildern der Render-Daten betragen mindestens $434\,\text{px}$, maximal $3998\,\text{px}$ und die durchschnittliche Seitenlänge beträgt $2147\,\text{px}$. Verteilungen der Seitenverhältnisse sind in \autoref{img:cv_render_seiten} dargestellt.
+Die Unterschiede der Inferenzzeiten der Datenquellen ergeben sich aus den Abmessungen der Bilder. Die DeepDarts-Daten sind bereits vorverarbeitet, sodass sie ein quadratisches Seitenverhältnis mit einer Auflösung von $800 \times 800\,\text{px}$ aufweisen. Die gerenderten Daten hingegen sind für diese Auswertung in keinerlei Weise vorverarbeitet und werden den Systemen in den originalen Auflösungen präsentiert. Die Seitenlängen von Bildern der Render-Daten betragen mindestens $434\,\text{px}$, maximal $3.998\,\text{px}$ und die durchschnittliche Seitenlänge beträgt $2.147\,\text{px}$. Verteilungen der Seitenverhältnisse sind in \autoref{img:cv_render_seiten} dargestellt.
 
 \begin{figure}
     \centering
@@ -101,7 +96,7 @@ Die Unterschiede der Inferenzzeiten der Datenquellen ergeben sich aus den Abmess
             \addplot+[draw=black, fill=bar_3!60]   table[x=system,y=d1-test]      {\ExecutionTimes};
             \addplot+[draw=black, fill=bar_4]      table[x=system,y=d2-val]       {\ExecutionTimes};
             \addplot+[draw=black, fill=bar_4!60]   table[x=system,y=d2-test]      {\ExecutionTimes};
-            \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
+            \legend{Render-Daten, $d_1$-val, $d_1$-test, $d_2$-val, $d_2$-test}
         \end{axis}
     \end{tikzpicture}
     \caption{Dauer der Normalisierung auf unterschiedlichen Datensätzen, gruppiert nach Systemen.}
@@ -115,9 +110,10 @@ Die Unterschiede der Inferenzzeiten der Datenquellen ergeben sich aus den Abmess
     \label{img:cv_render_seiten}
 \end{figure}
 
-Die tatsächlichen Ausführungszeiten der Systeme sind stark abhängig von der Infrastruktur, auf der die Systeme ausgeführt werden. Daher ist ihnen keine zu starke Bedeutung zuzusprechen. Die relativen Ausführungszeiten lassen sich jedoch miteinander vergleichen, um eine Einschätzung der Performance der Systeme zueinander zu erlangen. Die Inferenz des DeepDarts-Systems ist auf den DeepDarts-Daten un einen Faktor $4$ schneller und bei den gerenderten Daten um den Faktor $2,6$. Die Unterschiede liegen in den Arbeitsweisen der Systeme: DeepDarts verwendet ein neuronales Netz, dessen Ausführungszeit proportional zu den Eingabedaten skaliert, während die Bilddaten in dieser Thesis in einem Vorverarbeitungsschritt skaliert werden, um nahezu unabhängig von der Eingabegröße der Bilder zu sein. Die unterschiedlichen Ausführungszeiten zwischen DeepDarts-Daten und Render-Daten dieses Systems ergeben sich aus der minimalen Bildgröße dieses Vorverarbeitungsschritts, in welchem die Bilder zwischen $800$ und $1600\,\text{px}$ skaliert werden und damit über den Abmessungen der DeepDarts-Daten liegen.
+Die tatsächlichen Ausführungszeiten der Systeme sind stark abhängig von der Infrastruktur, auf der die Systeme ausgeführt werden. Daher ist ihnen keine zu starke Bedeutung zuzusprechen. Die relativen Ausführungszeiten lassen sich jedoch miteinander vergleichen, um eine Einschätzung der Performance der Systeme zueinander zu erlangen. Die Inferenz des DeepDarts-Systems ist auf den DeepDarts-Daten un einen Faktor $4$ schneller und bei den gerenderten Daten um den Faktor $2,6$. Die Unterschiede liegen in den Arbeitsweisen der Systeme: DeepDarts verwendet ein neuronales Netz, dessen Ausführungszeit proportional zu den Eingabedaten skaliert, während die Bilddaten in dieser Thesis in einem Vorverarbeitungsschritt skaliert werden, um nahezu unabhängig von der Eingabegröße der Bilder zu sein. Die unterschiedlichen Ausführungszeiten zwischen DeepDarts-Daten und Render-Daten dieses Systems ergeben sich aus der minimalen Bildgröße dieses Vorverarbeitungsschritts, in welchem die Bilder zwischen $800$ und $1.600\,\text{px}$ skaliert werden und damit über den Abmessungen der DeepDarts-Daten liegen.
 
 \subsubsection{Findung einer Normalisierung} % ----------------------------------------------------
+\label{sec:findung_normalisierung}
 
 \pgfplotstableread[col sep=comma]{
     system,         Render-Daten,   d1-val,     d1-test,    d2-val,     d2-test
@@ -150,78 +146,21 @@ Die tatsächlichen Ausführungszeiten der Systeme sind stark abhängig von der I
             \addplot+[draw=black, fill=bar_3!60]   table[x=system,y=d1-test]       {\CVNorm};
             \addplot+[draw=black, fill=bar_4]      table[x=system,y=d2-val]        {\CVNorm};
             \addplot+[draw=black, fill=bar_4!60]   table[x=system,y=d2-test]       {\CVNorm};
-            \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
+            \legend{Render-Daten, $d_1$-val, $d_1$-test, $d_2$-val, $d_2$-test}
         \end{axis}
     \end{tikzpicture}
     \caption{Auswertung der Fähigkeit unterschiedlicher Systeme, Normalisierungen für Daten zu finden.}
     \label{fig:cv_normalisierung}
 \end{figure}
 
-% \begin{figure}[ht]
-%     \centering
-%     \begin{tikzpicture}
-%         \matrix (m) [
-%             matrix of nodes,
-%             nodes in empty cells,
-%             row sep=0.5cm,
-%             column sep=0.5cm,
-%             nodes={anchor=center}
-%         ]
-%         {
-%                          & Diese Thesis & DeepDarts-$d_1$ & DeepDarts-$d_2$ \\
-%             % -----------------------------------
-%             Render-Daten &
-%             \drawpie{97/my_green, 3/my_red}
-%                          &
-%             \drawpie{100/my_red, 0/my_green}
-%                          &
-%             \drawpie{98/my_red, 2/my_green}                                 \\
+In diesem Teil der Auswertung wird die Fähigkeit der Systeme betrachtet, eine Normalisierung der Bilder durchzuführen. Eine erfolgreiche Normalisierung bezieht sich für diese Auswertung lediglich darauf, ob ausreichend Orientierungspunkte für eine Normalisierung identifiziert werden konnten. Das DeepDarts-System muss dafür in der Lage sein, drei Orientierungspunkte zu identifizieren, da das System einem fehlenden Orientierungspunkt durch Interpolation ergänzt. Für das System dieser Thesis beinhaltet diese Anforderung die Lokalisierung des Mittelpunkts und mindestens drei weiterer Orientierungspunkte. Die Wahl der Orientierungspunkte ist dabei bei dem DeepDarts-System auf vier vordefinierte Punkte festgelegt, während das in dieser Thesis erarbeitete System 60 mögliche Punkte erkennen kann.
 
-%             % -----------------------------------
-%             $d_1$-val    &
-%             \drawpie{100/my_green, 0/my_red}
-%                          &
-%             \drawpie{100/my_green, 0/my_red}
-%                          &
-%             \drawpie{37/my_green, 63/my_red}                                \\
-
-
-%             % -----------------------------------
-%             $d_1$-test   &
-%             \drawpie{100/my_green, 0/my_red}
-%                          &
-%             \drawpie{100/my_green, 0/my_red}
-%                          &
-%             \drawpie{83/my_green, 17/my_red}                                \\
-
-%             % -----------------------------------
-%             $d_2$-val    &
-%             \drawpie{100/my_green, 0/my_red}
-%                          &
-%             \drawpie{100/my_red, 0/my_green}
-%                          &
-%             \drawpie{100/my_green, 0/my_red}                                \\
-
-%             % -----------------------------------
-%             $d_2$-test   &
-%             \drawpie{99/my_green, 1/my_red}
-%                          &
-%             \drawpie{100/my_red, 0/my_green}
-%                          &
-%             \drawpie{100/my_green, 0/my_red}                                \\
-%         };
-%     \end{tikzpicture}
-%     \caption{Auswertung der Findung von Normalisierungen auf Daten. Grüne Bereiche stehen für erfolgreiche Normalisierungen, rote Bereiche für fehlgeschlagene Normalisierungen.}
-%     \label{fig:cv_normalisierung}
-% \end{figure}
-
-In diesem Teil der Auswertung wird die Fähigkeit der Systeme betrachtet, eine Normalisierung der Bilder durchzuführen. Eine erfolgreiche Normalisierung bezieht sich für diese Auswertung lediglich darauf, ob ausreichend Orientierungspunkte für eine Normalisierung identifiziert werden konnten. Das DeepDarts-System muss dafür in der Lage sein, drei Orientierungspunkte zu identifizieren, da das System einem fehlenden Orientierungspunkt durch Interpolation ergänzt. Für das System dieser Thesis beinhaltet diese Anforderung die Lokalisierung des Mittelpunkts und mindestens drei weiterer Orientierungspunkte. Die Wahl der Orientierungspunkte ist dabei bei dem DeepDarts-System auf vier vordefinierte Punkte festgelegt während das hier erarbeitete System 60 mögliche Punkte erkennen kann.
-
-Die Ergebnisse dieser Auswertung sind in \autoref{fig:cv_normalisierung} in Form von Kuchendiagrammen dargestellt. Die Auswertung ist sowohl hinsichtlich der Systeme als auch hinsichtlich der Datensätze aufgeteilt. Der Algorithmus dieser Thesis ist auf allen Datensätzen in der Lage, in mindestens $97\%$ der Bilder eine Normalisierung zu ermitteln. Die Performance ist dabei weitestgehend unabhängig von dem Ursprung der Daten. Demgegenüber steht die Performance der DeepDarts-Systeme $d_1$ und $d_2$. Während $d_1$ zwar Auswertungen von $100\%$ auf den eigenen Validierungs- und Test-Daten erzielt, ist es nicht in der Lage, positive Ergebnisse auf anderen Daten zu erzielen. Die Auswertung von $d_2$ auf den eigenen Daten liegt ebenfalls bei $100\%$ und zumindest die Findung der Entzerrung der Test-Daten aus $d_1$ deckt sich mit $83.4\%$ mit den Beobachtungen aus dem eigenen Paper. Jedoch ist die Auswertung auf den Validierungs-Daten von $d_1$ mit $36.8\%$ nicht annähernd auf diesem Niveau und auf den gerenderten Daten konnten lediglich für $2.2\%$ der Daten normalisiert werden.
+Die Ergebnisse dieser Auswertung sind in \autoref{fig:cv_normalisierung} in Form von Kuchendiagrammen dargestellt. Die Auswertung ist sowohl hinsichtlich der Systeme als auch hinsichtlich der Datensätze aufgeteilt. Der Algorithmus dieser Thesis ist auf allen Datensätzen in der Lage, in mindestens $97\,\%$ der Bilder eine Normalisierung zu ermitteln. Die Performance ist dabei weitestgehend unabhängig von dem Ursprung der Daten. Dem gegenüber steht die Performance der DeepDarts-Systeme $d_1$ und $d_2$. Während $d_1$ zwar Auswertungen von $100\,\%$ auf den eigenen Validierungs- und Test-Daten erzielt, ist es nicht in der Lage, positive Ergebnisse auf anderen Daten zu erzielen. Die Auswertung von $d_2$ auf den eigenen Daten liegt ebenfalls bei $100\,\%$ und zumindest die Findung der Entzerrung der Test-Daten aus $d_1$ deckt sich mit $83.4\,\%$ mit den Beobachtungen aus dem eigenen Paper. Jedoch ist die Auswertung auf den Validierungs-Daten von $d_1$ mit $36.8\,\%$ nicht annähernd auf diesem Niveau und auf den gerenderten Daten konnten lediglich für $2.2\,\%$ der Daten normalisiert werden.
 
 Diese Auswertung stärkt die Erkenntnis des Overfittings von DeepDarts und zeigt zugleich die Fähigkeit dieses Systems, ausreichend Orientierungspunkte zu finden, um eine Normalisierung zu ermöglichen.
 
 \subsubsection{Genauigkeit gefundener Normalisierungen} % -----------------------------------------
+\label{sec:genauigkeit_normalisierung}
 
 \pgfplotstableread[col sep=comma]{
     system,       Render-Daten, d1-val, d1-test, d2-val, d2-test
@@ -255,22 +194,22 @@ Diese Auswertung stärkt die Erkenntnis des Overfittings von DeepDarts und zeigt
             \addplot+[draw=black, fill=bar_3!60]   table[x=system,y=d1-test]       {\Similarities};
             \addplot+[draw=black, fill=bar_4]      table[x=system,y=d2-val]        {\Similarities};
             \addplot+[draw=black, fill=bar_4!60]   table[x=system,y=d2-test]       {\Similarities};
-            \legend{Render-Daten, d1-val, d1-test, d2-val, d2-test}
+            \legend{Render-Daten, $d_1$-val, $d_1$-test, $d_2$-val, $d_2$-test}
         \end{axis}
     \end{tikzpicture}
     \caption{Genauigkeiten der Normalisierungen auf unterschiedlichen Datensätzen, gruppiert nach Systemen. Sofern keine Normalisierung möglich war, existiert kein Balken.}
     \label{fig:cv_genauigkeit}
 \end{figure}
 
-Die Genauigkeit der Normalisierungen wird mit der in \autoref{sec:cv_metriken} eingeführten Metrik durchgeführt und die Ergebnisse sind in \autoref{fig:cv_genauigkeit} dargestellt. Es ist zu erkennen, dass signifikante Unterschiede zwischen den Systemen vorherrschen. DeepDarts' System $d_2$ erzielt auf dem ihm zugewiesenen Validierungs- und Test-Daten ausgesprochen gute Ergebnisse mit durchschnittlich $0.419\,\text{px}$ Abweichung während es auf anderen Daten keine Ergebnisse erzielen kann. $d_2$ hingegen kann auf allen Datensätzen Ergebnisse erzielen, jedoch sind deutliche Unterschiede zwischen den Quellen der Datensätzen zu erkennen. Auf DeepDarts-Daten können sehr gute Ergebnisse mit durchschnittlich $1.545\,\text{px}$ Abweichung auf den $d_1$-Daten und $1.067\,\text{px}$ auf den $d_2$-Daten erzielt werden. Weit davon abweichend ist jedoch die Auswertung auf den gerenderten Daten, auf denen lediglich eine mittlere Abweichung von $1568.744\,\text{px}$ erzielt wurde.
-Diese Beobachtung lässt darauf schließen, dass eine zuverlässige Normalisierung nicht mit diesem System möglich war, da die Bilder lediglich eine Größe von $800 \times 800\,\text{px}$ besaßen, was wesentlich geringer ist als die mittlere Abweichung.
+Die Genauigkeit der Normalisierungen wird mit der in \autoref{sec:cv_metriken} eingeführten Metrik durchgeführt und die Ergebnisse sind in \autoref{fig:cv_genauigkeit} dargestellt. Es ist zu erkennen, dass signifikante Unterschiede zwischen den Systemen vorherrschen. DeepDarts' System $d_2$ erzielt auf dem ihm zugewiesenen Validierungs- und Test-Daten ausgesprochen gute Ergebnisse mit durchschnittlich $0,419\,\text{px}$ Abweichung während es auf anderen Daten keine Ergebnisse erzielen kann. $d_2$ hingegen kann auf allen Datensätzen Ergebnisse erzielen, jedoch sind deutliche Unterschiede zwischen den Quellen der Datensätzen zu erkennen. Auf DeepDarts-Daten können sehr gute Ergebnisse mit durchschnittlich $1,545\,\text{px}$ Abweichung auf den $d_1$-Daten und $1,067\,\text{px}$ auf den $d_2$-Daten erzielt werden. Weit davon abweichend ist jedoch die Auswertung auf den gerenderten Daten, auf denen lediglich eine mittlere Abweichung von $1.568,744\,\text{px}$ erzielt wurde.
+Diese Beobachtung lässt darauf schließen, dass eine zuverlässige Normalisierung nicht mit diesem System möglich war, da die Bilder lediglich eine Größe von $800 \times 800\,\text{px}$ besaßen, was wesentlich geringer ist, als die mittlere Abweichung.
 
-Das in dieser Thesis erarbeitete System war jedoch in der Lage, auf allen Datensätzen Normalisierungen zu finden. Darüber hinaus bewegen sich die mittleren Verschiebungen über die Datensätze in etwa ähnlichen Wertebereichen: die Render-Daten konnten mit einer mittleren Verschiebung von $17.234\,\text{px}$ normalisiert werden, die DeepDarts-Daten mit $3.281\,\text{px}$. Die höhere Genauigkeit auf den DeepDarts-Datensätzen stammt von der Vorverarbeitung der Daten, sodass diese eine feste Größe besitzen, bei der die Dartscheiben nicht während der Vorverarbeitung dieses Systems skaliert werden. Da Skalierungen mit einem Informationsverlust einhergehen, steht die Anwendung dieser im Zusammenhang mit größeren Abweichungen der Auswertung.
+Das in dieser Thesis erarbeitete System war jedoch in der Lage, auf allen Datensätzen Normalisierungen zu finden. Darüber hinaus bewegen sich die mittleren Verschiebungen über die Datensätze in etwa ähnlichen Wertebereichen: die Render-Daten konnten mit einer mittleren Verschiebung von $17,234\,\text{px}$ normalisiert werden, die DeepDarts-Daten mit $3,281\,\text{px}$. Die höhere Genauigkeit auf den DeepDarts-Datensätzen stammt von der Vorverarbeitung der Daten, sodass diese eine feste Größe besitzen, bei der die Dartscheiben nicht während der Vorverarbeitung dieses Systems skaliert werden. Da Skalierungen mit einem Informationsverlust einhergehen, steht die Anwendung dieser im Zusammenhang mit größeren Abweichungen der Auswertung.
 
 \subsubsection{Zusammenfassung der Auswertung} % --------------------------------------------------
 
 Die dargestellten Auswertungen zeichnen ein deutliches Bild der Arbeitsweisen und Genauigkeiten der unterschiedlichen Systeme. Während die DeepDarts-Systeme sehr gute Auswertungen auf den ihnen zugeschriebenen Daten erzielen sind sie nicht in der Lage, auf ihnen unbekannte Daten zu generalisieren und ähnliche Ergebnisse zu erzielen. Das bereits in \autoref{sec:deepdarts} erwähnte Overfitting wird durch diese Auswertung bereits verdeutlicht.
 
-Die Inferenzzeit von DeepDarts ist geringer als die des in dieser Thesis erarbeiteten Systems. Hintergründe dafür können in den Implementierungen der jeweiligen Systeme gefunden werden. Während in dieser Thesis ein Algorithmus unter der Verwendung von Python-Code mit gelegentlicher Einbindung von Frameworks, die auf kompiliertem Maschinencode arbeiten, entwickelt wurde, verwendet DeepDarts ein neuronales Netz, welches nahezu vollständig kompiliert ist und keinerlei Kontrollfluss wie Verzweigungen und Schleifen verwendet. Dieser Unterschied ist bei der Interpretation der Ergebnisse nicht außer Acht zu lassen.
+Die Inferenzzeit von DeepDarts ist geringer als die des in dieser Thesis erarbeiteten Systems. Hintergründe dafür können in den Implementierungen der jeweiligen Systeme gefunden werden. Während in dieser Thesis ein Algorithmus entwickelt wurde, dessen Implementierung in Python erfolgt ist, verwendet DeepDarts ein neuronales Netz, welches nahezu vollständig kompiliert ist und keinerlei Kontrollfluss wie Verzweigungen und Schleifen verwendet. Dadurch profitiert DeepDarts von massiver Parallelität und effizienter Ausführung. Dieser Unterschied ist bei der Interpretation der Ergebnisse nicht außer Acht zu lassen.
 
 Mit der Auswertung der Fähigkeit, Normalisierungen auf Daten zu finden, in Kombination mit der Genauigkeit dieser gefundenen Normalisierungen ist hingegen ein wesentlicher Unterschied der Systeme erkennbar. DeepDarts ist nicht in der Lage, Bilder zu normalisieren, welche nicht aus den für das Training verwendeten Daten stammen. Die Wahl der Testdaten ist dabei zu hinterfragen, da diese für eine Vermeidung eines solchen Overfittings vorgesehen sind.

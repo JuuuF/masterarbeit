@@ -14,7 +14,7 @@ Die Grundlagen der Datenerstellung sind thematisch geordnet in die Abschnitte de
 
 Prozedurale Datenerstellung kommt in einer Vielzahl unterschiedlicher Anwendungsbereiche zum Einsatz. In dieser Arbeit dient die prozedurale Datenerstellung der Generierung von Trainingsdaten für neuronale Netze. Dieser Unterabschnitt erläutert, was unter prozeduraler Datenerstellung zu verstehen ist und welche Vorteile sich aus ihrer Anwendung ergeben.
 
-Die Erstellung von Daten kann sowohl manuell als auch automatisch geschehen. Prozedurale Datenerstellung bezeichnet eine Methode zur automatisierten Generierung von Daten unter Verwendung zufälliger Werte. Zur Datengenerierung werden zunächst Rahmenbedingungen definiert, innerhalb derer Zufallswerte erzeugt werden, die wiederum zur Steuerung relevanter Parameter dienen. Die Art der Zufallswerte ist dabei je nach Einsatzbereich unterschiedlich; für diese Thesis finden hauptsächlich 1- und 2-dimensionale Zufallswerte ihren Einsatz. Eindimensionale Zufallswerte werden beispielsweise genutzt, um Parameter wie Sättigung oder Helligkeit von Texturfarben zu bestimmen. Zweidimensionale Zufallswerte finden Anwendung in Form von Rauschtexturen, die beispielsweise die Oberflächenbeschaffenheit von Objekten beeinflussen. Die Wertebereiche dieser Zufallsgrößen lassen sich durch Skalierung, Clipping oder andere Verfahren der Nachverarbeitung an den jeweiligen Einsatzzweck anpassen. Durch diese Art der Parametrisierung durch Zufallswerte ist das automatisierte Erstellen einer Vielzahl variierender Daten möglich.
+Für die Erstellung von Daten kann sowohl manuell als auch automatisch geschehen. Prozedurale Datenerstellung bezeichnet eine Methode zur automatisierten Generierung von Daten unter Verwendung zufälliger Werte. Zur Datengenerierung werden zunächst Rahmenbedingungen definiert, innerhalb derer Zufallswerte erzeugt werden, die wiederum zur Steuerung relevanter Parameter dienen. Die Art der Zufallswerte ist dabei je nach Einsatzbereich unterschiedlich; für diese Thesis finden hauptsächlich ein- und zweidimensionale Zufallswerte ihren Einsatz. Eindimensionale Zufallswerte werden beispielsweise genutzt, um Parameter wie Sättigung oder Helligkeit von Texturfarben zu bestimmen. Zweidimensionale Zufallswerte finden Anwendung in Form von Rauschtexturen, die beispielsweise die Oberflächenbeschaffenheit von Objekten beeinflussen. Die Wertebereiche dieser Zufallsgrößen lassen sich durch Skalierung, Clipping oder andere Verfahren der Nachverarbeitung an den jeweiligen Einsatzzweck anpassen. Durch diese Art der Parametrisierung durch Zufallswerte ist das automatisierte Erstellen einer Vielzahl variierender Daten möglich.
 
 Ein wesentlicher Vorteil der prozeduralen Datenerstellung liegt in der hohen Komplexität der erzeugten Daten, die durch die Kombination zahlreicher Zufallsparameter erreicht wird. Die für ein Datensample verwendeten Zufallsparameter definieren dessen Position im hochdimensionalen Parameterraum. Durch diese Positionierung ist der Aufbau eines Samples eindeutig beschrieben und eine deterministische Reproduktion dessen ist durch diese ermöglicht.
 
@@ -23,28 +23,28 @@ Ein wesentlicher Vorteil der prozeduralen Datenerstellung liegt in der hohen Kom
 \subsection{3D-Rendering}
 \label{sec:3d_rendering}
 
-Die Erstellung von fotorealistischen Bildern aus 3D-Szenen wird eine Technik verwendet, die als Ray Tracing bezeichnet wird. Beim Ray Tracing wird die Farbe von Pixeln einer Kamerafläche durch von dieser ausgehenden Strahlen bestimmt \cite{ray_tracing,ray_tracing_distributed,ray_tracing_equations}. Treffen diese Strahlen auf Objekte, werden sie in Abhängigkeit von dessen Oberflächenbeschaffenheit modifiziert. Auf diese Weise geschieht eine rekursive Aussendung weiterer Strahlen, bis ein Abbruchkriterium erreicht ist. Durch diese von der Kamera ausgesandten Strahlen wird die Farbgebung der entsprechenden Pixel bestimmt, indem Strahlen durch Auftreffen auf Materialien und Lichtquellen Farbinformationen sammeln.
+Die Erstellung von fotorealistischen Bildern aus 3D-Szenen wird eine Technik verwendet, die als Raytracing bezeichnet wird. Beim Raytracing wird die Farbe von Pixeln einer Kamerafläche durch von dieser ausgehenden Strahlen bestimmt \cite{ray_tracing,ray_tracing_distributed,ray_tracing_equations}. Treffen diese Strahlen auf Objekte, werden sie in Abhängigkeit von dessen Oberflächenbeschaffenheit modifiziert. Auf diese Weise geschieht eine rekursive Aussendung weiterer Strahlen, bis ein Abbruchkriterium erreicht ist. Durch diese von der Kamera ausgesandten Strahlen wird die Farbgebung der entsprechenden Pixel bestimmt, indem Strahlen durch Auftreffen auf Materialien und Lichtquellen Farbinformationen sammeln.
 
-Die verteilte Anwendung dieser Technik für alle Pixel der Kamera sorgen für eine realistische Ausleuchtung einer modellierten Szene. Die weitgehende Unabhängigkeit der Pixel des Bildes ermöglicht eine verteilte Ausführung dieses Algorithmus auf Grafikkarten, um Rendering-Zeiten durch parallele Ausführungen zu optimieren.
+Die verteilte Anwendung dieser Technik für alle Pixel der Kamera sorgt für eine realistische Ausleuchtung einer modellierten Szene. Die weitgehende Unabhängigkeit der Pixel des Bildes ermöglicht eine verteilte Ausführung dieses Algorithmus auf Grafikkarten, um Rendering-Zeiten durch parallele Ausführungen zu optimieren.
 
-Ray Tracing ist der Industriestandard bezüglich der Erstellung realistischer Bilder und findet seinen Einsatz beispielsweise in Videospielen oder bei der Generierung realistischer Aufnahmen sowohl für Momentaufnahmen als auch für Bewegtbilder. In dieser Arbeit wird Ray Tracing zur Generierung realistischer Bilder von Dartscheiben verwendet, indem eine 3D-Szene erstellt wird, aus welcher Bilder erstellt werden. Diese Bilder werden im Kontext dieser Arbeit als Grundlage des Trainings eines neuronalen Netzes verwendet.
+Raytracing ist der Industriestandard bezüglich der Erstellung realistischer Bilder und findet seinen Einsatz beispielsweise in Videospielen oder bei der Generierung realistischer Aufnahmen sowohl für Momentaufnahmen als auch für Bewegtbilder. In dieser Arbeit wird Raytracing zur Generierung realistischer Bilder von Dartscheiben verwendet, indem eine 3D-Szene erstellt wird, aus welcher Bilder erstellt werden. Diese Bilder werden im Kontext dieser Arbeit als Grundlage des Trainings eines neuronalen Netzes verwendet.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Kameraparameter}
 \label{sec:kameras}
 
-Bei der Datenerstellung mittels 3D-Software und Ray-Tracing ist die Präsenz einer Kamera unabdingbar. Ursprüngliche Kameramodelle begonnen mit einer Pinhole-Kamera, die als Projektion eines 3D-Raumes in einen 2D-Raum vornimmt \cite{pinhole_camera}. Auf diesem Modell aufbauend wurden weitere Kameraparameter modelliert, bis die Simulation echter Kameras ermöglicht wurde. In aktuellen 3D-Softwares zum Rendern von Szenen sind eine Vielzahl an Kameraparametern implementiert und modifizierbar, sodass fotorealistische Aufnahmen simuliert werden können. Die Unterschiede zwischen der Verwendung einer simulierten und einer Echten Kamera sind daher für das ungeschulte Auge verschwindend gering und für das Erstellen von Trainingsdaten für ein neuronales Netz ideal geeignet. Die wichtigsten Parameter einer Kameraaufnahme werden in diesem Unterabschnitt grob erläutert, um ein oberflächliches Verständnis der Arbeitsweise einer Kamera zu erlangen.
+Bei der Datenerstellung mittels 3D-Software und Raytracing ist die Präsenz einer Kamera unabdingbar. Ursprüngliche Kameramodelle begonnen mit einer Pinhole-Kamera, die als Projektion eines 3D-Raumes in einen 2D-Raum vornimmt \cite{pinhole_camera}. Auf diesem Modell aufbauend wurden weitere Kameraparameter modelliert, bis die Simulation echter Kameras ermöglicht wurde. In aktuellen 3D-Softwares zum Rendern von Szenen sind eine Vielzahl an Kameraparametern implementiert und modifizierbar, sodass fotorealistische Aufnahmen simuliert werden können. Die Unterschiede zwischen der Verwendung einer simulierten und einer echten Kamera sind daher für das ungeschulte Auge verschwindend gering und für das Erstellen von Trainingsdaten für ein neuronales Netz ideal geeignet. Die wichtigsten Parameter einer Kameraaufnahme werden in diesem Unterabschnitt grob erläutert, um ein oberflächliches Verständnis der Arbeitsweise einer Kamera zu erlangen.
 
 \paragraph{Brennweite und Öffnungswinkel}
 
-Die Brennweite einer Kamera -- bzw. eines Objektives -- bestimmt die Lichtbrechung bei der Aufnahme eines Bildes. Diese Lichtbrechung resultiert in einem unterschiedlich großen Bereich, der von der Kamera eingefangen wird. Optisch ist die Brennweite für den Zoom des Bildes zuständig. Eine Brennweite von 50mm ist eine typische Brennweite, die dem menschlichen Blickwinkel nahe kommt. Geringere Brennweiten sorgen für ein größeres Sichtfeld während größere Brennweiten mit einem größeren Zoom einhergehen \cite{focal_lentgh}.
+Die Brennweite einer Kamera -- bzw. eines Objektives -- bestimmt die Lichtbrechung bei der Aufnahme eines Bildes. Diese Lichtbrechung resultiert in einem unterschiedlich großen Bereich, der von der Kamera eingefangen wird. Optisch ist die Brennweite für den Zoom des Bildes zuständig. Eine Brennweite von $50\,\text{mm}$ ist eine typische Brennweite, die dem menschlichen Blickwinkel nahe kommt. Geringere Brennweiten sorgen für ein größeres Sichtfeld während größere Brennweiten mit einem größeren Zoom einhergehen \cite{focal_lentgh}.
 
-Die Brennweite bestimmt den Öffnungswinkel der Kamera. Bei einer geringen Brennweite ist der Öffnungswinkel groß und analog ist er bei einer großen Brennweite klein.
+Die Brennweite bestimmt den Öffnungswinkel der Kamera. Bei einer geringen Brennweite ist der Öffnungswinkel groß und bei einer großen Brennweite klein.
 
 \paragraph{Belichtungsdauer und Bewegungsunschärfe}
 
-Für die Aufnahme von Bildern wird Licht auf einem Sensor eingefangen. Die Dauer, über die das Licht eingefangen wird, wird als Belichtungsdauer bezeichnet. Während dieser treffen Photonen auf den Sensor, welche für die Helligkeit des Bildes verantwortlich sind. Eine lange Belichtungsdauer resultiert in mehr eingefangenen Photonen und einem helleren Bild. Wird die Kamera während der Belichtung des Sensors bewegt, treffen Photonen unterschiedlicher Ursprünge auf die selbe Position des Sensors und es entsteht Bewegungsunschärfe. In einem Bild äußert sich diese durch verzogene Linien und unscharfe Aufnahmen \cite{motion_blur}.
+Für die Aufnahme von Bildern wird Licht auf einem Sensor eingefangen. Die Dauer, über die das Licht eingefangen wird, wird als Belichtungsdauer bezeichnet. Während dieser treffen Photonen auf den Sensor, welche für die Helligkeit des Bildes verantwortlich sind. Eine lange Belichtungsdauer resultiert in mehr eingefangenen Photonen und einem helleren Bild. Wird die Kamera während der Belichtung des Sensors bewegt, treffen Photonen unterschiedlicher Ursprünge auf dieselbe Position des Sensors und es entsteht Bewegungsunschärfe. In einem Bild äußert sich diese durch verzogene Linien und unscharfe Aufnahmen \cite{motion_blur}.
 
 \paragraph{ISO und Rauschen}
 
@@ -65,22 +65,22 @@ In dieser Arbeit werden binäre Maskenbilder bei der Erstellung synthetischer Da
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Dartscheiben-Geometrie}  % DARTS ======================================================
+\subsection{Geometrie einer Dartscheibe}  % DARTS ======================================================
 \label{sec:dartscheiben_geometrie}
 
 Die Geometrie und der Aufbaue einer Dartscheibe ist für die Erstellung der Daten zentral. Eine schematische Darstellung einer Dartscheibe ist in \autoref{img:dart_board} gegeben.
 
 \paragraph{Die Dartscheibe}
 
-Die Dartscheibe besteht grundlegend aus einer Scheibe mit 451mm Durchmesser. Sie besteht aus 20 einheitlich großen, radial angeordneten Feldern mit Zahlenwerden von 1 bis 20. Jedes Feld besitzt einen Double- und einen Triple-Ring mit einem Durchmesser von 8-10mm. Der Triple-Ring ist etwa 10cm vom Mittelpunkt entfernt; der Double-Ring etwa 16cm. Insgesamt ergibt sich ein Durchmesser von 34cm punkteerzielender Felder, der Bereich jenseits der 17cm Abstand des Mittelpunktes gibt keine Punkte \cite{wdf-rules}.
+Die Dartscheibe besteht grundlegend aus einer Scheibe mit $451\,\text{mm}$ Durchmesser. Sie besteht aus 20 einheitlich großen, radial angeordneten Feldern mit Zahlenwerden von 1 bis 20. Jedes Feld besitzt einen Double- und einen Triple-Ring mit einem Durchmesser von $8-10\,\text{mm}$. Der Triple-Ring ist etwa $10\,\text{cm}$ vom Mittelpunkt entfernt; der Double-Ring etwa $16\,\text{cm}$. Insgesamt ergibt sich ein Durchmesser von $34\,\text{cm}$ punkteerzielender Felder, der Bereich jenseits der $17\,\text{cm}$ Abstand des Mittelpunktes gibt keine Punkte \cite{wdf-rules}.
 
-In der Mitte der Dartscheibe befinden sich die Felder Bull und Double Bull (oder Bull's Eye). Sie haben Durchmesser jeweils ca. 32mm und 12,7mm. Das Bull gibt 25 Punkte, das Double Bull 50.
+In der Mitte der Dartscheibe befinden sich die Felder Bull und Double Bull (oder Bull's Eye). Sie haben Durchmesser jeweils ca. $32\,\text{mm}$ und $12,7\,\text{mm}$. Das Bull gibt 25 Punkte, das Double Bull 50.
 
 Die Felder mit einfachen Punktzahlen sind abwechselnd schwarz und weiß gefärbt, die Mehrfach-Felder der schwarzen Felder sind rot und die der weißen Felder grün gefärbt. Das Bull ist grün und das Double Bull rot.
 
 \paragraph{Rund um die Dartscheibe}
 
-Die Punktzahlen der Dartfelder werden durch aus Drähten gefertigten Zahlen angezeigt. Diese befinden sich an einem Ring am Äußeren Ende der Dartscheibe und sind radial um die Dartscheibe angeordnet. Dieser Zahlenring ist nicht fest an der Dartscheibe montiert, sodass er nach Belieben rotiert werden kann, um eine ungleichmäßige Abnutzung der Dartscheibe auszugleichen.
+Die Punktzahlen der Dartfelder werden durch aus Drähten gefertigten Zahlen angezeigt. Diese befinden sich an einem Ring am äußeren Ende der Dartscheibe und sind radial um die Dartscheibe angeordnet. Dieser Zahlenring ist nicht fest an der Dartscheibe montiert, sodass er nach Belieben rotiert werden kann, um eine ungleichmäßige Abnutzung der Dartscheibe auszugleichen.
 
 \paragraph{Material}
 
@@ -88,13 +88,25 @@ Die Felder der Steeldarts-Dartscheibe werden aus Fasern hergestellt, typisch sin
 
 \paragraph{Double und Triple}
 
-Mit Double und Triple (auch Treble) werden die Ringe an Feldern bezeichnet, die Vielfache der Feldgrundzahl als Score erteilen. Der Triple-Ring befindet sich zwischen den Einzelfeldern der Dartscheibe und gewährt das Dreifache der Grundpunktzahl des Feldes. Der Double-Ring befindet sich auf der Außenseite der Dartscheibe und gewährt seinem Namen entsprechend das Doppelte der Feldzahl. Das Feld mit der größten Punktzahl ist die Triple-20 mit $3 \times 20 = 60$ Punkten.
+Mit Double und Triple (auch Treble) werden die Ringe an Feldern bezeichnet, die ein Vielfaches der Feldgrundzahl als Score erteilen. Der Triple-Ring befindet sich zwischen den Einzelfeldern der Dartscheibe und gewährt das Dreifache der Grundpunktzahl des Feldes. Der Double-Ring befindet sich auf der Außenseite der Dartscheibe und gewährt seinem Namen entsprechend das Doppelte der Feldzahl. Das Feld mit der größten Punktzahl ist die Triple-20 mit $3 \times 20 = 60$ Punkten.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{imgs/rendering/dart_board.pdf}
-    \caption{Schematische Darstellung einer Dartscheibe.}
-    \label{img:dart_board}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{imgs/rendering/dart_board.pdf}
+        \caption{Schematische Darstellung einer Dartscheibe.}
+        \label{img:dart_board}
+    \end{subfigure}
+    \par
+    \vspace*{0.5cm}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{imgs/rendering/grundlagen/dart_arrow.pdf}
+        \caption{Schematische Darstellung eines Dartpfeils.}
+        \label{img:dart_arrow}
+    \end{subfigure}
+    \caption{Schematische Darstellungen von Dartscheibe und Dartpfeil.}
+    \label{img:dart_board_and_arrow}
 \end{figure}
 
 
@@ -107,7 +119,7 @@ Im Darts gibt es eine Vielzahl an Begrifflichkeiten, von denen einige auch in di
 
 \paragraph{Tip, Barrel, Shaft, Flight}
 
-Ein Dartpfeil besteht aus unterschiedlichen Bestandteilen. Die vier wesentlichen Bestandteile sind Tip, Barrel, Shaft und Flight\footnote{Abweichungen dieser Bezeichnungen sind möglich, sodass der Shaft auch häufig als Stem bezeichnet wird. Zur Vereinheitlichung wurden die genannten Begriffe verwendet.}, aufgezählt von der Vorderseite nach hinten \cite{wdf-rules,pdc_rules}. Die Tip ist die Spitze des Dartpfeils, die in die Dartscheibe eintrifft. Die Barrel ist der Teil des Dartpfeils, an dem er gegriffen wird und liegt direkt hinter der Tip. Auf die Barrel folgt der Shaft, der die Brücke zum Flight, dem Flügelende des Dartpfeils, schließt. Der Flight besteht aus vier Einzelflügeln, die in Abständen von $90\degree$ zueinander stehen und orthogonal zum Shaft verlaufen.
+Ein Dartpfeil besteht aus unterschiedlichen Bestandteilen. Die vier wesentlichen Bestandteile sind Tip, Barrel, Shaft und Flight\footnote{Abweichungen dieser Bezeichnungen sind möglich, sodass der Shaft auch häufig als Stem bezeichnet wird. Zur Vereinheitlichung wurden die genannten Begriffe verwendet.}, aufgezählt von der Vorderseite nach hinten \cite{wdf-rules,pdc_rules}. Die Tip ist die Spitze des Dartpfeils, die in die Dartscheibe eintrifft. Die Barrel ist der Teil des Dartpfeils, an dem er gegriffen wird und liegt direkt hinter der Tip. Auf die Barrel folgt der Shaft, der die Brücke zum Flight, dem Flügelende des Dartpfeils, schließt. Der Flight besteht aus vier Einzelflügeln, die in Abständen von $90\degree$ zueinander stehen und orthogonal zum Shaft verlaufen. Der Aufbau eines Dartpfeils ist in \autoref{img:dart_arrow} schematisch dargestellt.
 
 \paragraph{Spinne}
 
@@ -120,7 +132,7 @@ Als Spinne wird der Metallrahmen der Dartscheibe bezeichnet, der die Feldsegment
 
 Steeldarts ist die klassische Form von Darts, in der Dartpfeile mit Metallspitzen auf eine Dartscheibe geworfen werden. Die Bezeichnung des Steeldarts bezieht sich auf die Verwendung von Dartpfeilspitzen, die aus Metall gefertigt sind und ein spitzes Ende zum Eindringen in eine Zielscheibe besitzen. Diese Scheibe besteht üblicherweise aus Sisalfasern, die durch die Dartpfeile nicht irreparabel beschädigen. Dem gegenüber stehen Softdarts, bei welchem Pfeile mit Spitzen aus Kunststoff verwendet werden, die typischerweise auf eine elektronische Dartscheibe geworfen werden.
 
-Wesentlicher unterschied zwischen Soft- und Steeldarts ist neben der unterschiedlichen Ausrüstung die Art des Scorings. Während die meist elektronischen Dartscheiben von Softdarts ein automatischen Scoring verwenden muss die Punktzahl bei Steeldarts manuell gezählt werden. Eben dieser Unterschied ist Kern dieser Thesis, in der ein automatisches Scoring-System für Steeldarts entwickelt wird. Während er Einsatz von Softdarts auf Gelegenheitsspiele und Hobbynutzung ausgelegt ist, kommt Steeldarts in professionellen Umgebungen zum Einsatz.
+Wesentlicher unterschied zwischen Soft- und Steeldarts ist neben der unterschiedlichen Ausrüstung die Art des Scorings. Während die meist elektronischen Dartscheiben von Softdarts ein automatisches Scoring verwenden, muss die Punktzahl bei Steeldarts manuell gezählt werden. Eben dieser Unterschied ist Kern dieser Thesis, in der ein automatisches Scoring-System für Steeldarts entwickelt wird. Während er Einsatz von Softdarts auf Gelegenheitsspiele und Hobbynutzung ausgelegt ist, kommt Steeldarts in professionellen Umgebungen zum Einsatz.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -140,7 +152,7 @@ Essenziell für prozedurale Datenerstellung ist die Verwendung von Noise-Texture
 
 \subsubsection{White Noise}
 
-White Noise -- zu deutsch: weißes Rauschen -- ist eine Zufallsverteilung von Zahlenwerten, die nicht vorhersehbar ist und doch einem Muster folgt. Sie ist dadurch charakterisiert, dass jeder Ausgangswert mit der selben Wahrscheinlichkeit versehen ist \cite{white_noise}. Im 1-dimensionalen Beispiel von Audio entspricht weißes Rauschen der Charakteristik, dass jede Frequenz in einem Signal gleichermaßen vertreten ist. Hinsichtlich einer diskreten 2-dimensionalen Textur ist die Wahl jedes Intensitätswerts eines Pixels unabhängig voneinander gleichverteilt über das Intervall $[0, 1]$.
+White Noise -- zu deutsch: weißes Rauschen -- ist eine Zufallsverteilung von Zahlenwerten, die nicht vorhersehbar ist und doch einem Muster folgt. Sie ist dadurch charakterisiert, dass jeder Ausgangswert mit der selben Wahrscheinlichkeit versehen ist \cite{white_noise}. Im eindimensionalen Beispiel von Audio entspricht weißes Rauschen der Charakteristik, dass jede Frequenz in einem Signal gleichermaßen vertreten ist. Hinsichtlich einer diskreten zweidimensionalen Textur ist die Wahl jedes Intensitätswerts eines Pixels unabhängig voneinander gleichverteilt über das Intervall $[0, 1]$.
 
 \subsubsection{Perlin Noise}
 
@@ -169,8 +181,8 @@ Im Rahmen der Datengenerierung dieser Thesis werden Thresholding und Maskierung 
 
 Thresholding ist definiert durch \cite{cv_general}:
 \[\Phi(f, t) = \begin{cases}
-    1, &wenn f \geq t,\\
-    0 &sonst
+    1, &\text{wenn}~f \geq t,\\
+    0 &\text{sonst}
 \end{cases}\]
 
 Wird dieses globale Thresholding aller Pixel lokalisiert, sodass jedem Pixel ein dedizierter Threshold zugeordnet wird, spricht man von Maskierung. Eine Maske definiert die Schwellenwerte, die für die Einblendung einer modulierten Textur erforderlich sind. Neben der binären Ein- oder Ausblendung von Pixeln ermöglichen Masken durch kontinuierliche Werte im Intervall $[0, 1]$ eine anteilige Darstellung der Quelltextur. Diese Methode findet in dieser Thesis Anwendung bei der Erstellung einer realistischen Dartscheibe, indem mehrere maskierte Texturen überlagert werden.

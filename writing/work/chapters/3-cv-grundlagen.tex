@@ -3,7 +3,7 @@
 \section{Grundlagen}
 \label{sec:cv:grundlagen}
 
-Bevor in the Thematik der Normalisierung eingegangen wird, ist die Klärung von Grundbegriffen und -konzepten relevant. Diese legen den Grundbaustein für die Nachvollziehbarkeit der Algorithmen und Techniken, die für die Verarbeitung der Bilddaten wichtig sind. Diese Grundlagen setzen mathematische Kenntnisse voraus, wie sie in einem Studium der Informatik erlernt und verstanden werden. Spezifische Algorithmen und Techniken der herkömmlichen Computer Vision werden grundlegend erläutert, jedoch nicht in einem Detailgrad, der zum vollständigen Durchdringen der Themen notwendig ist. Diese Sektion ist lediglich dafür vorgesehen, ausreichend Kontext zu den jeweils verwendeten Methoden und Algorithmen zu liefern, um die Anwendung und Arbeitsweise des Vorgehens zu verstehen.
+Bevor in die Thematik der Normalisierung eingegangen wird, ist die Klärung von Grundbegriffen und -konzepten relevant. Diese legen den Grundbaustein für die Nachvollziehbarkeit der Algorithmen und Techniken, die für die Verarbeitung der Bilddaten wichtig sind. Diese Grundlagen setzen mathematische Kenntnisse voraus, wie sie in einem Studium der Informatik erlernt und verstanden werden. Spezifische Algorithmen und Techniken der herkömmlichen Computer Vision werden grundlegend erläutert, jedoch nicht in einem Detailgrad, der zum vollständigen Durchdringen der Themen notwendig ist. Diese Sektion ist lediglich dafür vorgesehen, ausreichend Kontext zu den jeweils verwendeten Methoden und Algorithmen zu liefern, um die Anwendung und Arbeitsweise des Vorgehens zu verstehen.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -155,7 +155,7 @@ Bei einem Bildausschnitt ohne Kanten ist ein Cluster um den Ursprung zu erwarten
         \caption{Reaktion auf einen Bildausschnitt mit einer Ecke.}
         \label{fig:harris_corner}
     \end{subfigure}
-    \caption{Visualisierung der Reaktionen von Kantenfiltern auf unterschiedliche Bildstrukturen und die Repräsentation ihrer Gradienten \cite{harris_visualization}. Die Haupt- und Nebenachsen sind in \autoref{fig:harris_flat} jeweils kurz, in \autoref{fig:harris_edge} ist die Hauptachse lang während die Nebenachse kurz ist und in \autoref{fig:harris_edge} sind sowohl Haupt- als auch Nebenachse lang.}
+    \caption{Visualisierung der Reaktionen von Kantenfiltern auf unterschiedliche Bildstrukturen und die Repräsentation ihrer Gradienten \cite{harris_visualization}. Die Haupt- und Nebenachsen sind in \autoref{fig:harris_flat} jeweils kurz, in \autoref{fig:harris_edge} ist die Hauptachse lang, während die Nebenachse kurz ist, und in \autoref{fig:harris_edge} sind sowohl Haupt- als auch Nebenachse lang.}
     \label{fig:harris}
 \end{figure}
 
@@ -191,7 +191,7 @@ Transformationen von Bildern in der Computer Vision basieren auf der Grundlage v
 \subsubsection{Homogene Koordinaten}
 \label{sec:homogene_koordinaten}
 
-Punkte im 2D-Raum besitzen eine $x$- und eine $y$-Koordinate, sodass $P = (x, y)$. Eine Erweiterung dieser Koordinatendarstellung sind homogene Koordinaten. Um einen 2D-Punkt $P$ in einen homogenen Punkt $\widetilde{P} = (\widetilde{x}, \widetilde{y}, \widetilde{z})$ umzuwandeln, wird eine Koordinate $\widetilde{z} \neq 0$ hinzugefügt, die zur Normalisierung der Koordinaten genutzt wird. Zur Umwandlung von $P$ in homogene Koordinaten wird $z=1$ gesetzt; die Rücktransformation geschieht durch $P = (\frac{\widetilde{x}}{\widetilde{z}}, \frac{\widetilde{y}}{\widetilde{z}})$. Homogene Koordinaten sind eine 3-dimensionale Einbettung des 2-dimensionalen Raumes und ermöglichen Transformationen von Koordinaten und als Erweiterung dessen auch die Transformation von Bildern durch Transformationsmatrizen $M$. Diese sind $3 \times 3$ Matrizen, die durch Multiplikation mit homogenen Punkten Transformationen auf diesen anwenden:
+Punkte im 2D-Raum besitzen eine $x$- und eine $y$-Koordinate, sodass $P = (x, y)$. Eine Erweiterung dieser Koordinatendarstellung sind homogene Koordinaten. Um einen 2D-Punkt $P$ in einen homogenen Punkt $\widetilde{P} = (\widetilde{x}, \widetilde{y}, \widetilde{z})$ umzuwandeln, wird eine Koordinate $\widetilde{z} \neq 0$ hinzugefügt, die zur Normalisierung der Koordinaten genutzt wird. Zur Umwandlung von $P$ in homogene Koordinaten wird $z=1$ gesetzt; die Rücktransformation geschieht durch $P = (\frac{\widetilde{x}}{\widetilde{z}}, \frac{\widetilde{y}}{\widetilde{z}})$. Homogene Koordinaten sind eine dreidimensionale Einbettung des zweidimensionalen Raumes und ermöglichen Transformationen von Koordinaten und als Erweiterung dessen auch die Transformation von Bildern durch Transformationsmatrizen $M$. Diese sind $3 \times 3$ Matrizen, die durch Multiplikation mit homogenen Punkten Transformationen auf diesen anwenden:
 \[ \widetilde{P}' = M \times \widetilde{P} \]
 \nomenclature{$P \in \mathbb{R}^2$}{Position in kartesischem Koordinatensystem}
 \nomenclature{$\widetilde{P} \in \mathbb{R}^3$}{Homogene Position $(\widetilde{x}, \widetilde{y}, \widetilde{z})$ in kartesischem Koordinatensystem}

@@ -7,10 +7,10 @@ In diesem Unterkapitel wird die Methodik des Algorithmus zur Lokalisierung und N
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Warum Computer Vision?}
+\subsection{Motivation der Verwendung herkömmlicher Computer Vision}
 \label{sec:warum_cv}
 
-Normalisierung von Daten für ein neuronales Netz kann auf unterschiedliche Arten umgesetzt werden. Bei der Herangehensweise von \citeauthor{deepdarts} für DeepDarts werden Normalisierung von Dartscheibe und Lokalisierung von Dartpfeilen in einem einzigen Durchlauf von einem neuronalen Netz ausgeführt. Dazu werden Orientierungspunkte auf der Dartscheibe identifiziert, deren Positionen in der entzerrten Darstellung der Dartscheibe bekannt sind. Auf diese Weise kann eine Homographie zur Normalisierung abgeleitet werden. In dieser Arbeit wird auf herkömmliche Techniken der Computer Vision zurückgegriffen, um etwaige Nachteile eines neuronalen Netzes gezielt anzugehen. Der wichtigste Aspekt der algorithmischen Normalisierung ist die Nachvollziehbarkeit der Arbeitsweise und Wartung bzw. Anpassung des Systems an neue Gegebenheiten. Wohingegen ein neuronales Netz eine Black-Box ist, deren Arbeitsweise nicht bekannt ist, und die lediglich durch aufwändiges Training neu eingestellt werden kann, kann bei einem Algorithmus nachvollzogen werden, wo er scheitert und er kann gezielt erweitert oder adaptiert werden.
+Normalisierung von Daten für ein neuronales Netz kann auf unterschiedliche Arten umgesetzt werden. Bei der Herangehensweise von \citeauthor{deepdarts} für DeepDarts werden Normalisierung von Dartscheibe und Lokalisierung von Dartpfeilen in einem einzigen Durchlauf von einem neuronalen Netz ausgeführt. Dazu werden Orientierungspunkte auf der Dartscheibe identifiziert, deren Positionen in der entzerrten Darstellung der Dartscheibe bekannt sind. Auf diese Weise kann eine Homographie zur Normalisierung abgeleitet werden. In dieser Arbeit wird auf herkömmliche Techniken der Computer Vision zurückgegriffen, um etwaige Nachteile eines neuronalen Netzes gezielt anzugehen. Der wichtigste Aspekt der algorithmischen Normalisierung ist die Nachvollziehbarkeit der Arbeitsweise und Wartung bzw. Anpassung des Systems an neue Gegebenheiten. Wohingegen ein neuronales Netz eine Black-Box ist, deren Arbeitsweise nicht bekannt ist, und die lediglich durch aufwändiges Training neu eingestellt werden kann, kann bei einem Algorithmus nachvollzogen werden, an dem dieser scheitert und gezielt erweitert oder adaptiert werden kann.
 
 Ebenfalls war die Verwendung von Computer Vision aufgrund der auffälligen Geometrie einer Dartscheibe naheliegend, da sie Ähnlichkeiten mit Schachbrettern aufweist, welche in der Computer Vision zur Identifizierung von Kameraparametern verwendet werden \cite{cv_general}. Da die Nutzung bekannter Geometrien eine zentrale Arbeitsweise der Computer Vision darstellt, war die Intuition gegeben, dass auch eine Erkennung eines ähnlich markanten Objekts -- konkret: einer Dartscheibe -- in einem Bild möglich ist. Aus dieser Intuition heraus wurde der in diesem Abschnitt beschriebene Algorithmus entwickelt.
 
@@ -19,7 +19,7 @@ Ebenfalls war die Verwendung von Computer Vision aufgrund der auffälligen Geome
 \subsection{Vorverarbeitung}
 \label{sec:vorverarbeitung}
 
-Die Algorithmen der Computer Vision arbeiten auf Bildern beliebiger Größe. Da die Dauer der Verarbeitung mit der Größe der Eingabebilder skaliert, ist eine angemessene Skalierung der Eingaben ein relevanter Bestandteil der Laufzeitoptimierung. Damit einher geht jedoch der Verlust von Informationen im Bild, was für eine Abwägung zwischen Geschwindigkeit und Genauigkeit sorgt. In dieser Arbeit wurde sich für eine schrittweise Verkleinerung der Eingabebilder mit Abmessungen $(w, h)$, entsprechend Breite und Höhe, entschieden, bis $\max (w, h) < s_\text{max} = 1600\text{px}$. Dabei werden Eingabebilder jeweils um den Faktor 2 verkleinert, um Artefakte durch Interpolierung zu minimieren. Der Wert von $s_\text{max}$ wurde heuristisch ermittelt als geeignetes Mittel zwischen Geschwindigkeit und Genauigkeit.
+Die Algorithmen der Computer Vision arbeiten auf Bildern beliebiger Größe. Da die Dauer der Verarbeitung mit der Größe der Eingabebilder skaliert, ist eine angemessene Skalierung der Eingaben ein relevanter Bestandteil der Laufzeitoptimierung. Damit einher geht jedoch der Verlust von Informationen im Bild, was für eine Abwägung zwischen Geschwindigkeit und Genauigkeit sorgt. In dieser Arbeit wurde sich für eine schrittweise Verkleinerung der Eingabebilder mit Abmessungen $(w, h)$, entsprechend Breite und Höhe, entschieden, bis $\max (w, h) < s_\text{max} = 1.600\text{px}$. Dabei werden Eingabebilder jeweils um den Faktor 2 verkleinert, um Artefakte durch Interpolierung zu minimieren. Der Wert von $s_\text{max}$ wurde heuristisch ermittelt als geeignetes Mittel zwischen Geschwindigkeit und Genauigkeit.
 \nomenclature{$(w, h) \in \mathbb{N}^2$}{Breite und Höhe eines Bildes}
 \nomenclature{$s_\text{max} \in \mathbb{N}$}{Maximale Breite bzw. Höhe eines Eingabebildes}
 
@@ -91,7 +91,7 @@ Aus den Start- und Endpunkten der Liniensegmente lassen sich unter Verwendung de
 \subsubsection{Mittelpunktextraktion}
 \label{sec:mittelpunktextraktion}
 
-Anhand der polaren Gleichungen $L_\text{polar}$ wird in diesem Schritt der Mittelpunkt der Dartscheibe ermittelt. Der Mittelpunkt zeichnet sich dadurch aus, dass alle Linien, die zwischen Dartfeldern liegen, folgend als Feldlinien bezeichnet, auf diesen gerichtet sind. Unter der Annahme, dass alle Feldlinien in $L_\text{polar}$ vorhanden sind, überschneiden sich eine Vielzahl dieser Linien im Mittelpunkt der Dartscheibe. Insbesondere ist bekannt, dass diese Linien in jeweils unterschiedlichen Winkeln auftreten, deren grobe Werte bekannt sind.
+Anhand der polaren Gleichungen $L_\text{polar}$ wird in diesem Schritt der Mittelpunkt der Dartscheibe ermittelt. Der Mittelpunkt zeichnet sich dadurch aus, dass alle Linien, die zwischen Dartfeldern liegen, folgend als Feldlinien bezeichnet, auf diese gerichtet sind. Unter der Annahme, dass alle Feldlinien in $L_\text{polar}$ vorhanden sind, überschneiden sich eine Vielzahl dieser Linien im Mittelpunkt der Dartscheibe. Insbesondere ist bekannt, dass diese Linien in jeweils unterschiedlichen Winkeln auftreten, deren grobe Werte bekannt sind.
 
 Unter Berücksichtigung dieser Beobachtung geschieht ein Binning der Linien $L_\text{polar}$ anhand ihrer Winkel $\theta_i$ in $b=10$ uniforme Bins $B$ der Größe $\frac{180\degree}{b}=18\degree$ mit den Intervallen $ B_i = [i \times \frac{180\degree}{b}, (i+1) \times \frac{180\degree}{b})$. Für jeden dieser Bins wird eine binäre Maske erstellt, auf der die jeweiligen Polarlinien mit einheitlicher Intensität gezeichnet werden. Diese Masken werden anschließend überlagert und weichgezeichnet, um den Einfluss von Ungenauigkeiten zu minimieren. In dem resultierenden Bild zeichnet sich der Punkt $P_\text{max} = (x_\text{max}, y_\text{max})$ mit dem höchsten Wert dadurch aus, dass durch ihn die meisten Linien verschiedener Richtungen verlaufen. Diese Eigenschaft ist durch die Art der Filterung dadurch verfeinert, dass statt beliebiger Kanten gezielt Kanten mit bestimmten Eigenschaften als Grundlage für die Linien dienen. Durch diese Wahl an Eigenschaften ist mit hoher Wahrscheinlichkeit davon auszugehen, dass mit dem Punkt $P_\text{max}$ der Mittelpunkt der Dartscheibe $m_\text{Dart}=(m_x, m_y)$ identifiziert wurde.
 \nomenclature{$P_\text{max} \in \mathbb{R^2}$}{Kartesischer Punkt mit maximalen Linienüberschneidungen in einem Bild}
@@ -174,8 +174,8 @@ An dieser Stelle in dem Algorithmus ist der Mittelpunkt der Dartscheibe identifi
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.6\textwidth]{imgs/cv/methodik/ellipse.png}
-    \caption{Ellipsoide Dartscheibe trotz entzerrter Feldlinienwinkel.}
+    \includegraphics[width=0.55\textwidth]{imgs/cv/methodik/ellipse.png}
+    \caption{Ellipsoide Darstellung einer Dartscheibe mit uniformen Feldlinienwinkeln.}
     \label{img:dart_ellipse}
 \end{figure}
 

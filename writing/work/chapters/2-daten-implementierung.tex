@@ -16,7 +16,7 @@ Der Einfluss des Seeds für diese Dartscheibe beläuft sich auf eine leichte Var
 
 \subsubsection{Parametrisierung von Spinne und Zahlen}
 
-Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne mit zunehmendem Alter und einer Verschiebung der Zahlen beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhende Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale Verschiebungen aufweisen und alte Dartscheibe sehr starke Verschiebungen mit sich ziehen. Zusätzlich wirkt sich der Altersfaktor bei Spinne und Zahlen aus, indem Rost mit zunehmendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit rost-rotem Farbton in das Material eingearbeitet.
+Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne mit zunehmendem Alter und einer Verschiebung der Zahlen beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhenden Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale Verschiebungen aufweisen und alte Dartscheibe sehr starke Verschiebungen mit sich ziehen. Zusätzlich wirkt sich der Altersfaktor bei Spinne und Zahlen aus, indem Rost mit zunehmendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit rost-rotem Farbton in das Material eingearbeitet.
 
 \subsubsection{Parametrisierung des Materials}
 
@@ -24,7 +24,7 @@ Die Dartscheibe weist zudem Gebrauchsspuren durch Einstichlöcher, Risse und Sta
 
 \paragraph{Einstichlöcher}
 
-Die Einstichlöcher werden durch ein Zusammenspiel mehrerer Masken generiert. Zum einen existiert eine Maske, die uniform verteilt Einstichlöcher über die gesamte Dartscheibe verteilt. Diese wird moduliert durch eine Maske, die die Stärke der Existenz bestimmt. An den Stellen, an denen die Existenzmaske stark vorhanden ist, werden Einstichlöcher vermehrt sichtbar als an schwachen Stellen der Existenzmaske. Diese Verteilung ist zu diesem Punkt unabhängig von dem Altersfaktor und lediglich durch den globalen Seed parametrisiert. Der Altersfaktor bestimmt einerseits die Dichte der Einstichlöcher durch Manipulation der Skalierung der Einstichlockmaske, andererseits wird zudem die Stärke der Existenzmaske derart vom Altersfaktor beeinflusst, dass ein Zunehmen des Alters mit mehr Einstichlöchern einhergeht.
+Die Einstichlöcher werden durch ein Zusammenspiel mehrerer Masken generiert. Zur Simulation von Einstichlöchern wird eine Maske verwendet, anhand welcher Einstichlöcher uniform über die gesamte Dartscheibe verteilt werden. Diese wird moduliert durch eine Maske, die die Stärke der Existenz bestimmt. An den Stellen, an denen die Existenzmaske stark vorhanden ist, werden Einstichlöcher vermehrt sichtbar als an schwachen Stellen der Existenzmaske. Diese Verteilung ist zu diesem Punkt unabhängig von dem Altersfaktor und lediglich durch den globalen Seed parametrisiert. Der Altersfaktor bestimmt einerseits die Dichte der Einstichlöcher durch Manipulation der Skalierung der Einstichlockmaske, andererseits wird zudem die Stärke der Existenzmaske derart vom Altersfaktor beeinflusst, dass ein Zunehmen des Alters mit mehr Einstichlöchern einhergeht.
 
 \paragraph{Risse}
 
@@ -56,15 +56,15 @@ Der erste Schritt zur Generierung eines Dartpfeils ist die Wahl der Tip. Sie wir
 
 \paragraph{Barrels}
 
-Auf die Tip folgt die Platzierung der Barrel. Die Barrel wird aus einem Pool von 7 Objekten ausgewählt, deren Ursprung jeweils derart positioniert ist, dass eine lückenlose Platzierung an der Tip ermöglicht ist. Die unterschiedlichen Barrel-Objekte verwenden verschiedene Methoden der Texturierung, sodass die Materialien einiger Barrel statisch vorgegeben sind, wohingegen andere Barrel ebenso wie die Tips zufällig texturiert werden. Die Spanne der unterschiedlichen Farben, die eine dynamische Barrel annehmen kann, ist im Gegensatz zu dem Farbspektrum der Tips größer, da alle RGB-Kanäle und die Oberflächenbeschaffenheit variabel sind. Darüber hinaus wird die Geometrie der Barrel bei ihrer Platzierung hinter der Tip um $\pm\,20\%$ sowohl in ihrer Länge als auch im Durchmesser variiert.
+Auf die Tip folgt die Platzierung der Barrel. Die Barrel wird aus einem Pool von 7 Objekten ausgewählt, deren Ursprung jeweils derart positioniert ist, dass eine lückenlose Platzierung an der Tip ermöglicht ist. Die unterschiedlichen Barrel-Objekte verwenden verschiedene Methoden der Texturierung, sodass die Materialien einiger Barrel statisch vorgegeben sind, wohingegen andere Barrel ebenso wie die Tips zufällig texturiert werden. Die Spanne der unterschiedlichen Farben, die eine dynamische Barrel annehmen kann, ist im Gegensatz zu dem Farbspektrum der Tips größer, da alle RGB-Kanäle und die Oberflächenbeschaffenheit variabel sind. Darüber hinaus wird die Geometrie der Barrel bei ihrer Platzierung hinter der Tip um $\pm\,20\,\%$ sowohl in ihrer Länge als auch im Durchmesser variiert.
 
 \paragraph{Shafts}
 
-Im Anschluss an die Barrel wird der Shaft des Dartpfeils platziert. Dieser wird ebenfalls aus einem vordefinierten Pool von acht Objekten ausgewählt. Der Großteil dieser Objekte besitzt dynamische Texturen, die analog zu dynamischen Barrel-Textren agieren. Ebenfalls wird die Geometrie der Shafts um $\pm\,20\%$ in Länge und Durchmesser variiert.
+Im Anschluss an die Barrel wird der Shaft des Dartpfeils platziert. Dieser wird ebenfalls aus einem vordefinierten Pool von acht Objekten ausgewählt. Der Großteil dieser Objekte besitzt dynamische Texturen, die analog zu dynamischen Barrel-Textren agieren. Ebenfalls wird die Geometrie der Shafts um $\pm\,20\,\%$ in Länge und Durchmesser variiert.
 
 \paragraph{Flights}
 
-Die Flights sind die komplexesten Elemente der Dartpfeile, da sie sie größte Spanne an Erscheinungsbildern besitzen. Ihr Aussehen variiert nicht nur durch ihre Farben, sondern auch durch durch ihre Form. Flights setzen sich aus vier gleichen Flügeln zusammen, die entlang des Dartpfeils in einem Abstand von $90\degree$ platziert sind. Um die Variation der Formen einzufangen, wurden 15 unterschiedliche Formen für Flights modelliert, die sich an realen Formen von Flights orientieren. Ihre Textur wird aus einem Texturatlas mit einer Größe von $1920 \times 1920$ Pixeln gesampled. Dieser besteht aus 9 unterschiedlichen Grundtexturen, die aus Landesflaggen und abstrakten Formen unterschiedlicher Farbpaletten bestehen. Abhängig vom Altersfaktor wird die Verformung der Flights gesteuert, sodass neue Flights keine Deformierungen aufweisen, alte Flights jedoch stark deformiert werden, um Gebrauchsspuren zu simulieren.
+Die Flights sind die komplexesten Elemente der Dartpfeile, da sie sie größte Spanne an Erscheinungsbildern besitzen. Ihr Aussehen variiert nicht nur durch ihre Farben, sondern auch durch durch ihre Form. Flights setzen sich aus vier gleichen Flügeln zusammen, die entlang des Dartpfeils in einem Abstand von $90\degree$ platziert sind. Um die Variation der Formen einzufangen, wurden 15 unterschiedliche Formen für Flights modelliert, die sich an realen Formen von Flights orientieren. Ihre Textur wird aus einem Texturatlas mit einer Größe von $1.920 \times 1.920$ Pixeln gesampled. Dieser besteht aus 9 unterschiedlichen Grundtexturen, die aus Landesflaggen und abstrakten Formen unterschiedlicher Farbpaletten bestehen. Abhängig vom Altersfaktor wird die Verformung der Flights gesteuert, sodass neue Flights keine Deformierungen aufweisen, alte Flights jedoch stark deformiert werden, um Gebrauchsspuren zu simulieren.
 
 \vspace{\baselineskip}
 
@@ -85,7 +85,7 @@ Die Positionierung der Dartpfeile auf der Dartscheibe ist ausschlaggebend für d
 \subsubsection{Positionierung Der Dartpfeile auf der Dartscheibe}
 \label{sec:dartpfeil_positionierung}
 
-Eine Uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartsrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese wurden in Form von Heatmaps in die Szene eingearbeitet.
+Eine uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartsrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese wurden in Form von Heatmaps in die Szene eingearbeitet.
 
 Die für die Datengenerierung dieses Thesis genutzten Heatmaps sind in \autoref{img:heatmaps} dargestellt. Es wurden zwei unterschiedliche Heatmaps genutzt: Eine realistische Heatmap und eine Heatmap zur gezielten Erstellung von Multiplier-Feldern und ihren Umgebungen. Tiefgehende Hintergründe für die Verwendung unterschiedlicher Wahrscheinlichkeitsverteilungen zur Positionierung von Dartpfeilen werden in \autoref{sec:oversampling} (\nameref{sec:oversampling}) erläutert. Die generelle Heatmap orientiert sich an den für DeepDarts gefundenen Wahrscheinlichkeitsverteilungen \cite{deepdarts}, Verteilungen aus Online-Recherchen \cite{heatmap} und eigenen Beobachtungen. Die Wahrscheinlichkeitsverteilungen dieser Heatmaps beziehen die gesamte Dartscheibe ein, sodass Treffer außerhalb der Dartfelder ebenfalls möglich sind.
 
@@ -96,7 +96,7 @@ Die für die Datengenerierung dieses Thesis genutzten Heatmaps sind in \autoref{
     \label{img:heatmaps}
 \end{figure}
 
-Bei der Findung von Positionen der Dartpfeile geschieht der Platzierung auf Grundlage der aktiven Heatmap. Bereiche mit hohen Gewichten unterliegen einer höheren Wahrscheinlichkeit, als Position für einen Dartpfeil gewählt zu werden als Bereiche mit geringen Gewichten. Durch eine Adaption der Heatmap, können gezielt Positionen forciert werden. So wurde für die Datengenerierung dieser Arbeit eine weitere Heatmap erstellt, die sich auf die Multiplier-Felder und ihre Umgebungen fokussiert. Durch diese zweite Heatmap wird eine Erstellung von Daten ermöglicht, bei denen alle Dartpfeile entweder auf den Multiplier-Feldern liegen oder in ihrer Nähe. Treffer weit außerhalb der Dartscheibe sowie Treffer zentral in Einzelfeldern werden unter Verwendung jeder Heatmap nicht generiert.
+Bei der Findung von Positionen der Dartpfeile geschieht der Platzierung auf Grundlage der aktiven Heatmap. Bereiche mit hohen Gewichten unterliegen einer höheren Wahrscheinlichkeit, als Position für einen Dartpfeil gewählt zu werden, als Bereiche mit geringen Gewichten. Durch eine Adaption der Heatmap, können gezielt Positionen forciert werden. So wurde für die Datengenerierung dieser Arbeit eine weitere Heatmap erstellt, die sich auf die Multiplier-Felder und ihre Umgebungen fokussiert. Durch diese zweite Heatmap wird eine Erstellung von Daten ermöglicht, bei denen alle Dartpfeile entweder auf den Multiplier-Feldern liegen oder in ihrer Nähe. Treffer weit außerhalb der Dartscheibe sowie Treffer zentral in Einzelfeldern werden unter Verwendung jeder Heatmap nicht generiert.
 
 Nach der Positionierung der Pfeile auf der Dartscheibe wird eine Nachverarbeitung vorgenommen, bei der Dartpfeile, die eine Überschneidung mit der Spinne aufweisen, von dieser entfernt werden. So wird sichergestellt, dass keine ambivalenten Dartpfeile existieren, die auf der Grenze zweier Felder eintreffen.
 
@@ -115,14 +115,14 @@ Alle Dartpfeile, die nicht ausgeblendet wurden, werden nach ihrer Positionierung
 \subsubsection{Ermittlung der Punktzahl}
 \label{sec:dartpfeile_punktzahl}
 
-Nachdem die Dartpfeile Positioniert und rotiert sind wird das Scoring der Szene vorgenommen. An diesem Punkt sind die Position der Dartscheibe $p_\text{Dartscheibe} \in \mathbb{R}^3$ und die Positionen aller Dartpfeile $p_{\text{Pfeil}, i} \in \mathbb{R}^3$ bekannt. Durch ihre Winkel und Abstände lassen sich die Dartfelder identifizieren, in denen die Dartpfeile eingetroffen sind. Auf diese Weise lässt sich für jeden Dartpfeil ermitteln, in welchem Feld dieser eingetroffen ist und welche Punktzahl durch ihn erzielt wurde.
+Nachdem die Dartpfeile positioniert und rotiert sind, wird das Scoring der Szene vorgenommen. An diesem Punkt sind die Position der Dartscheibe $p_\text{Dartscheibe} \in \mathbb{R}^3$ und die Positionen aller Dartpfeile $p_{\text{Pfeil}, i} \in \mathbb{R}^3$ bekannt. Durch ihre Winkel und Abstände lassen sich die Dartfelder identifizieren, in denen die Dartpfeile eingetroffen sind. Auf diese Weise lässt sich für jeden Dartpfeil ermitteln, in welchem Feld dieser eingetroffen ist und welche Punktzahl durch ihn erzielt wurde.
 \nomenclature{$p_\text{Dartscheibe}$}{Position der Dartscheibe im Raum}
 \nomenclature{$p_{\text{Pfeil}, i}$}{Position der Dartpfeile im Raum}
 
 \subsection{Ermittlung von Kameraparametern}  % ===================================================
 \label{sec:ermittlung_kameraparamater}
 
-Die Kamera ist durch eine Vielzahl intrinsischer wie extrinsischer Parameter charakterisiert. Während einige Parameter statisch gesetzt oder durch einfache Wahrscheinlichkeitsverteilungen modelliert sind, zeigen andere Parameter wesentlich komplexere Erscheinungsbilder auf. Dieser Unterabschnitt ist dafür vorgesehen, die Umsetzungen der komplexen Parameter genauer darzustellen. Es wird begonnen mit der Betrachtung der Kamerapositionierung in \autoref{sec:kameraraum}. Das Setzen der Brennweite der Kamera wird in \autoref{sec:brennweite} beschrieben und die Wahl von Seitenverhältnis und Auflösung des exportierten Bildes wird in \autoref{sec:aufloesung} beschrieben. Danach folgt in \autoref{sec:fokus} die Wahl des Fokuspunkts und abschließend wird in \autoref{sec:motion_blur} die Umsetzung von verwackelten Bildern dargestellt.
+Die Kamera ist durch eine Vielzahl intrinsischer wie extrinsischer Parameter charakterisiert. Während einige Parameter statisch gesetzt oder durch einfache Wahrscheinlichkeitsverteilungen modelliert sind, zeigen andere Parameter wesentlich komplexere Erscheinungsbilder auf. Dieser Unterabschnitt ist dafür vorgesehen, die Umsetzungen der komplexen Parameter genauer darzustellen. Es wird begonnen mit der Betrachtung der Kamerapositionierung. Danach folgt das Setzen der Brennweite der Kamera und die Wahl von Seitenverhältnis und Auflösung des exportierten Bildes. Danach wird die Wahl des Fokuspunkts und abschließend die Umsetzung von verwackelten Bildern beschrieben.
 
 \subsubsection{Kameraraum}
 \label{sec:kameraraum}
@@ -155,7 +155,7 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 \subsubsection{Brennweite}
 \label{sec:brennweite}
 
-Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von 18mm bis 60mm. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
+Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von $18\,\text{mm}$ bis $60\,\text{mm}$. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
 \begin{align*}
     l_\text{lower} & = l_\text{min} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}                          \\
     l_\text{upper} & = \frac{l_\text{max} - l_\text{min}}{2} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}
@@ -196,7 +196,7 @@ Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen
 \subsubsection{Seitenverhältnis und Auflösung}
 \label{sec:aufloesung}
 
-Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in dieser Arbeit berücksichtigt. So wird aus unterschiedlichen Seitenverhältnissen, die von Kameras in Mobiltelefonen verwendet werden, ausgewählt. Mögliche Seitenverhältnisse sind $4:3$, $16:9$, $1:1$, $3:2$, $2:1$, $21:9$ und $5:4$. Die Ausrichtung der Kamera ist in $\nicefrac{2}{3}$ der Aufnahmen vertikal und in $\nicefrac{1}{3}$ der Aufnahmen horizontal. Die Auflösung der Kamera wird uniform im Intervall $[1000\,\text{px}, 4000\,\text{px}]$ gewählt, welches die Pixelzahl entlang der längeren Seite angibt.
+Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in dieser Arbeit berücksichtigt. So wird aus unterschiedlichen Seitenverhältnissen, die von Kameras in Mobiltelefonen verwendet werden, ausgewählt. Mögliche Seitenverhältnisse sind $4:3$, $16:9$, $1:1$, $3:2$, $2:1$, $21:9$ und $5:4$. Die Ausrichtung der Kamera ist in $\nicefrac{2}{3}$ der Aufnahmen vertikal und in $\nicefrac{1}{3}$ der Aufnahmen horizontal. Die Auflösung der Kamera wird uniform im Intervall $[1.000\,\text{px}, 4.000\,\text{px}]$ gewählt, welches die Pixelzahl entlang der längeren Seite angibt.
 
 \subsubsection{Fokuspunkt}
 \label{sec:fokus}
@@ -206,7 +206,7 @@ Der Fokuspunkt der Kamera ist in der Szene durch ein eigenes Objekt definiert, s
 \subsubsection{Verwackelungen}
 \label{sec:motion_blur}
 
-Zuletzt werden Verwackelte Kamerabilder simuliert. Mit einer Wahrscheinlichkeit von $10\%$ wird die Kamera während der Aufnahme bewegt, wodurch verschwommene Bilder aufgenommen werden. Die Kamera wird normalverteilt mit einer Standardabweichung von $\frac{2\,\text{cm}}{3}$ in $x$-, $y$- und $z$-Position verschoben. Durch diese Verschiebung entstehen Aufnahmen, die teilweise verschwommen sind.
+Zuletzt werden verwackelte Kamerabilder simuliert. Mit einer Wahrscheinlichkeit von $10\,\%$ wird die Kamera während der Aufnahme bewegt, wodurch verschwommene Bilder aufgenommen werden. Die Kamera wird normalverteilt mit einer Standardabweichung von $\frac{2\,\text{cm}}{3}$ in $x$-, $y$- und $z$-Position verschoben. Durch diese Verschiebung entstehen Aufnahmen, die teilweise verschwommen sind.
 
 \subsection{Render-Einstellungen}  % ==============================================================
 \label{sec:render_einstellungen}

@@ -9,9 +9,9 @@ Diese Thesis setzt sich aus Unterprojekten zusammen, die eine gemeinsame Pipelin
 \section{Datengenerierung}
 \label{sec:impl:daten}
 
-Die Datengrundlage für dieses Projekt setzt sich aus unterschiedlichen Quellen zusammen. Neben bereits annotierten Daten des Deepdarts-Systems von \citeauthor{deepdarts} \cite{deepdarts-data} und manuell aufgenommenen Daten besteht der weitaus größte und für das Training des Neuronalen Netzes relevanteste Teil aus gerenderten und damit nicht realen Daten. Der Hintergrund dieser Entscheidung liegt in der fehlerbehafteten Datengrundlage der bereits vorhandenen Daten des Deepdarts-Systems.
+Die Datengrundlage für dieses Projekt setzt sich aus unterschiedlichen Quellen zusammen. Neben bereits annotierten Daten des DeepDarts-Systems von \citeauthor{deepdarts} \cite{deepdarts-data} und manuell aufgenommenen Daten besteht der weitaus größte und für das Training des Neuronalen Netzes relevanteste Teil aus gerenderten und damit nicht realen Daten. Der Hintergrund dieser Entscheidung liegt in der fehlerbehafteten Datengrundlage der bereits vorhandenen Daten des DeepDarts-Systems.
 
-Den Daten des Deepdarts-Systems liegen einige Fehlstände zugrunde, die in dieser Thesis aufgegriffen und verbessert werden sollten. Zum einen sind die Daten durch die manuelle Aufnahme wenig variabel, begründet darin, dass durch reale Aufnahmen nur bedingt viele Umgebungen abgedeckt werden können. Allem voran sind die Wahl der Dartscheibe, die Aufnahmeparameter der Kamera und die Spanne an Belichtungsmöglichkeiten Variablen, die durch die manuelle Aufnahme von Bildern stark beschränkt und nur schwer zu realisieren sind. Zum anderen beherbergen manuelle Aufnahmen der Risiko der fehlerhaften Kennzeichnung von Gegebenheiten und Einbringung ungewollter Verzerrungen. So kann es durch manuelles Annotieren passieren, dass Pfeilspitzen nicht korrekt identifiziert werden und damit fehlerhafte Daten zum Trainieren des Neuronalen Netzes verwendet werden.
+Den Daten des DeepDarts-Systems liegen einige Fehlstände zugrunde, die in dieser Thesis aufgegriffen und verbessert werden sollten. Zum einen sind die Daten durch die manuelle Aufnahme wenig variabel, begründet darin, dass durch reale Aufnahmen nur bedingt viele Umgebungen abgedeckt werden können. Allem voran sind die Wahl der Dartscheibe, die Aufnahmeparameter der Kamera und die Spanne an Belichtungsmöglichkeiten Variablen, die durch die manuelle Aufnahme von Bildern stark beschränkt und nur schwer zu realisieren sind. Zum anderen beherbergen manuelle Aufnahmen der Risiko der fehlerhaften Kennzeichnung von Gegebenheiten und Einbringung ungewollter Verzerrungen. So kann es durch manuelles Annotieren passieren, dass Pfeilspitzen nicht korrekt identifiziert werden und damit fehlerhafte Daten zum Trainieren des Neuronalen Netzes verwendet werden.
 
 Die synthetische Datenerstellung dieser Thesis basiert auf der 3D-Modellierungssoftware \textit{Blender}\cite{blender}. Mit dieser ist die Erstellung fotorealistischer und parametrisierbarer Szenen möglich, die gepaart mit externen Skripten zur automatisierten Datenerstellung genutzt wird. Dazu wird eine Szene erstellt, die als Blaupause aller synthetischer Daten fungiert. Die Objekte und Gegebenheiten in dieser Szene werden durch externes Setzen von spezifischen Parametern gelenkt und ermöglicht die Simulation einer Vielzahl unterschiedlicher Szenarien und Umgebungsbedingungen.
 
@@ -165,7 +165,7 @@ Zur Einstellung bestimmter Kameraparameter existieren Objekte in der Szene, durc
     \item maximaler vertikaler Winkel $|\phi_x| < 60\degree$
 \end{itemize}
 
-Diese Distanzen und Winkel beziehen sich auf die Mitte der Dartscheibe, die sich nach dem Regelwerk der \ac{WDF} in einer Höhe von 207cm befindet. Eine Darstellung des Bereichs der Kameraplatzierung ist mit \autoref{img:camera_space} gegeben.
+Diese Distanzen und Winkel beziehen sich auf die Mitte der Dartscheibe, die sich nach dem Regelwerk der \ac{WDF} in einer Höhe von $207\,\text{cm}$ befindet. Eine Darstellung des Bereichs der Kameraplatzierung ist mit \autoref{img:camera_space} gegeben.
 
 \begin{figure}
     \centering
@@ -176,7 +176,7 @@ Diese Distanzen und Winkel beziehen sich auf die Mitte der Dartscheibe, die sich
 
 Nachdem die Kamera zufällig in dem vorgegebenen Bereich Platziert ist, wird sie auf die Dartscheibe gerichtet und ihr Fokuspunkt wird zufällig auf der Dartscheibe positioniert mit einer normalverteilten Verschiebung von der Dartscheibe entfernt. Darüber hinaus existiert eine Wahrscheinlichkeit von $10\%$, dass die Kamera mit Bewegungsunschärfe versehen wird und sich während der Aufnahme zufällig bewegt.
 
-Sobald alle externen Kameraparameter gesetzt sind, werden die internen Kameraparameter gewählt. Die Brennweite wird anhängig von dem Abstand der Kamera zur Dartscheibe zwischen 18mm und 60mm gesetzt und die Öffnung der Linse wird ebenfalls in Abhängigkeit der Distanz zur Dartscheibe auf einen Wert zwischen 1.8 und 5 gesetzt, wodurch der F-Stop der Kamera bestimmt wird. Das Bildformat der Kamera wird zufällig aus einer Liste gängiger Bildformate von Mobiltelefonen gesetzt. 70\% aller Bilder werden im Hochformat, 30\% aller Bilder im Querformat aufgenommen und die Auflösung der Bilder wird zufällig zwischen 1000px und 4000px entlang der längeren Bildseite gesetzt. Die Belichtung der Kamera wird in einem Wertebereich zwischen 0.2 und 1.0 gesetzt. Diese spezifischen Bereiche der Kameraparameter wurden durch Metadatenanalyse eigener Aufnahmen und subjektive Bewertung von gerenderten Bildern festgelegt.
+Sobald alle externen Kameraparameter gesetzt sind, werden die internen Kameraparameter gewählt. Die Brennweite wird anhängig von dem Abstand der Kamera zur Dartscheibe zwischen $18\,\text{mm}$ und $60\,\text{mm}$ gesetzt und die Öffnung der Linse wird ebenfalls in Abhängigkeit der Distanz zur Dartscheibe auf einen Wert zwischen 1,8 und 5 gesetzt, wodurch der F-Stop der Kamera bestimmt wird. Das Bildformat der Kamera wird zufällig aus einer Liste gängiger Bildformate von Mobiltelefonen gesetzt. $70\%$ aller Bilder werden im Hochformat, $30\%$ aller Bilder im Querformat aufgenommen und die Auflösung der Bilder wird zufällig zwischen $1000\,\text{px}$ und $4000\,\text{px}$ entlang der längeren Bildseite gesetzt. Die Belichtung der Kamera wird in einem Wertebereich zwischen $0,2$ und $1,0$ gesetzt. Diese spezifischen Bereiche der Kameraparameter wurden durch Metadatenanalyse eigener Aufnahmen und subjektive Bewertung von gerenderten Bildern festgelegt.
 
 
 \subsubsection{Rendern}
@@ -208,21 +208,21 @@ Nach dem Rendern des Bildes und der Masken geschieht das Post-Processing. Aus de
 \section{Dartscheiben-Alignment}
 \label{sec:impl:cv}
 
-Das Finden und Entzerren der Dartscheibe ist das zweite Unterprojekt in dieser Thesis. Es ist ein Vorverarbeitungsschritt, der Bilder für die Vorhersage eines Neuronalen Netzes normalisiert. Die Herangehensweise, dem Neuronalen Netz diese vorverarbeiteten Daten zu präsentieren stammt aus dem Referenzpaper von \citeauthor{deepdarts} \cite{deepdarts}. Die Umsetzung dieser Entzerrung in dem Deepdarts-System, weist jedoch Schwachstellen auf, die mit dem in dieser Thesis erarbeiteten Algorithmus minimiert werden.
+Das Finden und Entzerren der Dartscheibe ist das zweite Unterprojekt in dieser Thesis. Es ist ein Vorverarbeitungsschritt, der Bilder für die Vorhersage eines Neuronalen Netzes normalisiert. Die Herangehensweise, dem Neuronalen Netz diese vorverarbeiteten Daten zu präsentieren stammt aus dem Referenzpaper von \citeauthor{deepdarts} \cite{deepdarts}. Die Umsetzung dieser Entzerrung in dem DeepDarts-System, weist jedoch Schwachstellen auf, die mit dem in dieser Thesis erarbeiteten Algorithmus minimiert werden.
 
-In den folgenden Unterkapiteln wird auf die einzelnen Module der Pipeline zur Entzerrung von Dartscheiben eingegangen. Allem voran wird auf die Herangehensweise der Entzerrung des Deepdarts-Systems eingegangen, auf der die Idee des in dieser Thesis erarbeiteten Entzerrungsalgorithmus basiert.
+In den folgenden Unterkapiteln wird auf die einzelnen Module der Pipeline zur Entzerrung von Dartscheiben eingegangen. Allem voran wird auf die Herangehensweise der Entzerrung des DeepDarts-Systems eingegangen, auf der die Idee des in dieser Thesis erarbeiteten Entzerrungsalgorithmus basiert.
 
 % ------------------------------------------------------------------------
 
 \subsection{Entzerrung der Daten im Referenzpaper}
 \label{sec:impl:cv:paper}
 
-Die Entzerrung in dem Deepdarts-Paper basiert auf Homographiefindung anhand von vier festgelegten Orientierungspunkten. Diese Punkte befinden sich an dem äußeren Rand des Double-Rings und sind in gleichen Abständen verteilt, wie in \autoref{img:dd_orientation} dargestellt ist. Das Finden dieser Punkte stützt auf der Annahme, dass diese Punkte eindeutig erkennbar sind. Sind diese spezifischen Fixpunkte nicht eindeutig erkennbar, indem sie durch einen Dartpfeil verdeckt sind oder durch eine verformte Spinne ambivalent sind, ist eine fehlerfreie Entzerrung der Dartscheibe nicht gewährleistet.
+Die Entzerrung in dem DeepDarts-Paper basiert auf Homographiefindung anhand von vier festgelegten Orientierungspunkten. Diese Punkte befinden sich an dem äußeren Rand des Double-Rings und sind in gleichen Abständen verteilt, wie in \autoref{img:dd_orientation} dargestellt ist. Das Finden dieser Punkte stützt auf der Annahme, dass diese Punkte eindeutig erkennbar sind. Sind diese spezifischen Fixpunkte nicht eindeutig erkennbar, indem sie durch einen Dartpfeil verdeckt sind oder durch eine verformte Spinne ambivalent sind, ist eine fehlerfreie Entzerrung der Dartscheibe nicht gewährleistet.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.6\textwidth]{imgs/dd_orientation_points.png}
-    \caption{Orientierungspunkte im Deepdarts-System. \cite{deepdarts}}
+    \caption{Orientierungspunkte im DeepDarts-System. \cite{deepdarts}}
     \label{img:dd_orientation}
 \end{figure}
 
@@ -335,7 +335,7 @@ Durch Einsetzen der Variablen in die Distanzberechnung folgt:
                                              & = | \cos{\theta} x_0 + \sin{\theta} y_0 - \rho |
 \end{align*}
 
-Durch diese Berechnung wird die minimale Distanz einer Polarlinie $(\rho, \theta)$ zu einem Punkt $(x_0, y_0)$ bestimmt. Für die Filterung der Polarlinien wird eine maximale Distanz von 10px toleriert. Jegliche Linien, deren polare Darstellung einen minimalen Abstand von mehr als 10px zum Mittelpunkt aufweisen, werden nicht als Feldlinien klassifiziert und sind für weitere Berechnungen nicht relevant. Die Ausgabe dieses Schrittes ist eine Liste von Polarlinien, die auf den Mittelpunkt der Dartscheibe gerichtet sind.
+Durch diese Berechnung wird die minimale Distanz einer Polarlinie $(\rho, \theta)$ zu einem Punkt $(x_0, y_0)$ bestimmt. Für die Filterung der Polarlinien wird eine maximale Distanz von $10\,\text{px}$ toleriert. Jegliche Linien, deren polare Darstellung einen minimalen Abstand von mehr als $10\,\text{px}$ zum Mittelpunkt aufweisen, werden nicht als Feldlinien klassifiziert und sind für weitere Berechnungen nicht relevant. Die Ausgabe dieses Schrittes ist eine Liste von Polarlinien, die auf den Mittelpunkt der Dartscheibe gerichtet sind.
 
 % -----------------------------------------------
 \subsubsection{Feldlinien-Berechnung}
@@ -347,13 +347,13 @@ Zur Identifizierung der Feldlinien anhand der gefilterten Linien wird eine Adapt
     d_i      & =\sqrt{(x_i - x_M)^2+(y_i - y_M)^2}
 \end{align*}
 
-Die auf $0.5\degree$ diskretisierten Winkel $\theta_i$ werden in 360 Bins eines Akkumulators $A$ aufsummiert, gewichtet nach ihrer Distanz $d_i$ zum Mittelpunkt. Der resultierende Akkumulator wird über eine Spanne von 10 Bins (entsprechend $5\degree$) geglättet und die 10 größten Peaks dieses Akkumulators werden identifiziert. Durch diese Glättung wird der Effekt einzelner Outlier vermindert und Cluster mehrerer ähnlicher Winkel, die durch Diskretisierungsschritte und Ungenauigkeiten in Bildern zu erwarten sind, bevorzugt. Die 10 resultierenden Winkel der Peak-Bins entsprechen den Winkeln der Feldlinien und sind der Output dieses Schrittes der Linienverarbeitung.
+Die auf $0,5\degree$ diskretisierten Winkel $\theta_i$ werden in 360 Bins eines Akkumulators $A$ aufsummiert, gewichtet nach ihrer Distanz $d_i$ zum Mittelpunkt. Der resultierende Akkumulator wird über eine Spanne von 10 Bins (entsprechend $5\degree$) geglättet und die 10 größten Peaks dieses Akkumulators werden identifiziert. Durch diese Glättung wird der Effekt einzelner Outlier vermindert und Cluster mehrerer ähnlicher Winkel, die durch Diskretisierungsschritte und Ungenauigkeiten in Bildern zu erwarten sind, bevorzugt. Die 10 resultierenden Winkel der Peak-Bins entsprechen den Winkeln der Feldlinien und sind der Output dieses Schrittes der Linienverarbeitung.
 
 % -----------------------------------------------
 \subsubsection{Feldlinien-Alignment}
 \label{sec:impl:cv:lines:lines_align}
 
-An diesem Punkt sind die ungefähren Winkel der Feldlinien bekannt. Die korrekte Positionierung dieser Linien ist jedoch nicht sichergestellt und wird in diesem Schritt verfeinert. Für jeden Winkel $\theta_i$ der Feldlinien $i \in [0..9]$ wird eine Optimierung vorgenommen. Jede Feldlinie wird so ausgerichtet, dass ihr kumulativer Abstand zu den Start- und Endpunkten ihrer korrespondierenden Liniensegmente aus \autoref{sec:impl:cv:lines:filter} minimal ist. Die Gewichtung dieser Abstände erfolgt proportional zur Distanz zum Mittelpunkt, wobei der Mittelpunkt als gesonderter Punkt mit dem doppelten Maximalgewicht mit einbezogen wird. Diese Optimierungsaufgabe liefert optimierte Polarlinien $(\rho_i', \theta_i')$ für jeden Winkel $\theta_i$.
+An diesem Punkt sind die ungefähren Winkel der Feldlinien bekannt. Die korrekte Positionierung dieser Linien ist jedoch nicht sichergestellt und wird in diesem Schritt verfeinert. Für jeden Winkel $\theta_i$ der Feldlinien $i \in [0,9]$ wird eine Optimierung vorgenommen. Jede Feldlinie wird so ausgerichtet, dass ihr kumulativer Abstand zu den Start- und Endpunkten ihrer korrespondierenden Liniensegmente aus \autoref{sec:impl:cv:lines:filter} minimal ist. Die Gewichtung dieser Abstände erfolgt proportional zur Distanz zum Mittelpunkt, wobei der Mittelpunkt als gesonderter Punkt mit dem doppelten Maximalgewicht mit einbezogen wird. Diese Optimierungsaufgabe liefert optimierte Polarlinien $(\rho_i', \theta_i')$ für jeden Winkel $\theta_i$.
 
 Durch die Überschneidung der optimierten Feldlinien ergibt sich ein neuer Mittelpunkt $(x_M', y_M')$. Dieser verschiebt sich typischer Weise lediglich um wenige Pixel, jedoch ist dieser Unterschied für die kommenden Schritte potenziell relevant.
 
