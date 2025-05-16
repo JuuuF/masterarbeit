@@ -3,7 +3,7 @@
 \section{Implementierung}
 \label{sec:cv:implementierung}
 
-\todo{CV-Implementierung beschreiben.}
+\todo{CV-Implementierung: Einleitende Sätze.}
 
 % -------------------------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ Im Gegensatz zur Einordnung schwarzer und weißer Farben stehen für die Einordn
     \text{is\_color}(C_p, T_C, t_\text{red}, t_\text{green}) =
     \begin{cases}
         1 , & \text{wenn} ~\min\left( \vert~ t_\text{red} - C_p[0] ~\vert, \vert~ t_\text{green} - C_p[0]~\vert \right) < T_C, \\
-        0, & \text{sonst}
+        0,  & \text{sonst}
     \end{cases}
 \end{equation*}
 \nomenclature{$t_\text{red} \in \mathbb{R}$}{Cr-Kanal-Referenzwert für rote Farbe.}
@@ -64,10 +64,19 @@ In dieser Gleichung stehen $t_\text{red}$ und $t_\text{green}$ für zu erwartend
 \subsection{Klassifizierung von Surroundings}
 \label{sec:surroundings_impl}
 
-top/bottom, left/right: black/white/color
+Unter Verwendung des CrYV-Farbraums ist die Einordnung von Feldfarben effizient ermöglicht und kann durch die zuvor beschriebenen Techniken implementiert werden. Diese Klassifizierung von Feldfarben ermöglicht fortlaufend die Klassifizierung von Surroundings hinsichtlich der Filterung von Orientierungspunkten.
 
-Kombination der Ecken -> Art der Surrounding (innen / außen von Ring)
+Wir erinnern uns: Orientierungspunkte sind als diejenigen Punkte definiert, die an den Ecken von Feldern liegen. Damit weisen sie in ihren Surroundings zwei farbige sowie eine schwarze und eine weiße Ecke vor. Diese Eigenschaft wird genutzt, um Kandidaten möglicher Orientierungspunkte zu filtern und zugleich ihre Orientierung zu bestimmen.
 
-Abgleich mit mittlerer Surrounding
+Für jede Surrounding wird ermittelt, welche Farbgebung in welcher Ecke der Surrounding im Mittel vorliegt. Die Farbinformationen der Ecken wird vermerkt und die Kombination dieser Informationen wird genutzt, um die Art des Orientierungspunkts zu identifizieren. Orientierungspunkte entlang der inneren Seite des Double- oder Triple-Rings zeichnen sich durch farbige Ecken in der Außenseite in Kombination mit einer schwarzen und einer weißen Ecke in der Innenseite aus. Für Orientierungspunkte entlang der Außenseite des Triple-Rings gelten die gespiegelten Bedingungen bezüglich der Farbgebung. Die Positionierung der schwarzen und weißen Ecken liefert Auskunft über die Parität der Orientierungslinie.
 
-\todo{Surroundings-Implementierung}
+Mit dieser Unterscheidung können diejenigen Kandidaten der Orientierungspunkte herausgefiltert werden, deren Surroundings nicht im Einklang der zu erwartenden Farbgebung sind. Die gefilterte Liste der Orientierungspunkte wird zur Bestimmung einer mittleren Surrounding verwendet, indem die Surroundings der verbliebenen Orientierungspunkte hinsichtlich ihrer Ausrichtung normalisiert werden und ein Mittelwert aller Surroundings ermittelt wird.
+
+Anhand dieser mittleren Surrounding werden die übrigen Orientierungspunkte klassifiziert. Die Klassifizierung verläuft auf Grundlage zweier Metriken: Lab-Abgleich und SSIM. Bei dem Lab-Abgleich wird eine Farbraumtransformation aller Surroundings in den Lab-Farbraum vorgenommen. In diesem werden die Kanaldifferenzen der roten und grünen Ecken betrachtet und es wird anhand der folgenden Ähnlichkeits-Metrik bestimmt, zu welchem Grad sich die Farben ähneln:
+\[\text{sim}\left(S_1, S_2\right) = \exp^{-\nicefrac{0.01}{2}(d_r + d_g)}\]
+\nomenclature{$\text{sim}$}{Similarity-Metrik zur Bestimmung des Ähnlichkeitsgrads zweier Surroundings.}
+\nomenclature{$S_i$}{Surrounding mit Index $i$.}
+\nomenclature{$d_r$, $d_g$}{Mittlere Differenz roter bzw. grüner Bereiche des Lab-Abgleichs zweier Surroundings.}
+Hinter $d_r$ und $d_g$ stehen in dieser Formel die mittleren Differenzen der roten und grünen Bereiche der Surroundings $S_1$ und $S_2$. Diese Metrik liefert einen Wert, anhand dessen ein Ähnlichkeitsgrad der gegebenen Surroundings abgelesen werden kann. Zusätzlich zu dieser Metrik wird die SSIM-Indem genutzt, um die strukturelle Ähnlichkeit aller Surroundings zu der mittleren Surrounding zu ermitteln. Durch diese werden Outlier herausgefiltert, die nicht der zu erwarteten Struktur folgen und lediglich zufällig die korrekten mittleren Farben in den Ecken aufweisen.
+
+Durch Abgleich des Mittelwerts der $\text{sim}$-Metrik und des SSIM-Indexes mit einem vordefinierten Threshold wird klassifiziert, ob ein potenzieller Orientierungspunkt als dieser klassifiziert wird oder von dem System abgelehnt wird. Durch diese Klassifikation werden die finalen Orientierungspunkte, die zur Findung einer Homographie zur Normalisierung der Dartscheibe genutzt werden, ermittelt.

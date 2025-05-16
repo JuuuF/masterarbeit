@@ -53,7 +53,7 @@ Der Aufbau des in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{imgs/ai/yolov8.pdf}
+    \includegraphics[width=\textwidth]{imgs/ai/methodik/yolov8.pdf}
     \caption{YOLOv8*-Architektur. (1) Bottleneck; Extraktion von Features. (2) Head; Kombination von Features. (3) Detect; Deutung von Features.}
     \label{img:yolov8_architektur}
 \end{figure}
@@ -64,7 +64,7 @@ Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengeset
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{imgs/ai/yolov8_parts.pdf}
+    \includegraphics[width=\textwidth]{imgs/ai/methodik/yolov8_parts.pdf}
     \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3, 4) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (5) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (6) Transition-Block; Residualer Fully-Connected layer zum Einfangen globaler Informationen.}
     \label{img:yolov8_parts}
 \end{figure}
@@ -142,7 +142,7 @@ Die Outputdaten besitzen die Form $25 \times 25 \times 8 \times 3$. Das Input-Bi
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{imgs/ai/data_outputs.pdf}
+    \includegraphics[width=\textwidth]{imgs/ai/methodik/data_outputs.pdf}
     \caption{Schematische Darstellung des Output-Datenformats. Die Anzahl der Output-Zellen wurde hinsichtlich der Übersichtlichkeit auf $10 \times 10$ Regionen begrenzt.}
     \label{img:datenformat}
 \end{figure}
@@ -174,7 +174,7 @@ Für die Augmentierung von Bilddaten existieren unterschiedliche Herangehensweis
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{imgs/ai/augmentation_pipeline.pdf}
+    \includegraphics[width=\textwidth]{imgs/ai/methodik/augmentation_pipeline.pdf}
     \caption{Pipeline der Daten-Augmentierung.}
     \label{img:augmentierungs_pipeline}
 \end{figure}
