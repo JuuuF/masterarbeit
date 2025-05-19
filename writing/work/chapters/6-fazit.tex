@@ -109,44 +109,72 @@ Trotz erfolgreicher Normalisierungen geschieht an diesem Punkt ein Verlust relev
 % - - Problem: Einige Punkte werden nicht korrekt erkannt
 % - - Lösung: Durch Überarbeitung der Klassifizierung genauer klassifizieren (ggf. mit kleinem CNN, das Surroundings / Farben klassifiziert)
 
+Darüber hinaus besteht die Möglichkeit, die Funktionsweise Erkennung der Dartscheibe mit einer Ellipsenerkennung zu erweitern, mit der die Geometrie der Dartscheibe abgeleitet werden kann \cite{ellipse_detection_algorithm}. Die Verwendung von Ellipsenerkennung wurde bei der Implementierung dieser Arbeit zu Teilen implementiert, jedoch konnten keine zufriedenstellenden Ergebnisse erzielt werden. Trotz dessen liegt in der Verwendung dieser Technik viel Potenzial, welches in die Normalisierung von Dartscheiben einfließen kann.
+
+% - Ellipsen-Erkennung in CV einbauen (\cite{ellipse_detection_algorithm})
+% - - Möglichkeit zur Identifizierung von Ellipsen im Bild
+
 \paragraph{Kompilierung des Algorithmus}
 
 Zur Implementierung des Algorithmus, wie er in dieser Thesis vorgestellt und ausgewertet wurde, wurde Python als Programmiersprache verwendet. Trotz der Verwendung der Bibliotheken NumPy und OpenCV, welche zu Teilen kompilierte Funktionen einsetzen, geschieht ein großer Anteil der Berechnungen durch interpretierten Quelltext. Interpretation von Quelltext ist weitaus ineffizienter als die Ausführung kompilierten Quelltexts.
 
 Die Kompilierung des Algorithmus kann auf unterschiedliche Weisen umgesetzt werden. Bibliotheken wie Cython und Numba ermöglichen die Ausführung von Python-basiertem Quelltext bzw. Kompilierung von Teilen des Python-Quelltexts zur Optimierung von Ausführungszeiten \cite{cython,numba}. Durch diese Bibliotheken kann potenziell eine Optimierung der Laufzeit mit geringer Abänderung des vorhandenen Quelltexts erzielt werden.
 
-- Kompilierung der CV-Pipeline
-- - entweder Cython \cite{cython} / Numba \cite{numba} oder Implementierung in kompilierter Sprache (C/C++/Rust)
+% - Kompilierung der CV-Pipeline
+% - - entweder Cython \cite{cython} / Numba \cite{numba} oder Implementierung in kompilierter Sprache (C/C++/Rust)
 
-- Ellipsen-Erkennung in CV einbauen (\cite{ellipse_detection_algorithm})
-- - Möglichkeit zur Identifizierung von Ellipsen im Bild
+\paragraph{Auswertungen auf unterschiedlichen Plattformen}
 
-- Vergleich mit DD auf unterschiedlichen Plattformen
-- - aktuell: eine Plattform
-- - möglich: Ausführung beides Systeme auf einem Mobiltelefon
-- - Hintergrund: System ist darauf ausgelegt, mobil genutzt zu werden
+Die Auswertung hinsichtlich der Ausführungszeit dieses Systems beläuft sich auf ein bestimmtes System, auf welchem die Ausführungszeiten ermittelt wurden. Das verwendete System ist jedoch weitaus leistungsstärker als die für die vorgesehene Verwendung des Systems ausgelegten Systeme, namentlich Mobiltelefone. Eine Auswertung auf verschiedenen mobilen Geräten ermöglicht als fortführende Arbeit in der Hinsicht die Optimierung der Parameter des Algorithmus, um eine optimale Abstimmung von Geschwindigkeit und Genauigkeit zu ermitteln. Die in \autoref{sec:daten:ergebnisse} erzielten Resultate hinsichtlich der Ausführungszeiten von DeepDarts und dem in dieser Thesis erarbeiteten Algorithmus sind in diesem Aspekt lediglich relativ zueinander zu betrachten; eine Ableitung realer Ausführungszeiten ist nur bedingt möglich.
 
-\todo{Ausblick CV}
+% - Vergleich mit DD auf unterschiedlichen Plattformen
+% - - aktuell: eine Plattform
+% - - möglich: Ausführung beides Systeme auf einem Mobiltelefon
+% - - Hintergrund: System ist darauf ausgelegt, mobil genutzt zu werden
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Ausblick der Dartpfeilerkennung}
 \label{sec:ausblick_ki}
 
-- neues Trainieren des Systems auf mehr echten Daten
-- - Arbeit spezifisch hinsichtlich Aufnahme und Annotation neuer Daten
+Die Lokalisierung der Dartpfeile beruht auf der Verwendung eines neuronalen Netzes, welches auf synthetischen Daten trainiert wurde. Hinsichtlich dieses Trainings und der Rahmenbedingungen werden in diesem Unterabschnitt mögliche zukünftige Aufgaben erläutert und Verbesserungsvorschläge hinsichtlich bestimmter Schwachstellen aufgelistet. Durch weitere Ausarbeitung dieser Themenbereiche wird eine Verbesserung des Systems als wahrscheinlich erachtet.
 
-- Quantisierung der Netzwerke
-- - Verbesserung der Geschwindigkeit
-- - Verringerung der Ressourcennutzung (insbesondere hinsichtlich mobilem Deployment)
+\paragraph{Netzwerktraining}
 
-- KI-Prediction auf Grundlage einer leeren Dartscheibe
-- - Kalibrierungs-Bild schließen und als Referenz nutzen
-- - Wenn bekannt ist, dass keine Dartpfeile auf Kalibrierungs-Bild vorhanden sind, ist die Wahrscheinlichkeit von Fehlklassifikationen des Hintergrundes geringer
+Das Training des neuronalen Netzes basiert auf einem \ac{ood}-Ansatz, in welchem synthetische Daten generiert wurden, um ein System zu trainieren, welches auf echte Daten angewandt wird. Zwischen synthetischen und realen Daten liegen jedoch nicht von der Hand zu weisende Diskrepanzen, die einem optimalen Training im Wege stehen. Durch die Aufnahme weiterer realer und zugleich variabler Daten kann die Datenlage realer Bilder für das Training vervielfacht werden, wodurch eine bessere Inferenz auf realen Daten zu erwarten ist.
 
-- neue Architekturen austesten
-- - Arbeit mit Fokus spezifisch auf Auswahl des Netzwerks
+Zusätzlich sind einige Rahmenbedingungen des Trainings verbesserungswürdig. Das Training verlief mit einer Batch Size von 32, welche für ein stabileres Training erhöht werden kann; aus technischen Gründen war dies im Umfang dieser Arbeit nicht möglich. Darüber hinaus wurde die Learning Rate manuell angepasst und unterlag keinem Algorithmus oder festgelegtem Muster. Für weiteres Training ist in Ausschau zu setzen, dass ein Schedule zur Anpassung der Learning Rate verwendet wird, der dem Verhalten der manuellen Learning Rate folgt.
 
-- Warm Restarts der Learning Rate: \cite{lr_warm_restart}
+% - Training:
+% - - neues Trainieren des Systems auf mehr echten Daten
+% - - - Arbeit spezifisch hinsichtlich Aufnahme und Annotation neuer Daten
+% - - Batch Size erhöhen
+% - - Learning Rate gescheit implementieren
 
-\todo{Ausblick NN}
+\paragraph{Netzwerkarchitektur}
+
+Ein wesentlicher Kritikpunkt des Netzwerktrainings dieser Thesis ist die verwendete Netzwerkarchitektur. Durch die eigene Implementierung und die vorgenommenen Adaptionen der YOLOv8-Architektur ist die Verwendung vortrainierter Gewichte nicht möglich. Es kann daher kein Transfer Learning durchgeführt werden und nicht auf bereits initialisierte und auf reale Bedingungen angepasste Gewichte zurückgegriffen werden. Durch diese Tatsache ist ein signifikanter Verlust der Performance zu erwarten. Durch ein vorheriges Trainieren des Backbones durch Unsupervised Learning auf realen Bildern können die Gewichte des Backbones an reale Gegebenheiten angepasst werden.
+
+Zusätzlich können weitere Recherchen zur Verwendung unterschiedlicher Netzwerkarchitekturen vorgenommen werden, durch die Einblicke in die unterschiedlichen Performances erlangt werden können. Auf diese Weise kann ermittelt werden, welche Techniken in Netzwerkarchitekturen zielführend für diese Aufgabe sind und es kann ein Netzwerk konzipiert werden, welches optimal für die Erkennung von Dartpfeilspitzen in Bildern geeignet ist. Weiterhin kann zu der Untersuchung weiterer Netzwerkarchitekturen der Einfluss eigener Netzwerkbestandteile, wie dem Transition-Block, der in dieser Arbeit eingeführt wurde, genauer betrachtet und ausgewertet werden.
+
+% - Netzwerkarchitektur:
+% - - Transfer-Learning durch eigene Implementierung nicht gegeben
+% - - - ggf. Unsupervised Learning durch Umwandlung des Backbones in Autoencoder
+% - - weitere Netzwerkarchitekturen austesten
+% - - Vorteile weiterer Adaptionen genauer untersuchen
+
+\paragraph{Quantisierung des Netzwerks}
+
+Das Quantisieren von Netzwerken ist eine Technik, bei der die Netzwerkgewichte von 32-bit Float-Werten zu Integern verschiedener Längen überführt werden. Dadurch kann eine effizientere und schnellere Inferenz des Netzwerks erzielt werden während lediglich geringfügige Einbußen in der Qualität der Aufgaben in Kauf genommen werden. Die Quantisierung von Netzwerken dient der Ausführung neuronaler Netze in Infrastruktur, deren Ressourcen begrenzt sind. Insbesondere mit Blick auf ein potenzielles mobiles Deployment dieses Systems ist die Quantisierung des verwendeten neuronalen Netzes ein Thema, in das die Investition weiterer Ressourcen für sinnvoll erachtet wird.
+
+% - Quantisierung der Netzwerke
+% - - Verbesserung der Geschwindigkeit
+% - - Verringerung der Ressourcennutzung (insbesondere hinsichtlich mobilem Deployment)
+
+\paragraph{Erweiterte Herangehensweise für Vorhersagen}
+
+Zuletzt kann die Art der Vorhersage des Netzwerks überarbeitet werden, um eine Anpassung an die spezifischen Gegebenheiten der verwendeten Dartscheibe vorzunehmen. Durch die Aufnahme eines Kalibrierungsbildes, in dem die Dartscheibe ohne Pfeile zu sehen ist, kann das Aussehen der Dartscheibe gespeichert werden. Bei der Vorhersage von Aufnahmen kann diese Referenzaufnahme der leeren Dartscheibe verwendet werden, um falsche Vorhersagen auf Grundlage von Eigenheiten der Dartscheibe zu unterbinden. Beispielsweise sind besondere Abnutzungen oder Logos bzw. Schriftzüge um die Dartscheibe herum als häufige Fehlerquellen auf realen Daten identifiziert worden. Sofern das Aussehen der Dartscheibe ohne Pfeile bekannt ist, besteht die Möglichkeit, dieser Art von fehlerhaften Vorhersagen gezielt entgegenzuwirken.
+
+% - KI-Prediction auf Grundlage einer leeren Dartscheibe
+% - - Kalibrierungs-Bild schließen und als Referenz nutzen
+% - - Wenn bekannt ist, dass keine Dartpfeile auf Kalibrierungs-Bild vorhanden sind, ist die Wahrscheinlichkeit von Fehlklassifikationen des Hintergrundes geringer

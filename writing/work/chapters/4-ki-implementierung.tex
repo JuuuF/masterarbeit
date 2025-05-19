@@ -27,7 +27,7 @@ In diesem Unterabschnitt wird das Training des neuronalen Netzes thematisiert. E
 
 \subsubsection{Infrastruktur und Rahmenbedingungen}
 
-Das Training von YOLOv8* wurde auf einer NVIDIA GeForce RTX 4090 aus einem TensorFlow-Docker-Container ausgeführt. Es wurde eine Batch-Size von 16 verwendet mit dem AdamW-Optimizer und einer adaptiven Learning Rate, wie in \autoref{sec:dynamisches_training} erläutert. Für das Training wurden $24.960$ Trainings- und $544$ Validierungsdaten verwendet. Die Trainingsdaten setzen sich zusammen aus $24.576$ generierten Daten, $256$ Daten des DeepDarts-Trainings-Datensatzes und $128$ Daten, die privat aufgenommen wurden. Die Validierungsdaten sind zusammengesetzt aus $256$ synthetischen Daten, $128$ Daten des DeepDarts-Validierungs-Datensatzes sowie $160$ manuell aufgenommen Daten.
+Das Training von YOLOv8* wurde auf einer NVIDIA GeForce RTX 4090 aus einem TensorFlow-Docker-Container ausgeführt. Es wurde eine Batch-Size von $32$ verwendet mit dem AdamW-Optimizer und einer dynamischen Learning Rate, wie in \autoref{sec:dynamisches_training} erläutert. Für das Training wurden $24.960$ Trainings- und $672$ Validierungsdaten verwendet. Die Trainingsdaten setzen sich zusammen aus $24.576$ generierten Daten ($20.480$ Daten auf Grundlage regulärer Heatmaps und $4.096$ Daten auf Grundlage von Multiplier-Heatmaps), $256$ Daten des DeepDarts-$d_1$-Trainingssatzes und $128$ manuell aufgenommenen Daten. Die Validierungsdaten sind zusammengesetzt aus $256$ synthetischen Daten, $256$ Daten der DeepDarts-$d_2$-Trainingsdaten sowie $160$ manuell aufgenommen Daten. Die Trainings- und Validierungsdaten unterliegen einer strikten thematischen Trennung, sodass die realen Datensätze in unterschiedlichen Umgebungen aufgenommen wurden. Auf diese Weise wird eine objektive Einschätzung der Generalisierbarkeit nicht durch eine vorteilhafte Datenlage verzerrt.
 
 \subsubsection{Augmentierungsparameter}
 
@@ -40,48 +40,3 @@ Die Daten wurden vektorisiert als TensorFlow Datasets eingelesen, wodurch ein ef
 \nomenclature{$b_\text{adj}$}{Maximale Helligkeitsänderung der Augmentierung.}
 \nomenclature{$\sigma_\text{noise}$}{Standardabweichung der Rausch-Augmentierung.}
 \nomenclature{$\sigma_\text{trans}$}{Standardabweichung der Translations-Augmentierung.}
-
-\subsubsection{Verlauf des Trainings}
-
-\todo{Trainings-Epochen eintragen}
-Das Training mit einer unbestimmten Anzahl an Epochen gestartet und dynamisch nach \textbf{XXX} Epochen abgebrochen, nachdem keine weitere Verbesserung des Validierungs-Losses verzeichnet werden konnte. der Verlauf des Trainings ist in \autoref{img:training_verlauf} dargestellt. Die Abbildung ist unterteilt in die Teil-Losses der Existenz, Klassen und Positionen sowie den kombinierten Loss. Die Graphen der Trainings- und Validierungs-Losses fallen gemeinsam, jedoch besteht eine Diskrepanz zwischen diesen Werten. Der Verlauf der Validierungs-Losses deuten weder auf Over- noch Underfitting hin.
-
-\begin{figure}
-    \centering
-    \begin{subfigure}{\linewidth}
-        \raggedleft
-        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss_xst.pdf}
-        \hspace{2.3cm}
-        \caption{Gewichteter Existenz-Loss $\omega_\text{xst}\,\mathcal{L}_\text{xst}$}
-    \end{subfigure}
-    \vspace{0.1cm}
-    \par
-
-    \begin{subfigure}{\linewidth}
-        \raggedleft
-        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss_cls.pdf}
-        \hspace{2.3cm}
-        \caption{Gewichteter Klassen-Loss $\omega_\text{cls}\,\mathcal{L}_\text{cls}$}
-    \end{subfigure}
-    \vspace{0.1cm}
-    \par
-
-    \begin{subfigure}{\linewidth}
-        \raggedleft
-        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss_pos.pdf}
-        \hspace{2.3cm}
-        \caption{Gewichteter Positions-Loss $\omega_\text{pos}\,\mathcal{L}_\text{pos}$}
-    \end{subfigure}
-    \vspace{0.1cm}
-    \par
-
-    \begin{subfigure}{\linewidth}
-        \raggedleft
-        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss.pdf}
-        \hspace{2.3cm}
-        \caption{Kombinierter Loss $\mathcal{L}$}
-    \end{subfigure}
-
-    \caption{Trainingsverlauf der YOLOv8*-Architektur. Die Loss-Werte sind als Punkte dargestellt, welche durch eine Linie der entsprechenden Farbe geglättet dargestellt sind. Trainings-Losses werden in blau dargestellt, Validierungs-Losses in orange.}
-    \label{img:training_verlauf}
-\end{figure}

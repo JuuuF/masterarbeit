@@ -10,41 +10,41 @@
 \subsection{Metriken}
 \label{sec:ki_metriken}
 
-Für die Auswertung der Genauigkeit der jeweiligen Systeme werden mehrere Metriken verwendet. Zur Auswertung von DeepDarts wurde \ac{pcs} verwendet, um die relative Anzahl korrekt ausgewerteter Scores zu bestimmen. Diese Metrik ist jedoch dahingehend fehleranfällig, dass positive Ergebnisse trotz Fehlklassifikationen zustande kommen können. \ac{pcs} misst die Fähigkeit, die korrekte Punktzahl vorherzusagen, statt der Fähigkeit, die Dartpfeile korrekt zu ermitteln. Um Einblick in dieser Fähigkeiten der Systeme zu gewinnen, werden in dieser Arbeit drei weitere Metriken verwendet: Existenz $\mu_X$, Klasse $\mu_K$ und Position $\mu_P$.
-\nomenclature{$\mu_X$}{Existenz-Metrik zur Bestimmung korrekter Anzahl der Dartpfeile je Bild.}
-\nomenclature{$\mu_K$}{Klassen-Metrik zur Bestimmung korrekter Klassen der Dartpfeile je Bild.}
-\nomenclature{$\mu_P$}{Positions-Metrik zur Bestimmung der Abweichungen der Dartpfeilpositionen.}
+Für die Auswertung der Genauigkeit der jeweiligen Systeme werden mehrere Metriken verwendet. Zur Auswertung von DeepDarts wurde \ac{pcs} verwendet, um die relative Anzahl korrekt ausgewerteter Scores zu bestimmen. Diese Metrik ist jedoch dahingehend fehleranfällig, dass positive Ergebnisse trotz Fehlklassifikationen zustande kommen können. \ac{pcs} misst die Fähigkeit, die korrekte Punktzahl vorherzusagen, statt der Fähigkeit, die Dartpfeile korrekt zu ermitteln. Um Einblick in dieser Fähigkeiten der Systeme zu gewinnen, werden in dieser Arbeit drei weitere Metriken verwendet: Existenz $\mu_\text{xst}$, Klasse $\mu_\text{cls}$ und Position $\mu_\text{pos}$.
+\nomenclature{$\mu_\text{xst}$}{Existenz-Metrik zur Bestimmung korrekter Anzahl der Dartpfeile je Bild.}
+\nomenclature{$\mu_\text{cls}$}{Klassen-Metrik zur Bestimmung korrekter Klassen der Dartpfeile je Bild.}
+\nomenclature{$\mu_\text{pos}$}{Positions-Metrik zur Bestimmung der Abweichungen der Dartpfeilpositionen.}
 
-\subsubsection{Existenz-Metrik $\mu_X$}
+\subsubsection{Existenz-Metrik $\mu_\text{xst}$}
 
-Mit dieser Metrik wird bestimmt, ob die korrekte Anzahl der Dartpfeile bestimmt wurde. $\mu_X$ ist definiert als:
+Mit dieser Metrik wird bestimmt, ob die korrekte Anzahl der Dartpfeile bestimmt wurde. $\mu_\text{xst}$ ist definiert als:
 \begin{equation*}
-    \mu_X = \frac{1}{N} \sum_{i=1}^{N}1 - \frac{1}{3} \vert~N_\text{Dart, i} - \widehat{N}_\text{Dart, i}~\vert
+    \mu_\text{xst} = \frac{1}{N} \sum_{i=1}^{N}1 - \frac{1}{3} \vert~N_\text{Dart, i} - \widehat{N}_\text{Dart, i}~\vert
 \end{equation*}
 \nomenclature{$N_\text{Dart, i} \in \mathbb{N}$}{Anzahl vorhandener Dartpfeile in dem Bild mit Index $i$.}
 \nomenclature{$\widehat{N}_\text{Dart, i} \in \mathbb{N}$}{Anzahl vorhergesagter Dartpfeile in dem Bild mit Index $i$.}
-In dieser Formel stehen $N_\text{Dart, i} \in \mathbb{N}$ und $\widehat{N}_\text{Dart, i} \in \mathbb{N}$ für die Anzahl vorhandener und vorhergesagter Dartpfeile je Bild mit Index $i$. Anhand des Werts von $\mu_X$ wird ermittelt, wie die Anzahl der zu ermittelnden Dartpfeile zu der Vorhersage der Dartpfeile vergleichbar ist.
+In dieser Formel stehen $N_\text{Dart, i} \in \mathbb{N}$ und $\widehat{N}_\text{Dart, i} \in \mathbb{N}$ für die Anzahl vorhandener und vorhergesagter Dartpfeile je Bild mit Index $i$. Anhand des Werts von $\mu_\text{xst}$ wird ermittelt, wie die Anzahl der zu ermittelnden Dartpfeile zu der Vorhersage der Dartpfeile vergleichbar ist.
 
 Ohne weiteren Kontext gibt diese Metrik keinen Aufschluss über die Korrektheit der Vorhersagen der Dartpfeile aus. Eine Korrelation zwischen Dartpfeil-Existenz und Dartpfeil-Position wird in dieser Metrik nicht festgehalten.
 
-\subsubsection{Klassen-Metrik $\mu_K$}
+\subsubsection{Klassen-Metrik $\mu_\text{cls}$}
 
-$\mu_K$ betrachtet die Korrektheit der vorhergesagten Klassen der Dartpfeile. Für diese Metrik wird ein Matching vorgenommen, anhand dessen die Klassen vorhergesagter Dartpfeile mit den Klassen existierender Dartpfeile verglichen werden:
+$\mu_\text{cls}$ betrachtet die Korrektheit der vorhergesagten Klassen der Dartpfeile. Für diese Metrik wird ein Matching vorgenommen, anhand dessen die Klassen vorhergesagter Dartpfeile mit den Klassen existierender Dartpfeile verglichen werden:
 \begin{equation*}
-    \mu_K = \frac{1}{N}\sum_{i=1}^{N} \frac{1}{3} N_{K, \text{correct}, i}
+    \mu_\text{cls} = \frac{1}{N}\sum_{i=1}^{N} \frac{1}{3} N_{K, \text{correct}, i}
 \end{equation*}
 \nomenclature{$N_{K, \text{correct}, i} \in \mathbb{N}$}{Anzahl korrekt vorhergesagter Klassen in dem Bild mit Index $i$.}
-$N_{K, \text{correct}, i} \in \mathbb{N}$ beschreibt die Anzahl korrekt vorhergesagter Klassen in dem Bild mit Index $i$. Das Matching der Klassen wird mit einem Greedy-Matching durchgeführt, in welchem zusätzlich erkannte Klassen verworfen werden. Diese Ungenauigkeit der Metrik wird durch die Kombination mit der Metrik $\mu_X$ ausgeglichen.
+$N_{K, \text{correct}, i} \in \mathbb{N}$ beschreibt die Anzahl korrekt vorhergesagter Klassen in dem Bild mit Index $i$. Das Matching der Klassen wird mit einem Greedy-Matching durchgeführt, in welchem zusätzlich erkannte Klassen verworfen werden. Diese Ungenauigkeit der Metrik wird durch die Kombination mit der Metrik $\mu_\text{xst}$ ausgeglichen.
 
-\subsubsection{Positions-Metrik $\mu_P$}
+\subsubsection{Positions-Metrik $\mu_\text{pos}$}
 
-Ziel dieser Metrik ist es, die durchschnittlichen Abweichungen der Dartpfeilspitzen einzufangen. Die Dartpfeilspitzen werden analog zu $\mu_K$ durch ein Greedy-Matching korreliert, indem die vorhandenen und vorhergesagten Dartpfeilpositionen mit den je geringsten Abständen zueinander gepaart werden, sofern sie noch nicht gepaart wurden. Diese Metrik gibt einen Einblick in die Fähigkeit, mit welcher Präzision Dartpfeilspitzen erkannt werden. Der Wert von $\mu_P$ ergibt sich aus:
+Ziel dieser Metrik ist es, die durchschnittlichen Abweichungen der Dartpfeilspitzen einzufangen. Die Dartpfeilspitzen werden analog zu $\mu_\text{cls}$ durch ein Greedy-Matching korreliert, indem die vorhandenen und vorhergesagten Dartpfeilpositionen mit den je geringsten Abständen zueinander gepaart werden, sofern sie noch nicht gepaart wurden. Diese Metrik gibt einen Einblick in die Fähigkeit, mit welcher Präzision Dartpfeilspitzen erkannt werden. Der Wert von $\mu_\text{pos}$ ergibt sich aus:
 \begin{equation*}
-    \mu_P = \frac{1}{N} \sum_{i=1}^{N} \sum_{d=1}^{3} \left\Vert P_{i, d} - \widehat{P}_{i, d} \right\Vert _2
+    \mu_\text{pos} = \frac{1}{N} \sum_{i=1}^{N} \sum_{d=1}^{3} \left\Vert P_{i, d} - \widehat{P}_{i, d} \right\Vert _2
 \end{equation*}
 \nomenclature{$P_{i, d} \in \mathbb{R}^2$}{Position des Dartpfeils mit Index $d$ in Bild $i$.}
 \nomenclature{$\widehat{P}_{i, d} \in \mathbb{R}^2$}{Vorhergesagte Position des Dartpfeils mit Index $d$ in Bild $i$.}
-$P_{i, d} \in \mathbb{R}^2$ und $\widehat{P}_{i, d} \in \mathbb{R}^2$ sind die gegebenen und vorhergesagten Positionen der Dartpfeile mit dem Index $d$ in dem Bild mit dem Index $i$. Vorhergesagte Positionen für nicht vorhandene Dartpfeile haben keinen Einfluss auf diese Metrik. Diese Eigenschaft der Metrik wird analog zu $\mu_K$ durch die Auswertung von $\mu_X$ abgebildet.
+$P_{i, d} \in \mathbb{R}^2$ und $\widehat{P}_{i, d} \in \mathbb{R}^2$ sind die gegebenen und vorhergesagten Positionen der Dartpfeile mit dem Index $d$ in dem Bild mit dem Index $i$. Vorhergesagte Positionen für nicht vorhandene Dartpfeile haben keinen Einfluss auf diese Metrik. Diese Eigenschaft der Metrik wird analog zu $\mu_\text{cls}$ durch die Auswertung von $\mu_\text{xst}$ abgebildet.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ Die in den folgenden Unterabschnitten dargestellten Auswertungen stellen die Erg
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Auswertung der Existenz-Metrik \texorpdfstring{$\mu_X$}{µ\_X}}
+\subsection{Auswertung der Existenz-Metrik \texorpdfstring{$\mu_\text{xst}$}{µ\_xst}}
 \label{sec:auswertung_xst}
 
 \pgfplotstableread[col sep=comma]{
@@ -90,7 +90,7 @@ Die in den folgenden Unterabschnitten dargestellten Auswertungen stellen die Erg
                 ymax=100,
                 bar width=0.3cm,
                 enlarge x limits=0.25,
-                ylabel={$\mu_X$ [\%]},
+                ylabel={$\mu_\text{xst}$ [\%]},
                 symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
                 xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
                 legend style={at={(1.02,1.00)}, anchor=north west},
@@ -108,11 +108,11 @@ Die in den folgenden Unterabschnitten dargestellten Auswertungen stellen die Erg
             \legend{Render-Daten, Val-Daten, Test-Daten, $d_1$-val, $d_1$-test, $d_2$-val, $d_2$-test}
         \end{axis}
     \end{tikzpicture}
-    \caption{Auswertung von $\mu_X$ der Systeme auf unterschiedlichen Datenquellen.}
+    \caption{Auswertung von $\mu_\text{xst}$ der Systeme auf unterschiedlichen Datenquellen.}
     \label{fig:nn_xst}
 \end{figure}
 
-Die Auswertungen der Existenz-Metrik $\mu_X$ sind in \autoref{fig:nn_xst} dargestellt; die Abbildung zeigt die Auswertungen der Metrik der Systeme auf den jeweiligen Datenquellen. Das neuronale Netz dieser Thesis konnte Werte zwischen $65\,\%$ und $88\,\%$ erzielt werden. Die Verteilung der Auswertungsdifferenzen ist nahezu gleichverteilt über die unterschiedlichen Datenquellen. Die größte Genauigkeit wurde mit $88\,\%$ auf den gerenderten Daten erzielt, während die geringsten Metrik-Werte auf den Validierungs-Daten von DeepDarts-$d_1$ mit $65\,\%$ erzielt wurden.
+Die Auswertungen der Existenz-Metrik $\mu_\text{xst}$ sind in \autoref{fig:nn_xst} dargestellt; die Abbildung zeigt die Auswertungen der Metrik der Systeme auf den jeweiligen Datenquellen. Das neuronale Netz dieser Thesis konnte Werte zwischen $65\,\%$ und $88\,\%$ erzielt werden. Die Verteilung der Auswertungsdifferenzen ist nahezu gleichverteilt über die unterschiedlichen Datenquellen. Die größte Genauigkeit wurde mit $88\,\%$ auf den gerenderten Daten erzielt, während die geringsten Metrik-Werte auf den Validierungs-Daten von DeepDarts-$d_1$ mit $65\,\%$ erzielt wurden.
 
 Die Auswertung von DeepDarts-$d_1$ zeigt eine signifikante Korrelation zwischen Datenquelle und Metrik-Auswertung. Die Auswertung auf den dem System zugeordneten Daten fällt mit durchschnittlich $66\,\%$ weitaus besser aus als auf unabhängigen Quellen, die nicht Teil des Trainings des Systems waren. Auf diesen Daten wird ein durchschnittlicher Wert von $17\,\%$ erzielt.
 
@@ -120,7 +120,7 @@ DeepDarts-$d_2$ zeigt eine weitaus bessere Auswertung als DeepDarts-$d_1$, sodas
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Auswertung der Klassen-Metrik \texorpdfstring{$\mu_K$}{µ\_K}}
+\subsection{Auswertung der Klassen-Metrik \texorpdfstring{$\mu_\text{cls}$}{µ\_cls}}
 \label{sec:auswertung_cls}
 
 \pgfplotstableread[col sep=comma]{
@@ -141,7 +141,7 @@ DeepDarts-$d_2$ zeigt eine weitaus bessere Auswertung als DeepDarts-$d_1$, sodas
                 ymax=100,
                 bar width=0.3cm,
                 enlarge x limits=0.25,
-                ylabel={$\mu_K$ [\%]},
+                ylabel={$\mu_\text{cls}$ [\%]},
                 symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
                 xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
                 legend style={at={(1.02,1.00)}, anchor=north west},
@@ -159,19 +159,19 @@ DeepDarts-$d_2$ zeigt eine weitaus bessere Auswertung als DeepDarts-$d_1$, sodas
             \legend{Render-Daten, Val-Daten, Test-Daten, $d_1$-val, $d_1$-test, $d_2$-val, $d_2$-test}
         \end{axis}
     \end{tikzpicture}
-    \caption{Auswertung von $\mu_K$ der Systeme auf unterschiedlichen Datenquellen.}
+    \caption{Auswertung von $\mu_\text{cls}$ der Systeme auf unterschiedlichen Datenquellen.}
     \label{fig:nn_cls}
 \end{figure}
 
-Die Auswertung der unterschiedlichen Systeme hinsichtlich der Metrik $\mu_K$ ist in \autoref{fig:nn_cls} dargestellt. Die Resultate spiegeln die Auswertung von $\mu_X$ wider indes die relativen Verteilungen ähnlicher Struktur sind. Die Auswertung des Ansatzes dieser Thesis zeigen Werte im Bereich um $70\,\%$ für die Daten, die für diese Arbeit erstellt wurden mit einer signifikant besseren Auswertung gerenderter Daten im Vergleich zu realen Daten. Auf den DeepDarts-$d_1$-Datensätzen konnten mit $56\,\%$ die geringsten Resultate erzielt werden während auf den DeepDarts-$d_2$-Daten im Mittel $68\,\%$ erzielt wurden. Mit diesen Resultaten liegen die Genauigkeiten der Findung von Feldfarben unter den Genauigkeiten der Fähigkeit, die Dartpfeile zu identifizieren.
+Die Auswertung der unterschiedlichen Systeme hinsichtlich der Metrik $\mu_\text{cls}$ ist in \autoref{fig:nn_cls} dargestellt. Die Resultate spiegeln die Auswertung von $\mu_\text{xst}$ wider indes die relativen Verteilungen ähnlicher Struktur sind. Die Auswertung des Ansatzes dieser Thesis zeigen Werte im Bereich um $70\,\%$ für die Daten, die für diese Arbeit erstellt wurden mit einer signifikant besseren Auswertung gerenderter Daten im Vergleich zu realen Daten. Auf den DeepDarts-$d_1$-Datensätzen konnten mit $56\,\%$ die geringsten Resultate erzielt werden während auf den DeepDarts-$d_2$-Daten im Mittel $68\,\%$ erzielt wurden. Mit diesen Resultaten liegen die Genauigkeiten der Findung von Feldfarben unter den Genauigkeiten der Fähigkeit, die Dartpfeile zu identifizieren.
 
-DeepDarts-$d_1$ zeigt hinsichtlich $\mu_K$ ähnliche Auswertungen zu $\mu_X$: Es werden einzig gute Ergebnisse mit Werten um $63\,\%$ auf den diesem System zugeschriebenen Datensätzen erzielt. Auf Datensätzen, die nicht zum Training oder zur Auswertung des Systems verwendet wurden lag im Durchschnitt lediglich eine Klassen-Genauigkeit von $17\,\%$ vor.
+DeepDarts-$d_1$ zeigt hinsichtlich $\mu_\text{cls}$ ähnliche Auswertungen zu $\mu_\text{xst}$: Es werden einzig gute Ergebnisse mit Werten um $63\,\%$ auf den diesem System zugeschriebenen Datensätzen erzielt. Auf Datensätzen, die nicht zum Training oder zur Auswertung des Systems verwendet wurden lag im Durchschnitt lediglich eine Klassen-Genauigkeit von $17\,\%$ vor.
 
-Ähnliche Züge der Evaluation hinsichtlich $\mu_K$ sind für DeepDarts-$d_2$ zu verzeichnen: Die $d_2$-Datensätze werden mit einer hohen Genauigkeit von durchschnittlich $77\,\%$ erkannt während weitere Datensätze mit durchschnittlich $20\,\%$ Genauigkeit ausgewertet sind. Die Fähigkeit, Feldfarben korrekt zu identifizieren, liegt bei DeepDarts-$d_2$ deutlich unter der Fähigkeit, Dartpfeile zu identifizieren. Die Bestimmung korrekter Scores je Dartpfeil ist dadurch stark beeinträchtigt.
+Ähnliche Züge der Evaluation hinsichtlich $\mu_\text{cls}$ sind für DeepDarts-$d_2$ zu verzeichnen: Die $d_2$-Datensätze werden mit einer hohen Genauigkeit von durchschnittlich $77\,\%$ erkannt während weitere Datensätze mit durchschnittlich $20\,\%$ Genauigkeit ausgewertet sind. Die Fähigkeit, Feldfarben korrekt zu identifizieren, liegt bei DeepDarts-$d_2$ deutlich unter der Fähigkeit, Dartpfeile zu identifizieren. Die Bestimmung korrekter Scores je Dartpfeil ist dadurch stark beeinträchtigt.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Auswertung der Positions-Metrik \texorpdfstring{$\mu_P$}{µ\_P}}
+\subsection{Auswertung der Positions-Metrik \texorpdfstring{$\mu_\text{pos}$}{µ\_pos}}
 \label{sec:auswertung_pos}
 
 \pgfplotstableread[col sep=comma]{
@@ -191,10 +191,10 @@ DeepDarts-$d_1$ zeigt hinsichtlich $\mu_K$ ähnliche Auswertungen zu $\mu_X$: Es
                 ymode=log,
                 log origin=infty,
                 ymin=1,
-                ymax=500,
+                ymax=550,
                 bar width=0.3cm,
                 enlarge x limits=0.25,
-                ylabel={$\mu_P$ [px]},
+                ylabel={$\mu_\text{pos}$ [px]},
                 symbolic x coords={Thesis, DeepDarts-d1, DeepDarts-d2},
                 xtick={Thesis,DeepDarts-d1,DeepDarts-d2},
                 legend style={at={(1.02, 1.00)}, anchor=north west},
@@ -212,11 +212,15 @@ DeepDarts-$d_1$ zeigt hinsichtlich $\mu_K$ ähnliche Auswertungen zu $\mu_X$: Es
             \legend{Render-Daten, Val-Daten, Test-Daten, $d_1$-val, $d_1$-test, $d_2$-val, $d_2$-test}
         \end{axis}
     \end{tikzpicture}
-    \caption{Auswertung von $\mu_P$ der Systeme auf unterschiedlichen Datenquellen. Je geringer die Werte, desto besser die Auswertung.}
+    \caption{Auswertung von $\mu_\text{pos}$ der Systeme auf unterschiedlichen Datenquellen. Je geringer die Werte, desto besser die Auswertung.}
     \label{fig:nn_pos}
 \end{figure}
 
-\todo{POS-Auswertung beschreiben}
+Mit der Metrik $\mu_\text{pos}$ wird die Genauigkeit der Lokalisierung der Dartpfeilspitzen untersucht. Je geringer die Wertigkeit, desto besser ist die Vorhersage. Die erzielten Ergebnisse der unterschiedlichen Systeme sind in \autoref{fig:nn_pos} dargestellt. Es ist für das in dieser Thesis trainierte neuronale Netz zu erkennen, dass die Vorhersagen realer und synthetischer Daten nicht dem Bild der Auswertungen von $\mu_\text{xst}$ und $\mu_\text{cls}$ folgen, indem die Ergebnisse der synthetischen Daten nicht signifikant von den Ergebnissen realer Daten abweichen und die Ergebnisse auf echten Daten tendenziell besser sind als auf synthetischen Daten. Die mittlere Genauigkeit aller Datensätze liegt bei einer Verschiebung von etwa $33\,\text{px}$.
+
+DeepDarts-$d_1$ hingegen zeigt ähnliche Auswertungen in dieser Metrik wie in den zuvor beschriebenen Metriken. Auf den $d_1$-Validierungs- und Test-Daten konnte eine mittlere Abweichung von $17\,\text{px}$ festgestellt werden.
+
+Die Auswertungen von $\mu_\text{pos}$ durch DeepDarts-$d_2$ folgen ebenso wie die Auswertung des Systems dieser Thesis nicht der Struktur der Metriken $\mu_\text{xst}$ und $\mu_\text{cls}$. Die geringsten Werte konnten mit einer mittleren Verschiebung von $8\,\text{px}$ auf den synthetischen Daten erzielt werden während auf den eigenen Daten im Durchschnitt $21\,\text{px}$ Abweichung und auf allen weiteren Daten $226\,\text{px}$.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -263,6 +267,8 @@ DeepDarts-$d_1$ zeigt hinsichtlich $\mu_K$ ähnliche Auswertungen zu $\mu_X$: Es
     \label{fig:nn_pcs}
 \end{figure}
 
-Es zeichnet sich ein ähnliches Bild wie in \autoref{fig:cv_genauigkeit} ab, indem eine signifikant höhere Performance
+Für die Auswertung von \ac{pcs} zeichnet sich ein ähnliches Bild wie in \autoref{fig:cv_genauigkeit} ab, indem signifikant bessere Vorhersagen auf den Systemen zugeordneten Daten erzielt werden als auf den Systemen unbekannten Daten. Mit dieser Thesis konnte eine mittlere Korrektheit der Vorhersagen von etwa $61\,\%$ erzielt werden. Zu erkennen ist eine geringfügig bessere Auswertung auf synthetischen Daten, jedoch beläuft sich der Unterschied auf wenige Prozentpunkte. Die Auswertung befinden sich innerhalb einer Spanne von $9\,\%$.
 
-\todo{PCS-Auswertung beschreiben}
+Die Spanne der durch DeepDarts-$d_1$ erzielten Werte des \ac{pcs} ist hingegen weitaus größer. Auf den $d_1$-Daten konnte eine mittlere Korrektheit von $92\,\%$ erzielt werden während auf restlichen Daten lediglich durchschnittlich $2\,\%$ der Daten korrekt vorhergesagt werden konnten. Vor den Hintergrund der \ac{cv}-Auswertung in \autoref{sec:findung_normalisierung} kann abgeleitet werden, dass diese Genauigkeiten auf die Tatsache der Standard-Antwort von 0 Punkten zurückzuführen ist, die im Fehlerfall ausgegeben wird.
+
+Hinsichtlich DeepDarts-$d_2$ ist ebenfalls eine starke Präferenz eigener Daten aus der Auswertung des \ac{pcs} zu erkennen. Die Korrektheit der Vorhersagen auf $d_2$-Daten beträgt $90\,\%$ auf Validierungs- und $84,67\,\%$ auf Test-Daten. Diese Auswertung deckt sich mit der für DeepDarts angegebenen Korrektheit von $84\,\%$ im DeepDarts-Paper \cite{deepdarts}. Auf Daten, die nicht zum Training von DeepDarts-$d_2$ verwendet wurden, konnten lediglich \ac{pcs} zwischen $0\,\%$ und $5\,\%$ auf Daten dieser Thesis erzielt werden und $10\,\%$ und $24\,\%$ auf den $d_1$-Daten.

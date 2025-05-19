@@ -132,11 +132,11 @@ Das Training des neuronalen Netzes zielt auf das Erlernen der Identifizierung vo
 \subsubsection{Trainingsdaten}
 \label{sec:trainingsdaten}
 
-Die Trainingsdaten bilden die Basis des Trainings eines neuronalen Netzes. Für das Training des DeepDarts-Systems wurden wenig diverse Daten verwendet, wodurch die Performance des Systems beeinträchtigt wurde, wie bereits in \autoref{sec:cv:ergebnisse} dargestellt wurde. Um diesem Phänomen der einseitigen und wenig diversen Daten entgegenzuwirken, wurde in dieser Thesis auf die Nutzung eigener, synthetisch generierter Daten gesetzt, die durch Salting echter Daten angereichert wurden. Die Datenerstellung erfolgte nach dem in \autoref{cha:daten} beschriebenen Prinzip. Zum Salting wurden einerseits Daten aus dem DeepDarts-Datensatz verwendet, sowie manuell aufgenommene Daten aus einem Lokal.
+Die Trainingsdaten bilden die Basis des Trainings eines neuronalen Netzes. Für das Training des DeepDarts-Systems wurden wenig diverse Daten verwendet, wodurch die Performance des Systems beeinträchtigt wurde, wie bereits in \autoref{sec:cv:ergebnisse} dargestellt werden konnte. Um den einseitigen und wenig diversen Daten entgegenzuwirken, wurde in dieser Thesis auf die Nutzung eigener, synthetisch generierter Daten gesetzt, die durch Salting echter Daten angereichert wurden. Die Datenerstellung erfolgte nach dem in \autoref{cha:daten} beschriebenen Prinzip. Zum Salting wurden einerseits Daten aus dem DeepDarts-Datensatz verwendet, sowie manuell aufgenommene Daten aus einem Lokal.
 
-Die überwiegende Mehrheit der Trainingsdaten wird durch die generierten Daten ausgemacht mit dem Ziel, durch diese ein grundlegendes Verständnis der zu lösenden Aufgabe der Klassifikation von Existenz und Feldfarbe sowie der Regression von Positionen der Dartpfeilspitzen zu erlangen. Das Salting durch eine geringe Menge echter Daten dient der Festigung der erlernten Grundprinzipien und der Adaption auf echte Daten zur Minimierung des Risikos des Overfittings. Daten, die zum Salting verwendet werden, besitzen zur Regulierung von Kardinalitätsunterschieden eine höhere Gewichtung als generierte Daten.
+Die überwiegende Mehrheit der Trainingsdaten wird durch generierte Daten ausgemacht mit dem Ziel, durch diese ein grundlegendes Verständnis der zu lösenden Aufgabe der Klassifikation von Existenz und Feldfarbe sowie der Regression von Positionen der Dartpfeilspitzen zu erlangen. Durch ein Salting mit echten Daten wird die Fähigkeit des Erlernens von Gegebenheiten realer Bilder ermöglicht. Darüber hinaus wird ein Salting durch reale Daten vorgenommen. Die Datenquellen dafür setzen sich zusammen aus DeepDarts-Trainingsdaten und realen Aufnahmen, die für das Training dieser Arbeit aufgenommen und annotiert wurden. Daten, die zum Salting verwendet werden, besitzen zur Regulierung von Kardinalitätsunterschieden eine höhere Gewichtung als generierte Daten.
 
-Supervised Training setzt die Existenz sowohl von Inputs als auch korrekten Outputs voraus, um die getätigten Vorhersagen des Netzwerks auf ihre Korrektheit zu überprüfen und die Netzwerkparameter durch Backpropagation zu adaptieren. Dazu sind einheitliche In- und Outputs notwendig. Die Inputdaten bestehen aus normalisierten 3-Kanal-Farbbildern mit dem Farbformat BGR und Abmessungen von $800 \times 800\,\text{px}$\footnote{Da es sich bei dem trainierten Netzwerk um ein Fully Convolutional Neural Network handelt, ist eine Festlegung auf konkrete Bilddimensionen nicht notwendig. Zur Vereinheitlichung der Daten und zur Normalisierung der Eingaben wurde jedoch eine feste Größe verwendet.}.
+Supervised Training setzt die Existenz sowohl von Inputs als auch korrekten Outputs voraus, um die getätigten Vorhersagen des Netzwerks auf ihre Korrektheit zu überprüfen und die Netzwerkparameter durch Backpropagation zu adaptieren. Dazu sind einheitliche In- und Outputs notwendig. Die Inputdaten bestehen aus normalisierten 3-Kanal-Farbbildern mit dem Farbformat BGR und Abmessungen von $800 \times 800\,\text{px}$.
 
 Die Outputdaten besitzen die Form $25 \times 25 \times 8 \times 3$. Das Input-Bild wird in $25 \times 25$ Regionen -- entsprechend $32 \times 32\,\text{px}$ je Region --, für die je eine Matrix der Größe $8 \times 3$ vorhergesagt wird. Diese Matrix enthält Informationen zu Existenz von Dartpfeilspitzen in ihrer Region, die relative Position dieser sowie die getroffene Feldfarbe. Je Region können bis zu 3 Dartpfeile identifiziert werden. Eine schematische Veranschaulichung der Datenstruktur wird in \autoref{img:datenformat} dargestellt.
 
@@ -152,7 +152,6 @@ Die Outputdaten besitzen die Form $25 \times 25 \times 8 \times 3$. Das Input-Bi
 
 Zusätzlich zu den Trainingsdaten werden für das Supervised Training Validierungsdaten verwendet. Diese setzen sich ebenfalls aus unterschiedlichen Quellen zusammen, jedoch in gleichen Anteilen und resultierend ohne spezifische Gewichtung. Analog zu den Trainingsdaten stammen die Validierungsdaten aus einem Pool generierter Daten, Daten des DeepDarts-Datensatzes und manuell aufgenommen und annotierten Daten. Dabei wurde auf eine strikte Trennung der Daten geachtet, sodass die generierten Daten gesondert gerendert, die DeepDarts-Daten aus einem separaten Teil de Daten mit sich unterscheidender Dartscheibe ausgewählt und die manuell aufgenommen Daten an einem anderen Ort aufgenommen wurden als die in den Trainingsdaten vorhandenen Daten. Auf diese Weise ist eine strikte Trennung der Trainings- und Validierungsdaten gegeben, durch die Verzerrungen durch Ähnlichkeiten zwischen Datensätzen minimiert werden während gleichzeitig unterschiedliche Quellen verwendet werden.
 
-
 \subsubsection{Oversampling}
 \label{sec:oversampling}
 
@@ -163,7 +162,6 @@ Durch das Oversampling ist ein übermäßiger Prozentsatz unterrepräsentierter 
 Trotz der Vorteile von Oversampling muss auf eine korrekte Einbindung dessen geachtet werden, um eine übermäßige Verzerrung der Datenlage zu verhindern \cite{oversampling_bad}. Für diese Thesis wurden $24.576$ Daten erstellt, davon $20.480$ reguläre Daten und $4.096$ Oversampling-Daten. Der Prozentsatz des Oversamplings beläuft sich damit auf $16,67\,\%$ der generierten Daten.
 
 Die Heatmaps zum Generieren der für das Oversampling genutzten Wahrscheinlichkeitsverteilungen sind in \autoref{img:heatmaps} dargestellt; Details zur Datenerstellung mittels dieser Heatmaps wurden in \autoref{sec:wie_dartpfeil_positionen} (\nameref{sec:wie_dartpfeil_positionen}) erläutert.
-
 
 \subsubsection{Augmentierung}
 \label{sec:daten_augmentierung}
@@ -198,30 +196,73 @@ Diese Augmentierungen werden dynamisch beim Einlesen der Daten angewandt, sodass
 
 Die Geschwindigkeit des Trainings wird durch die Learning Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning Rate sorgt für rapide und starke Änderungen während eine geringe Learning Rate eine geringe Änderung und langsame Konvergenz der Parameterwerte mit sich zieht. Für das Training in dieser Thesis wurde eine adaptive Learning Rate verwendet, die dynamisch auf den Verlauf des Trainings reagiert und für eine gezielte Konvergenz sorgt \cite{adaptive_lr_schedule}.
 
-Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn des Trainings ansteigen lässt und sie heruntersetzt, sobald über eine vorbestimmte Dauer keine Verbesserung des Validation-Losses geschehen ist:
+Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor dem Hintergrund des optimalen Lernerfolgs für eine manuelle Anpassung der Learning Rate entschieden. Initial wurde die Learning Rate auf den Wert $\text{lr}_0 = 0,001$ gesetzt. Sofern der Trainingserfolg nach subjektiver Einschätzung zu stagnieren begann, wurde die Learning Rate um den Faktor $f_\text{lr} = 0,1^{0,25}$ angepasst. Durch diesen Wert wird die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert.
 
-\begin{equation*}
-    \text{lr}(e) =
-    \begin{cases}
-        \frac{\text{lr}_0}{e+1},                                      & \text{wenn\,} e < e_\text{warmup},                                                               \\
-        \min(\text{lr}_\text{min}, \text{lr}(e-1) \cdot f_\text{lr}), & \text{wenn\,} \min(\text{val\_loss}) \notin \{\text{val\_loss}_i \mid i \in [0,e-w_\text{lr}]\}, \\
-        \text{lr}(e-1),                                               & \text{ansonsten.}
-    \end{cases}
-\end{equation*}
-\nomenclature{$e \in \mathbb{N}$}{Aktuelle Trainingsepoche}
-\nomenclature{$e_\text{warmup} \in \mathbb{N}$}{Anzahl an Warmup-Epochen für das Training}
+% Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn des Trainings ansteigen lässt und sie heruntersetzt, sobald über eine vorbestimmte Dauer keine Verbesserung des Validation-Losses geschehen ist:
+
+% \begin{equation*}
+%     \text{lr}(e) =
+%     \begin{cases}
+%         \frac{\text{lr}_0}{e+1},                                      & \text{wenn\,} e < e_\text{warmup},                                                               \\
+%         \min(\text{lr}_\text{min}, \text{lr}(e-1) \cdot f_\text{lr}), & \text{wenn\,} \min(\text{val\_loss}) \notin \{\text{val\_loss}_i \mid i \in [0,e-w_\text{lr}]\}, \\
+%         \text{lr}(e-1),                                               & \text{ansonsten.}
+%     \end{cases}
+% \end{equation*}
+% \nomenclature{$e \in \mathbb{N}$}{Aktuelle Trainingsepoche}
+% \nomenclature{$e_\text{warmup} \in \mathbb{N}$}{Anzahl an Warmup-Epochen für das Training}
 \nomenclature{$\text{lr}_0$}{Initiale Learning Rate}
-\nomenclature{$\text{lr}_\text{min}$}{Minimale Learning Rate}
+% \nomenclature{$\text{lr}_\text{min}$}{Minimale Learning Rate}
 \nomenclature{$f_\text{lr}$}{Adaptionsfaktor der Learning Rate}
-\nomenclature{$w_\text{lr}$}{Fenstergröße des Learning Rate-Schedules}
+% \nomenclature{$w_\text{lr}$}{Fenstergröße des Learning Rate-Schedules}
 
-Es wurden Parameterbelegungen $\text{lr}_0 = 0,001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,1^{0,25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
+% Es wurden Parameterbelegungen $\text{lr}_0 = 0,001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,1^{0,25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
 
 \subsubsection{Trainingsablauf}
 
-Für das Training wurden die erwähnten Techniken und Optimierungen eingesetzt. Als Optimizer wurde sich für AdamW entschieden, der sich durch adaptive Gradientenanpassung auszeichnet und empirisch für solide Generalisierungsfähigkeiten bekannt ist \cite{adamw, adamw_good, adamw_good2, adamw_good3, adamw_good4}.
+Für das Training wurden die erwähnten Techniken und Optimierungen eingesetzt. Als Optimizer wurde sich für AdamW entschieden, der sich durch adaptive Gradientenanpassung auszeichnet und empirisch für solide Generalisierungsfähigkeiten bekannt ist \cite{adamw, adamw_good, adamw_good2, adamw_good3, adamw_good4}. Das Training verlief über 500 Epochen und der Verlauf ist in \autoref{img:trainingsverlauf} dargestellt. Die Abbildung ist unterteilt in die Teil-Losses der Existenz, Klassen und Positionen sowie den kombinierten Loss. Trainings- und Validierungs-Loss fallen tendenziell gemeinsam, jedoch ist eine größere Diskrepanz der jeweiligen Werte bei $\mathcal{L}_\text{xst}$ zu verzeichnen als bei $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$. Der Verlauf der Validierungs-Losses deuten jedoch weder auf Over- noch Underfitting hin.
 
-\todo{Daten zum Training, Graphen etc - EDIT: Das ist teils in Implementierung schon. Überdenken!}
+In den Graphen ist ein Sprung der Losses um Epoche $400$ zu vermerken. Dieser Sprung ist durch die manuelle Adaption der Learning Rate bedingt. Um einem lokalen Minimum des Losses entgegenzuwirken wurde die Learning Rate erneut erhöht und danach wieder verringert. Diese Technik ist als Warm Restart bekannt und kann zu einer Verbesserungen der Losses führen \cite{lr_warm_restart}. In diesem Fall ist der Loss durch diese Technik verbessert worden.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{\linewidth}
+        \raggedleft
+        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss_xst.pdf}
+        \hspace{2.3cm}
+        \caption{Gewichteter Existenz-Loss $\omega_\text{xst}\,\mathcal{L}_\text{xst}$}
+    \end{subfigure}
+    \vspace{0.1cm}
+    \par
+
+    \begin{subfigure}{\linewidth}
+        \raggedleft
+        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss_cls.pdf}
+        \hspace{2.3cm}
+        \caption{Gewichteter Klassen-Loss $\omega_\text{cls}\,\mathcal{L}_\text{cls}$}
+    \end{subfigure}
+    \vspace{0.1cm}
+    \par
+
+    \begin{subfigure}{\linewidth}
+        \raggedleft
+        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss_pos.pdf}
+        \hspace{2.3cm}
+        \caption{Gewichteter Positions-Loss $\omega_\text{pos}\,\mathcal{L}_\text{pos}$}
+    \end{subfigure}
+    \vspace{0.1cm}
+    \par
+
+    \begin{subfigure}{\linewidth}
+        \raggedleft
+        \includegraphics[height=4.75cm]{imgs/ai/ergebnisse/loss.pdf}
+        \hspace{2.3cm}
+        \caption{Kombinierter Loss $\mathcal{L}$}
+    \end{subfigure}
+
+    \caption{Trainingsverlauf der YOLOv8*-Architektur. Die Loss-Werte sind als Punkte dargestellt, welche durch eine Linie der entsprechenden Farbe geglättet dargestellt sind. Trainings-Losses werden in blau dargestellt, Validierungs-Losses in orange.}
+    \label{img:trainingsverlauf}
+\end{figure}
+
 
 % -------------------------------------------------------------------------------------------------
 
