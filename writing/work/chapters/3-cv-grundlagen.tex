@@ -122,17 +122,12 @@ Filterung und Kantenerkennung werden in dieser Thesis ausgiebig genutzt. So wird
 \subsection{Harris Corner Detection}
 \label{sec:harris_corners}
 
-Die Harris Corner Detection ist ein Algorithmus, der 1988 von C. Harris und M. Stephens vorgestellt wurde, und ist ein etablierter Algorithmus in der Computer Vision \cite{harris_corners,cv_general}. Ziel des Algorithmus ist es, Ecken in einem Eingabebild zu identifizieren und auszugeben. In dieser Sektion wird auf die grundlegende Arbeitsweise des Algorithmus eingegangen, um ein Verständnis seiner Arbeitsweise zu erlangen.
+Die Harris Corner Detection ist ein etablierter Algorithmus in der Computer Vision, der 1988 von C. Harris und M. Stephens vorgestellt wurde \cite{harris_corners,cv_general}. Ziel des Algorithmus ist es, Ecken in einem Eingabebild zu identifizieren.
 
 Der Kerngedanke hinter der Harris Corner Detection basiert auf der Beobachtung, dass eine Ecke dadurch spezifiziert ist, dass sie der Endpunkt zweier aufeinandertreffender Kanten ist. Durch Kombination von Kanteninformationen und Thresholding werden Ecken in einem Bild identifiziert.
 
-Als erster Schritt der Harris Corner Detection wird das Bild mit Kantenerkennungsfiltern verarbeitet, die, wie in \autoref{sec:kantenerkennung} beschrieben, Kanten im Bild hervorheben. Diese Kantenerkennung erfolgt in horizontaler und vertikaler Richtung, woraus zwei Kantenreaktionen hervorgehen. Diese werden in ein Koordinatensystem übertragen, in dem die Magnitude der Reaktion festgehalten wird. Die Richtungen und Ausprägungen der Kanten bestimmen die Positionen in dem Koordinatensystem. Cluster an Punkten in diesem Koordinatensystem deuten auf eine Häufung ähnlicher Kanten hin.
-
-Bei einem Bildausschnitt ohne Kanten ist ein Cluster um den Ursprung zu erwarten, bei einem Bildausschnitt mit einer Kante ist ein weiterer Cluster zu erwarten. Sind mehrere Kanten in einem Bildausschnitt vorhanden, existieren mehrere Cluster, bei dem jeder Cluster durch eine Kante in einer bestimmten Richtung hervorgerufen wird. In dem Fall einer Ecke sind mehrere Cluster zu erwarten, die es zu identifizieren gilt. Die Identifikation basiert auf Flächenmomenten und dem Einpassen einer Ellipse an Daten. Die Details dieser Implementierung sind für einen Überblick nicht relevant; was in diesem Schritt wichtig ist, ist die Form und Größe der Ellipse, spezifisch ihre Hauptachse $\lambda_1$ und Nebenachse $\lambda_2$. Existieren keine Kanten in dem betrachteten Bildausschnitt, ist ein zentraler Cluster mit geringer Größe im Koordinatenursprung zu erwarten, $\lambda_1$ und $\lambda_2$ sind klein. Bei einer Kante sind zwei Cluster zu erwarten, die von einer Ellipse mit langer Haupt- und kurzer Nebenachse umfasst werden: $\lambda_1 \gg \lambda_2$ bzw. $\lambda_2 \gg \lambda_1$. Sind mehrere Kanten in unterschiedlichen Winkeln vorhanden, existieren mehrere Cluster, die sich durch eine große Ellipse umfassen lassen. Die Haupt- und Nebenachsen sind daher groß. Kantenreaktionen und resultierende Ellipsen sind in \autoref{fig:harris} visualisiert.
-
-\nomenclature{$\lambda_1 \in \mathbb{R}$}{Hauptachse einer Ellipse}
-\nomenclature{$\lambda_2 \in \mathbb{R}$}{Nebenachse einer Ellipse}
-
+Als erster Schritt der Harris Corner Detection wird das Bild mit Kantenerkennungsfiltern verarbeitet, die, wie in \autoref{sec:kantenerkennung} beschrieben, Kanten im Bild hervorheben. Diese Kantenerkennung erfolgt in horizontaler und vertikaler Richtung, woraus zwei Kantenreaktionen hervorgehen. Diese werden in einem Koordinatensystem dargestellt, in welchem umfassende Ellipsen um die resultierenden Cluster gelegt werden. Kantenreaktionen und resultierende Ellipsen sind in \autoref{fig:harris} visualisiert.
+4
 \begin{figure}
     \centering
     \begin{subfigure}{0.3\textwidth}
@@ -159,13 +154,7 @@ Bei einem Bildausschnitt ohne Kanten ist ein Cluster um den Ursprung zu erwarten
     \label{fig:harris}
 \end{figure}
 
-$\lambda_1$ und $\lambda_2$ werden mit der folgenden Formel zu einem Wert $R$ zusammengefasst:
-\[ R = \lambda_1 \lambda_2 - \kappa_{\in[0.04, 0.06]}(\lambda_1 + \lambda_2)^2 \]
-$\kappa$ ist dabei ein empirisch bestimmter Wert zur Regulierung der Funktion. $R$ wird in Kombination mit Thresholding genutzt, um einen Punkt in einem Bild als Ecke zu klassifizieren.
-\nomenclature{$R \in \mathbb{R}$}{Ausgabewert der Harris Corner Detection zur Bestimmung von Ecken}
-\nomenclature{$\kappa \in \mathbb{R}$}{Regulierungsfaktor der Harris Corner Detection}
-Bei der Klassifizierung von Bildpixeln kommt es dazu, dass Cluster von Pixeln als Ecken erkannt werden. Aus diesen Clustern wird mittels Non-Maximum-Suppression derjenige Pixel hervorgehoben, der die größte Antwort auf die Eckenerkennung liefert. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf Null gesetzt.
-
+Anhand der Exzentrizität und Größe einer Ellipse wird festgestellt, ob es sich bei einem Cluster von Pixeln um eine Ecke handelt. Benachbarte Pixel um eine Ecke werden dabei ebenfalls als Ecken identifiziert. Um diese zu unterdrücken, wird Non-Maximum-Suppression verwendet, bei der lediglich diejenigen Pixel mit der stärksten Antwort auf die Eckenerkennung hervorgehoben werden. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf Null gesetzt.
 
 % -------------------------------------------------------------------------------------------------
 

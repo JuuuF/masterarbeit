@@ -3,7 +3,11 @@
 \chapter{Identifizierung von Dartpfeilen mit neuronalen Netzen}
 \label{cha:ki}
 
-\todo{Einleitende Sätze zu Kapitel 4.}
+An diesem Punkt in der Arbeit sind die Datenerstellung, bei der synthetische Bilddaten generiert werden, sowie die Vorverarbeitung der Bilder, durch die normalisierte Aufnahmen entstehen, erklärt und ausgewertet worden. Der dritte und letzte inhaltliche Themenbereich dieser Thesis umfasst die Lokalisierung der Dartpfeile in normalisierten Aufnahmen von Dartscheiben und das daraus resultierende Scoring der gespielten Runde. Diese Aufgabe wird durch die Verwendung neuronaler Netze angegangen, die auf Grundlage der in \autoref{cha:daten} synthetisch erstellten Daten trainiert werden.
+
+Ziel des Trainings ist es, ein System zu erschaffen, welches in der Lage ist, Dartpfeilspitzen exakt in Bildern zu lokalisieren und die getroffene Feldfarbe auszugeben. Anhand dieser Informationen können die getroffenen Felder und damit einhergehend die erzielte Punktzahl robust abgeleitet werden. In DeepDarts, dem Referenzsystem dieser Thesis, werden die getroffenen Felder ausschließlich anhand der relativen Positionen der Dartpfeile zu den Orientierungspunkten ermittelt. Diese Herangehensweise beruht darauf, dass Orientierungspunkte exakt lokalisiert werden können. Ist das nicht der Fall, werden Dartpfeile möglicherweise fehlerhaft identifiziert. Durch Ermittlung der Feldfarbe ist ein gewisser Grad der Robustheit gegen Ungenauigkeiten in der Identifizierung der Orientierungspunkte und folglich der Normalisierung gegeben.
+
+Die Unterteilung dieses Kapitels folgt dem bereits in \autoref{cha:daten} und \autoref{cha:cv} eingeführten Schema. Begonnen wird mit einer Erklärung von Grundlagen für das Verständnis der weiteren Unterabschnitte. Darauf folgt die Darstellung der verwendeten Methodik hinsichtlich der Auswahl des Netzwerks und des Trainingsprozesses. Details zur Implementierung des neuronalen Netzes und des Trainings werden im Anschluss daran erläutert. Abschließend werden die erzielten Ergebnisse des Trainings und des Gesamtsystems anhand unterschiedlicher Metriken ausgewertet.
 
 \input{chapters/4-ki-grundlagen.tex}
 \input{chapters/4-ki-methodik.tex}

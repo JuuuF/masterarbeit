@@ -162,7 +162,7 @@ Die erste Teiltransformation ist die Translation des Mittelpunktes $M$ in den Ko
 \nomenclature{$L_o \in \mathbb{R}^2$}{Orthogonale Linie zur Startlinie $L_s$}
 \nomenclature{$\phi_o \in \mathbb{R}$}{Feldlinienwinkel der Orthogonalen Linie $L_o$}
 
-Diese Schritte werden für alle Startindizes $s \in [0, 9]$ ausgeführt und die finale Transformation wird durch Mittelwertbildung errechnet. Dadurch wird eine optimale Entzerrung aller Winkel $\phi_i$ erlangt, die nicht durch die Wahl der Startlinie beeinflusst ist. In \autoref{img:linienverarbeitung} (5) ist eine Dartscheibe nach der Entzerrung der Feldlinienwinkel dargestellt. Zu erkennen ist dabei, dass trotz Angleichung der Winkel $\phi_i$ keine Normalisierung der Dartscheibe erreicht ist. Um die Normalisierung zu vollenden, muss die Dartscheibe von einer elliptischen in eine runde Form gebracht und korrekt skaliert werden. Diese Schritte geschehen in dem Verarbeitungsabschnitt der Orientierung.
+Diese Schritte werden für alle Startindizes $s \in [0, 9]$ ausgeführt und die finale Transformation wird durch Mittelwertbildung errechnet. Dadurch wird eine optimale Entzerrung aller Winkel $\phi_i$ erlangt, die nicht durch die Wahl der Startlinie beeinflusst ist. In \autoref{img:linienverarbeitung} (5) ist eine Dartscheibe nach der Entzerrung der Feldlinienwinkel dargestellt. Zu erkennen ist, dass trotz Angleichung der Winkel $\phi_i$ keine Normalisierung der Dartscheibe erreicht ist. Um die Normalisierung zu vollenden, muss die elliptische Dartscheibe in eine runde Form überführt und skaliert werden.
 \nomenclature{$s \in \mathbb{N}$}{Indizes für Startlinien der Winkelentzerrung}
 
 % -------------------------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ An dieser Stelle in dem Algorithmus ist der Mittelpunkt der Dartscheibe identifi
     \label{img:dart_ellipse}
 \end{figure}
 
-Das Vorgehen der Orientierung basiert auf der Umsetzung des DeepDarts-Systems, in welchem Orientierungspunkte identifiziert werden, deren Positionen in einem ideal entzerrten Bild bekannt sind. Anhand dieser Punktverschiebungen kann folglich eine Homographie abgeleitet werden, die eine finale Transformation des Bildes vornimmt, um diese Punkte auf ihre Zielpositionen zu überführen und die Dartscheibe final zu entzerren. Im Gegensatz zu einer handvoll fest definierter Orientierungspunkte, wie es im DeepDarts-System festgelegt wurde, werden für dieses System beliebig viele Orientierungspunkte identifiziert, wodurch eine wesentlich robustere Entzerrung ermöglicht ist.
+Das Vorgehen der Orientierung basiert auf der Umsetzung des DeepDarts-Systems, in welchem Orientierungspunkte identifiziert werden, deren Positionen in einem normalisierten Bild bekannt sind. Anhand dieser Punktverschiebungen wird eine Homographie abgeleitet, die eine Transformation des Bildes vornimmt, um diese Punkte auf ihre Zielpositionen zu überführen und die Dartscheibe zu entzerren. Im Gegensatz wenigen fest definierten Orientierungspunkten, wie im DeepDarts-System, wird für dieses System eine Vielzahl an Orientierungspunkten identifiziert, was eine wesentlich robustere Entzerrung ermöglicht.
 
 Die wesentlichen Schritte der Orientierung sind in \autoref{img:orientierung} dargestellt und werden in den folgenden Unterkapiteln genauer erläutert.
 

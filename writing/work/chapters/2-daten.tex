@@ -3,7 +3,13 @@
 \chapter{Simulation von Dartscheiben zur Generierung von Trainingsdaten}
 \label{cha:daten}
 
-\todo{Einleitende Sätze zu Kapitel 2.}
+Der erste Themenbereich dieser Masterarbeit ist die Erstellung von Daten. Diese Daten bestehen aus Bildern und Annotationen von Objekten in diesen Bildern. Bei den Bildern handelt es sich um Aufnahmen von Dartscheiben, in denen Dartpfeile stecken. Die Positionen der Dartpfeile und die mit diesen erzielten Punktzahlen machen die Annotationen aus. In diesem Kapitel wird ein System vorgestellt, mit welchem die automatisierte Erstellung dieser Daten ermöglicht wird.
+
+Das Aussehen dieser Bilder zielt darauf ab, Aufnahmen von Mobiltelefonen zu imitieren, wie sie im Einsatz in einer App zum automatischen Dart-Scoring anhand einzelner Bilder aufgenommen werden. Insbesondere bezieht diese Zielsetzung die charakteristischen Optiken von Kameras in Mobiltelefonen mit ein, beispielsweise erhöhte Nachverarbeitung durch Kontrasterhöhung oder Rauschen durch hohe ISO-Werte. Die Verteilung der Dartpfeile auf der Dartscheibe folgt typischen Mustern, die in Amateurspielen zu erwarten sind.
+
+Umgesetzt wird die Datenerstellung durch das Modellieren einer 3D-Szene bestehend aus Dartscheibe, Dartpfeilen, verschiedenen Beleuchtungen und einer Kamera. Diese Objekte sind auf eine Weise konzipiert, dass die Erscheinungsbilder dieser Objekte prozedural gestaltet sind und eine beliebige Anzahl verschiedener Objekte von diesen abgeleitet werden kann. Dadurch wird die Variabilität der erstellten Daten groß gehalten.
+
+Der Aufbau dieses Kapitels ist unterteilt in vier Unterkapitel. In dem ersten Unterkapitel werden Grundlagen hinsichtlich der Datenerstellung und die in ihr verwendeten Techniken vorgestellt. Diese bieten die Grundlage zum Verständnis der Methodik, welche im darauf folgenden Unterkapitel erläutert wird. Die Methodik umfasst die Konzepte, die zur Erstellung der Daten verwendet werden und auf denen sich die Implementierung stützt. Auf bestimmte Bereiche der Implementierung wird in dem dritten Unterkapitel eingegangen. Abschließend werden die Ergebnisse der synthetischen Datenerstellung im letzten Unterkapitel der Arbeit betrachtet und ausgewertet.
 
 \input{chapters/2-daten-grundlagen.tex}
 \input{chapters/2-daten-methodik.tex}

@@ -3,7 +3,7 @@
 \section{Methodik}
 \label{sec:ki:methodik}
 
-\todo{Einleitende Sätze zur Methodik.}
+Im Anschluss an die Grundlagen widmet sich dieser Abschnitt der Methodik hinter der Konzeption und der Herangehensweise der Lokalisierung von Dartpfeilen durch ein neuronales Netz. In einem ersten Unterabschnitt wird der Aufbau und das Konzept der verwendeten Netzwerkarchitektur beschrieben. Insbesondere wird auf die Hintergründe und Besonderheiten der Netzwerkarchitektur eingegangen. Danach folgt eine Betrachtung der verwendeten Loss-Funktion für das Training. Diese ist spezifisch auf die Netzwerkarchitektur zugeschnitten, sodass ein optimales Training ermöglicht wird. Zuletzt wird das Training selbst thematisiert. Es wird auf die Wahl und Zusammensetzung der Trainings- und Validierungsdaten eingegangen, Parameter des Trainings werden erläutert und der Verlauf des Trainings wird dargestellt.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -54,18 +54,18 @@ Der Aufbau des in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/ai/methodik/yolov8.pdf}
-    \caption{YOLOv8*-Architektur. (1) Bottleneck; Extraktion von Features. (2) Head; Kombination von Features. (3) Detect; Deutung von Features.}
+    \caption{YOLOv8*-Architektur. (1) Bottleneck; Extraktion von Features. (2) Head; Kombination von Features. (3) Detect; Deutung von Features. Inspiriert durch \citeauthor{yolo_model_visualization_inspration} \cite{yolo_model_visualization_inspration}}
     \label{img:yolov8_architektur}
 \end{figure}
 
 Die Netzwerkarchitektur setzt sich aus unterschiedlichen Blöcken zusammen. Grundlegende Blöcke sind: Faltung (Conv2d), Max-Pooling (MaxPool2d), Addition (Add), zweidimensionale Normalisierung (BatchNorm2d), SiLU-Aktivierungsfunktion (SiLU) sowie Zweiteilung von Feature-Maps (Split) und Konkatenation von Feature Maps (Concat). Zusätzlich zu diesen bereits in YOLOv8 vorhandenen Grundblöcken werden Fully-Connected-Schichten (Dense), Dropout-Schichten (Dropout) und explizite Formänderungen der Tensoren (Reshape) ergänzt.
 
-Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengesetzt, aus der die YOLOv8*-Architektur aufgebaut ist. Bereits in YOLOv8 enthaltene Blöcke sind SPPF, C2f und Bottleneck mit und ohne Shortcut. Adaptiert wurde der Conv-Block, indem eine Dropout-Schicht hinzugefügt wurde. Als neuer Block ist der Transition-Block aufgenommen worden, der ähnlich zu dem Bottleneck-Block mit Shortcut aufgebaut ist, jedoch mit der Addition eines Dense-Layers. Die zusammengesetzten Blöcke der YOLOv8*-Architektur sind in \autoref{img:yolov8_parts} dargestellt.
+Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengesetzt, aus der die YOLOv8*-Architektur aufgebaut ist. Bereits in YOLOv8 enthaltene Blöcke sind SPPF, C2f und Bottleneck mit und ohne Shortcut. Adaptiert wurde der Conv-Block, indem eine Dropout-Schicht hinzugefügt wurde. Als neuer Block ist der Transition-Block aufgenommen worden, der ähnlich zu dem Bottleneck-Block mit Shortcut aufgebaut ist, jedoch mit der Addition einer Fully-Connected-Schicht. Die zusammengesetzten Blöcke der YOLOv8*-Architektur sind in \autoref{img:yolov8_parts} dargestellt.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/ai/methodik/yolov8_parts.pdf}
-    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3, 4) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (5) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (6) Transition-Block; Residualer Fully-Connected layer zum Einfangen globaler Informationen.}
+    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3, 4) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (5) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (6) Transition-Block; Residualer Fully-Connected-Schicht zum Einfangen globaler Informationen.}
     \label{img:yolov8_parts}
 \end{figure}
 
@@ -194,7 +194,7 @@ Diese Augmentierungen werden dynamisch beim Einlesen der Daten angewandt, sodass
 \subsubsection{Dynamisches Training}
 \label{sec:dynamisches_training}
 
-Die Geschwindigkeit des Trainings wird durch die Learning Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning Rate sorgt für rapide und starke Änderungen während eine geringe Learning Rate eine geringe Änderung und langsame Konvergenz der Parameterwerte mit sich zieht. Für das Training in dieser Thesis wurde eine adaptive Learning Rate verwendet, die dynamisch auf den Verlauf des Trainings reagiert und für eine gezielte Konvergenz sorgt \cite{adaptive_lr_schedule}.
+Die Geschwindigkeit des Trainings wird durch die Learning Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning Rate sorgt für rapide und starke Änderungen während eine geringe Learning Rate eine geringe Änderung und langsame Konvergenz der Parameterwerte mit sich zieht. Für das Training in dieser Thesis wurde eine dynamische Learning Rate verwendet, die basierend auf dem Verlauf des Trainings gesetzt wird und für eine gezielte Konvergenz sorgt \cite{adaptive_lr_schedule}.
 
 Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor dem Hintergrund des optimalen Lernerfolgs für eine manuelle Anpassung der Learning Rate entschieden. Initial wurde die Learning Rate auf den Wert $\text{lr}_0 = 0,001$ gesetzt. Sofern der Trainingserfolg nach subjektiver Einschätzung zu stagnieren begann, wurde die Learning Rate um den Faktor $f_\text{lr} = 0,1^{0,25}$ angepasst. Durch diesen Wert wird die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert.
 
@@ -218,8 +218,9 @@ Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor de
 % Es wurden Parameterbelegungen $\text{lr}_0 = 0,001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,1^{0,25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
 
 \subsubsection{Trainingsablauf}
+\label{sec:trainingsverlauf}
 
-Für das Training wurden die erwähnten Techniken und Optimierungen eingesetzt. Als Optimizer wurde sich für AdamW entschieden, der sich durch adaptive Gradientenanpassung auszeichnet und empirisch für solide Generalisierungsfähigkeiten bekannt ist \cite{adamw, adamw_good, adamw_good2, adamw_good3, adamw_good4}. Das Training verlief über 500 Epochen und der Verlauf ist in \autoref{img:trainingsverlauf} dargestellt. Die Abbildung ist unterteilt in die Teil-Losses der Existenz, Klassen und Positionen sowie den kombinierten Loss. Trainings- und Validierungs-Loss fallen tendenziell gemeinsam, jedoch ist eine größere Diskrepanz der jeweiligen Werte bei $\mathcal{L}_\text{xst}$ zu verzeichnen als bei $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$. Der Verlauf der Validierungs-Losses deuten jedoch weder auf Over- noch Underfitting hin.
+Für das Training wurden die erwähnten Techniken und Optimierungen eingesetzt. Als Optimizer wurde sich für AdamW entschieden, der sich durch adaptive Gradientenanpassung auszeichnet und empirisch für solide Generalisierungsfähigkeiten bekannt ist \cite{adamw, adamw_good, adamw_good2, adamw_good3, adamw_good4}. Zudem konnte bereits gezeigt werden, dass die YOLOv8-Architektur erfolgreich mit diesem Optimizer trainiert werden konnte \cite{adamw_yolo}. Das Training verlief über 500 Epochen und der Verlauf ist in \autoref{img:trainingsverlauf} dargestellt. Die Abbildung ist unterteilt in die Teil-Losses der Existenz, Klassen und Positionen sowie den kombinierten Loss. Trainings- und Validierungs-Loss fallen tendenziell gemeinsam, jedoch ist eine größere Diskrepanz der jeweiligen Werte bei $\mathcal{L}_\text{xst}$ zu verzeichnen als bei $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$. Der Verlauf der Validierungs-Losses deuten jedoch weder auf Over- noch Underfitting hin.
 
 In den Graphen ist ein Sprung der Losses um Epoche $400$ zu vermerken. Dieser Sprung ist durch die manuelle Adaption der Learning Rate bedingt. Um einem lokalen Minimum des Losses entgegenzuwirken wurde die Learning Rate erneut erhöht und danach wieder verringert. Diese Technik ist als Warm Restart bekannt und kann zu einer Verbesserungen der Losses führen \cite{lr_warm_restart}. In diesem Fall ist der Loss durch diese Technik verbessert worden.
 
