@@ -1,0 +1,30 @@
+% !TeX root = ../main.tex
+
+\mbox{~}
+\newpage
+
+\vspace*{2.17cm}
+
+{\noindent\Huge\textbf{Kurzfassung}}
+
+\vspace*{1.405cm}
+
+\noindent In dieser Masterarbeit wird ein System zum automatischen Scoring im Steeldarts auf Basis einzelner Aufnahmen von Dartscheiben entwickelt. Dafür wird eine Kombination von Techniken herkömmlicher Computer Vision und neuronaler Netze eingesetzt, durch welche Dartscheiben in beliebigen Bildern identifiziert und normalisiert werden und Dartpfeile in diesen vorverarbeiteten Aufnahmen lokalisiert werden. Das Training des neuronalen Netzes beruht auf synthetisch generierten, realitätsnahen Bildern von Dartscheiben, die durch prozedurale 3D-Modellierung nahezu fotorealistisch erstellt und automatisch annotiert werden.
+
+Diese Masterarbeit baut auf einem von \citeauthor{deepdarts} in 2021 vorgestellten System mit dem Namen DeepDarts auf. In diesem System wurden Schwachstellen identifiziert und gezielt angegangen. Die durch DeepDarts gewonnen Erkenntnisse und Herangehensweisen dienten als methodische Grundlage für die Weiterentwicklung des Systems in dieser Arbeit.
+
+Durch die in dieser Thesis erarbeiteten Systeme werden zufriedenstellende Ergebnisse in allen drei Themenbereichen dieser Arbeit -- Datenerstellung, Normalisierung und Lokalisierung -- erzielt. Hinsichtlich der Datenerstellung wird ein System vorgestellt, welches nahezu fotorealistische und variable Aufnahmen von Dartscheiben generiert und diese korrekt annotiert. Der Algorithmus zur Findung und Normalisierung von Dartscheiben in beliebigen Bildern erzielt eine Erfolgsrate von $97\,\%$ und einen mittleren Fehler von weniger als $5\,\%$. Das neuronale Netz zur Lokalisierung der Dartpfeilspitzen ist in der Lage, in $60\,\%$ der eingegebenen Bilder korrekte Vorhersagen zu erzielen ohne Overfitting auf spezifischen Daten. Die Ergebnisse zeigen, dass das entwickelte System robuste Vorverarbeitungsschritte mit Lokalisierung durch neuronale Netze erfolgreich kombiniert und damit die Grundlage für ein automatisches Dart-Scoring bildet.
+
+\newpage
+
+\vspace*{2.17cm}
+
+{\noindent\Huge\textbf{Abstract}}
+
+\vspace*{1.405cm}
+
+\noindent This master thesis presents a system for automatic steel dart scoring, based on images of dart boards captured with a single camera. To achieve this, a combination of standard computer vision techniques and neural networks is employed, which are able to identify and normalize dart boards in arbitrary images and locate dart tips in those preprocessed images. For the neural network training synthetically generated realistic images of dart boards are used, which are generated through 3D modeling and are nearly photorealistic.
+
+This master thesis stems from a system called DeepDarts, presented by \citeauthor{deepdarts} in 2021. In DeepDarts, some weak points were identified and addressed in a controlled manner. The insights gained from that system serve as a methodological basis for the further development in this thesis.
+
+Through the systems developed in this thesis, satisfactory results were achieved in all subject areas: data generation, normalization and localization. Regarding data generation, a system is developed which is able to produce nearly photorealistic and variable images of dart boards and their correct annotations. The algorithm for identifying and normalizing dart boards in arbitrary images has a mean success rate of $97\,\%$ and a mean error of less than $5\,\%$. The neural network for localizing the dart tips is able to correctly predict about $60\,\%$ of presented images without overfitting to specific cases. These results show that the presented system combines a robust preprocessing with neural network predictions to create a solid basis for automatic dart scoring.
