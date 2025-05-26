@@ -3,41 +3,47 @@
 \section{Implementierung}
 \label{sec:cv:implementierung}
 
-Nach der Vorstellung der Methodik hinter der Normalisierung der Bilddaten widmet sich dieser Abschnitt Details zur Implementierung dieser Methodiken. Es wird auf ausgewählte Bereiche eingegangen, in denen die Implementierung wesentliche Einblicke in die Arbeitsweise des vorgestellten Algorithmus liefert. In diesem Abschnitt werden drei Unterabschnitte zu jeweils einem besonderen Aspekt des vorgestellten Algorithmus erklärt. In \autoref{sec:winkelfindung_impl} wird die Entzerrung der Feldlinienwinkel betrachtet, sodass die Winkel der Felder auf der Dartscheibe uniform verlaufen. Anschließend wird in \autoref{sec:farbidentifizierung_impl} auf die Identifizierung relevanter Farben eingegangen. Dabei spielt der für diese Thesis konzipierte CrYV-Farbraum eine wesentliche Rolle. In \autoref{sec:surroundings_impl} wird zuletzt betrachtet, wie die Klassifizierung von Surroundings stattfindet, anhand der Kandidaten von Orientierungspunkten einer Filterung unterzogen werden.
+Nach der Erläuterung der Methodik zur Normalisierung der Bilddaten widmet sich dieser Abschnitt Details zur Implementierung. Es wird auf ausgewählte Bereiche eingegangen, in denen die Implementierung wesentliche Einblicke in die Arbeitsweise des vorgestellten Algorithmus liefert. In diesem Abschnitt werden drei Unterabschnitte zu jeweils einem bestimmten Aspekt des vorgestellten Algorithmus erklärt. In \autoref{sec:winkelfindung_impl} wird die Entzerrung der Feldlinienwinkel betrachtet, sodass die Winkel der Felder auf der Dartscheibe uniform verlaufen. Anschließend wird in \autoref{sec:farbidentifizierung_impl} auf die Identifizierung relevanter Farben eingegangen. Dabei spielt der für diese Thesis konzipierte CrYV-Farbraum eine wesentliche Rolle. In \autoref{sec:surroundings_impl} wird zuletzt betrachtet, wie die Klassifizierung von Surroundings stattfindet, anhand welcher Kandidaten von Orientierungspunkten einer Filterung unterzogen werden.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Winkelfindung aus gefilterten Linien}
 \label{sec:winkelfindung_impl}
 
-Die Aufgabe der Winkelfindung gefilterter Linien ist die Identifizierung von Winkel-Clustern. Die Winkel für diese Berechnung stammen aus Linien, deren unendliche Verlängerung nahe dem Dartscheibenmittelpunkt verläuft.
+Die Aufgabe der Winkelfindung gefilterter Linien ist die Identifizierung von Winkel-Clustern. Die Winkel für diese Berechnung stammen aus Linien, deren unendliche Verlängerung nahe dem Dartscheibenmittelpunkt $m_\text{Dart}$ verläuft.
 
-Für die Bewältigung dieser Aufgabe wird eine Adaption der Hough-Transformation implementiert. Eingabe in diesen Teilalgorithmus ist ein binäres Bild, auf dem die gefilterten Linien eingezeichnet sind. Für jegliche Pixel, die in diesem Bild eingezeichnet sind, wird der Winkel $\varphi_i$ zum Mittelpunkt bestimmt:
-\[\varphi_i = \arctan2\left( y_i - m_\text{Dart, y}, x_i - m_\text{Dart, x} \right)\]
+Für die Bewältigung dieser Aufgabe wird eine Adaption der Hough-Transformation verwendet. Eingabe in diesen Teilalgorithmus ist ein binäres Bild, auf dem die gefilterten Linien eingezeichnet sind. Für jegliche Pixel, die in diesem Bild eingezeichnet sind, wird der Winkel $\varphi_i$ zum Mittelpunkt $m_\text{Dart} = (c_x, c_y)$ bestimmt:
+\[\varphi_i = \arctan2\left( y_i - c_y, x_i - c_x \right)\]
 \nomenclature{$\varphi_i$}{Winkel eines Pixels zum Mittelpunkt der Dartscheibe.}
-Für die Implementierung dieser Berechnung wurde die von NumPy zur Verfügung gestellte vektorisierte Funktion \textit{np.arctan2} verwendet. Diese Funktion, wie auch weitere Funktionen der Bibliothek, zeichnet sich durch eine effiziente und vektorisierte Berechnung von einer Eingabeliste aus. Unter der Verwendung dieser vektorisierter und zusätzlich kompilierter Funktionen ist eine schnelle Ausführung aufwändiger Berechnungen trotz der Ausführung mit Python möglich.
+\vspace*{-0.1cm}
+Für die Implementierung dieser Berechnung werden die von NumPy zur Verfügung gestellte vektorisierte Funktion \textit{np.arctan2} verwendet. Diese Funktion, wie auch weitere Funktionen der Bibliothek, zeichnet sich durch eine effiziente und vektorisierte Berechnung von einer Eingabeliste aus. Unter der Verwendung dieser vektorisierten und zusätzlich kompilierten Funktionen ist eine schnelle Ausführung komplexer Berechnungen trotz der Ausführung mit Python möglich.
+
+Aus dieser Berechnung gehen Winkel der Pixel im Wertebereich $[0\degree, 180\degree)$ hervor, die auf eine Granularität von $0,5\,\text{px}$ quantisiert und in den Akkumulator $A^{360}$ mit $360$ Bins eingetragen werden. Dieser Akkumulator wird einer doppelten Filterung durch einen Box-Kernel der mit einer Breite von zehn Bins unterzogen, welche keinen radialen Verzerrungen unterliegen darf. Un dies zu erzielen, werden die zehn beginnenden und endenden Bins aus $A^{360}$ an das jeweils gegenüberliegende Ende kopiert. Anschließend wird der erweiterte Akkumulator gefiltert und die angefügten Enden werden verworfen. Durch diese Technik ist eine Glättung unter Beibehaltung radialer Einflüsse ermöglicht.
 
 % - Codebeispiel: get-rough-line-angles
 
 % -------------------------------------------------------------------------------------------------
 
+\vspace*{-0.1cm}
 \subsection{Farben-Identifizierung}
 \label{sec:farbidentifizierung_impl}
 
-Für die Identifizierung von Orientierungspunkten werden die Farben der Umgebungen der Kandidaten der Orientierungspunkte klassifiziert. Der Kontext, in welchem diese Verarbeitung stattfindet, ist in \autoref{img:orientierung} (3) dargestellt: Die Dartscheibe ist log.polar um ihren Mittelpunkts abgerollt und die Kandidaten sind identifiziert. Durch diese Form der Darstellung sind korrekte Orientierungspunkte derart positioniert, dass ihre Surrounding die vier unterschiedlichen Farben der Dartscheibenfelder in je einer Ecke enthält. Zur Klassifizierung werden Funktionen verwendet, die die mittleren Farben dieser Eckbereiche der Surroundings in schwarz, weiß und farbig klassifizieren.
+Für die Identifizierung von Orientierungspunkten werden die Farben der Umgebungen potenzieller Orientierungspunkte klassifiziert. Der Kontext, in welchem diese Verarbeitung stattfindet, ist in \autoref{img:orientierung} (3) dargestellt: Die Dartscheibe ist log-polar um ihren Mittelpunkts abgerollt und die Kandidaten sind identifiziert. Durch diese Form der Darstellung sind korrekte Orientierungspunkte derart positioniert, dass ihre Surrounding die vier unterschiedlichen Farben der Dartscheibenfelder in je einer Ecke enthält. Zur Klassifizierung werden Funktionen verwendet, die die mittleren Farben dieser Eckbereiche der Surroundings in schwarz, weiß und farbig klassifizieren.
 
+\vspace*{-0.1cm}
 \paragraph{CrYV-Farbraum}
 
-Die Farben der Surroundings werden zur Einordnung in den CrYV-Farbraum umgewandelt. Der CrYV-Farbraum ist derart gestaltet, dass eine gezielte Isolation für die Unterscheidung relevanter Farbcharakteristiken durch gezieltes Thresholding durchgeführt werden kann. Die Farbkanäle der CrYV-Bilder werden separatem Thresholding unterzogen, um Farbeinflüsse spezifisch zu untersuchen und auszumachen, ob eine gewisse Farbgebung vorhanden ist.
+Die Farben der Surroundings werden zur Einordnung in den CrYV-Farbraum umgewandelt. Der CrYV-Farbraum ist derart gestaltet, dass eine gezielte Isolation für die Unterscheidung relevanter Farbcharakteristiken durch gezieltes Thresholding durchgeführt werden kann. Die Farbkanäle der CrYV-Bilder werden separatem Thresholding unterzogen, um Farbeinflüsse spezifisch zu untersuchen und um auszumachen, ob eine gewisse Farbgebung vorhanden ist.
 
+\vspace*{-0.1cm}
 \paragraph{Klassifizierung schwarzer und weißer Bereiche}
 
-Die durchschnittliche Farben schwarzer und weißer Felder der Dartscheibe sind durch bereits vollzogene Vorverarbeitungsschritte bekannt. Zur Einordnung, ob ein Feld schwarz oder weiß ist, wird der zu überprüfende Bereich der Surrounding (Patch) mit der schwarzen bzw. weißen Farbe analysiert. In einem ersten Schritt wird die mittlere Farbe des Patches bestimmt. Die absoluten Differenzen der jeweiligen Farbkanäle des Patches sowie der Ziel-Farbe werden berechnet und die Summe dieser Kanäle wird berechnet. Anhand eines empirisch ermittelten Schwellwerts wird ein Thresholding durchgeführt, durch welches eine Klassifizierung in \quotes{schwarz} oder \quotes{nicht schwarz} (und analog für weiß) geschieht:
+Die durchschnittlichen Farben schwarzer und weißer Felder der Dartscheibe sind durch bereits vollzogene Vorverarbeitungsschritte bekannt. Zur Einordnung, ob ein Feld schwarz oder weiß ist, wird der zu überprüfende Bereich der Surrounding -- bezeichnet als Patch -- mit der schwarzen bzw. weißen Farbe analysiert. In einem ersten Schritt wird die mittlere Farbe des Patches bestimmt. Die absoluten Differenzen der jeweiligen Farbkanäle des Patches sowie der Ziel-Farbe werden berechnet und die Summe dieser Kanäle wird berechnet. Anhand eines empirisch ermittelten Schwellwerts wird ein Thresholding durchgeführt, durch welches eine Klassifizierung in \quotes{schwarz} oder \quotes{nicht schwarz} (und analog für weiß) geschieht:
 \begin{equation*}
     \text{is\_bw}(C_p, C_r, T_C) =
     \begin{cases}
-        1, & \text{wenn} ~\sum_{i=0}^{2} \vert~ C_r[i] - C_p[i] ~\vert < T_C \\
-        0  & \text{sonst}
+        \text{true}, & \text{wenn} ~\sum_{i=0}^{2} \vert~ C_r[i] - C_p[i] ~\vert < T_C \\
+        \text{false} & \text{sonst}
     \end{cases}
 \end{equation*}
 \nomenclature{$C_p \in \mathbb{R}^3$}{CrYV-Farbe eines Patches.}
@@ -51,8 +57,8 @@ Im Gegensatz zur Einordnung schwarzer und weißer Farben stehen für die Einordn
 \begin{equation*}
     \text{is\_color}(C_p, T_C, t_\text{red}, t_\text{green}) =
     \begin{cases}
-        1 , & \text{wenn} ~\min\left( \vert~ t_\text{red} - C_p[0] ~\vert, \vert~ t_\text{green} - C_p[0]~\vert \right) < T_C, \\
-        0,  & \text{sonst}
+        \text{true}, & \text{wenn} ~\min\left( \vert~ t_\text{red} - C_p[0] ~\vert, \vert~ t_\text{green} - C_p[0]~\vert \right) < T_C, \\
+        \text{false} & \text{sonst}
     \end{cases}
 \end{equation*}
 \nomenclature{$t_\text{red} \in \mathbb{R}$}{Cr-Kanal-Referenzwert für rote Farbe.}
@@ -66,17 +72,17 @@ In dieser Gleichung stehen $t_\text{red}$ und $t_\text{green}$ für zu erwartend
 
 Unter Verwendung des CrYV-Farbraums ist die Einordnung von Feldfarben effizient ermöglicht und kann durch die zuvor beschriebenen Techniken implementiert werden. Diese Klassifizierung von Feldfarben ermöglicht fortlaufend die Klassifizierung von Surroundings hinsichtlich der Filterung von Orientierungspunkten.
 
-Wir erinnern uns: Orientierungspunkte sind als diejenigen Punkte definiert, die an den Ecken von Feldern liegen. Damit weisen sie in ihren Surroundings zwei farbige sowie eine schwarze und eine weiße Ecke vor. Diese Eigenschaft wird genutzt, um Kandidaten möglicher Orientierungspunkte zu filtern und zugleich ihre Orientierung zu bestimmen.
+Orientierungspunkte sind als diejenigen Punkte definiert, die an den Ecken von Feldern liegen. Damit weisen sie in ihren Surroundings zwei farbige sowie eine schwarze und eine weiße Ecke vor. Diese Eigenschaft wird genutzt, um Kandidaten möglicher Orientierungspunkte zu filtern und zugleich ihre Orientierung zu bestimmen.
 
-Für jede Surrounding wird ermittelt, welche Farbgebung in welcher Ecke der Surrounding im Mittel vorliegt. Die Farbinformationen der Ecken wird vermerkt und die Kombination dieser Informationen wird genutzt, um die Art des Orientierungspunkts zu identifizieren. Orientierungspunkte entlang der inneren Seite des Double- oder Triple-Rings zeichnen sich durch farbige Ecken in der Außenseite in Kombination mit einer schwarzen und einer weißen Ecke in der Innenseite aus. Für Orientierungspunkte entlang der Außenseite des Triple-Rings gelten die gespiegelten Bedingungen bezüglich der Farbgebung. Die Positionierung der schwarzen und weißen Ecken liefert Auskunft über die Parität der Orientierungslinie.
+Für jede Surrounding wird ermittelt, welche Farbgebung in welcher Ecke der Surrounding im Mittel vorliegt. Die Farbinformationen der Ecken werden vermerkt und die Kombination dieser Informationen wird genutzt, um die Art des Orientierungspunkts zu identifizieren. Orientierungspunkte entlang der inneren Seite des Double- oder Triple-Rings zeichnen sich durch farbige außen liegende Ecken in Kombination mit einer schwarzen und einer weißen innen liegenden Ecke aus. Für Orientierungspunkte entlang der Außenseite des Triple-Rings gelten die gespiegelten Bedingungen bezüglich der Farbgebung. Die Positionierung der schwarzen und weißen Ecken liefert Auskunft über die Parität der Orientierungslinie.
 
-Mit dieser Unterscheidung können diejenigen Kandidaten der Orientierungspunkte herausgefiltert werden, deren Surroundings nicht im Einklang der zu erwartenden Farbgebung sind. Die gefilterte Liste der Orientierungspunkte wird zur Bestimmung einer mittleren Surrounding verwendet, indem die Surroundings der verbliebenen Orientierungspunkte hinsichtlich ihrer Ausrichtung normalisiert werden und ein Mittelwert aller Surroundings ermittelt wird.
+Mit dieser Unterscheidung können diejenigen Kandidaten der Orientierungspunkte herausgefiltert werden, deren Surroundings nicht im Einklang mit der zu erwartenden Farbgebung sind. Die gefilterte Liste der Orientierungspunkte wird zur Bestimmung einer mittleren Surrounding verwendet, indem die Surroundings der verbliebenen Orientierungspunkte hinsichtlich ihrer Ausrichtung normalisiert werden und ein Mittelwert aller Surroundings ermittelt wird.
 
-Anhand dieser mittleren Surrounding werden die übrigen Orientierungspunkte klassifiziert. Die Klassifizierung verläuft auf Grundlage zweier Metriken: Lab-Abgleich und SSIM. Bei dem Lab-Abgleich wird eine Farbraumtransformation aller Surroundings in den Lab-Farbraum vorgenommen. In diesem werden die Kanaldifferenzen der roten und grünen Ecken betrachtet und es wird anhand der folgenden Ähnlichkeits-Metrik bestimmt, zu welchem Grad sich die Farben ähneln:
+Anhand dieser mittleren Surrounding werden die potenziellen Orientierungspunkte klassifiziert. Die Klassifizierung verläuft auf Grundlage zweier Metriken: Lab-Abgleich und \ac{ssim}. Bei dem Lab-Abgleich wird eine Farbraumtransformation aller Surroundings in den Lab-Farbraum vorgenommen. In diesem werden die Kanaldifferenzen der roten und grünen Ecken betrachtet und es wird anhand der folgenden Ähnlichkeits-Metrik bestimmt, zu welchem Grad sich die Farben ähneln:
 \[\text{sim}\left(S_1, S_2\right) = \exp^{-\nicefrac{0.01}{2}(d_r + d_g)}\]
 \nomenclature{$\text{sim}$}{Similarity-Metrik zur Bestimmung des Ähnlichkeitsgrads zweier Surroundings.}
 \nomenclature{$S_i$}{Surrounding mit Index $i$.}
 \nomenclature{$d_r$, $d_g$}{Mittlere Differenz roter bzw. grüner Bereiche des Lab-Abgleichs zweier Surroundings.}
-Hinter $d_r$ und $d_g$ stehen in dieser Formel die mittleren Differenzen der roten und grünen Bereiche der Surroundings $S_1$ und $S_2$. Diese Metrik liefert einen Wert, anhand dessen ein Ähnlichkeitsgrad der gegebenen Surroundings abgelesen werden kann. Zusätzlich zu dieser Metrik wird die SSIM-Indem genutzt, um die strukturelle Ähnlichkeit aller Surroundings zu der mittleren Surrounding zu ermitteln. Durch diese werden Outlier herausgefiltert, die nicht der zu erwarteten Struktur folgen und lediglich zufällig die korrekten mittleren Farben in den Ecken aufweisen.
+Hinter $d_r$ und $d_g$ stehen in dieser Formel die mittleren Differenzen der roten und grünen Bereiche der Surroundings $S_1$ und $S_2$. Diese Metrik liefert einen Wert, anhand dessen ein Ähnlichkeitsgrad der gegebenen Surroundings abgelesen werden kann. Zusätzlich zu dieser Metrik wird der \ac{ssim}-Index genutzt, um die strukturelle Ähnlichkeit aller Surroundings zu der mittleren Surrounding zu ermitteln. Durch diese werden Outlier herausgefiltert, die nicht der zu erwarteten Struktur folgen und lediglich zufällig die korrekten mittleren Farben in den Ecken aufweisen.
 
-Durch Abgleich des Mittelwerts der $\text{sim}$-Metrik und des SSIM-Indexes mit einem vordefinierten Threshold wird klassifiziert, ob ein potenzieller Orientierungspunkt als dieser klassifiziert wird oder von dem System abgelehnt wird. Durch diese Klassifikation werden die finalen Orientierungspunkte, die zur Findung einer Homographie zur Normalisierung der Dartscheibe genutzt werden, ermittelt.
+Durch Abgleich des Mittelwerts der $\text{sim}$-Metrik und des \ac{ssim}-Indexes mit einem vordefinierten Threshold wird klassifiziert, ob ein potenzieller Orientierungspunkt als dieser klassifiziert wird oder ob dieser von dem System abgelehnt wird. Durch diese Klassifikation werden die finalen Orientierungspunkte, die für die Findung einer Homographie zur Normalisierung der Dartscheibe genutzt werden, ermittelt.

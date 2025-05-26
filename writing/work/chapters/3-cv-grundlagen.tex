@@ -1,16 +1,17 @@
 % !TeX root = ../main.tex
 
+\newpage
 \section{Grundlagen}
 \label{sec:cv:grundlagen}
 
-Bevor in die Thematik der Normalisierung eingegangen wird, ist die Klärung von Grundbegriffen und -konzepten relevant. Diese legen den Grundbaustein für die Nachvollziehbarkeit der Algorithmen und Techniken, die für die Verarbeitung der Bilddaten wichtig sind. Diese Grundlagen setzen mathematische Kenntnisse voraus, wie sie in einem Studium der Informatik erlernt und verstanden werden. Spezifische Algorithmen und Techniken der herkömmlichen Computer Vision werden grundlegend erläutert, jedoch nicht in einem Detailgrad, der zum vollständigen Durchdringen der Themen notwendig ist. Diese Sektion ist lediglich dafür vorgesehen, ausreichend Kontext zu den jeweils verwendeten Methoden und Algorithmen zu liefern, um die Anwendung und Arbeitsweise des Vorgehens zu verstehen.
+Bevor in die Thematik der Normalisierung eingegangen wird, ist die Klärung von Grundbegriffen und -konzepten relevant. Diese legen den Grundbaustein für die Nachvollziehbarkeit der Algorithmen und Techniken, die für die Verarbeitung der Bilddaten relevant sind. Diese Grundlagen setzen mathematische Kenntnisse voraus, wie sie in einem Studium der Informatik erlernt und verstanden werden. Die Grundlagen werden in einem Detailgrad erklärt, der ein Verständnis der eingesetzten Techniken ermöglicht.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Polarlinien}
 \label{sec:polarlinien}
 
-Die polare Darstellung von Linien ist für die Identifizierung der Dartscheibe dahingehend relevant, dass sie es ermöglicht, einer Linie einen Winkel zuzuordnen, in dem diese verläuft. Eine Polarlinie ist definiert als ein Tupel $(\rho, \theta)$, in dem $\rho$ der minimale Abstand der Linie zum Koordinatenursprung ist und $\theta$ der Winkel der Liniennormalen zur x-Achse. Die Charakterisierung einer Linie durch einen Winkel in \autoref{sec:linien} verwendet.
+Die polare Darstellung von Linien ist für die Identifizierung der Dartscheibe dahingehend relevant, dass sie es ermöglicht, einer Linie einen Winkel zuzuordnen, in dem diese verläuft. Eine Polarlinie ist definiert als ein Tupel $(\rho, \theta)$, in dem $\rho$ der minimale Abstand der Linie zum Koordinatenursprung ist und $\theta$ der Winkel der Liniennormalen zur x-Achse. Die Charakterisierung einer Linie durch einen Winkel in \autoref{sec:linien} (\nameref{sec:linien}) verwendet.
 
 Zur Umrechnung einer Linie, gegeben durch zwei Punkte $P_1 = (x_1, y_1)$ und $P_2 = (x_2, y_2)$, in Polarform werden folgende Gleichungen genutzt \cite{polar_linien}:
 \[ \rho = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2} \]
@@ -26,31 +27,29 @@ Als Thresholding wird in der Datenverarbeitung die Einteilung von Werten eines D
 \nomenclature{$D$}{Generischer Definitionsbereich}
 \nomenclature{$T$}{Generischer Threshold}
 
-Thresholding findet seine Verwendung im Kontext dieser Masterarbeit in der Extraktion relevanter Informationen auf Bildern durch die Betrachtung von Pixeln innerhalb bestimmter Grenzwerte in Bildern. Diese Technik ermöglicht beispielsweise das Identifizieren von Merkmalen anhand von Farben, die in bestimmten Farbräumen besonders hervorgehoben sind und durch Thresholding eindeutig identifiziert werden können. Durch Kombination mehrerer Thresholds können komplexe Sachverhalte und Charakteristiken aus Bildern extrahiert werden.
+Thresholding findet seine Verwendung im Kontext dieser Masterarbeit in der Extraktion relevanter Informationen auf Bildern durch die Betrachtung von Pixeln innerhalb bestimmter Grenzwerte in Bildern. Diese Technik ermöglicht unter anderem das Identifizieren von Merkmalen anhand von Farben, die in bestimmten Farbräumen besonders hervorgehoben sind und durch Thresholding eindeutig identifiziert werden können. Durch Kombination mehrerer Thresholds können komplexe Sachverhalte und Charakteristiken aus Bildern extrahiert werden.
 
-In dieser Thesis wird Thresholding in vielerlei Hinsicht verwendet, unter anderem in \autoref{sec:filterung} zur Differenzierung zwischen Kante und Hintergrund oder in \autoref{sec:linienfilterung} zur Filterung von Linien anhand einer Abstandsmetrik.
+In dieser Thesis wird Thresholding in vielerlei Hinsicht verwendet, unter anderem in \autoref{sec:filterung} zur Differenzierung zwischen Kanten und Hintergrund oder in \autoref{sec:linienfilterung} zur Filterung von Linien anhand einer Abstandsmetrik.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Binning}
 \label{sec:binning}
 
-Als Erweiterung von Thresholding lässt sich Binning verstehen. Unter Binning versteht man die Diskretisierung von Werten in definierte Intervalle, sogenannte Bins oder Buckets. Binning ermöglicht es, Spannen von Werten in definierte Bereiche zu unterteilen und somit in diskrete Kategorien einzuordnen. Dabei wird zwischen Hard Binning und Soft Binning unterschieden.
+Binning ist als Erweiterung von Thresholding zu verstehen. Es bezeichnet die Diskretisierung von Werten in definierte Intervalle, sogenannte Bins oder Buckets. Durch Binning wird es ermöglicht, Spannen von Werten in definierte Bereiche zu unterteilen und somit in diskrete Kategorien einzuordnen. Dabei wird zwischen Hard Binning und Soft Binning unterschieden.
 
-Beim Hard Binning werden Intervallgrenzen $I = \{i_0, i_1, ..., i_n\} \subseteq D$ definiert, die einen Definitionsbereich $D$ von Daten in halboffene Intervalle $I_{k \in [0, n-1]} = [i_k, i_{k+1})$ unterteilen. Diese Intervalle korrespondieren mit Bins $B_{i \in [0, n]}$, in welche diejenigen Werte akkumuliert werden, die in das dementsprechende Intervall fallen. Es existieren harte Grenzen der Bins, die unter anderem dafür sorgen, dass nahe beieinander liegende Werte $v_0 \in D$ und $v_1 = v_0 - \epsilon_{>0}$ in unterschiedlichen Bins zugeordnet werden, sofern $x_0 \in I$.
+Beim Hard Binning werden Intervallgrenzen $I = \{i_0, i_1, ..., i_n\} \subseteq D$ definiert, die einen Definitionsbereich $D$ von Daten in halboffene Intervalle $I_{k \in [0, n-1]} = [i_k, i_{k+1})$ unterteilen. Diese Intervalle korrespondieren mit Bins $B_{i \in [0, n]}$, in welche diejenigen Werte akkumuliert werden, die in das dementsprechende Intervall fallen. Es existieren harte Grenzen der Bins, die unter anderem dafür sorgen, dass nahe beieinander liegende Werte $v_0 \in D$ und $v_1 = v_0 - \epsilon_{>0}$ in unterschiedlichen Bins zugeordnet werden, sofern $x_0 \in I$. Um dieses Artefakt zu umgehen, gibt es das Soft Binning, in dem Werte anteilig in Bins eingeordnet werden, sodass Werte im Umkreis um Intervallgrenzen in beide Bins einsortiert werden, gewichtet mit der Distanz zu der Intervallgrenze.
 
-Um dieses Artefakt zu umgehen, gibt es das Soft Binning, in dem Werte anteilig in Bins eingeordnet werden, sodass Werte im Umkreis um Intervallgrenzen in beide Bins einsortiert werden, gewichtet mit der Distanz zu der Intervallgrenze.
-
-Binning wird in dieser Thesis unter anderem in \autoref{sec:mittelpunktextraktion} genutzt, um Polarlinien anhand ihrer Winkel zu kategorisieren.
+Binning wird in dieser Thesis unter anderem in \autoref{sec:mittelpunktextraktion} (\nameref{sec:mittelpunktextraktion}) genutzt, um Polarlinien anhand ihrer Winkel zu kategorisieren.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Faltung}
 \label{sec:was_filterung}
 
-Die Faltung, auch Convolution genannt, ist eine mathematische Operation, die ihren Ursprung in der Signalverarbeitung hat. Die Faltung nimmt zwei Funktionen $f$ und $g$ und berechnet eine resultierende Funktion $h = (f * g)$. Die Definition einer Faltung ist \cite{convolution,cv_general}:
+Die Faltung, auch Convolution genannt, ist eine mathematische Operation, die ihren Ursprung in der Signalverarbeitung hat. Bei der Faltung werden Funktionen $f$ und $g$ kombiniert, um eine resultierende Funktion $h = (f * g)$ zu errechnen. Die Definition einer Faltung lautet \cite{convolution,cv_general}:
 \[ (f*g)(x) = \int_{-\infty}^{-\infty} f(t) g(x-t) dt\]
-In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die Extraktion von Merkmalen aus Bildern ermöglicht. Die diskrete 2D-Faltung funktioniert, indem ein Kernel auf jede Position eines Bildes angewandt wird. Mathematisch ist sie wie folgt beschrieben \cite{discrete_convolution}:
+Hinsichtlich der Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die Extraktion von Merkmalen aus Bildern ermöglicht. Die diskrete 2D-Faltung funktioniert, indem ein Kernel auf jede Position eines Bildes angewandt wird. Mathematisch ist sie wie folgt beschrieben \cite{discrete_convolution}:
 \[ I[x, y] = \sum_{i=0}^{x_k} \sum_{j=0}^{y_k} I[x - \lfloor\frac{x_k}{2}\rfloor + i - 1, y - \lfloor \frac{y_k}{2} \rfloor + j - 1] \times k[i, j] \]
 \nomenclature{$I \in \mathbb{N}^2$}{Bild mit einem Kanal}
 \nomenclature{$k \in \mathbb{N}^2$}{Faltungs-Kernel}
@@ -58,9 +57,9 @@ In Hinsicht auf Bildverarbeitung wird eine diskrete 2D-Faltung genutzt, die die 
 \nomenclature{$c_0 \in \mathbb{N}$}{Anzahl der Eingabekanäle in einen Kernel}
 \nomenclature{$c_1 \in \mathbb{N}$}{Anzahl der Ausgabekanäle eines Kernels}
 \nomenclature{$x, y \in \mathbb{N}$}{Variable Koordinaten in einem kartesischen Koordinatensystem}
-Dabei ist $I \in \mathbb{N}^2$ ein Eingabebild mit einem Kanal, $x$ und $y$ sind Positionen im Bild in $k \in \mathbb{N}^2$ ein Kernel der Größe $x_k \times y_k$.
+Dabei ist $I \in \mathbb{N}^2$ ein Eingabebild mit einem Farbkanal, $x$ und $y$ sind Positionen im Bild in $k \in \mathbb{N}^2$ ein Kernel der Größe $x_k \times y_k$.
 
-Diese allgemeine Formel lässt sich auf die Verwendung unter mehrerer Kanäle anwenden. Für eine Faltung eines Bildes mit $c_0$ Kanälen, einer Kernel-Größe von $k_x \times k_y$ und einer Ausgabe in $c_1$ Kanälen wird ein Kernel der Größe $ c_0 \times k_x \times k_y \times c_1$ erstellt. Dabei werden für jeden Pixel in jedem Kanal alle Eingabekanäle betrachtet und gefiltert.
+Diese allgemeine Formel lässt sich auf die Verwendung mehrerer Kanäle erweitern. Für eine Faltung eines Bildes mit $c_0$ Kanälen, einer Kernel-Größe von $k_x \times k_y$ und einer Ausgabe von $c_1$ Kanälen wird ein Kernel der Größe $ c_0 \times k_x \times k_y \times c_1$ erstellt. Dabei werden für jeden Pixel in jedem Kanal alle Eingabekanäle betrachtet und gefiltert.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -69,7 +68,7 @@ Diese allgemeine Formel lässt sich auf die Verwendung unter mehrerer Kanäle an
 
 Nachdem die Prinzipien der Faltung bekannt sind, wird in diesem Abschnitt auf die konkrete Anwendung der Faltung in der Bildverarbeitung eingegangen.
 
-Anhängig von den Werten eines Kernels werden unterschiedliche Charakteristiken eines Bildes hervorgehoben. So können mit einem Kantenerkennungsfilter hochfrequente Bestandteile in einem Bild hervorgehoben werden während ein Bild mit mit einem Glättungsfilter weichgezeichnet wird und hochfrequente Anteile herausgefiltert werden. Der Sobel-Filter ist ein in der Computer Vision etablierter Filter zur robusten Kantenerkennung\cite{sobel,cv_general}. Der Sobel-Filter kombiniert die Prinzipien der Glättung und Kantenerkennung, indem das Bild in einer Richtung geglättet wird und in der anderen eine Kantenerkennung durchgeführt wird. Die Kantenerkennung ist durch diesen Filter robust hinsichtlich Rauschen im Bild. Exemplarische Filter für Kantenerkennung und Weichzeichnung sowie ein Sobel-Filter sind in \autoref{fig:filter} dargestellt.
+Anhängig von den Werten eines Kernels (auch Filter genannt) werden unterschiedliche Charakteristiken eines Bildes hervorgehoben. So können mit einem Kantenerkennungsfilter hochfrequente Bestandteile in einem Bild hervorgehoben werden während ein Bild mit mit einem Glättungsfilter weichgezeichnet wird und hochfrequente Anteile herausgefiltert werden. Der Sobel-Filter ist ein in der \ac{cv} etablierter Filter zur robusten Kantenerkennung \cite{sobel,cv_general}. Er kombiniert die Prinzipien der Glättung und Kantenerkennung, indem das Bild durch diesen in einer Richtung geglättet wird und in der anderen eine Kantenerkennung durchgeführt wird. Die Kantenerkennung ist durch diesen Filter robust hinsichtlich Rauschen im Bild. Exemplarische Filter für Kantenerkennung und Weichzeichnung sowie ein Sobel-Filter sind in \autoref{fig:filter} dargestellt.
 
 \begin{figure}
     \centering
@@ -115,19 +114,17 @@ Anhängig von den Werten eines Kernels werden unterschiedliche Charakteristiken 
     \label{fig:filter}
 \end{figure}
 
-Filterung und Kantenerkennung werden in dieser Thesis ausgiebig genutzt. So wird in \autoref{sec:kanten} Kantenerkennung als erster Schritt der Normalisierung angewandt und Filterung generell in \autoref{cha:ki} als wichtiger Bestandteil von Schichten neuronaler Netze.
+Filterung und Kantenerkennung werden in dieser Thesis ausgiebig genutzt. So wird in \autoref{sec:kanten} Kantenerkennung als erster Schritt der Normalisierung angewandt und Filterung an sich ist in \autoref{cha:ki} ein wichtiger Bestandteil von Schichten neuronaler Netze.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Harris Corner Detection}
 \label{sec:harris_corners}
 
-Die Harris Corner Detection ist ein etablierter Algorithmus in der Computer Vision, der 1988 von C. Harris und M. Stephens vorgestellt wurde \cite{harris_corners,cv_general}. Ziel des Algorithmus ist es, Ecken in einem Eingabebild zu identifizieren.
+Die Harris Corner Detection ist ein etablierter Algorithmus in der \ac{cv}, der 1988 von C. Harris und M. Stephens vorgestellt wurde \cite{harris_corners,cv_general}. Ziel des Algorithmus ist es, Ecken in einem Eingabebild zu identifizieren. Der Kerngedanke hinter der Harris Corner Detection basiert auf der Beobachtung, dass eine Ecke dadurch spezifiziert ist, dass sie der Endpunkt zweier aufeinandertreffender Kanten ist. Durch Kombination von Kanteninformationen und Thresholding werden Ecken in einem Bild identifiziert.
 
-Der Kerngedanke hinter der Harris Corner Detection basiert auf der Beobachtung, dass eine Ecke dadurch spezifiziert ist, dass sie der Endpunkt zweier aufeinandertreffender Kanten ist. Durch Kombination von Kanteninformationen und Thresholding werden Ecken in einem Bild identifiziert.
+Als erster Schritt der Harris Corner Detection wird das Bild mit Kantenerkennungsfiltern verarbeitet, die, wie in \autoref{sec:kantenerkennung} beschrieben, Kanten im Bild hervorheben. Diese Kantenerkennung erfolgt in horizontaler und vertikaler Richtung, woraus zwei Kantenreaktionen hervorgehen. Kantenreaktionen benachbarter Pixelregionen werden je in einem Koordinatensystem dargestellt, die die Magnitude der Kantenreaktionen von Pixeln in horizontaler und vertikaler Richtung darstellen. In diesen Koordinatensystemen werden umliegende Ellipsen um die resultierenden Cluster gelegt, wie in \autoref{fig:harris} visualisiert.
 
-Als erster Schritt der Harris Corner Detection wird das Bild mit Kantenerkennungsfiltern verarbeitet, die, wie in \autoref{sec:kantenerkennung} beschrieben, Kanten im Bild hervorheben. Diese Kantenerkennung erfolgt in horizontaler und vertikaler Richtung, woraus zwei Kantenreaktionen hervorgehen. Diese werden in einem Koordinatensystem dargestellt, in welchem umfassende Ellipsen um die resultierenden Cluster gelegt werden. Kantenreaktionen und resultierende Ellipsen sind in \autoref{fig:harris} visualisiert.
-4
 \begin{figure}
     \centering
     \begin{subfigure}{0.3\textwidth}
@@ -154,52 +151,54 @@ Als erster Schritt der Harris Corner Detection wird das Bild mit Kantenerkennung
     \label{fig:harris}
 \end{figure}
 
-Anhand der Exzentrizität und Größe einer Ellipse wird festgestellt, ob es sich bei einem Cluster von Pixeln um eine Ecke handelt. Benachbarte Pixel um eine Ecke werden dabei ebenfalls als Ecken identifiziert. Um diese zu unterdrücken, wird Non-Maximum-Suppression verwendet, bei der lediglich diejenigen Pixel mit der stärksten Antwort auf die Eckenerkennung hervorgehoben werden. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf Null gesetzt.
+Anhand der Exzentrizität und Größe einer Ellipse wird beurteilt, ob es sich bei einem Cluster von Pixeln um eine Fläche, Kante oder Ecke handelt. Benachbarte Pixel um einen Pixel auf einer Ecke werden dabei ebenfalls als Ecken identifiziert. Um diese zu unterdrücken, wird \ac{nms} verwendet, bei der lediglich diejenigen Pixel mit der stärksten Antwort auf die Eckenerkennung hervorgehoben werden. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf Null gesetzt.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Hough-Transformation}
 \label{sec:hough_transformation}
 
-Die Hough-Transformation, veröffentlicht 1962 von Paul Hough, ist ein Algorithmus zur Identifizierung von simplen Strukturen in Kantenbildern \cite{hough_transform,hough_transform}. In diesem Abschnitt wird die Erkennung von Linien mit der Hough-Transformation beschrieben, wie sie in \autoref{sec:linienerkennung} verwendet wird.
+Die Hough-Transformation, veröffentlicht 1962 von Paul Hough, ist ein Algorithmus zur Identifizierung von simplen Strukturen in Kantenbildern \cite{hough_transform,hough_transform}. In diesem Abschnitt wird die Erkennung von Linien mit der Hough-Transformation beschrieben, wie sie in \autoref{sec:linienerkennung} (\nameref{sec:linienerkennung}) verwendet wird.
 
 Hauptaspekt des Algorithmus ist die Transformation von Punkten im Image-Space zu Linien im Parameter-Space. Der Image-Space ist das Koordinatensystem des Bildes mit den Achsen $x$ und $y$; der Parameter-Space ist ein Koordinatensystem mit den Achsen $\rho$ und $\theta$. Linien im Image-Space sind mathematisch beschrieben als Geraden der polaren Form:
 \[ 0 = x \sin{\theta} - y \cos{\theta} + \rho \]
 \nomenclature{$(\rho, \theta) \in \mathbb{R}^2$}{Koordinaten (Abstand und Winkel) in einem polaren Koordinatensystem}
-Dabei sind $\rho$ und $\theta$ Winkel und Abstand einer Linie zum Koordinatenursprung, wie in \autoref{sec:polarlinien} eingeführt. Ein Punkt $(x, y)$ im Image-Space ist im Parameter-Space als Sinuswelle dargestellt, die alle Linien beschreibt, die durch den Punkt $(x, y)$ im Image-Space verlaufen. Ein Punkt $(\rho, \theta)$ im Parameter-Space beschreibt eine Linie in Image-Space.
+Dabei sind $\rho$ und $\theta$ -- wie in \autoref{sec:polarlinien} eingeführt -- Winkel und Abstand einer Linie zum Koordinatenursprung, welcher in Bildern in der oberen linken Ecke liegt. Ein Punkt $(x, y)$ im Image-Space ist im Parameter-Space als Sinuswelle dargestellt, welche alle Linien beschreibt, die durch den Punkt $(x, y)$ im Image-Space verlaufen. Ein Punkt $(\rho, \theta)$ im Parameter-Space beschreibt eine Linie in Image-Space.
 
-Input der Hough-Transformation ist ein durch Thresholding vorverarbeitetes Bild, in dem typischerweise Kanten oder Ecken extrahiert wurden. Die extrahierten Pixel werden im Parameter-Space akkumuliert, in dem sie sich in Form von Sinuswellen überschneiden. Liegen demnach mehrere Punkte im Image-Space in einer Linie, so überschneiden sich ihre korrespondieren Sinus-Darstellungen im Parameter-Space in einem Punkt. Dieser Punkt liegt an den Koordinaten $(\rho, \theta)$ und beschreibt die Parameter der Geraden, die durch die Punkte verläuft. Das Identifizieren von Peaks im Parameter-Space führt analog zur Identifizierung von Linien im Image-Space.
+Eingabedaten der Hough-Transformation sind durch Thresholding vorverarbeitete Bilder, in denen typischerweise Kanten oder Ecken extrahiert sind. Die extrahierten Pixel werden im Parameter-Space akkumuliert, in dem sie sich in Form von Sinuswellen überschneiden. Liegen demnach Punkten im Image-Space in einer Linie, so überschneiden sich ihre korrespondieren Sinus-Darstellungen im Parameter-Space in einem Punkt. Dieser Punkt liegt an den Koordinaten $(\rho, \theta)$ und beschreibt die Parameter der Geraden, die durch die Punkte verläuft. Das Identifizieren von Peaks im Parameter-Space führt analog zur Identifizierung von Linien im Image-Space.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Transformationsmatrizen}
 \label{sec:transformations_matrizen}
 
-Transformationen von Bildern in der Computer Vision basieren auf der Grundlage von Transformationsmatrizen \cite{transformationen_1,transformationen_2,cv_general}.
+Transformationen von Bildern in der \ac{cv} basieren auf der Grundlage von Transformationsmatrizen \cite{transformationen_1,transformationen_2,cv_general}. Die unterschiedlichen Arten von Transformationsmatrizen und ihre Arbeitsweisen werden in den folgenden Unterabschnitten erläutert. Es wird dabei begonnen mit Grundlagen homogener Koordinaten, gefolgt von unterschiedlichen Arten von Transformationsmatrizen.
 
 \subsubsection{Homogene Koordinaten}
 \label{sec:homogene_koordinaten}
 
-Punkte im 2D-Raum besitzen eine $x$- und eine $y$-Koordinate, sodass $P = (x, y)$. Eine Erweiterung dieser Koordinatendarstellung sind homogene Koordinaten. Um einen 2D-Punkt $P$ in einen homogenen Punkt $\widetilde{P} = (\widetilde{x}, \widetilde{y}, \widetilde{z})$ umzuwandeln, wird eine Koordinate $\widetilde{z} \neq 0$ hinzugefügt, die zur Normalisierung der Koordinaten genutzt wird. Zur Umwandlung von $P$ in homogene Koordinaten wird $z=1$ gesetzt; die Rücktransformation geschieht durch $P = (\frac{\widetilde{x}}{\widetilde{z}}, \frac{\widetilde{y}}{\widetilde{z}})$. Homogene Koordinaten sind eine dreidimensionale Einbettung des zweidimensionalen Raumes und ermöglichen Transformationen von Koordinaten und als Erweiterung dessen auch die Transformation von Bildern durch Transformationsmatrizen $M$. Diese sind $3 \times 3$ Matrizen, die durch Multiplikation mit homogenen Punkten Transformationen auf diesen anwenden:
+Punkte im 2D-Raum besitzen eine $x$- und eine $y$-Koordinate, sodass ein Punkt definiert ist durch $P = (x, y)$. Eine Erweiterung dieser Koordinatendarstellung sind homogene Koordinaten. Um einen 2D-Punkt $P$ in einen homogenen Punkt $\widetilde{P} = (\widetilde{x}, \widetilde{y}, \widetilde{z})$ umzuwandeln, wird eine Koordinate $\widetilde{z} \neq 0$ hinzugefügt, die zur Normalisierung der Koordinaten genutzt wird \cite{cv_general}. Zur Umwandlung von $P$ in homogene Koordinaten wird $z=1$ gesetzt; die Rücktransformation geschieht durch $P = (\frac{\widetilde{x}}{\widetilde{z}}, \frac{\widetilde{y}}{\widetilde{z}})$. Homogene Koordinaten sind eine dreidimensionale Einbettung des zweidimensionalen Raumes und ermöglichen Transformationen von Koordinaten und als Erweiterung dessen auch die Transformation von Bildern durch Transformationsmatrizen $M$. Diese sind $3 \times 3$ Matrizen, die durch Multiplikation mit homogenen Punkten Transformationen auf diese anwenden:
 \[ \widetilde{P}' = M \times \widetilde{P} \]
 \nomenclature{$P \in \mathbb{R}^2$}{Position in kartesischem Koordinatensystem}
 \nomenclature{$\widetilde{P} \in \mathbb{R}^3$}{Homogene Position $(\widetilde{x}, \widetilde{y}, \widetilde{z})$ in kartesischem Koordinatensystem}
 \nomenclature{$\widetilde{P}' \in \mathbb{R}^3$}{Transformierte homogene Position in kartesischem Koordinatensystem}
 \nomenclature{$M_{i \in \mathbb{N}} \in \mathbb{R}^{3 \times 3}$}{Transformationsmatrix}
-Die unterschiedlichen Einträge der Transformationsmatrizen bestimmen die Art der Transformation. Durch Aneinanderreihung mehrerer Transformationsmatrizen aneinander können mehrere Transformationen in einer einzelnen Transformation zusammengefasst werden. Dabei ist die rechts-Assoziativität der Matrixmultiplikation zu beachten, durch die eine Anwendung der Matrizen von rechts nach links geschieht. Darüber hinaus ist die Kommutativität bei Matrixmultiplikationen nicht gegeben, sodass die Reihenfolge der Anwendungen relevant ist:
+Die unterschiedlichen Einträge der Transformationsmatrizen bestimmen die Art der Transformation. Durch Verkettung von Transformationsmatrizen können mehrere Transformationen in einer einzelnen Transformation zusammengefasst werden. Dabei ist die rechts-Assoziativität der Matrixmultiplikation zu beachten, durch die eine Anwendung der Matrizen von rechts nach links geschieht. Darüber hinaus ist die Kommutativität bei Matrixmultiplikationen nicht gegeben, sodass die Reihenfolge der Anwendungen relevant ist:
 {\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
     \widetilde{P}' & = M_n \times \dots \times M_2 \times M_1 \times \widetilde{P}   \\
                    & = (M_n \times \dots \times M_2 \times M_1) \times \widetilde{P} \\
                    & = M_{n, \dots, 2, 1} \times \widetilde{P}
 \end{align*}}
+Die Anwendung der Matrix $M_{n, \dots, 2, 1}$ auf ein Bild hat den selben Effekt wie die aufeinanderfolgende Anwendung der Matrizen $M_1$ bis $M_n$.
 
+\newpage
 \subsubsection{Affine Transformationsmatrizen}
 \label{sec:affine_transformations_matrizen}
 
-Affine Transformationen zeichnen sich durch die Aufrechterhaltung von Punkten, geraden Linien und Flächen aus. Nach einer affinen Transformation verbleiben parallele Linien weiterhin parallel \cite{cv_general}. Es gibt unterschiedliche Arten affiner Transformationen, die in diesem Unterabschnitt vorgestellt werden.
+Affine Transformationen zeichnen sich durch die Aufrechterhaltung von Punkten, geraden Linien und Flächen aus. Nach einer affinen Transformation verbleiben parallele Linien weiterhin parallel, Winkel zwischen Geraden können sich jedoch ändern \cite{cv_general}. Es gibt unterschiedliche Arten affiner Transformationen, die in diesem Unterabschnitt vorgestellt werden.
 
-\paragraph{Translation}
+\paragraph{Translationsmatrix}
 \label{par:translation}
 
 Die Translationsmatrix verschiebt Punkte um gegebene Distanzen. $x$- und $y$-Verschiebungen werden mit $t_x$ und $t_y$ beschrieben und sind wie folgt aufgebaut:
@@ -221,10 +220,10 @@ Die Translationsmatrix verschiebt Punkte um gegebene Distanzen. $x$- und $y$-Ver
 \end{align*}}
 \nomenclature{$M_\text{trans} \in \mathbb{R}^{3 \times 3}$}{Translationsmatrix}
 
-\paragraph{Skalierung}
+\paragraph{Skalierungsmatrix}
 \label{par:skalierung}
 
-Die Skalierungsmatrix zeichnet sich durch ihre horizontale Skalierung $c_x$ und vertikale Skalierung $c_y$ aus und ist wie folgt aufgebaut:
+Die Skalierungsmatrix skaliert ein Bild, unterteilt in eine horizontale Skalierung $s_x$ und eine vertikale Skalierung $s_y$. Skalierungen $<1$ resultieren in einer Stauchung, Skalierungen $>1$ in Streckungen. Skalierungsmatrizen sind wie folgt aufgebaut:
 
 {\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
@@ -243,10 +242,10 @@ Die Skalierungsmatrix zeichnet sich durch ihre horizontale Skalierung $c_x$ und 
 \end{align*}}
 \nomenclature{$M_\text{scl} \in \mathbb{R}^{3 \times 3}$}{Skalierungsmatrix}
 
-\paragraph{Scherung}
+\paragraph{Scherungsmatrix}
 \label{par:scherung}
 
-Ber der Scherung werden Punkte parallel zur $x$-Achse mit $c_x$ und parallel zur $y$-Achse mit $c_y$ geschert:
+Ber der Scherung werden Punkte parallel zur $x$-Achse mit $a_x$ und parallel zur $y$-Achse mit $a_y$ geschert; d neutrale Wert einer Scherung beträgt 0. Scherungsmatrizen haben die Form:
 
 {\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
@@ -254,21 +253,21 @@ Ber der Scherung werden Punkte parallel zur $x$-Achse mit $c_x$ und parallel zur
      & =
     \left[
         \begin{array}{ccc}
-            1   & c_x & 0 \\
-            c_y & 1   & 0 \\
+            1   & a_x & 0 \\
+            a_y & 1   & 0 \\
             0   & 0   & 1 \\
         \end{array}
         \right]
     \threedvec{x}{y}{1} \\
      & =
-    \threedvec{x + c_x \cdot y}{c_y \cdot x + y}{1}
+    \threedvec{x + a_x \cdot y}{a_y \cdot x + y}{1}
 \end{align*}}
 \nomenclature{$M_\text{shr} \in \mathbb{R}^{3 \times 3}$}{Scherungsmatrix}
 
 \paragraph{Rotation}
 \label{par:rotation}
 
-Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch positiver Richtung um den Koordinatenursprung rotiert. Sie zugehörigen Rotationsmatrizen nutzen diesen Winkel zur Konstruktion einer Rotationsmatrix. Anzumerken ist dabei, dass eine Rotationsmatrix als Kombination aus Skalierungen $s_x = s_y = \cos(\alpha)$ und Scherungen $-c_x = c_y = \sin(\alpha)$ konstruiert werden kann:
+Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch positiver Richtung um den Koordinatenursprung rotiert. Die Zusammensetzung einer Rotationsmatrix kann aufgeteilt werden in einen Skalierungs- und einen Scherungsanteil. Die Skalierung erfolgt uniform in horizontaler und vertikaler Richtung um den Faktor $s_{x, y} = \cos(\alpha)$; die Anteile der Scherung sind gegeben mit $a_x = -\sin(\alpha)$ und $a_y = \sin(\alpha)$. Aus diesen Voraussetzungen ergibt sich die folgende Definition der Rotationsmatrix:
 
 {\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
@@ -287,6 +286,7 @@ Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch p
 \end{align*}}
 \nomenclature{$M_\text{rot} \in \mathbb{R}^{3 \times 3}$}{Rotationsmatrix}
 
+\newpage
 \subsubsection{Homographien}
 \label{sec:homographien}
 
@@ -305,16 +305,15 @@ Im Gegensatz zu affinen Transformationen können Matrixeinträge in Homographien
 \nomenclature{$H \in \mathbb{R}^{3 \times 3}$}{Homographie}
 \nomenclature{$h_{i, j \in [0, 2]} \in \mathbb{R}$}{Parameter einer Homographie}
 
-Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je 2 Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:entzerrung} genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten und entzerrten Bildern zu mappen.
+Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je zwei Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:entzerrung} (\nameref{sec:entzerrung}) genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten Bildern zu transformieren.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Log-polare Entzerrung}
 \label{sec:logpolare_entzerrung}
 
-Die log-polare Darstellung eines Bildes wird durch eine Transformation des Koordinatensystems erlangt. Während Koordinaten in einem kartesischen Koordinatensystem durch $x$- und $y$-Koordinaten angegeben sind, werden Punkte im log-polaren Koordinatensystem durch ein Tupel $\left(\rho, \theta\right)$ beschrieben. Sie sind definiert als logarithmischer Abstand und Winkel zu einem spezifischen Punkt $\left(c_x, c_y\right)$ \cite{logpolar}. Die Umwandlung der Koordinaten ist definiert durch:
+Die log-polare Darstellung eines Bildes wird durch eine Transformation des Koordinaten-systems erlangt. Während Koordinaten in einem kartesischen Koordinatensystem durch $x$- und $y$-Koordinaten angegeben sind, werden Punkte im log-polaren Koordinatensystem durch ein Tupel $\left(\rho, \theta\right)$ beschrieben. Sie sind definiert als logarithmischer Abstand und Winkel zu einem spezifischen Punkt $\left(c_x, c_y\right)$ \cite{logpolar}. Die Umwandlung der Koordinaten ist definiert durch:
 \nomenclature{$(c_x, c_y) \in \mathbb{R}^2$}{Position eines Mittelpunktes in einem Bild}
-
 \begin{align*}
     \rho(x, y)   & = \ln \sqrt{(x - c_x)^ 2 + (y - c_y)^2}      \\
     \theta(x, y) & = \arctan2 \left((y - c_y), (x - c_x)\right)
@@ -327,26 +326,27 @@ In dieser Thesis wird die log-polare Darstellung eines Bildes in \autoref{sec:or
 \subsection{Farbräume}
 \label{sec:farbräume}
 
-Farbinformationen in Bildern werden auf unterschiedliche Arten gespeichert. Diese unterschiedlichen Arten der Darstellungen von Farben werden als Farbräume bezeichnet \cite{color_space,cv_general}. Zu den am weitesten verbreiteten Farbräumen zählen unter anderem der RGB- Farbraum und der HSV-Farbraum. Im RGB-Farbraum werden Farbinformationen analog zum menschlichen Auge in designierten Kanälen für rote, grüne und blaue Bestandteile des Bildes unterteilt; im HSV-Farbraum stehen die Kanäle H, S und V für Färbung (\quotes{hue}), Sättigung (\quotes{saturation}) und Helligkeit (\quotes{value}). Visuell nähere Verbundenheit zwischen der menschlichen Farbwahrnehmung wird durch die Farbräume YCbCr und Lab erzielt. Diese Farbräume nutzen ebenfalls drei Farbkanäle, die jedoch abstrakter gestaltet sind und Farbinformationen auf eine Art encodieren, dass eine Interpolation von Farben zueinander mit visuellem Einklang ermöglichen, der in RGB und HSV nicht trivial erzielbar ist.
+Farbinformationen in Bildern werden auf unterschiedliche Arten gespeichert. Diese unterschiedlichen Arten der Darstellungen von Farben werden als Farbräume bezeichnet \cite{color_space,cv_general}. Zu den am weitesten verbreiteten Farbräumen zählen unter anderem der RGB- und der HSV-Farbraum. Im RGB-Farbraum werden Farbinformationen nach dem Vorbild des menschlichen Auges in designierten Kanälen für rote, grüne und blaue Bestandteile des Bildes unterteilt; im HSV-Farbraum stehen die Kanäle H, S und V für Färbung (\quotes{hue}), Sättigung (\quotes{saturation}) und Helligkeit (\quotes{value}). Visuell nähere Verbundenheit zwischen der menschlichen Farbwahrnehmung wird durch die Farbräume YCbCr und Lab erzielt. Diese Farbräume nutzen ebenfalls drei Farbkanäle, die jedoch abstrakter gestaltet sind und Farbinformationen auf eine Art encodieren, dass eine Interpolation von Farben zueinander mit visuellem Einklang ermöglichen, der in RGB und HSV nicht trivial erzielbar ist.
 
-Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nachteilen in Verbindung. In dieser Arbeit werden die aufgezählten Farbräume zur Identifizierung von Farben und Hervorhebung von Merkmalen in Bildern genutzt. Die Verwendung von Farbraumtransformationen geschieht in \autoref{sec:orientierungspunkte_klassifizieren}.
+Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nachteilen in Verbindung. In dieser Arbeit werden die aufgezählten Farbräume zur Identifizierung von Farben und Hervorhebung von Merkmalen in Bildern genutzt. Die Verwendung von Farbraumtransformationen in dieser Thesis geschieht insbesondere in \autoref{sec:orientierungspunkte_klassifizieren} und \autoref{sec:farbidentifizierung_impl}.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{Structural Similarity (SSIM)}
+\newpage
+\subsection{\acl{ssim}}
 \label{sec:ssim}
 
-Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeauthor{ssim} eine Metrik entwickelt, die über das triviale Vergleichen von Farbinformationen hinaus geht \cite{ssim,cv_general}. Grundprinzip der SSIM-Metrik ist das Einfangen und Vergleichen visuell auffälliger Änderungen im Bild und Unterdrückung von Effekten wie Weichzeichnung und lokaler Verschiebungen von Pixeln. Es werden Informationen zu Luminanz, Kontrast und Struktur auf Eingabebildern identifiziert und jeweils miteinander verglichen. Eine gewichtetes Produkt der jeweiligen Ähnlichkeitsfaktoren bestimmt schließlich den SSIM-Wert.
+Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeauthor{ssim} die \acf{ssim} entwickelt, die über das triviale Vergleichen von Farbinformationen hinaus geht \cite{ssim,cv_general}. Das Grundprinzip der \ac{ssim}-Metrik ist das Einfangen und Vergleichen visuell auffälliger Änderungen im Bild und Unterdrückung von Effekten wie Weichzeichnung und lokaler Verschiebungen von Pixeln. Es werden Informationen zu Luminanz, Kontrast und Struktur auf Eingabebildern identifiziert und jeweils miteinander verglichen. Eine gewichtetes Produkt der jeweiligen Ähnlichkeitsfaktoren bestimmt schließlich den \ac{ssim}-Wert.
 
-Diese Handhabung der Informationsverarbeitung sorgt für Robustheit gegenüber visuell geringer Änderungen, die jedoch starke Auswirkungen auf die zugrundeliegenden Daten besitzen. Ein Beispiel ist das Weichzeichnen eines Bildes oder das Hinzufügen von Rauschen. Diese Operationen ändern die Pixelwerte der Eingabebilder stark, jedoch sind sie visuell unauffällig.
+Diese Handhabung der Informationsverarbeitung sorgt für Robustheit gegenüber geringen augenscheinlichen Änderungen, die jedoch starke Auswirkungen auf die zugrundeliegenden Daten besitzen. So ist das Weichzeichnen eines Bildes oder das Hinzufügen von Rauschen eine solche Änderung, bei der die Pixelwerte der Bilder stark verändert werden, die Aussage hinter den Daten jedoch nicht.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{RANSAC}
 \label{sec:ransac}
 
-Nicht-ideale Daten beinhalten häufig Outlier. Outlier sind Datenpunkte, die nicht der zu erwartenden oder gewünschten Datenstruktur folgen, sondern als fehlerhafte Aufnahmen in den Daten vorhanden sind. Triviale Least-Squares-Approximationen aller Datenpunkte ist für diese Anomalien in Daten anfällig, wodurch die Ergebnisse dieser Methoden beeinflusst werden. Um mit dieser Art der Anomalien umzugehen, stellten \citeauthor{ransac} 1981 den RANSAC-Algorithmus vor \cite{ransac,cv_general}.
+Bei der Verarbeitung von Daten ist nicht in jedem Fall davon auszugehen, dass alle vorhandenen Datenpunkte Teil relevante Informationen halten. Outlier sind Datenpunkte, die nicht der zu erwartenden oder gewünschten Aussage der Daten folgen, sondern als fehlerhafte Aufnahmen in den Daten vorhanden sind. Triviale Least-Squares-Approximationen unter Einbezug aller Datenpunkte ist für diese Anomalien in Daten anfällig, wodurch die Ergebnisse dieser Methoden beeinflusst werden. Um mit dieser Art der Anomalien umzugehen, stellten \citeauthor{ransac} 1981 den RANSAC-Algorithmus vor \cite{ransac,cv_general}.
 
-RANSAC steht für \quotes{\underline{Ran}dom \underline{Sa}mple \underline{C}onsensus} und beruht auf dem zufälligen Auswählen eines Subsets von Datenpunkten zur Approximation einer akkuraten Beschreibung der Daten. Nach dem Auswählen zufälliger Punkte und Approximieren einer Zielverteilung wird jeder Punkt anhand von Grenzbedingungen als Inlier oder Outlier klassifiziert. Das Verhältnis von Inliern zu Outliern wird als Metrik zur Bewertung der Approximation genutzt. Durch wiederholtes Auswählen zufälliger Datenpunkte und Klassifizierung der Approximation ist eine Identifizierung einer Approximation möglich, auf die Outlier in den Datenpunkten wenig Einfluss nehmen.
+RANSAC steht für \quotes{\underline{Ran}dom \underline{Sa}mple \underline{C}onsensus} und beruht auf dem zufälligen Auswählen eines Subsets von Datenpunkten zur Approximation einer akkuraten Beschreibung der Daten. Nach dem Auswählen zufälliger Punkte und Approximieren einer Zielverteilung wird jeder Punkt anhand von Grenzbedingungen als Inlier oder Outlier klassifiziert. Das Verhältnis von Inliern zu Outliern wird als Metrik zur Bewertung der Approximation genutzt. Durch wiederholtes Auswählen zufälliger Datenpunkte und Klassifizierung ist eine Identifizierung einer Approximation möglich, auf die Outlier in den Datenpunkten wenig Einfluss nehmen.
 
-In dieser Arbeit wird dieser Ansatz in \autoref{sec:entzerrung} genutzt, um eine Entzerrung der Dartscheibe auf Grundlage von Orientierungspunkten zu identifizieren.
+In dieser Arbeit wird dieser Ansatz in \autoref{sec:entzerrung} (\nameref{sec:entzerrung}) genutzt, um eine Normalisierung der Dartscheibe auf Grundlage von Orientierungspunkten trotz möglicher Outlier robust zu identifizieren.

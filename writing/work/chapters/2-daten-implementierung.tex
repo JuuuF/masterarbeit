@@ -3,47 +3,48 @@
 \section{Implementierung}
 \label{sec:daten:implementierung}
 
-Nachdem die grundlegende Methodik zur Datenerstellung erläutert ist, widmet sich dieser Abschnitt einem Einblick in relevante Details der Implementierung. Diese dienen dem tiefgehenden Verständnis der Umsetzung der Datenerstellung. Für die Implementierung der Datenerstellung wurde sich für die Verwendung von Blender entschieden \cite{blender}. Blender ist eine Open-Source-Software, mit der realistische 3D-Szenen modelliert werden können. Zusätzlich bietet es die Möglichkeit, durch Python-Skripte auf diese Szenen zuzugreifen und sie programmatisch zu manipulieren. Diese Eigenschaften bilden die Grundlage, mit der die für diese Arbeit relevanten Aufgaben umgesetzt werden können. Wie diese Umsetzung vorgenommen wurde, wird in diesem Abschnitt erläutert.
+Nachdem die grundlegende Methodik zur Datenerstellung erläutert ist, widmet sich dieser Abschnitt einem Einblick in relevante Details der Implementierung. Diese dienen dem tiefgehenden Verständnis der Umsetzung der Datenerstellung. Für die Implementierung der Datenerstellung wird sich für die Verwendung von Blender entschieden \cite{blender}. Blender ist eine Open-Source-Software, die eine realistische Modellierung von 3D-Szenen ermöglicht. Zusätzlich bietet es die Möglichkeit, durch Python-Skripte auf diese Szenen zuzugreifen und sie programmatisch zu manipulieren. Diese Eigenschaften bilden die Grundlage, mit der die für diese Arbeit relevanten Aufgaben bewältigt werden. Wie diese bestimmte Aspekte dieser Umsetzung vorgenommen werden, wird in diesem Abschnitt erläutert.
 
-Es wird in einem ersten Unterabschnitt betrachtet, wie die Implementierung der Parameter in der Dartscheibe und ihren Materialien stattfindet. Danach wird auf die Zusammensetzung der Dartpfeile und ihre Positionierung eingegangen. Zuletzt werden die konkreten Einstellungen des Renderns erläutert und es wird beschrieben, wie die automatische Normalisierung der Dartscheiben geschieht.
+Es wird in einem ersten Unterabschnitt betrachtet, wie die Implementierung der Parameter in der Dartscheibe und ihren Materialien stattfindet. Danach wird auf die Zusammensetzung der Dartpfeile und ihre Positionierung eingegangen. Zuletzt werden die konkreten Einstellungen für das Rendern erläutert und es wird beschrieben, wie die automatische Normalisierung der Dartscheibe geschieht.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Parametrisierung der Dartscheibe}  % ==================================================
 \label{sec:dartscheibe_parametrisierung}
 
-Die Dartscheibe ist auf unterschiedliche Weisen parametrisiert. Sie integriert sowohl den globalen Seed als auch den von diesem abgeleiteten Altersfaktor, um ihr Aussehen parametrisiert zu steuern. Grundlegend basiert das Aussehen jeder Dartscheibe auf einer idealen, neuen Dartscheibe. Die Dartscheibe besitzt ein Grundmaterial, welches durch seine Beschaffenheit an Sisal angelehnt ist und farblich einer neuen Dartscheibe entspricht.
+Die Dartscheibe ist auf unterschiedliche Weisen parametrisiert. Sie integriert sowohl den globalen Seed als auch den von diesem abgeleiteten Altersfaktor, um ihr Aussehen parametrisiert zu steuern. Grundlegend basiert das Aussehen jeder Dartscheibe auf einer idealen, neuen Dartscheibe. Die Dartscheibe besitzt ein Grundmaterial, dessen Beschaffenheit von Sisalfasern inspiriert ist und farblich einer neuen Dartscheibe entspricht.
 
-Der Einfluss des Seeds für diese Dartscheibe beläuft sich auf eine leichte Variation der Farben und Oberflächenstruktur. Mit zunehmendem Altersfaktor werden die Farben der Felder zwischen dem Grundfarbton und einer alten Variante der Feldfarben interpoliert, sodass ein Altern der Dartscheibe mit einer Verfärbung der Felder einhergeht.
+Der Einfluss des Seeds für diese Dartscheibe beläuft sich auf eine leichte Variation von Farben und Oberflächenstruktur. Mit zunehmendem Altersfaktor werden die Farben der Felder zwischen dem Grundfarbton und einer Variante für Farben alter Dartfelder interpoliert, sodass ein Altern der Dartscheibe mit einer Verfärbung der Felder einhergeht.
 
 \subsubsection{Parametrisierung von Spinne und Zahlen}
 
-Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne mit zunehmendem Alter und einer Verschiebung der Zahlen beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhenden Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale Verschiebungen aufweisen und alte Dartscheibe sehr starke Verschiebungen mit sich ziehen. Zusätzlich wirkt sich der Altersfaktor bei Spinne und Zahlen aus, indem Rost mit zunehmendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit rost-rotem Farbton in das Material eingearbeitet.
+Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne und einer Verschiebung der Zahlen mit zunehmendem Alter beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhenden Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale und alte Dartscheibe starke Verschiebungen aufweisen. Zusätzlich wirkt sich der Altersfaktor auf Spinne und Zahlen aus, indem Rost mit steigendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit rost-rotem Farbton in das Material eingearbeitet.
 
+\newpage
 \subsubsection{Parametrisierung des Materials}
 
-Die Dartscheibe weist zudem Gebrauchsspuren durch Einstichlöcher, Risse und Staubpartikel auf, die ebenso wie ihre Farbe von den Parametern des globalen Seeds und des Alters beeinflusst werden. Umgesetzt ist dies durch die Verwendung von Noise-Texturen, Maskierungen und Variation der Stärken dieser Techniken, um den Einfluss von Alter zu integrieren.
+Die Dartscheibe weist Gebrauchsspuren durch Einstichlöcher, Risse und Staubpartikel auf, die ebenso wie ihre Farbe von den Parametern des globalen Seeds und von dem Altersfaktor beeinflusst werden. Umgesetzt ist dies durch die Verwendung von Noise-Texturen, Maskierungen und Variation der Stärken dieser Techniken, um den Einfluss von Alter zu integrieren.
 
 \paragraph{Einstichlöcher}
 
-Die Einstichlöcher werden durch ein Zusammenspiel mehrerer Masken generiert. Zur Simulation von Einstichlöchern wird eine Maske verwendet, anhand welcher Einstichlöcher uniform über die gesamte Dartscheibe verteilt werden. Diese wird moduliert durch eine Maske, die die Stärke der Existenz bestimmt. An den Stellen, an denen die Existenzmaske stark vorhanden ist, werden Einstichlöcher vermehrt sichtbar als an schwachen Stellen der Existenzmaske. Diese Verteilung ist zu diesem Punkt unabhängig von dem Altersfaktor und lediglich durch den globalen Seed parametrisiert. Der Altersfaktor bestimmt einerseits die Dichte der Einstichlöcher durch Manipulation der Skalierung der Einstichlockmaske, andererseits wird zudem die Stärke der Existenzmaske derart vom Altersfaktor beeinflusst, dass ein Zunehmen des Alters mit mehr Einstichlöchern einhergeht.
+Die Einstichlöcher werden durch ein Zusammenspiel mehrerer Masken generiert. Zur Simulation dieser wird eine Maske verwendet, anhand welcher Einstichlöcher uniform über die gesamte Dartscheibe verteilt werden. Die Stärke und damit die Existenz der Einstichlöcher wird moduliert durch eine weitere Maske. An den Stellen, an welchen die Existenzmaske stark vorhanden ist, werden Einstichlöcher vermehrt sichtbar als an schwachen Stellen der Existenzmaske. Der Altersfaktor bestimmt einerseits die Dichte der Einstichlöcher durch Manipulation der Skalierung der Einstichlockmaske, andererseits wird zudem die Stärke der Existenzmaske derart vom Altersfaktor beeinflusst, dass ein Zunehmen des Alters mit mehr Einstichlöchern einhergeht.
 
 \paragraph{Risse}
 
-Analog zu den Einstichlöchern werden die Risse im Material parametrisiert. Es existieren ebenfalls zwei Masken, die jeweils die Ausprägung der Risse und ihre Existenz bestimmen. Die Ausprägung der Risse ist durch eine verzerrte Voronoi-Textur erzielt, deren Verzerrung und Größe durch den Altersfaktor beeinflusst wird. Die Existenzmaske der Risse wird analog zur Existenz der Einstichlöcher gehandhabt. Die Existenzmasken der unterschiedlichen Charakteristiken werden zudem mit unterschiedlichen Variationen des globalen Seeds generiert, sodass eine Korrelation der Masken ausgeschlossen ist.
+Analog zu den Einstichlöchern werden die Risse im Material parametrisiert. Es existieren ebenfalls zwei Masken, die die Ausprägung der Risse und ihre Existenz bestimmen. Die Ausprägung der Risse ist durch eine verzerrte Voronoi-Textur gegeben, deren Verzerrung und Größe durch den Altersfaktor beeinflusst wird. Die Existenzmaske der Risse wird analog zur Existenz der Einstichlöcher gehandhabt. Die Existenzmasken der unterschiedlichen Charakteristiken werden zudem mit unterschiedlichen Variationen des globalen Seeds generiert, sodass eine Korrelation der Masken ausgeschlossen ist.
 
 \paragraph{Staubpartikel}
 
-Die Staubpartikel setzen sich aus Masken für kleine Haare und Staubpartikel selbst zusammen. Diese werden ebenso wie die zuvor beschriebenen Charakteristiken durch Masken der Existenz und Ausprägung erstellt.
+Die Staubpartikel setzen sich aus Masken für kleine Haare und Staubpartikel selbst zusammen. Diese werden ebenso wie die zuvor beschriebenen Charakteristiken durch Masken der Existenz und Ausprägung erstellt. Staubpartikel sind modelliert als kleine Punkte während Haare als kurze Striche dargestellt sind.
 
 \vspace{\baselineskip}
 
-Die erstellten Masken der Einstichlöcher, Risse und Staubpartikel werden mit eigenen Texturen versehen und beeinflussen teilweise die Oberflächenbeschaffenheit der Dartscheibe durch Beeinflussung der Normalen des Materials.
+\noindent Die erstellten Masken der Einstichlöcher, Risse und Staubpartikel werden jeweils mit eigenen Texturen versehen und beeinflussen teilweise die Oberflächenbeschaffenheit der Dartscheibe durch Beeinflussung der Normal Maps des Materials.
 
 \subsection{Zusammensetzung der Dartpfeile}  % ====================================================
 \label{sec:dartpfeile_zusammensetzung}
 
-Die Umsetzung der Generierung von Dartpfeilen beruht auf der Nutzung von Geometry Nodes in Blender. Geometry Nodes bieten die Möglichkeit der deskriptiven Zusammensetzung von Objekten. Weiterhin ist die Einbindung von externen Parametern wie dem globalen Seed der Szene zur Steuerung von Zufallsvariablen durch sie ermöglicht. Aufgebaut werden die Dartpfeile aus einem Pool unterschiedlicher vordefinierter Objekte, die auf Grundlage des globalen Seeds zu einem zufälligen Dartpfeil zusammengesetzt werden. Die für die Generierung vordefinierten Objekte sind in \autoref{img:darts_parts} aufgelistet.
+Die Generierung von Dartpfeilen beruht auf der Nutzung von Geometry Nodes in Blender, welche die Möglichkeit der deskriptiven und Node-basierten Zusammensetzung von Objekten ermöglichen. Weiterhin ist die Einbindung von externen Parametern wie dem globalen Seed der Szene zur Steuerung von Zufallsvariablen durch sie ermöglicht. Aufgebaut werden die Dartpfeile aus einem Pool unterschiedlicher vordefinierter Objekte, die auf Grundlage des globalen Seeds zu einem zufälligen Dartpfeil zusammengesetzt werden. Die für die Generierung vordefinierten Objekte sind in \autoref{img:darts_parts} aufgelistet.
 
 \begin{figure}
     \centering
@@ -54,11 +55,11 @@ Die Umsetzung der Generierung von Dartpfeilen beruht auf der Nutzung von Geometr
 
 \paragraph{Tips}
 
-Der erste Schritt zur Generierung eines Dartpfeils ist die Wahl der Tip. Sie wird aus einem Pool von 4 Objekten gewählt und ihre Spitze wird zum Ursprung des finalen Dartpfeils. Ihre Textur der Tip wird ebenfalls auf Grundlage des Seeds zufällig gesetzt, sodass ein möglichst großes Spektrum unterschiedlicher Dartpfeilspitzen abgedeckt wird.
+Der erste Schritt zur Generierung eines Dartpfeils ist die Wahl der Tip. Sie wird aus einem Pool von vier Objekten gewählt und ihre Spitze wird zum Ursprung des finalen Dartpfeils. Die Helligkeit und Reflektivität der Textur der Tip wird auf Grundlage des Seeds zufällig gesetzt, sodass ein möglichst großes Spektrum unterschiedlicher Dartpfeilspitzen abgedeckt wird.
 
 \paragraph{Barrels}
 
-Auf die Tip folgt die Platzierung der Barrel. Die Barrel wird aus einem Pool von 7 Objekten ausgewählt, deren Ursprung jeweils derart positioniert ist, dass eine lückenlose Platzierung an der Tip ermöglicht ist. Die unterschiedlichen Barrel-Objekte verwenden verschiedene Methoden der Texturierung, sodass die Materialien einiger Barrel statisch vorgegeben sind, wohingegen andere Barrel ebenso wie die Tips zufällig texturiert werden. Die Spanne der unterschiedlichen Farben, die eine dynamische Barrel annehmen kann, ist im Gegensatz zu dem Farbspektrum der Tips größer, da alle RGB-Kanäle und die Oberflächenbeschaffenheit variabel sind. Darüber hinaus wird die Geometrie der Barrel bei ihrer Platzierung hinter der Tip um $\pm\,20\,\%$ sowohl in ihrer Länge als auch im Durchmesser variiert.
+Auf die Tip folgt die Platzierung der Barrel. Die Barrel wird aus einem Pool von sieben Objekten ausgewählt, welche lückenlos hinter der Tip platziert werden. Die unterschiedlichen Barrel-Objekte verwenden verschiedene Methoden der Texturierung, sodass die Materialien einiger Barrel statisch vorgegeben sind, wohingegen andere Barrel ebenso wie die Tips zufällig texturiert werden, jedoch über alle RBG-Kanäle. Darüber hinaus wird die Geometrie der Barrel bei ihrer Platzierung hinter der Tip um $\pm\,20\,\%$ sowohl in ihrer Länge als auch im Durchmesser variiert.
 
 \paragraph{Shafts}
 
@@ -66,11 +67,11 @@ Im Anschluss an die Barrel wird der Shaft des Dartpfeils platziert. Dieser wird 
 
 \paragraph{Flights}
 
-Die Flights sind die komplexesten Elemente der Dartpfeile, da sie sie größte Spanne an Erscheinungsbildern besitzen. Ihr Aussehen variiert nicht nur durch ihre Farben, sondern auch durch durch ihre Form. Flights setzen sich aus vier gleichen Flügeln zusammen, die entlang des Dartpfeils in einem Abstand von $90\degree$ platziert sind. Um die Variation der Formen einzufangen, wurden 15 unterschiedliche Formen für Flights modelliert, die sich an realen Formen von Flights orientieren. Ihre Textur wird aus einem Texturatlas mit einer Größe von $1.920 \times 1.920$ Pixeln gesampled. Dieser besteht aus 9 unterschiedlichen Grundtexturen, die aus Landesflaggen und abstrakten Formen unterschiedlicher Farbpaletten bestehen. Abhängig vom Altersfaktor wird die Verformung der Flights gesteuert, sodass neue Flights keine Deformierungen aufweisen, alte Flights jedoch stark deformiert werden, um Gebrauchsspuren zu simulieren.
+Die Flights sind die komplexesten Elemente der Dartpfeile, da sie die größte Spanne an Erscheinungsbildern besitzen. Ihr Aussehen variiert nicht nur durch ihre Farben, sondern auch durch ihre Form. Flights setzen sich aus vier gleichen Flügeln zusammen, die entlang des Dartpfeils in einem Abstand von $90\degree$ platziert sind. Um die Variation der Formen einzufangen, sind 15 unterschiedliche Formen für Flights modelliert, die sich an realen Formen von Flights orientieren. Ihre Textur wird aus einem Texturatlas mit einer Größe von $1.920 \times 1.920\,\text{px}$ gesampled. Dieser besteht aus neun unterschiedlichen Grundtexturen, bestehend aus Landesflaggen und abstrakten Formen unterschiedlicher Farbpaletten. Abhängig vom Altersfaktor wird die Verformung der Flights gesteuert, sodass neue Flights keine Deformierungen aufweisen, alte Flights jedoch stark deformiert werden, um Gebrauchsspuren zu simulieren.
 
 \vspace{\baselineskip}
 
-Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass lediglich gleiche Dartpfeile existieren. Eine Variation der Dartpfeile innerhalb einer Szene ist möglich, es wurde sich jedoch gegen diese Art der Umsetzung entschieden, da die Verwendung unterschiedlicher Dartpfeile für den selben Wurf unwahrscheinlich ist. Unterschiedliche zufällig generierte Dartpfeile sind in \autoref{img:dartpfeile} dargestellt. Hervorzuheben sind die unterschiedlichen Farben und Formen der Flights sowie die variierenden Bestandteile und ihre Texturierung.
+\noindent Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass alle Dartpfeile einer Szene gleich aufgebaut sind. Eine Variation der Dartpfeile innerhalb einer Szene ist möglich, es wird sich jedoch gegen diese Art der Umsetzung entschieden, da die Verwendung unterschiedlicher Dartpfeile innerhalb einer Runde unwahrscheinlich ist. Unterschiedliche zufällig generierte Dartpfeile sind in \autoref{img:dartpfeile} dargestellt. Hervorzuheben sind die unterschiedlichen Farben und Formen der Flights sowie die variierenden Bestandteile und ihre Texturierung.
 
 \begin{figure}
     \centering
@@ -79,26 +80,26 @@ Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass lediglich g
     \label{img:dartpfeile}
 \end{figure}
 
-\subsection{Generierung von Dartpfeil-Positionen}  % ==============================================
+\subsection{Generierung von Dartpfeilpositionen}  % ==============================================
 \label{sec:wie_dartpfeil_positionen}
 
-Die Positionierung der Dartpfeile auf der Dartscheibe ist ausschlaggebend für die Variabilität der Daten. In der Umsetzung der Platzierung werden unterschiedliche Techniken verwendet, um realistische Verteilungen und Erscheinungsbilder zu erzielen. \autoref{sec:dartpfeil_positionierung} thematisiert die Positionierung der Dartpfeile auf der Dartscheibe während die Bestimmung der Existenz von Dartpfeilen zur Variation der Anzahlen der Dartpfeile in \autoref{sec:dartpfeile_existenz} erklärt wird. Nachdem die Existenz und Position der Dartpfeile gesetzt ist, wird die Rotation in \autoref{sec:dartpfeile_rotation} erklärt. Zuletzt wird die Bestimmung der erzielten Punktzahl in \autoref{sec:dartpfeile_punktzahl} erläutert.
+Die Positionierung der Dartpfeile auf der Dartscheibe ist ausschlaggebend für die Variabilität der Daten. In der Umsetzung der Platzierung werden unterschiedliche Techniken verwendet, um realistische Verteilungen und Erscheinungsbilder zu erzielen. In den folgenden Kapiteln wird die Positionierung der Dartpfeile auf der Dartscheibe beschrieben und die Bestimmung der Existenz von Dartpfeilen zur Variation der Anzahlen der Dartpfeile wird erklärt. Danach werden die Setzung der Rotation und zuletzt die Bestimmung der erzielten Punktzahl erläutert.
 
 \subsubsection{Positionierung Der Dartpfeile auf der Dartscheibe}
 \label{sec:dartpfeil_positionierung}
 
-Eine uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartsrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese wurden in Form von Heatmaps in die Szene eingearbeitet.
+Eine uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartsrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese sind in Form von Heatmaps in die Szene eingearbeitet.
 
-Die für die Datengenerierung dieses Thesis genutzten Heatmaps sind in \autoref{img:heatmaps} dargestellt. Es wurden zwei unterschiedliche Heatmaps genutzt: Eine realistische Heatmap und eine Heatmap zur gezielten Erstellung von Multiplier-Feldern und ihren Umgebungen. Tiefgehende Hintergründe für die Verwendung unterschiedlicher Wahrscheinlichkeitsverteilungen zur Positionierung von Dartpfeilen werden in \autoref{sec:oversampling} (\nameref{sec:oversampling}) erläutert. Die generelle Heatmap orientiert sich an den für DeepDarts gefundenen Wahrscheinlichkeitsverteilungen \cite{deepdarts}, Verteilungen aus Online-Recherchen \cite{heatmap} und eigenen Beobachtungen. Die Wahrscheinlichkeitsverteilungen dieser Heatmaps beziehen die gesamte Dartscheibe ein, sodass Treffer außerhalb der Dartfelder ebenfalls möglich sind.
+Die für die Datengenerierung dieses Thesis genutzten Heatmaps sind in \autoref{img:heatmaps} dargestellt. Es werden zwei unterschiedliche Heatmaps genutzt: Eine realistische Heatmap und eine Heatmap zur gezielten Erstellung von Multiplier-Feldern und ihren Umgebungen. Tiefgehende Hintergründe für die Verwendung unterschiedlicher Wahrscheinlichkeitsverteilungen zur Positionierung von Dartpfeilen werden in \autoref{sec:oversampling} (\nameref{sec:oversampling}) erläutert. Die realistische Heatmap orientiert sich an den für DeepDarts gefundenen Wahrscheinlichkeitsverteilungen \cite{deepdarts}, Verteilungen aus Online-Recherchen \cite{heatmap} und eigenen Beobachtungen. Die Wahrscheinlichkeitsverteilungen dieser Heatmaps beziehen die gesamte Dartscheibe ein, sodass Treffer außerhalb der Dartfelder ebenfalls möglich sind.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/rendering/methodik/heatmaps.pdf}
-    \caption{Heatmaps für die Datenerstellung; (links) Generelle Heatmap; (rechts) Multiplier-Heatmap für Oversampling der Daten.}
+    \caption{Heatmaps für die Datenerstellung; (links) Realistische Heatmap; (rechts) Multiplier-Heatmap für Oversampling der Daten.}
     \label{img:heatmaps}
 \end{figure}
 
-Bei der Findung von Positionen der Dartpfeile geschieht der Platzierung auf Grundlage der aktiven Heatmap. Bereiche mit hohen Gewichten unterliegen einer höheren Wahrscheinlichkeit, als Position für einen Dartpfeil gewählt zu werden, als Bereiche mit geringen Gewichten. Durch eine Adaption der Heatmap, können gezielt Positionen forciert werden. So wurde für die Datengenerierung dieser Arbeit eine weitere Heatmap erstellt, die sich auf die Multiplier-Felder und ihre Umgebungen fokussiert. Durch diese zweite Heatmap wird eine Erstellung von Daten ermöglicht, bei denen alle Dartpfeile entweder auf den Multiplier-Feldern liegen oder in ihrer Nähe. Treffer weit außerhalb der Dartscheibe sowie Treffer zentral in Einzelfeldern werden unter Verwendung jeder Heatmap nicht generiert.
+Bei der Findung von Positionen der Dartpfeile geschieht die Platzierung auf Grundlage der aktiven Heatmap. Bereiche mit hohen Gewichten unterliegen einer höheren Wahrscheinlichkeit, als Position für einen Dartpfeil gewählt zu werden, als Bereiche mit geringen Gewichten. Durch eine Adaption der Heatmap, kann die Positionierung der Dartpfeile gezielt beeinflusst werden. So wird für die Datengenerierung dieser Arbeit eine weitere Heatmap erstellt, die sich auf die Multiplier-Felder und ihre Umgebungen fokussiert. Durch diese zweite Heatmap wird eine Erstellung von Daten ermöglicht, bei denen alle Dartpfeile entweder auf den Multiplier-Feldern liegen oder in ihrer Nähe. Treffer weit außerhalb der Dartscheibe sowie Treffer zentral in Einzelfeldern werden unter Verwendung der Multiplier-Heatmap nicht generiert.
 
 Nach der Positionierung der Pfeile auf der Dartscheibe wird eine Nachverarbeitung vorgenommen, bei der Dartpfeile, die eine Überschneidung mit der Spinne aufweisen, von dieser entfernt werden. So wird sichergestellt, dass keine ambivalenten Dartpfeile existieren, die auf der Grenze zweier Felder eintreffen.
 
@@ -107,38 +108,38 @@ Nach der Positionierung der Pfeile auf der Dartscheibe wird eine Nachverarbeitun
 
 Die Existenz von Dartpfeilen wird durch zwei Faktoren gesteuert. Vor der Positionierung eines Dartpfeils wird für jeden Pfeil entschieden, ob dieser existiert oder nicht. Anhand einer Wahrscheinlichkeitsverteilung werden die Dartpfeile zufällig ausgeblendet. Durch diese Zufallsentscheidung wird eine dynamische Anzahl an Dartpfeilen generiert.
 
-Eine weitere Gegebenheit, unter der ein Dartpfeil ausgeblendet wird, ist die zu geringe Entfernung zu anderen Dartpfeilen. Liegt die Position eines Dartpfeils zu nahe an einem bereits platzierten Dartpfeil, wird dieser ausgeblendet. Es wurde sich gegen eine Adaption der Position entschieden, um zu starke Abweichung von Heatmaps und erneute Überschneidung der Spinne zu vermeiden; eine neue Positionierung des Dartpfeils wurde nicht eingesetzt, da die Möglichkeit besteht, dass die verwendete Heatmap nicht ausreichend Bereiche zur korrekten Platzierung aller Dartpfeile zur Verfügung stellt.
+Eine weitere Gegebenheit, unter der ein Dartpfeil ausgeblendet wird, ist die zu geringe Entfernung zu anderen Dartpfeilen. Liegt die Position eines Dartpfeils zu nahe an einem bereits platzierten Dartpfeil, wird dieser ausgeblendet. Es wird sich gegen eine Adaption der Position entschieden, um starke Abweichung von Heatmaps und erneute Überschneidung der Spinne zu vermeiden; eine neue Positionierung des Dartpfeils wird nicht eingesetzt, da die Möglichkeit besteht, dass die verwendete Heatmap nicht ausreichend Bereiche zur korrekten Platzierung aller Dartpfeile zur Verfügung stellt.
 
 \subsubsection{Rotation der Dartpfeile}
 \label{sec:dartpfeile_rotation}
 
-Alle Dartpfeile, die nicht ausgeblendet wurden, werden nach ihrer Positionierung rotiert. Die Rotation erfolgt unabhängig voneinander entlang ihrer $x$- $y$- und $z$-Achse. Die Rotation des Dartpfeils entlang der horizontalen $x$-Achse verläuft uniform im Intervall $[-5\degree, 35\degree]$. Diese Rotation bestimmt den Einschlagswinkel des Dartpfeils. Entlang der vertikalen $y$-Achse erfahren die Dartpfeile eine normalverteilte Rotation mit einer Standardabweichung von $\sigma = \frac{15\degree}{3}$ um $0\degree$ mit einem Clipping einer maximalen Rotation von $\pm\,15\degree$. Die Rotation entlang ihrer $z$-Achse ist uniform im Intervall $[0\degree, 360\degree]$.
+Alle Dartpfeile, die nicht ausgeblendet sind, werden nach ihrer Positionierung rotiert. Die Rotation erfolgt unabhängig voneinander entlang ihrer $x$- $y$- und $z$-Achse. Die Rotation des Dartpfeils entlang der horizontalen $x$-Achse verläuft uniform im Intervall $[-5\degree, 35\degree]$. Diese Rotation bestimmt den Einschlagswinkel des Dartpfeils. Entlang der vertikalen $y$-Achse erfahren die Dartpfeile eine normalverteilte Rotation mit einer Standardabweichung von $\sigma = \frac{15\degree}{3}$ um $0\degree$ mit einem Clipping einer maximalen Rotation von $\pm\,15\degree$. Die Rotation entlang ihrer $z$-Achse ist uniform im Intervall $[0\degree, 360\degree]$, um eine zufällige Drehung des Dartpfeils zu modellieren.
 
 \subsubsection{Ermittlung der Punktzahl}
 \label{sec:dartpfeile_punktzahl}
 
-Nachdem die Dartpfeile positioniert und rotiert sind, wird das Scoring der Szene vorgenommen. An diesem Punkt sind die Position der Dartscheibe $p_\text{Dartscheibe} \in \mathbb{R}^3$ und die Positionen aller Dartpfeile $p_{\text{Pfeil}, i} \in \mathbb{R}^3$ bekannt. Durch ihre Winkel und Abstände lassen sich die Dartfelder identifizieren, in denen die Dartpfeile eingetroffen sind. Auf diese Weise lässt sich für jeden Dartpfeil ermitteln, in welchem Feld dieser eingetroffen ist und welche Punktzahl durch ihn erzielt wurde.
+Nachdem die Dartpfeile positioniert und rotiert sind, wird das Scoring der Szene vorgenommen. An diesem Punkt sind die Position der Dartscheibe $p_\text{Dartscheibe} \in \mathbb{R}^3$ und die Positionen aller Dartpfeile $p_{\text{Pfeil}, i} \in \mathbb{R}^3$ bekannt. Durch ihre Positionen zueinander lassen sich die Felder identifizieren, in denen die Dartpfeile eingetroffen sind. Auf diese Weise wird für jeden Dartpfeil ermittelt, in welchem Feld dieser eingetroffen ist und welche Punktzahl durch ihn erzielt ist. Das Scoring der Runde erfolgt durch Summation der Punktzahlen der einzelnen Dartpfeile.
 \nomenclature{$p_\text{Dartscheibe}$}{Position der Dartscheibe im Raum}
 \nomenclature{$p_{\text{Pfeil}, i}$}{Position der Dartpfeile im Raum}
 
 \subsection{Ermittlung von Kameraparametern}  % ===================================================
 \label{sec:ermittlung_kameraparamater}
 
-Die Kamera ist durch eine Vielzahl intrinsischer wie extrinsischer Parameter charakterisiert. Während einige Parameter statisch gesetzt oder durch einfache Wahrscheinlichkeitsverteilungen modelliert sind, zeigen andere Parameter wesentlich komplexere Erscheinungsbilder auf. Dieser Unterabschnitt ist dafür vorgesehen, die Umsetzungen der komplexen Parameter genauer darzustellen. Es wird begonnen mit der Betrachtung der Kamerapositionierung. Danach folgt das Setzen der Brennweite der Kamera und die Wahl von Seitenverhältnis und Auflösung des exportierten Bildes. Danach wird die Wahl des Fokuspunkts und abschließend die Umsetzung von verwackelten Bildern beschrieben.
+Die Kamera ist durch eine Vielzahl intrinsischer wie extrinsischer Parameter charakterisiert. Während einige Parameter statisch gesetzt oder durch einfache Wahrscheinlichkeitsverteilungen modelliert sind, zeigen andere Parameter wesentlich komplexere Verhalten auf. Dieser Unterabschnitt ist dafür vorgesehen, die Umsetzungen der komplexen Parameter genauer darzustellen. Es wird begonnen mit der Betrachtung der Kamerapositionierung, danach folgt das Setzen der Brennweite der Kamera und die Wahl von Seitenverhältnis und Auflösung des exportierten Bildes. Abschließend wird die Wahl des Fokuspunkts und die Umsetzung von verwackelten Bildern beschrieben.
 
+\newpage
 \subsubsection{Kameraraum}
 \label{sec:kameraraum}
 
 Für die Positionierung der Kamera in der Szene existiert ein Objekt, das den Bereich umfasst, innerhalb dessen die Kamera platziert werden kann. Dieser kegelförmige Kameraraum ist ausgehend vom Mittelpunkt der Dartscheibe platziert und durch verschiedene Parameter definiert:
 
 \begin{itemize}
-    \item \textbf{Horizontaler Seitenwinkel $\phi_h$}: Öffnungswinkel des Kegels zu den Seiten der Dartscheibe
-    \item \textbf{Vertikaler Winkel $\phi_v$}: Öffnungswinkel des Kegels in die Höhe
-    \item \textbf{Kameraabstand $\left(d_\text{min}, d_\text{max}\right)$}: Minimaler und maximaler Abstand der Kamera von der Dartscheibe
-    \item \textbf{Kamerahöhe $\left(y_\text{min}, y_\text{max}\right)$}: Minimale und maximale Höhe der Kamera im Raum\footnote{Es wird von einem realen Raum ausgegangen, in dem der Mittelpunkt der Dartscheibe auf einer Höhe von 2,07m angebracht ist.}
-    \item \textbf{Maximaler Seitenabstand $dx_\text{max}$}: Maximaler seitlicher Abstand der Kamera zum Dartscheibenmittelpunkt
+    \item \textbf{Horizontaler Seitenwinkel} $\phi_h$: Öffnungswinkel des Kegels zu den Seiten der Dartscheibe,
+    \item \textbf{Vertikaler Winkel} $\phi_v$: Öffnungswinkel des Kegels in die Höhe,
+    \item \textbf{Kameraabstand} $\left(d_\text{min}, d_\text{max}\right)$: Minimaler und maximaler Abstand der Kamera von der Dartscheibe,
+    \item \textbf{Kamerahöhe} $\left(y_\text{min}, y_\text{max}\right)$: Minimale und maximale Höhe der Kamera im Raum\footnote{Es wird von einer standardisierten Anbringungshöhe der Dartscheibe von $2,07\,\text{m}$ ausgegangen.},
+    \item \textbf{Maximaler Seitenabstand} $dx_\text{max}$: Maximaler seitlicher Abstand der Kamera zum Dartscheibenmittelpunkt.
 \end{itemize}
-
 \nomenclature{$\phi_h$}{Horizontaler Öffnungswinkel des Kamera-Space zu den Seiten der Dartscheibe}
 \nomenclature{$\phi_v$}{Vertikaler Öffnungswinkel des Kamera-Space in die Höhe}
 \nomenclature{$\left(d_\text{min}, d_\text{max}\right)$}{Minimaler und maximaler Abstand der Kamera von der Dartscheibe}
@@ -150,14 +151,14 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{imgs/rendering/implementierung/camera_space.png}
-    \caption{Darstellung des Kamerabereichs, der zur Erstellung der Daten verwendet wurde.}
+    \caption{Darstellung des Kamerabereichs, der zur Erstellung der Daten verwendet wird. Zu sehen sind zusätzlich die Dartscheibe und die Kamera.}
     \label{img:camera_space}
 \end{figure}
 
 \subsubsection{Brennweite}
 \label{sec:brennweite}
 
-Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von $18\,\text{mm}$ bis $60\,\text{mm}$. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
+Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kamera im Raum. So wird die Brennweite $l_\text{Kamera}$ der Kamera in Abhängigkeit ihrer Distanz zur Dartscheibe gesetzt. Die Spanne der Brennweite reicht von $18\,\text{mm}$ bis $60\,\text{mm}$. Die tatsächlichen Grenzwerte der Brennweiten in Abhängigkeit der Distanz werden wie folgt berechnet:
 \begin{align*}
     l_\text{lower} & = l_\text{min} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}                          \\
     l_\text{upper} & = \frac{l_\text{max} - l_\text{min}}{2} + \frac{d_\text{Kamera}}{d_\text{max} - d_\text{min}} * \frac{l_\text{max} - l_\text{min}}{2}
@@ -166,7 +167,7 @@ Das Setzen der internen Kameraparameter erfolgt nach der Positionierung der Kame
 \nomenclature{$l_\text{min}$, $l_\text{max}$}{Minimale und maximale Brennweite der Kamera}
 \nomenclature{$d_\text{Kamera}$}{Abstand der Kamera zur Dartscheibe}
 \nomenclature{$l_\text{Kamera}$}{Brennweite der Kamera}
-Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen Ober- und Untergrenze werden zufällig uniform gewählt. Auf diese Weise wird eine Korrelation zwischen verwendeter Brennweite und Abstand zur Dartscheibe gewonnen unter Beibehaltung der Variabilität der Daten und Einfluss von Zufallswerten.
+Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen Ober- und Untergrenze werden zufällig uniform gewählt. Auf diese Weise wird eine Korrelation zwischen verwendeter Brennweite und Abstand zur Dartscheibe gewonnen unter Beibehaltung von Variabilität der Daten und Einfluss von Zufallswerten.
 
 \begin{center}
     \begin{tikzpicture}
@@ -191,33 +192,31 @@ Visualisiert sind diese Gleichungen in \autoref{fig:brennweiten}. Werte zwischen
             \addplot[color=data_secondary, opacity=0.5] fill between[of = upper and lower];
         \end{axis}
     \end{tikzpicture}
-    \captionof{figure}{Abhängigkeit der Brennweiten von dem Abstand zur Dartscheibe. Ober- und Untergrenzen sind durch Strichlinien angegeben, der farblich hervorgehobene Bereich stellt die Spanne möglicher Brennweiten für jeweilige Entfernungen dar.}
+    \captionof{figure}{Abhängigkeit der Brennweite vom Abstand zur Dartscheibe. Ober- und Untergrenzen sind durch Strichlinien angegeben, der farblich hervorgehobene Bereich stellt die Spanne möglicher Brennweiten für jeweilige Entfernungen dar.}
     \label{fig:brennweiten}
 \end{center}
 
 \subsubsection{Seitenverhältnis und Auflösung}
 \label{sec:aufloesung}
 
-Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in dieser Arbeit berücksichtigt. So wird aus unterschiedlichen Seitenverhältnissen, die von Kameras in Mobiltelefonen verwendet werden, ausgewählt. Mögliche Seitenverhältnisse sind $4:3$, $16:9$, $1:1$, $3:2$, $2:1$, $21:9$ und $5:4$. Die Ausrichtung der Kamera ist in $\nicefrac{2}{3}$ der Aufnahmen vertikal und in $\nicefrac{1}{3}$ der Aufnahmen horizontal. Die Auflösung der Kamera wird uniform im Intervall $[1.000\,\text{px}, 4.000\,\text{px}]$ gewählt, welches die Pixelzahl entlang der längeren Seite angibt.
+Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in dieser Arbeit berücksichtigt. So wird aus unterschiedlichen Seitenverhältnissen, die von Kameras in Mobiltelefonen verwendet werden, ausgewählt. Mögliche Seitenverhältnisse sind $4\!:\!3$, $16\!:\!9$, $1\!:\!1$, $3\!:\!2$, $2\!:\!1$, $21\!:\!9$ und $5\!:\!4$. Die Ausrichtung der Kamera ist in $\nicefrac{2}{3}$ der Aufnahmen vertikal und in $\nicefrac{1}{3}$ der Aufnahmen horizontal. Die Auflösung der Kamera wird uniform im Intervall zwischen $1.000\,\text{px}$ und  $4.000\,\text{px}$ gewählt, welches die Pixelzahl entlang der längeren Seite angibt.
 
 \subsubsection{Fokuspunkt}
 \label{sec:fokus}
 
-Der Fokuspunkt der Kamera ist in der Szene durch ein eigenes Objekt definiert, sodass die Kamera den Ursprung dieses Objektes fokussiert. Dieses Objekt wird im Umfeld um die Dartscheibe platziert. Ausgehend vom Dartscheibenmittelpunkt wird es normalverteilt mit den Standardabweichungen $\sigma_x = \sigma_z = \frac{r_\text{D}}{3}$ und $\sigma_y = 2\,\text{cm}$ platziert. $x$- und $z$-Positionen liegen dabei auf der Dartscheibe, die $y$-Achse verläuft parallel zur Normalen der Dartscheibe und $r_\text{D}$ ist der Gesamtdurchmesser der Dartscheibe. Der Kamerafokus ist damit grob auf den Mittelpunkt der Dartscheibe gerichtet, jedoch nicht deterministisch.
+Der Fokuspunkt der Kamera liegt in der Szene auf einem spezifischen leeren Objekt, dessen Ursprung fokussiert wird. Dieses wird normalverteilt mit den Standardabweichungen $\sigma_x = \sigma_z = \frac{r_\text{D}}{3}$ und $\sigma_y = 2\,\text{cm}$ um den Dartscheibenmittelpunkt platziert. Die $x$- und $z$-Positionen liegen dabei auf der Dartscheibe, die $y$-Achse verläuft parallel zur Normalen der Dartscheibe und $r_\text{D}$ ist der Gesamtdurchmesser der Dartscheibe. Der Kamerafokus ist damit grob auf den Mittelpunkt der Dartscheibe gerichtet.
 
 \subsubsection{Verwackelungen}
 \label{sec:motion_blur}
 
-Zuletzt werden verwackelte Kamerabilder simuliert. Mit einer Wahrscheinlichkeit von $10\,\%$ wird die Kamera während der Aufnahme bewegt, wodurch verschwommene Bilder aufgenommen werden. Die Kamera wird normalverteilt mit einer Standardabweichung von $\frac{2\,\text{cm}}{3}$ in $x$-, $y$- und $z$-Position verschoben. Durch diese Verschiebung entstehen Aufnahmen, die teilweise verschwommen sind.
+Zuletzt werden verwackelte Kamerabilder simuliert. Mit einer Wahrscheinlichkeit von $10\,\%$ wird die Kamera während der Aufnahme bewegt, wodurch verschwommene Bilder aufgenommen werden. Die Kamera wird normalverteilt mit einer Standardabweichung von $\sigma = \frac{2\,\text{cm}}{3}$ in $x$-, $y$- und $z$-Position verschoben. Durch diese Verschiebung entstehen Aufnahmen, die teilweise verschwommen sind.
 
 \subsection{Render-Einstellungen}  % ==============================================================
 \label{sec:render_einstellungen}
 
-Zur Handhabung der Farbinformation bietet Blender eine Vielzahl unterschiedlicher Einstellungen. Die hohe Diversität unterschiedlicher gewünschter Erscheinungsbilder sorgt für viele Möglichkeiten zur Anpassung der Farbaufnahme der Kameras in den Szenen. Für einen Cartoon ist beispielsweise ein anderer Umgang mit Farben bei dem Rendern von Bildern erwünscht als für eine cinematische Szene. Die für diese Thesis verwendeten Farbräume wurden derart gewählt, dass Farben möglichst realistisch dargestellt werden. Dazu wurde als Darstellungsgerät und Sequencer sRGB mit einer AgX als Anzeigetransformation gewählt. Trotz häufiger Korrekturen von Handykameras hinsichtlich Kontrasterhöhung der Aufnahmen wurde sich für einen neutralen Basiskontrast entschieden. Eine Erhöhung des Kontrasts geschieht bei der Augmentierung der Trainingsdaten in \autoref{sec:daten_augmentierung}.
+Zur Handhabung der Farbinformation bietet Blender eine Vielzahl unterschiedlicher Einstellungen. Die hohe Diversität gewünschter Erscheinungsbilder sorgt für viele Möglichkeiten zur Anpassung der Farbaufnahme der Kameras in den Szenen. Der für diese Thesis verwendete Farbraum ist derart gewählt, dass Farben möglichst realistisch dargestellt werden. Dazu wird als Darstellungsgerät und Sequencer sRGB mit AgX als Anzeigetransformation gewählt. Trotz häufiger Korrekturen von Handykameras hinsichtlich Kontrasterhöhung der Aufnahmen wird ein neutraler Basiskontrast verwendet. Eine Erhöhung des Kontrasts geschieht bei der Augmentierung der Trainingsdaten in \autoref{sec:daten_augmentierung}.
 
 \subsection{Berechnung von Entzerrung}  % =========================================================
 \label{sec:berechnung_entzerrung}
 
-Die Erstellung der Entzerrungshomographie geschieht auf Grundlage exportierter Masken von dem Rendering. Eine der exportierten Masken zeigt die Orientierungspunkte, wie sie im DeepDarts-System verwendet wurden \cite{deepdarts}. Die Orientierungspunkte liegen auf der Außenseite des Double-Rings zwischen den Feldern 5 und 20 (oben), 13 und 6 (rechts), 17 und 3 (unten) und 8 und 11 (links). Die Positionen dieser Punkte im entzerrten Bild sind bekannt, weshalb die Verschiebungen berechnet und die Homographie zur Entzerrung des Bildes abgeleitet werden kann. In der Szene befindet sich ein Objekt, welches aus vier einzelnen Punkten an den Positionen der Orientierungspunkte befindet. Dieses Objekt wird als Maske ausgehend von der finalen Kameraposition und mit den finalen Kameraparametern gerendert. Aus dieser Make lassen sich die Positionen durch Identifizierung von Mittelpunkten in Pixelclustern identifizieren und durch ihre Positionierung zueinander zu den jeweiligen Orientierungspunkten zuordnen.
-
-Diese Art der Identifizierung der Dartscheibenorientierung ist jedoch nicht ideal und zieht Ungenauigkeiten mit sich. Genauer wird auf diese Ungenauigkeiten in der Diskussion in \autoref{sec:diskussion:daten} eingegangen.
+Die Erstellung der Entzerrungshomographie geschieht auf Grundlage exportierter Masken von dem Rendering. Eine der exportierten Masken zeigt die Orientierungspunkte, wie sie von DeepDarts verwendet werden \cite{deepdarts}. Die Orientierungspunkte liegen auf der Außenseite des Double-Rings zwischen den Feldern 5 und 20 (oben), 13 und 6 (rechts), 17 und 3 (unten) und 8 und 11 (links). Durch die bekannten Positionen dieser Punkte im normalisierten ist die Berechnung der Verschiebungen dieser Punkte trivial und die Homographie zur Entzerrung des Bildes wird von diesen abgeleitet. Zur Erstellung dieser Maske befindet sich ein Objekt in der Szene, welches aus vier Punkten an den Positionen der Orientierungspunkte besteht. Dieses Objekt wird als Maske ausgehend von der ermittelten Kameraposition und den Kameraparametern gerendert. Aus dieser Make lassen sich die Positionen durch Identifizierung von Mittelpunkten in Pixelclustern identifizieren und durch ihre Positionierung zueinander zu den jeweiligen Orientierungspunkten zuordnen.
