@@ -3,14 +3,14 @@
 \chapter{Einleitung}
 \label{cha:einleitung}
 
-\todo{Einleitende Sätze der Einleitung.}
+Darts ist ein beliebtes Spiel mit vielerlei Spielvariationen und geringer Einstiegsschwelle für neue Spieler. Mit zunehmender Beliebtheit von Steeldarts als Freizeitbeschäftigung steigt auch die Relevanz automatisierter Systeme für das Scoring. Diese Aufgabe muss auf eine Weise gelöst werden, die sowohl benutzerfreundlich wie auch effizient ist. Insbesondere im Bereich professioneller Anwendung ist die Zuverlässigkeit und Genauigkeit dieser Systeme unabdingbar. Vor diesem Hintergrund befasst sich die vorliegende Arbeit der Konzeption und Umsetzung eines Systems, das auf Basis eines einzelnen Bildes einer Dartscheibe sowohl die getroffenen Felder als auch die exakten Positionen der Dartpfeile identifiziert. Zur Umsetzung werden realistische Simulationen, algorithmische Bildverarbeitung und maschinelles Lernen kombiniert, um eine robuste und effiziente Lösung zu entwickeln.
 
 % -------------------------------------------------------------------------------------------------
 
 \section{Projektübersicht}
 \label{sec:projektuebersicht}
 
-Darts ist ein beliebtes Spiel mit vielerlei Spielvariationen und geringer Einstiegsschwelle für neue Spieler. Es ist allseits bekannt und weit verbreitet. Während für den Heimgebrauch sowie für Gaststätten elektronische Dartscheiben mit eingespeicherten Spielvarianten und automatischem Scoring existieren, werden in professionellen Kreisen weiterhin analoge Dartscheiben ohne integrierte Mechanismen verwendet, die ein automatisches Scoring ermöglichen. Das Ermitteln der erzielten Punktzahlen kann im Steeldarts entweder manuell oder automatisch geschehen. Manuelles Errechnen der erzielten Punktzahlen erfordert Konzentration und Übung, um die finale Punktzahl korrekt und schnell zu berechnen:
+Während für den Heimgebrauch sowie für Gaststätten elektronische Dartscheiben mit eingespeicherten Spielvarianten und automatischem Scoring existieren, werden in professionellen Kreisen weiterhin analoge Dartscheiben ohne integrierte Mechanismen verwendet, die ein automatisches Scoring ermöglichen. Das Ermitteln der erzielten Punktzahlen kann im Steeldarts entweder manuell oder automatisch geschehen. Manuelles Errechnen der erzielten Punktzahlen erfordert Konzentration und Übung, um die finale Punktzahl korrekt und schnell zu berechnen:
 \[ \text{Score} = \sum_{i=1}^{3} \text{mult}_i \cdot \text{Feld}_i \]
 Automatisierte Techniken zur Bestimmung der Punktzahl unterscheiden sich in ihren Herangehensweisen. Die zuverlässigste und in professionellen Kreisen am weitesten verbreitete Herangehensweise ist der Einsatz von Multi-Camera-Systemen. In diesem werden mehrere kalibrierte Kameras um die Dartscheibe platziert und aufeinander abgestimmt, sodass eine akkurate Rekonstruktion der Dartscheibe möglich ist. Durch diese Rekonstruktion ist eine Triangulation der Dartpfeilpositionen und folglich eine Bestimmung des Scorings ermöglicht. Diese Systeme sind gewerblich erhältlich, jedoch ist ihr Einsatz für den gelegentlichen Heimgebrauch nicht im Einklang mit ihren Preisen. Beispiele etablierter Systeme sind AutoDarts \cite{autodarts} und Scolia \cite{scoliadarts}.
 
