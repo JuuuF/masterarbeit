@@ -89,7 +89,7 @@ Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengeset
     \label{tab:yolov8_params}
 \end{table}
 
-Die variable Größe von YOLOv8 ist analog in YOLOv8* übernommen worden, sodass die Konfigurationen n, s, m, l und x möglich sind. Die verwendete Architektur dieser Thesis orientiert sich in ihrer Größenordnung an der in DeepDarts verwendeten Architektur YOLOv4-tiny, welche ca. $6$ Millionen Parameter beinhaltete. Die Größenordnungen der Parametrisierungen sind in \autoref{tab:yolov8_params} dargestellt. Aufgrund der im Vergleich zu DeepDarts komplexeren Daten wird sich für die Verwendung von YOLOv8*-s entschieden, welche mit etwa $10,5$ Millionen Parametern etwa $40\,\%$ mehr Parameter besitzt als YOLOv4-tiny.
+Die variable Größe von YOLOv8 ist analog in YOLOv8* übernommen worden, sodass die Konfigurationen n, s, m, l und x möglich sind. Die verwendete Architektur dieser Thesis orientiert sich in ihrer Größenordnung an der in DeepDarts verwendeten Architektur YOLOv4-tiny, welche ca. $6$ Millionen Parameter beinhaltete. Die Größenordnungen der Parametrisierungen sind in \autoref{tab:yolov8_params} dargestellt. Aufgrund der im Vergleich zu DeepDarts komplexeren Daten wird sich für die Verwendung von YOLOv8*-s entschieden, welche mit etwa $10,\!5$ Millionen Parametern etwa $40\,\%$ mehr Parameter besitzt als YOLOv4-tiny.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ Die Loss-Funktion folgt dem Aufbau der YOLOv8*-Architektur. Sie ist definiert al
 \vspace*{-0.4cm}
 \paragraph{Existenz-Loss $\mathcal{L}_\text{xst}$}
 
-Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge jeglicher Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und drei Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1.875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0,16\,\%$ beträgt. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts möglich ist.
+Für den Existenz-Loss $\mathcal{L}_\text{xst}$ wird der Focal-Loss der Existenz-Einträge aller Einträge jeglicher Regionen gebildet \cite{focal_loss}. Die Verwendung des Focal-Loss für diesen Loss liegt in der spärlichen Menge positiver Einträge in Output-Tensoren. Bei einer Auflösung von $25 \times 25$ Regionen und drei Vorhersagen je Region besitzt der Output-Tensor $n_\text{entries} = 25 \times 25 \times 3 = 1.875$ Einträge. Zu erwarten sind $ n_\text{positive} \leq 3 $ positive Einträge, sodass der maximal zu erwartende Prozentsatz positiver Einträge $p_\text{positive} = \frac{n_\text{positive}}{n_\text{entries}} \leq \frac{1}{625} = 0,\!16\,\%$ beträgt. Der Focal-Loss gewichtet positive und negative Klassen, sodass ein gezieltes Erlernen trotz signifikanten Klassenungleichgewichts möglich ist.
 
 \vspace*{-0.1cm}
 \paragraph{Klassen-Loss $\mathcal{L}_\text{cls}$}
@@ -121,7 +121,7 @@ Die Bestimmung des Positions-Losses $\mathcal{L}_\text{pos}$ geschieht ebenso wi
 
 \paragraph{Gewichtung}
 
-Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position resultieren unterschiedliche Ausgabewerte der Losses. Die Loss-Gewichte $\omega_\text{xst}$, $\omega_\text{cls}$ und $\omega_\text{pos}$ gewichten die Loss-Outputs derart, dass kein Loss wesentlich überwiegt und eine Reduktion des Losses $\mathcal{L}$ eine uniforme Reduktion der Losses $\mathcal{L}_\text{xst}$, $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$ mit sich zieht. Zum Anpassen der Losses aneinander für eine gleichwertige Konvergenz werden die gewichte $\omega_\text{xst} = 400$, $\omega_\text{cls} = 2.000$ und $\omega_\text{pos} = 0,5$ verwendet.
+Durch die Verwendung unterschiedlicher Losses für Existenz, Klasse und Position resultieren unterschiedliche Ausgabewerte der Losses. Die Loss-Gewichte $\omega_\text{xst}$, $\omega_\text{cls}$ und $\omega_\text{pos}$ gewichten die Loss-Outputs derart, dass kein Loss wesentlich überwiegt und eine Reduktion des Losses $\mathcal{L}$ eine uniforme Reduktion der Losses $\mathcal{L}_\text{xst}$, $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$ mit sich zieht. Zum Anpassen der Losses aneinander für eine gleichwertige Konvergenz werden die gewichte $\omega_\text{xst} = 400$, $\omega_\text{cls} = 2.000$ und $\omega_\text{pos} = 0,\!5$ verwendet.
 
 \subsubsection{Hintergründe und Zielsetzung}
 
@@ -168,7 +168,7 @@ Die Datenerstellung beruht auf der Verwendung von Heatmaps zur Positionierung de
 
 Durch das Oversampling ist ein übermäßiger Prozentsatz unterrepräsentierter Klassen in den Daten vorhanden, der zu einem ausgeglichenen Lernen aller Klassen führt \cite{oversampling}. Ohne Oversampling flächenmäßig kleiner Felder resultierten Vorhersagen von Double-, Triple- oder Bull-Treffern vermehrt in Fehlklassifizierungen als schwarze bzw. weiße Felder.
 
-Trotz der Vorteile von Oversampling muss auf eine korrekte Einbindung dessen geachtet werden, um eine übermäßige Verzerrung der Datenlage zu verhindern \cite{oversampling_bad}. Für diese Thesis wurden $24.576$ Daten synthetisch erstellt, davon $20.480$ reguläre Daten und $4.096$ Oversampling-Daten. Der Prozentsatz des Oversamplings beläuft sich damit auf $16,67\,\%$ der generierten Daten.
+Trotz der Vorteile von Oversampling muss auf eine korrekte Einbindung dessen geachtet werden, um eine übermäßige Verzerrung der Datenlage zu verhindern \cite{oversampling_bad}. Für diese Thesis wurden $24.576$ Daten synthetisch erstellt, davon $20.480$ reguläre Daten und $4.096$ Oversampling-Daten. Der Prozentsatz des Oversamplings beläuft sich damit auf $16,\!67\,\%$ der generierten Daten.
 
 % Die Heatmaps zum Generieren der für das Oversampling genutzten Wahrscheinlichkeitsverteilungen sind in \autoref{img:heatmaps} dargestellt; Details zur Datenerstellung mittels dieser Heatmaps sind in \autoref{sec:wie_dartpfeil_positionen} (\nameref{sec:wie_dartpfeil_positionen}) erläutert.7
 
@@ -205,7 +205,7 @@ Entgegen der Pixel-Manipulation nimmt die Augmentierung durch Transformation Ein
 
 Die Geschwindigkeit des Trainings wird durch die Learning Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning Rate sorgt für rapide und starke Änderungen während eine geringe Learning Rate eine geringe Änderung und langsame Konvergenz der Netzwerkparameter mit sich zieht. Für das Training in dieser Thesis wurde eine dynamische Learning Rate verwendet, die basierend auf dem Verlauf des Trainings gesetzt wurde und auf eine gezielte Konvergenz ausgelegt ist \cite{adaptive_lr_schedule}.
 
-Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor dem Hintergrund des optimalen Lernerfolgs für eine manuelle Anpassung der Learning Rate entschieden. Initial wurde die Learning Rate auf den Wert $\text{lr}_0 = 0,001$ gesetzt. Sofern der Trainingserfolg nach subjektiver Einschätzung zu stagnieren begann, wurde die Learning Rate um den Faktor $f_\text{lr} = 0,1^{0,25}$ angepasst. Durch diesen Wert erfolgt eine Minderung der Learning Rate um den Faktor 10 nach vierfacher Verringerung.
+Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor dem Hintergrund des optimalen Lernerfolgs für eine manuelle Anpassung der Learning Rate entschieden. Initial wurde die Learning Rate auf den Wert $\text{lr}_0 = 0,\!001$ gesetzt. Sofern der Trainingserfolg nach subjektiver Einschätzung zu stagnieren begann, wurde die Learning Rate um den Faktor $f_\text{lr} = 0,\!1^{0,25}$ angepasst. Durch diesen Wert erfolgt eine Minderung der Learning Rate um den Faktor 10 nach vierfacher Verringerung.
 
 % Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn des Trainings ansteigen lässt und sie heruntersetzt, sobald über eine vorbestimmte Dauer keine Verbesserung des Validation-Losses geschehen ist:
 
@@ -224,7 +224,7 @@ Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor de
 \nomenclature{$f_\text{lr}$}{Adaptionsfaktor der Learning Rate}
 % \nomenclature{$w_\text{lr}$}{Fenstergröße des Learning Rate-Schedules}
 
-% Es wurden Parameterbelegungen $\text{lr}_0 = 0,001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,1^{0,25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
+% Es wurden Parameterbelegungen $\text{lr}_0 = 0,\!001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,\!1^{0,\!25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
 
 \subsubsection{Trainingsablauf}
 \label{sec:trainingsverlauf}

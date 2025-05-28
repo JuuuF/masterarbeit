@@ -10,7 +10,7 @@ Die Datenerstellung fußt auf einer 3D-Szene, beschrieben in \autoref{sec:3d_sze
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/rendering/rendering_pipeline.pdf}
-    \caption{Schematische Darstellung der Rendering-Pipeline.}
+    \caption{Schematische Darstellung der Rendering-Pipeline. Die Reihenfolge nebeneinander aufgelisteter Prozesse ist nicht sequenziell vorgegeben.}
     \label{img:rendering_pipeline}
 \end{figure}
 
@@ -88,6 +88,7 @@ Environment Maps, auch als HDRIs bezeichnet, sind $360\degree$-Aufnahmen von rea
 
 Wenige Zentimeter neben der Kamera befindet sich ein Punktlicht, das als Kamerablitz fungiert. Es kann ein- und ausgeschaltet werden und sorgt für eine helle Ausleuchtung der Szene. Die Farbe des Lichtes ist kaltweiß und sorgt durch sein Positionierung für harte Schatten entlang der Kanten von Objekten im Bild. Besonders stark ist dieser Effekt bei Dartpfeilen zu beobachten.
 
+\newpage
 \paragraph{Spotlight}
 
 Bei der Aufnahme realer Daten ist die Existenz von Spotlights aufgekommen. Bei Spotlights handelt es sich um ein oder mehrere Lichter, die auf die Dartscheibe gerichtet sind und den Feldbereich ausleuchten. Diese Art der Ausleuchtung sorgt ebenfalls für einen auffälligen Schattenwurf und wird in der 3D-Szene als Flächenlicht mit variierender Größe modelliert. Diese Art der Beleuchtung wird beispielsweise im Strongbows Pub\footnote{\url{https://www.strongbowspub.de}} in Kiel eingesetzt, aus welchem Teile der realen Daten stammen.
@@ -121,6 +122,7 @@ Der Seed und der Altersparameter bestimmen weitestgehend das Aussehen der Szene,
 
 Darüber hinaus ist das Setzen der Dartpfeilpositionen ein wichtiger Schritt des Skriptes. Diese werden anhand von Wahrscheinlichkeitsverteilungen auf der Dartscheibe verteilt und zufällig rotiert. Aus den Positionen im 3D-Raum kann die erzielte Punktzahl des simulierten Dartspiels abgeleitet werden.
 
+\newpage
 Die Kamera wird von dem Skript in einem vorgegebenen Raum positioniert und ihre internen sowie externen Parameter werden in definierten Intervallen randomisiert, zu Teilen basierend auf ihrer Position relativ zur Dartscheibe. Es werden unter anderem Brennweite, Fokuspunkt, Auflösung und das Seitenverhältnis gesetzt, um einer Datenverzerrung hinsichtlich spezifischer Kameraeinstellungen vorzubeugen. Würden alle Sample die selben Kameraparameter nutzen, bestünde die Gefahr der Spezialisierung eines aus diesen Daten trainierten Systems auf diese Gegebenheiten. Dadurch besteht die Gefahr der fehlerhaften Vorhersage auf Daten, die nicht diese exakten Kameraparameter vorweisen. Durch Randomisierung der Parameter wird diese Einschränkung der Generalisierungsfähigkeit umgangen.
 
 \subsubsection{Statische und dynamische Objekte}

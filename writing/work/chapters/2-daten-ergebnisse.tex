@@ -28,7 +28,7 @@ Die normalisierten Bilder befinden sich vertikal entlang der Mitte der Abbildung
 \subsection{Rahmenbedingungen der Erstellung}  % ==================================================
 \label{sec:render_info}
 
-Die Datenerstellung wurde parallel auf mehreren Rechnern mit unterschiedlichen Grafikkarten ausgeführt. Als Mittelwert aller Daten wurde eine Erstellungszeit von 30 Sekunden je Sample ermittelt. Die Erstellung eines Samples beinhaltet das Einlesen der Szene, Setzen von Objekten und Parametern, Rendern des Output-Bildes sowie den Binärmasken und die Nachverarbeitung der Daten zur Anreicherung der Metadaten und Normalisierung für das Training neuronaler Netze. Insgesamt wurden $24.960$ Trainingsdaten, $256$ Validierungsdaten und $2.048$ Testdaten erstellt. Die Speichernutzung je Sample beträgt durchschnittlich 8\,MB, wobei die Datenmenge durch Entfernen von Masken, die nach der Erstellung der Daten nicht mehr verwendet werden, weiter reduziert werden kann. Insgesamt wurden für diese Arbeit Daten mit einem Umfang von etwa $216\,\text{GB}$ erstellt. Das Blender-Projekt beläuft sich auf eine Größe von $220\,\text{MB}$, zu denen weitere $1,8\,\text{GB}$ durch 208 Environment Maps hinzukommen, die extern dynamisch in die Blender-Szene eingebunden werden.
+Die Datenerstellung wurde parallel auf mehreren Rechnern mit unterschiedlichen Grafikkarten ausgeführt. Als Mittelwert aller Daten wurde eine Erstellungszeit von 30 Sekunden je Sample ermittelt. Die Erstellung eines Samples beinhaltet das Einlesen der Szene, Setzen von Objekten und Parametern, Rendern des Output-Bildes sowie den Binärmasken und die Nachverarbeitung der Daten zur Anreicherung der Metadaten und Normalisierung für das Training neuronaler Netze. Insgesamt wurden $24.960$ Trainingsdaten, $256$ Validierungsdaten und $2.048$ Testdaten erstellt. Die Speichernutzung je Sample beträgt durchschnittlich 8\,MB, wobei die Datenmenge durch Entfernen von Masken, die nach der Erstellung der Daten nicht mehr verwendet werden, weiter reduziert werden kann. Insgesamt wurden für diese Arbeit Daten mit einem Umfang von etwa $216\,\text{GB}$ erstellt. Das Blender-Projekt beläuft sich auf eine Größe von $220\,\text{MB}$, zu denen weitere $1,\!8\,\text{GB}$ durch 208 Environment Maps hinzukommen, die extern dynamisch in die Blender-Szene eingebunden werden.
 
 \subsection[Qualitative Auswertung]{Qualitative Auswertung: Subjektiver Unterschied zwischen generierten und realen Bildern}  % =======
 \label{sec:rendering_qualitativ}
@@ -41,7 +41,6 @@ Insgesamt ist jedoch trotz der erwähnten Schwachpunkte nach subjektivem Empfind
 
 % =================================================================================================
 
-\newpage
 \subsection{Quantitative Metadatenauswertung} % ===================================================
 \label{sec:metadaten}
 
@@ -141,6 +140,7 @@ Bei der Erstellung von Daten werden die Positionen der Dartpfeile im 3D-Raum fes
 
 % =================================================================================================
 
+\newpage
 \subsection{Ungenauigkeiten der Datenerstellung}  % ===============================================
 \label{sec:daten_ungenauigkeiten}
 

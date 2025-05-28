@@ -20,7 +20,6 @@ Der Einfluss des Seeds für diese Dartscheibe beläuft sich auf eine leichte Var
 
 Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne und einer Verschiebung der Zahlen mit zunehmendem Alter beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhenden Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale und alte Dartscheibe starke Verschiebungen aufweisen. Zusätzlich wirkt sich der Altersfaktor auf Spinne und Zahlen aus, indem Rost mit steigendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit rost-rotem Farbton in das Material eingearbeitet.
 
-\newpage
 \subsubsection{Parametrisierung des Materials}
 
 Die Dartscheibe weist Gebrauchsspuren durch Einstichlöcher, Risse und Staubpartikel auf, die ebenso wie ihre Farbe von den Parametern des globalen Seeds und von dem Altersfaktor beeinflusst werden. Umgesetzt ist dies durch die Verwendung von Noise-Texturen, Maskierungen und Variation der Stärken dieser Techniken, um den Einfluss von Alter zu integrieren.
@@ -70,7 +69,7 @@ Im Anschluss an die Barrel wird der Shaft des Dartpfeils platziert. Dieser wird 
 Die Flights sind die komplexesten Elemente der Dartpfeile, da sie die größte Spanne an Erscheinungsbildern besitzen. Ihr Aussehen variiert nicht nur durch ihre Farben, sondern auch durch ihre Form. Flights setzen sich aus vier gleichen Flügeln zusammen, die entlang des Dartpfeils in einem Abstand von $90\degree$ platziert sind. Um die Variation der Formen einzufangen, sind 15 unterschiedliche Formen für Flights modelliert, die sich an realen Formen von Flights orientieren. Ihre Textur wird aus einem Texturatlas mit einer Größe von $1.920 \times 1.920\,\text{px}$ gesampled. Dieser besteht aus neun unterschiedlichen Grundtexturen, bestehend aus Landesflaggen und abstrakten Formen unterschiedlicher Farbpaletten. Abhängig vom Altersfaktor wird die Verformung der Flights gesteuert, sodass neue Flights keine Deformierungen aufweisen, alte Flights jedoch stark deformiert werden, um Gebrauchsspuren zu simulieren.
 
 \vspace{\baselineskip}
-
+\newpage
 \noindent Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass alle Dartpfeile einer Szene gleich aufgebaut sind. Eine Variation der Dartpfeile innerhalb einer Szene ist möglich, es wird sich jedoch gegen diese Art der Umsetzung entschieden, da die Verwendung unterschiedlicher Dartpfeile innerhalb einer Runde unwahrscheinlich ist. Unterschiedliche zufällig generierte Dartpfeile sind in \autoref{img:dartpfeile} dargestellt. Hervorzuheben sind die unterschiedlichen Farben und Formen der Flights sowie die variierenden Bestandteile und ihre Texturierung.
 
 \begin{figure}
@@ -127,7 +126,6 @@ Nachdem die Dartpfeile positioniert und rotiert sind, wird das Scoring der Szene
 
 Die Kamera ist durch eine Vielzahl intrinsischer wie extrinsischer Parameter charakterisiert. Während einige Parameter statisch gesetzt oder durch einfache Wahrscheinlichkeitsverteilungen modelliert sind, zeigen andere Parameter wesentlich komplexere Verhalten auf. Dieser Unterabschnitt ist dafür vorgesehen, die Umsetzungen der komplexen Parameter genauer darzustellen. Es wird begonnen mit der Betrachtung der Kamerapositionierung, danach folgt das Setzen der Brennweite der Kamera und die Wahl von Seitenverhältnis und Auflösung des exportierten Bildes. Abschließend wird die Wahl des Fokuspunkts und die Umsetzung von verwackelten Bildern beschrieben.
 
-\newpage
 \subsubsection{Kameraraum}
 \label{sec:kameraraum}
 
@@ -137,7 +135,7 @@ Für die Positionierung der Kamera in der Szene existiert ein Objekt, das den Be
     \item \textbf{Horizontaler Seitenwinkel} $\phi_h$: Öffnungswinkel des Kegels zu den Seiten der Dartscheibe,
     \item \textbf{Vertikaler Winkel} $\phi_v$: Öffnungswinkel des Kegels in die Höhe,
     \item \textbf{Kameraabstand} $\left(d_\text{min}, d_\text{max}\right)$: Minimaler und maximaler Abstand der Kamera von der Dartscheibe,
-    \item \textbf{Kamerahöhe} $\left(y_\text{min}, y_\text{max}\right)$: Minimale und maximale Höhe der Kamera im Raum\footnote{Es wird von einer standardisierten Anbringungshöhe der Dartscheibe von $2,07\,\text{m}$ ausgegangen.},
+    \item \textbf{Kamerahöhe} $\left(y_\text{min}, y_\text{max}\right)$: Minimale und maximale Höhe der Kamera im Raum\footnote{Es wird von einer standardisierten Anbringungshöhe der Dartscheibe von $2,\!07\,\text{m}$ ausgegangen.},
     \item \textbf{Maximaler Seitenabstand} $dx_\text{max}$: Maximaler seitlicher Abstand der Kamera zum Dartscheibenmittelpunkt.
 \end{itemize}
 \nomenclature{$\phi_h$}{Horizontaler Öffnungswinkel des Kamera-Space zu den Seiten der Dartscheibe}
@@ -155,6 +153,7 @@ Die Generierung der Daten dieser Arbeit erfolgte mit den Parametern: $\phi_h = 1
     \label{img:camera_space}
 \end{figure}
 
+\newpage
 \subsubsection{Brennweite}
 \label{sec:brennweite}
 

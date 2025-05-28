@@ -22,7 +22,7 @@ Das Scoring der Dartpfeile ist durch den Zugriff auf die Positionen der Dartpfei
 
 Mit der Unterteilung des Scorings in Normalisierung der Dartscheibe und Lokalisierung der Dartpfeile wird sich im Wesentlichen von der Herangehensweise von DeepDarts gelöst. Aufgrund der Nachteile in der Nutzung neuronaler Netze wurde sich für die Normalisierung für die Verwendung herkömmlicher \ac{cv} entschieden. Die Forschungsfrage dieses Themenbereichs der Arbeit thematisiert den Mehrwert dieser Aufteilung, indem die Zuverlässigkeit betrachtet wird. Die Auswertung der Normalisierung wurde mittels dreier Metriken vorgenommen, die die Dauer, den Erfolg und die Genauigkeit untersuchen.
 
-Die Dauer der algorithmischen Normalisierung ist im Vergleich zu dem DeepDarts-Ansatz messbar größer. Die Ausführungszeit der Normalisierung beläuft sich auf etwa die doppelte Dauer der vollständigen DeepDarts-Inferenz. Absolut betrachtet ist die durchschnittlich gemessene Dauer von $\leq 0,5\,\text{s}$ jedoch kein schwerwiegender Kritikpunkt.
+Die Dauer der algorithmischen Normalisierung ist im Vergleich zu dem DeepDarts-Ansatz messbar größer. Die Ausführungszeit der Normalisierung beläuft sich auf etwa die doppelte Dauer der vollständigen DeepDarts-Inferenz. Absolut betrachtet ist die durchschnittlich gemessene Dauer von $\leq 0,\!5\,\text{s}$ jedoch kein schwerwiegender Kritikpunkt.
 
 Die Fähigkeit der Normalisierung wurde mit $> 97\,\%$ gemessen und ist damit sehr zuverlässig. Einige Kritikpunkte der Ausführung wurden in der Diskussion bereits aufgefasst, anhand derer die Ausführung der Normalisierung verbessert werden kann. Die bereits erzielte Fähigkeit zur Identifizierung stellt jedoch eine sehr gute Grundlage dar.
 
@@ -32,7 +32,7 @@ Zusammenfassend lässt sich zur Beantwortung dieser Forschungsfrage festhalten, 
 
 \subsection*{3. Wie zuverlässig ist eine Generalisierung eines durch \ac{ood}-Training mit synthetischen Daten trainiertes neuronales Netzwerk auf Daten realer Dartscheiben?}
 
-Das Training des neuronalen Netzes zur Lokalisierung der Dartpfeile in normalisierten Bildern verlief auf $98,5\,\%$ synthetischen Daten mit Salting von $1,5\,\%$ realer Daten. Damit ist kein reines \ac{ood}-Training vollzogen. Die Auswertung des neuronalen Netzes wurde auf Datensätzen unterschiedlicher Quellen vollzogen, in welchen die Effekte des \ac{ood}-Trainings dargestellt werden konnten.
+Das Training des neuronalen Netzes zur Lokalisierung der Dartpfeile in normalisierten Bildern verlief auf $98,\!5\,\%$ synthetischen Daten mit Salting von $1,\!5\,\%$ realer Daten. Damit ist kein reines \ac{ood}-Training vollzogen. Die Auswertung des neuronalen Netzes wurde auf Datensätzen unterschiedlicher Quellen vollzogen, in welchen die Effekte des \ac{ood}-Trainings dargestellt werden konnten.
 
 Die Auswertung auf unterschiedlichen Metriken zur Betrachtung der Performance unterschiedlicher Bestandteile der Netzwerkarchitektur zeigt eine zwar messbare, jedoch geringfügige Präferenz synthetischer Daten gegenüber realen Daten. Die wesentliche Fehleranfälligkeit wurde in der Identifikation der Feldfarben ermittelt, was auf eine Diskrepanz simulierter und realer Farben hinweist. Trotz dieser Differenzen ist von keiner starken Verzerrung oder kritischer Einseitigkeit der Trainingsdaten auszugehen, welche nicht in realen Aufnahmen widergespiegelt ist.
 
