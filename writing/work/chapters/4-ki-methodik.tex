@@ -52,7 +52,7 @@ Eine grundlegende Änderung der YOLOv8-Architektur ist das Hinzufügen von Trans
 \subsubsection{Aufbau der Architektur}
 \label{sec:yolov8_aufbau}
 
-Der Aufbau der in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{img:yolov8_architektur} dargestellt. Sie ist unterteilt in die Bereiche Backbone, Head und Detect. Das Backbone und der Head sind weitestgehend analog zur YOLOv8-Architektur strukturiert. Der Detection ist ein gesonderter Netzwerkabschnitt zugeteilt, in welchem die Eliminierung des Multi-Scale-Outputs sowie die gesonderte Handhabung der Outputs manifestiert ist. Sie dazu unterteilt in drei parallele Stränge, in welchen Auswertungen zu Existenz, Position und Klasse abgeleitet und zu einem gemeinsamen Output konkateniert werden. Dieser Output besitzt eine Größe von $25 \times 25 \times 8 \times 3$, wie in \autoref{img:datenformat} dargestellt.
+Der Aufbau der in dieser Thesis verwendeten YOLOv8*-Architektur ist in \autoref{img:yolov8_architektur} dargestellt. Sie ist unterteilt in die Bereiche Backbone, Head und Detect. Das Backbone und der Head sind weitestgehend analog zur YOLOv8-Architektur strukturiert. Der Detection ist ein gesonderter Netzwerkabschnitt zugeteilt, in welchem die Eliminierung des Multi-Scale-Outputs sowie die gesonderte Handhabung der Outputs manifestiert ist. Sie ist dazu unterteilt in drei parallele Stränge, in welchen Auswertungen zu Existenz, Position und Klasse abgeleitet und zu einem gemeinsamen Output konkateniert werden. Dieser Output besitzt eine Größe von $25 \times 25 \times 8 \times 3$, wie in \autoref{img:datenformat} dargestellt.
 
 \begin{figure}
     \centering
@@ -203,7 +203,7 @@ Entgegen der Pixel-Manipulation nimmt die Augmentierung durch Transformation Ein
 \subsubsection{Dynamisches Training}
 \label{sec:dynamisches_training}
 
-Die Geschwindigkeit des Trainings wird durch die Learning-Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning-Rate sorgt für rapide und starke Änderungen während eine geringe Learning-Rate eine geringe Änderung und langsame Konvergenz der Netzwerkparameter mit sich zieht. Für das Training in dieser Thesis wurde eine dynamische Learning-Rate verwendet, die basierend auf dem Verlauf des Trainings gesetzt wurde und auf eine gezielte Konvergenz ausgelegt ist \cite{adaptive_lr_schedule}.
+Die Geschwindigkeit des Trainings wird durch die Learning-Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning-Rate sorgt für rapide und starke Änderungen, während eine geringe Learning-Rate eine geringe Änderung und langsame Konvergenz der Netzwerkparameter mit sich zieht. Für das Training in dieser Thesis wurde eine dynamische Learning-Rate verwendet, die basierend auf dem Verlauf des Trainings gesetzt wurde und auf eine gezielte Konvergenz ausgelegt ist \cite{adaptive_lr_schedule}.
 
 Anstelle eines vorprogrammierten Schedules einer Learning-Rate wurde sich vor dem Hintergrund des optimalen Lernerfolgs für eine manuelle Anpassung der Learning-Rate entschieden. Initial wurde die Learning-Rate auf den Wert $\text{lr}_0 = 0,\!001$ gesetzt. Sofern der Trainingserfolg nach subjektiver Einschätzung zu stagnieren begann, wurde die Learning-Rate um den Faktor $f_\text{lr} = 0,\!1^{0,25}$ angepasst. Durch diesen Wert erfolgt eine Minderung der Learning-Rate um den Faktor 10 nach vierfacher Verringerung.
 
