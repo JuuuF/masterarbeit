@@ -18,7 +18,7 @@ Der Einfluss des Seeds für diese Dartscheibe beläuft sich auf eine leichte Var
 
 \subsubsection{Parametrisierung von Spinne und Zahlen}
 
-Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne und einer Verschiebung der Zahlen mit zunehmendem Alter beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhenden Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale und alte Dartscheibe starke Verschiebungen aufweisen. Zusätzlich wirkt sich der Altersfaktor auf Spinne und Zahlen aus, indem Rost mit steigendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit rost-rotem Farbton in das Material eingearbeitet.
+Hinsichtlich ihrer Geometrie wird die Dartscheibe durch eine Verformung der Spinne und einer Verschiebung der Zahlen mit zunehmendem Alter beeinflusst. Die Verschiebung dieser Objekte wird durch eine auf Perlin Noise beruhenden Translation der Vertices im Mesh realisiert. Die Magnitude dieser Translation ist durch den Altersfaktor bestimmt, sodass neue Dartscheiben minimale und alte Dartscheibe starke Verschiebungen aufweisen. Zusätzlich wirkt sich der Altersfaktor auf Spinne und Zahlen aus, indem Rost mit steigendem Alter häufiger vertreten ist. Dieser ist als überlagerte Noise-Textur mit Rost-rotem Farbton in das Material eingearbeitet.
 
 \subsubsection{Parametrisierung des Materials}
 
@@ -30,7 +30,7 @@ Die Einstichlöcher werden durch ein Zusammenspiel mehrerer Masken generiert. Zu
 
 \paragraph{Risse}
 
-Analog zu den Einstichlöchern werden die Risse im Material parametrisiert. Es existieren ebenfalls zwei Masken, die die Ausprägung der Risse und ihre Existenz bestimmen. Die Ausprägung der Risse ist durch eine verzerrte Voronoi-Textur gegeben, deren Verzerrung und Größe durch den Altersfaktor beeinflusst wird. Die Existenzmaske der Risse wird analog zur Existenz der Einstichlöcher gehandhabt. Die Existenzmasken der unterschiedlichen Charakteristiken werden zudem mit unterschiedlichen Variationen des globalen Seeds generiert, sodass eine Korrelation der Masken ausgeschlossen ist.
+Analog zu den Einstichlöchern werden die Risse im Material parametrisiert. Es existieren ebenfalls zwei Masken, die die Ausprägung der Risse und ihre Existenz bestimmen. Die Ausprägung der Risse ist durch eine verzerrte Voronoi-Textur gegeben, deren Verzerrung und Größe durch den Altersfaktor beeinflusst wird. Die Existenzmaske der Risse wird analog zur Existenz der Einstichlöcher gehandhabt. Existenzmasken der unterschiedlichen Charakteristiken werden zudem mit unterschiedlichen Variationen des globalen Seeds generiert, sodass eine Korrelation der Masken ausgeschlossen ist.
 
 \paragraph{Staubpartikel}
 
@@ -58,11 +58,11 @@ Der erste Schritt zur Generierung eines Dartpfeils ist die Wahl der Tip. Sie wir
 
 \paragraph{Barrels}
 
-Auf die Tip folgt die Platzierung der Barrel. Die Barrel wird aus einem Pool von sieben Objekten ausgewählt, welche lückenlos hinter der Tip platziert werden. Die unterschiedlichen Barrel-Objekte verwenden verschiedene Methoden der Texturierung, sodass die Materialien einiger Barrel statisch vorgegeben sind, wohingegen andere Barrel ebenso wie die Tips zufällig texturiert werden, jedoch über alle RBG-Kanäle. Darüber hinaus wird die Geometrie der Barrel bei ihrer Platzierung hinter der Tip um $\pm\,20\,\%$ sowohl in ihrer Länge als auch im Durchmesser variiert.
+Auf die Tip folgt die Platzierung des Barrels. Der Barrel wird aus einem Pool von sieben Objekten ausgewählt und lückenlos hinter der Tip platziert. Die unterschiedlichen Barrel-Objekte verwenden verschiedene Methoden der Texturierung, sodass die Materialien einiger Barrels statisch vorgegeben sind, wohingegen andere Barrels ebenso wie die Tips zufällig texturiert werden, jedoch über alle RGB-Kanäle. Darüber hinaus wird die Geometrie der Barrels bei ihrer Platzierung hinter der Tip um $\pm\,20\,\%$ sowohl in ihrer Länge als auch im Durchmesser variiert.
 
 \paragraph{Shafts}
 
-Im Anschluss an die Barrel wird der Shaft des Dartpfeils platziert. Dieser wird ebenfalls aus einem vordefinierten Pool von acht Objekten ausgewählt. Der Großteil dieser Objekte besitzt dynamische Texturen, die analog zu dynamischen Barrel-Textren agieren. Ebenfalls wird die Geometrie der Shafts um $\pm\,20\,\%$ in Länge und Durchmesser variiert.
+Im Anschluss an den Barrel wird der Shaft des Dartpfeils platziert. Dieser wird ebenfalls aus einem vordefinierten Pool von acht Objekten ausgewählt. Der Großteil dieser Objekte besitzt dynamische Texturen, die analog zu dynamischen Barrel-Texturen agieren. Ebenfalls wird die Geometrie der Shafts um $\pm\,20\,\%$ in Länge und Durchmesser variiert.
 
 \paragraph{Flights}
 
@@ -70,7 +70,7 @@ Die Flights sind die komplexesten Elemente der Dartpfeile, da sie die größte S
 
 \vspace{\baselineskip}
 \newpage
-\noindent Alle Dartpfeile einer Szene nutzen den selben Geometry Nodes, sodass alle Dartpfeile einer Szene gleich aufgebaut sind. Eine Variation der Dartpfeile innerhalb einer Szene ist möglich, es wird sich jedoch gegen diese Art der Umsetzung entschieden, da die Verwendung unterschiedlicher Dartpfeile innerhalb einer Runde unwahrscheinlich ist. Unterschiedliche zufällig generierte Dartpfeile sind in \autoref{img:dartpfeile} dargestellt. Hervorzuheben sind die unterschiedlichen Farben und Formen der Flights sowie die variierenden Bestandteile und ihre Texturierung.
+\noindent Alle Dartpfeile einer Szene nutzen dieselben Geometry Nodes, sodass alle Dartpfeile einer Szene gleich aufgebaut sind. Eine Variation der Dartpfeile innerhalb einer Szene ist möglich, es wird sich jedoch gegen diese Art der Umsetzung entschieden, da die Verwendung unterschiedlicher Dartpfeile innerhalb einer Runde unwahrscheinlich ist. Unterschiedliche zufällig generierte Dartpfeile sind in \autoref{img:dartpfeile} dargestellt. Hervorzuheben sind die unterschiedlichen Farben und Formen der Flights sowie die variierenden Bestandteile und ihre Texturierung.
 
 \begin{figure}
     \centering
@@ -89,12 +89,12 @@ Die Positionierung der Dartpfeile auf der Dartscheibe ist ausschlaggebend für d
 
 Eine uniforme Wahrscheinlichkeitsverteilung der Dartpfeilpositionen folgt weder Erwartungen realer Spiele noch wird es dem Anspruch dieser Arbeit gerecht. Zur realitätsnahen Simulation von Dartsrunden wurden daher reale Wahrscheinlichkeitsverteilungen analysiert und diese sind in Form von Heatmaps in die Szene eingearbeitet.
 
-Die für die Datengenerierung dieses Thesis genutzten Heatmaps sind in \autoref{img:heatmaps} dargestellt. Es werden zwei unterschiedliche Heatmaps genutzt: Eine realistische Heatmap und eine Heatmap zur gezielten Erstellung von Multiplier-Feldern und ihren Umgebungen. Tiefgehende Hintergründe für die Verwendung unterschiedlicher Wahrscheinlichkeitsverteilungen zur Positionierung von Dartpfeilen werden in \autoref{sec:oversampling} (\nameref{sec:oversampling}) erläutert. Die realistische Heatmap orientiert sich an den für DeepDarts gefundenen Wahrscheinlichkeitsverteilungen \cite{deepdarts}, Verteilungen aus Online-Recherchen \cite{heatmap} und eigenen Beobachtungen. Die Wahrscheinlichkeitsverteilungen dieser Heatmaps beziehen die gesamte Dartscheibe ein, sodass Treffer außerhalb der Dartfelder ebenfalls möglich sind.
+Die für die Datengenerierung dieser Thesis genutzten Heatmaps sind in \autoref{img:heatmaps} dargestellt. Es werden zwei unterschiedliche Heatmaps genutzt: Eine realistische Heatmap und eine Heatmap zur gezielten Erstellung von Multiplier-Feldern und ihren Umgebungen. Tiefgehende Hintergründe für die Verwendung unterschiedlicher Wahrscheinlichkeitsverteilungen zur Positionierung von Dartpfeilen werden in \autoref{sec:oversampling} (\nameref{sec:oversampling}) erläutert. Die realistische Heatmap orientiert sich an den für DeepDarts gefundenen Wahrscheinlichkeitsverteilungen \cite{deepdarts}, Verteilungen aus Online-Recherchen \cite{heatmap} und eigenen Beobachtungen. Die Wahrscheinlichkeitsverteilungen dieser Heatmaps beziehen die gesamte Dartscheibe ein, sodass Treffer außerhalb der Dartfelder ebenfalls möglich sind.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/rendering/methodik/heatmaps.pdf}
-    \caption{Heatmaps für die Datenerstellung; (links) Realistische Heatmap; (rechts) Multiplier-Heatmap für Oversampling der Daten.}
+    \caption{Heatmaps für die Datenerstellung; realistische Heatmap (links); Multiplier-Heatmap für Oversampling der Daten (rechts).}
     \label{img:heatmaps}
 \end{figure}
 
@@ -205,7 +205,7 @@ Unterschiedliche Seitenverhältnisse der Kameraaufnahmen sind ebenfalls in diese
 
 Der Fokuspunkt der Kamera liegt in der Szene auf einem spezifischen leeren Objekt, dessen Ursprung fokussiert wird. Dieses wird normalverteilt mit den Standardabweichungen $\sigma_x = \sigma_z = \frac{r_\text{D}}{3}$ und $\sigma_y = 2\,\text{cm}$ um den Dartscheibenmittelpunkt platziert. Die $x$- und $z$-Positionen liegen dabei auf der Dartscheibe, die $y$-Achse verläuft parallel zur Normalen der Dartscheibe und $r_\text{D}$ ist der Gesamtdurchmesser der Dartscheibe. Der Kamerafokus ist damit grob auf den Mittelpunkt der Dartscheibe gerichtet.
 
-\subsubsection{Verwackelungen}
+\subsubsection{Verwacklungen}
 \label{sec:motion_blur}
 
 Zuletzt werden verwackelte Kamerabilder simuliert. Mit einer Wahrscheinlichkeit von $10\,\%$ wird die Kamera während der Aufnahme bewegt, wodurch verschwommene Bilder aufgenommen werden. Die Kamera wird normalverteilt mit einer Standardabweichung von $\sigma = \frac{2\,\text{cm}}{3}$ in $x$-, $y$- und $z$-Position verschoben. Durch diese Verschiebung entstehen Aufnahmen, die teilweise verschwommen sind.
@@ -218,4 +218,4 @@ Zur Handhabung der Farbinformation bietet Blender eine Vielzahl unterschiedliche
 \subsection{Berechnung von Entzerrung}  % =========================================================
 \label{sec:berechnung_entzerrung}
 
-Die Erstellung der Entzerrungshomographie geschieht auf Grundlage exportierter Masken von dem Rendering. Eine der exportierten Masken zeigt die Orientierungspunkte, wie sie von DeepDarts verwendet werden \cite{deepdarts}. Die Orientierungspunkte liegen auf der Außenseite des Double-Rings zwischen den Feldern 5 und 20 (oben), 13 und 6 (rechts), 17 und 3 (unten) und 8 und 11 (links). Durch die bekannten Positionen dieser Punkte im normalisierten ist die Berechnung der Verschiebungen dieser Punkte trivial und die Homographie zur Entzerrung des Bildes wird von diesen abgeleitet. Zur Erstellung dieser Maske befindet sich ein Objekt in der Szene, welches aus vier Punkten an den Positionen der Orientierungspunkte besteht. Dieses Objekt wird als Maske ausgehend von der ermittelten Kameraposition und den Kameraparametern gerendert. Aus dieser Make lassen sich die Positionen durch Identifizierung von Mittelpunkten in Pixelclustern identifizieren und durch ihre Positionierung zueinander zu den jeweiligen Orientierungspunkten zuordnen.
+Die Erstellung der Entzerrungshomographie geschieht auf Grundlage exportierter Masken von dem Rendering. Eine der exportierten Masken zeigt die Orientierungspunkte, wie sie von DeepDarts verwendet werden \cite{deepdarts}. Die Orientierungspunkte liegen auf der Außenseite des Double-Rings zwischen den Feldern 5 und 20 (oben), 13 und 6 (rechts), 17 und 3 (unten) und 8 und 11 (links). Durch die bekannten Positionen dieser Punkte im normalisierten ist die Berechnung der Verschiebungen dieser Punkte trivial und die Homographie zur Entzerrung des Bildes wird von diesen abgeleitet. Zur Erstellung dieser Maske befindet sich ein Objekt in der Szene, welches aus vier Punkten an den Positionen der Orientierungspunkte besteht. Dieses Objekt wird als Maske ausgehend von der ermittelten Kameraposition und den Kameraparametern gerendert. Aus dieser Maske lassen sich die Positionen durch Identifizierung von Mittelpunkten in Pixelclustern identifizieren und durch ihre Positionierung zueinander zu den jeweiligen Orientierungspunkten zuordnen.

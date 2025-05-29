@@ -36,9 +36,9 @@ In dieser Thesis wird Thresholding in vielerlei Hinsicht verwendet, unter andere
 \subsection{Binning}
 \label{sec:binning}
 
-Binning ist als Erweiterung von Thresholding zu verstehen. Es bezeichnet die Diskretisierung von Werten in definierte Intervalle, sogenannte Bins oder Buckets. Durch Binning wird es ermöglicht, Spannen von Werten in definierte Bereiche zu unterteilen und somit in diskrete Kategorien einzuordnen. Dabei wird zwischen Hard Binning und Soft Binning unterschieden.
+Binning ist als Erweiterung von Thresholding zu verstehen. Es bezeichnet die Diskretisierung von Werten in definierte Intervalle, sogenannte Bins oder Buckets. Durch Binning wird es ermöglicht, Spannen von Werten in definierte Bereiche zu unterteilen und somit in diskrete Kategorien einzuordnen. Dabei wird zwischen Hard-Binning und Soft-Binning unterschieden.
 
-Beim Hard Binning werden Intervallgrenzen $I = \{i_0, i_1, ..., i_n\} \subseteq D$ definiert, die einen Definitionsbereich $D$ von Daten in halboffene Intervalle $I_{k \in [0, n-1]} = [i_k, i_{k+1})$ unterteilen. Diese Intervalle korrespondieren mit Bins $B_{i \in [0, n]}$, in welche diejenigen Werte akkumuliert werden, die in das dementsprechende Intervall fallen. Es existieren harte Grenzen der Bins, die unter anderem dafür sorgen, dass nahe beieinander liegende Werte $v_0 \in D$ und $v_1 = v_0 - \epsilon_{>0}$ in unterschiedlichen Bins zugeordnet werden, sofern $x_0 \in I$. Um dieses Artefakt zu umgehen, gibt es das Soft Binning, in dem Werte anteilig in Bins eingeordnet werden, sodass Werte im Umkreis um Intervallgrenzen in beide Bins einsortiert werden, gewichtet mit der Distanz zu der Intervallgrenze.
+Beim Hard-Binning werden Intervallgrenzen $I = \{i_0, i_1, ..., i_n\} \subseteq D$ definiert, die einen Definitionsbereich $D$ von Daten in halboffene Intervalle $I_{k \in [0, n-1]} = [i_k, i_{k+1})$ unterteilen. Diese Intervalle korrespondieren mit Bins $B_{i \in [0, n]}$, in welche diejenigen Werte akkumuliert werden, die in das dementsprechende Intervall fallen. Es existieren harte Grenzen der Bins, die unter anderem dafür sorgen, dass nahe beieinander liegende Werte $v_0 \in D$ und $v_1 = v_0 - \epsilon_{>0}$ in unterschiedlichen Bins zugeordnet werden, sofern $x_0 \in I$. Um dieses Artefakt zu umgehen, gibt es das Soft-Binning, in dem Werte anteilig in Bins eingeordnet werden, sodass Werte im Umkreis um Intervallgrenzen in beide Bins einsortiert werden, gewichtet mit der Distanz zu der Intervallgrenze.
 
 Binning wird in dieser Thesis unter anderem in \autoref{sec:mittelpunktextraktion} (\nameref{sec:mittelpunktextraktion}) genutzt, um Polarlinien anhand ihrer Winkel zu kategorisieren.
 
@@ -151,7 +151,7 @@ Als erster Schritt der Harris Corner Detection wird das Bild mit Kantenerkennung
     \label{fig:harris}
 \end{figure}
 
-Anhand der Exzentrizität und Größe einer Ellipse wird beurteilt, ob es sich bei einem Cluster von Pixeln um eine Fläche, Kante oder Ecke handelt. Benachbarte Pixel um einen Pixel auf einer Ecke werden dabei ebenfalls als Ecken identifiziert. Um diese zu unterdrücken, wird \ac{nms} verwendet, bei der lediglich diejenigen Pixel mit der stärksten Antwort auf die Eckenerkennung hervorgehoben werden. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf Null gesetzt.
+Anhand der Exzentrizität und Größe einer Ellipse wird beurteilt, ob es sich bei einem Cluster von Pixeln um eine Fläche, Kante oder Ecke handelt. Benachbarte Pixel um einen Pixel auf einer Ecke werden dabei ebenfalls als Ecken identifiziert. Um diese zu unterdrücken, wird \ac{nms} verwendet, bei der lediglich diejenigen Pixel mit der stärksten Antwort auf die Eckenerkennung hervorgehoben werden. Alle benachbarten Pixel in einem vordefinierten Fenster um diesen maximalen Pixel werden entweder in ihrer Intensität gedämpft oder unterdrückt und auf null gesetzt.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -190,7 +190,7 @@ Die unterschiedlichen Einträge der Transformationsmatrizen bestimmen die Art de
                    & = (M_n \times \dots \times M_2 \times M_1) \times \widetilde{P} \\
                    & = M_{n, \dots, 2, 1} \times \widetilde{P}
 \end{align*}}
-Die Anwendung der Matrix $M_{n, \dots, 2, 1}$ auf ein Bild hat den selben Effekt wie die aufeinanderfolgende Anwendung der Matrizen $M_1$ bis $M_n$.
+Die Anwendung der Matrix $M_{n, \dots, 2, 1}$ auf ein Bild hat denselben Effekt wie die aufeinanderfolgende Anwendung der Matrizen $M_1$ bis $M_n$.
 
 \newpage
 \subsubsection{Affine Transformationsmatrizen}
@@ -245,7 +245,7 @@ Die Skalierungsmatrix skaliert ein Bild, unterteilt in eine horizontale Skalieru
 \paragraph{Scherungsmatrix}
 \label{par:scherung}
 
-Ber der Scherung werden Punkte parallel zur $x$-Achse mit $a_x$ und parallel zur $y$-Achse mit $a_y$ geschert; d neutrale Wert einer Scherung beträgt 0. Scherungsmatrizen haben die Form:
+Bei der Scherung werden Punkte parallel zur $x$-Achse mit $a_x$ und parallel zur $y$-Achse mit $a_y$ geschert; d neutrale Wert einer Scherung beträgt 0. Scherungsmatrizen haben die Form:
 
 {\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
@@ -267,7 +267,7 @@ Ber der Scherung werden Punkte parallel zur $x$-Achse mit $a_x$ und parallel zur
 \paragraph{Rotation}
 \label{par:rotation}
 
-Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch positiver Richtung um den Koordinatenursprung rotiert. Die Zusammensetzung einer Rotationsmatrix kann aufgeteilt werden in einen Skalierungs- und einen Scherungsanteil. Die Skalierung erfolgt uniform in horizontaler und vertikaler Richtung um den Faktor $s_{x, y} = \cos(\alpha)$; die Anteile der Scherung sind gegeben mit $a_x = -\sin(\alpha)$ und $a_y = \sin(\alpha)$. Aus diesen Voraussetzungen ergibt sich die folgende Definition der Rotationsmatrix:
+Die Rotation erfolgt anhand eines Winkels $\alpha$, der Punkte in mathematisch positiver Richtung um den Koordinatenursprung rotiert. Ihre Zusammensetzung kann aufgeteilt werden in einen Skalierungs- und einen Scherungsanteil. Die Skalierung erfolgt uniform in horizontaler und vertikaler Richtung um den Faktor $s_{x, y} = \cos(\alpha)$; die Anteile der Scherung sind gegeben mit $a_x = -\sin(\alpha)$ und $a_y = \sin(\alpha)$. Aus diesen Voraussetzungen ergibt sich die folgende Definition der Rotationsmatrix:
 
 {\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
@@ -336,7 +336,7 @@ Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nac
 \subsection{\acl{ssim}}
 \label{sec:ssim}
 
-Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeauthor{ssim} die \acf{ssim} entwickelt, die über das triviale Vergleichen von Farbinformationen hinaus geht \cite{ssim,cv_general}. Das Grundprinzip der \ac{ssim}-Metrik ist das Einfangen und Vergleichen visuell auffälliger Änderungen im Bild und Unterdrückung von Effekten wie Weichzeichnung und lokaler Verschiebungen von Pixeln. Es werden Informationen zu Luminanz, Kontrast und Struktur auf Eingabebildern identifiziert und jeweils miteinander verglichen. Eine gewichtetes Produkt der jeweiligen Ähnlichkeitsfaktoren bestimmt schließlich den \ac{ssim}-Wert.
+Für die Aufgabe der Ähnlichkeitsbestimmung von Bildern wurde 2004 von \citeauthor{ssim} die \acf{ssim} entwickelt, die über das triviale Vergleichen von Farbinformationen hinaus geht \cite{ssim,cv_general}. Das Grundprinzip der \ac{ssim}-Metrik ist das Einfangen und Vergleichen visuell auffälliger Änderungen im Bild und Unterdrückung von Effekten wie Weichzeichnung und lokaler Verschiebungen von Pixeln. Es werden Informationen zu Luminanz, Kontrast und Struktur auf Eingabebildern identifiziert und jeweils miteinander verglichen. Ein gewichtetes Produkt der jeweiligen Ähnlichkeitsfaktoren bestimmt schließlich den \ac{ssim}-Wert.
 
 Diese Handhabung der Informationsverarbeitung sorgt für Robustheit gegenüber geringen augenscheinlichen Änderungen, die jedoch starke Auswirkungen auf die zugrundeliegenden Daten besitzen. So ist das Weichzeichnen eines Bildes oder das Hinzufügen von Rauschen eine solche Änderung, bei der die Pixelwerte der Bilder stark verändert werden, die Aussage hinter den Daten jedoch nicht.
 

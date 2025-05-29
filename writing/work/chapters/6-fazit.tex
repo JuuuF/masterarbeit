@@ -12,7 +12,7 @@ Die Forschungsfragen dieser Arbeit wurden in \autoref{sec:forschungsfragen} eing
 
 \subsection*{1. Welche Qualität synthetischer, realistischer und variabler Daten können in einer automatisierten Pipeline zur Erstellung von Bildern von Dartscheiben mit korrekter Annotation erreicht werden?}
 
-Diese Forschungsfrage bezieht sich auf den ersten Themenbereich dieser Thesis, in welchem Daten durch Simulation automatisch generiert wurden. Die Beantwortung dieser Frage kann hinsichtlich unterschiedlicher Gesichtspunkte ausgelegt werden. Aufgrund einer fehlenden Metrik zur Quantisierung des Realismus der generierten Bilder wurde eine qualitative Analyse vollzogen. In dieser wurden die Ergebnisse der Datengenerierung kritisch betrachtet und es konnte festgestellt werden, dass die Aufnahmen keinen Fotorealismus darstellen. Bei der Betrachtung der Ergebnisse fällt die synthetische Natur der Bilder ins Auge und es ist in den meisten Fällen nicht von der Hand zu weisen, dass es sich bei den Bildern nicht um reale Aufnahmen handelt. Trotz dessen konnten realistische Gebrauchsspuren, Beleuchtungen und Aufnahmen simuliert werden, wie sie in Aufnahmen realer Dartscheiben zu finden sind. Durch Metadatenanalyse konnten realistische Spannen unterschiedlicher Parameter identifiziert und synthetisch nacherzeugt werden. Zusammenfassend lässt sich die Qualität der erstellten Daten als annähernd realistisch einordnen.
+Diese Forschungsfrage bezieht sich auf den ersten Themenbereich dieser Thesis, in welchem Daten durch Simulation automatisch generiert wurden. Die Beantwortung dieser Frage kann hinsichtlich unterschiedlicher Gesichtspunkte ausgelegt werden. Aufgrund einer fehlenden Metrik zur Quantisierung des Realismus der generierten Bilder wurde eine qualitative Analyse vollzogen. In dieser wurden die Ergebnisse der Datengenerierung kritisch betrachtet und es konnte festgestellt werden, dass die Aufnahmen keinen Fotorealismus darstellen. Bei der Betrachtung der Ergebnisse fällt die synthetische Natur der Bilder ins Auge und es ist in den meisten Fällen nicht von der Hand zu weisen, dass es sich bei den Bildern nicht um reale Aufnahmen handelt. Trotz dessen konnten realistische Gebrauchsspuren, Beleuchtungen und Aufnahmen simuliert werden, wie sie in Aufnahmen realer Dartscheiben zu finden sind. Durch Metadatenanalyse konnten realistische Spannen unterschiedlicher Parameter identifiziert und synthetisch simuliert werden. Zusammenfassend lässt sich die Qualität der erstellten Daten als annähernd realistisch einordnen.
 
 Hinsichtlich der Korrektheit der Annotationen der Daten sind geringfügige Ungenauigkeiten in der automatischen Normalisierung der Bilder zur Generierung von Trainingsdaten für das Training neuronaler Netze vorzufinden. Diese Ungenauigkeiten befinden sich im Umfang von Abweichungen lediglich weniger Pixel. Gleiche Abweichungen gelten für die Lokalisierung von Dartpfeilen in Bildern. Die Magnitude dieser Fehler ist jedoch geringfügig und qualitativ gleichauf mit manueller Annotation, jedoch ohne fehlerhafte Annotation oder übersehene Datenpunkte.
 
@@ -52,7 +52,7 @@ Mit der synthetischen Datenerstellung wird das Erstellen beliebiger Datenmengen 
 
 Im Vergleich zu DeepDarts konnte auf Grundlage der synthetischen Daten und der Verwendung ausgiebiger Augmentierung ein System trainiert werden, dessen Auswertungen nicht auf Overfitting der eigenen Daten schließen lässt. Dadurch ist die Generalisierbarkeit des Systems weitestgehend aufrechterhalten, sodass die Inferenz auf neuen Daten unter vorhersehbarer Genauigkeit abläuft.
 
-Durch die algorithmische Normalisierung der Dartscheibe wurde ein System vorgestellt, welches in der Lage ist, beliebige Bilder von Dartscheiben zu normalisieren. Die algorithmische Natur dieser Herangehensweise schlägt sich in der Wartbarkeit und Interpretierbarkeit des Systems nieder. Während Die Arbeitsweise von Ansätzen unter Einbindung neuronaler Netze nicht bekannt sind und Fehlerfälle durch intensive Auswertungen und Interpretierungen angegangen werden müssen, ist die Adaption eines Algorithmus gezielt möglich. Ursachen der fehlerhaften Verarbeitung können schnell ausfindig gemacht werden und es bedarf keine großen Datenmengen sowie Infrastruktur mit großer Rechenleistung, um das System auf neue Daten anzupassen.
+Durch die algorithmische Normalisierung der Dartscheibe wurde ein System vorgestellt, welches in der Lage ist, beliebige Bilder von Dartscheiben zu normalisieren. Die algorithmische Natur dieser Herangehensweise schlägt sich in der Wartbarkeit und Interpretierbarkeit des Systems nieder. Während die Arbeitsweise von Ansätzen unter Einbindung neuronaler Netze nicht bekannt sind und Fehlerfälle durch intensive Auswertungen und Interpretierungen angegangen werden müssen, ist die Adaption eines Algorithmus gezielt möglich. Ursachen der fehlerhaften Verarbeitung können schnell ausfindig gemacht werden und es bedarf keine großen Datenmengen sowie Infrastruktur mit großer Rechenleistung, um das System auf neue Daten anzupassen.
 
 Zusammenfassend kann von einem Erfolg bezüglich der gestellten Aufgabe gesprochen werden. Das erarbeitete System ist zu dem aktuellen Zeitpunkt nicht in geeignet für den realen Einsatz, beispielsweise in einer App. Die Fehlerquote des Systems liegt mit etwa $40\,\%$ deutlich zu hoch, jedoch ist eine solide Grundlage zur Erarbeitung eines leistungsstarken Systems gegeben.
 
@@ -67,7 +67,7 @@ Diese Arbeit stellt ein System vor, mit welchem ein automatisches Dart-Scoring d
 \subsection{Ausblick der Datenerstellung}
 \label{sec:ausblick_data}
 
-Die Datenerstellung ist ein komplexer Prozess, welcher ein Zusammenspiel vieler unterschiedlicher Komponenten ist. Die Möglichkeiten zur Erweiterung dieses Systeme sind daher sehr vielseitig. Anstatt der Optimierung von Implementierungsdetails wird sich in diesem Ausblick auf die methodischen Aspekte zur Erweiterung der Datenerstellung fokussiert.
+Die Datenerstellung ist ein komplexer Prozess, welcher ein Zusammenspiel vieler unterschiedlicher Komponenten ist. Die Möglichkeiten zur Erweiterung dieses Systems sind daher sehr vielseitig. Anstatt der Optimierung von Implementierungsdetails wird sich in diesem Ausblick auf die methodischen Aspekte zur Erweiterung der Datenerstellung fokussiert.
 
 \vspace*{-0.15cm}
 \paragraph{Integration von \ac{pbr}}
@@ -134,7 +134,7 @@ Die Auswertung hinsichtlich der Ausführungszeit dieses Systems beläuft sich au
 
 % - Vergleich mit DD auf unterschiedlichen Plattformen
 % - - aktuell: eine Plattform
-% - - möglich: Ausführung beides Systeme auf einem Mobiltelefon
+% - - möglich: Ausführung beider Systeme auf einem Mobiltelefon
 % - - Hintergrund: System ist darauf ausgelegt, mobil genutzt zu werden
 
 % -------------------------------------------------------------------------------------------------
@@ -148,13 +148,13 @@ Die Lokalisierung der Dartpfeile beruht auf der Verwendung eines neuronalen Netz
 
 Das Training des neuronalen Netzes basiert auf einem \ac{ood}-Ansatz, in welchem synthetische Daten generiert wurden, um ein System zu trainieren, welches auf reale Daten angewandt wird. Zwischen synthetischen und realen Daten liegen jedoch nicht von der Hand zu weisende Diskrepanzen, die einem optimalen Training im Wege stehen. Durch die Aufnahme weiterer realer und zugleich variabler Daten kann die Datenlage realer Bilder für das Training vervielfacht werden, wodurch eine bessere Inferenz auf realen Daten zu erwarten ist.
 
-Zusätzlich sind einige Rahmenbedingungen des Trainings verbesserungswürdig. Das Training verlief mit einer Batch Size von 32, welche für ein stabileres Training erhöht werden kann; aus technischen Gründen war dies im Umfang dieser Arbeit nicht möglich. Darüber hinaus wurde die Learning Rate manuell angepasst und unterlag keinem Algorithmus oder festgelegtem Muster. Für weiteres Training ist in Ausschau zu setzen, dass ein Schedule zur Anpassung der Learning Rate verwendet wird, der dem Verhalten der manuellen Learning Rate folgt.
+Zusätzlich sind einige Rahmenbedingungen des Trainings verbesserungswürdig. Das Training verlief mit einer Batch Size von 32, welche für ein stabileres Training erhöht werden kann; aus technischen Gründen war dies im Umfang dieser Arbeit nicht möglich. Darüber hinaus wurde die Learning-Rate manuell angepasst und unterlag keinem Algorithmus oder festgelegtem Muster. Für weiteres Training ist in Ausschau zu setzen, dass ein Schedule zur Anpassung der Learning-Rate verwendet wird, der dem Verhalten der manuellen Learning-Rate folgt.
 
 % - Training:
 % - - neues Trainieren des Systems auf mehr realen Daten
 % - - - Arbeit spezifisch hinsichtlich Aufnahme und Annotation neuer Daten
 % - - Batch Size erhöhen
-% - - Learning Rate gescheit implementieren
+% - - Learning-Rate gescheit implementieren
 
 \paragraph{Netzwerkarchitektur}
 

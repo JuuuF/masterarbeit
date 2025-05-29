@@ -17,7 +17,7 @@ Dieses Unterkapitel thematisiert zunächst die Hintergründe der Wahl von YOLOv8
 \subsubsection{Hintergründe zur Wahl von YOLOv8 als Basismodell}
 \label{sec:hintergrund_yolov8}
 
-Die Architektur von YOLOv8 ist derart parametrisiert, dass unterschiedliche Netzwerkgrößen als Varianten vorgegeben sind. Die Größe und Komplexität des Netzwerks ist aufgeteilt in die Klassen n (nano), s (small), m (medium), l (large) und x (extra large). Diese Varianten unterscheiden sich in den Größen und Anzahlen der verwendeten Schichten und sind für unterschiedliche Einsatzsituationen ausgelegt. Während l- und x-Modelle für Umgebungen ausgelegt sind, in denen vorhandene Rechenleistung keinen Engpass darstellt, sind die s- und n-Modelle für den Einsatz in mobilen Geräten oder Edge-Devices vorgesehen, in denen die Ressourcen begrenzt sind. Die Verwendung von Netzwerken geringerer Größen geht mit Einbußen in der Qualität der Vorhersagen einher.
+Die Architektur von YOLOv8 ist derart parametrisiert, dass unterschiedliche Netzwerkgrößen als Varianten vorgegeben sind. Die Größe und damit einhergehend die Komplexität des Netzwerks ist aufgeteilt in die Klassen n (nano), s (small), m (medium), l (large) und x (extra large). Diese Varianten unterscheiden sich in den Größen und Anzahlen der verwendeten Schichten und sind für unterschiedliche Einsatzsituationen ausgelegt. Während l- und x-Modelle für Umgebungen ausgelegt sind, in denen vorhandene Rechenleistung keinen Engpass darstellt, sind die s- und n-Modelle für den Einsatz in mobilen Geräten oder Edge-Devices vorgesehen, in denen die Ressourcen begrenzt sind. Die Verwendung von Netzwerken geringerer Größen geht mit Einbußen in der Qualität der Vorhersagen einher.
 
 Zusätzlich zu den genannten Charakteristiken ist YOLOv8 ein optimierter Nachfolger der für DeepDarts verwendeten YOLOv4-Architektur. Durch den Einsatz von YOLOv4 in DeepDarts konnte die Fähigkeit dieser Familie der Netzwerkarchitekturen hinsichtlich der Erkennung von Dartpfeilen gezeigt werden.
 
@@ -27,7 +27,7 @@ Aufgrund des vorgesehenen Einsatzbereichs des Systems dieser Arbeit in mobilen E
 \subsubsection{Adaption des Modells}
 \label{sec:yolo_adaption}
 
-Obgleich durch \citeauthor{deepdarts} der Einsatz von YOLO-Architekturen zur Identifizierung von Dartpfeilen gezeigt wurde, ist die generelle Strukturierung der Architektur nicht optimal für die zugrundeliegende Aufgabe. Für eine Abstimmung der Architektur auf die Aufgabe werden strukturelle Änderungen im Netzwerkaufbau unternommen. Die Adaptierte Netzwerkarchitektur wird im Folgenden als YOLOv8* bezeichnet, um eine Differenzierung zu der offiziellen YOLOv8-Architektur herzustellen.
+Obgleich durch \citeauthor{deepdarts} der Einsatz von YOLO-Architekturen zur Identifizierung von Dartpfeilen gezeigt wurde, ist die generelle Strukturierung der Architektur nicht optimal für die zugrundeliegende Aufgabe. Für eine Abstimmung der Architektur auf die Aufgabe werden strukturelle Änderungen im Netzwerkaufbau unternommen. Die adaptierte Netzwerkarchitektur wird im Folgenden als YOLOv8* bezeichnet, um eine Differenzierung zu der offiziellen YOLOv8-Architektur herzustellen.
 
 \vspace*{-0.12cm}
 \paragraph{Bounding Boxes}
@@ -68,7 +68,7 @@ Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengeset
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/ai/methodik/yolov8_parts.pdf}
-    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3, 4) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (5) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (6) Transition-Block; Residualer Dense-Schicht zum Einfangen globaler Informationen.}
+    \caption{Netzwerkbestandteile der YOLOv8*-Architektur. (1) SPPF-Block; dieser zeichnet sich durch Hintereinanderreihung von MaxPool2d-Schichten aus. (2) C2f-Block; dieser spaltet die Feature Maps auf und wendet wiederholt Bottleneck-Blöcke an. (3, 4) Bottleneck-Block ohne und mit Shortcut; wiederholte Anwendung von Convolution, ggf. mit residualem Shortcut. (5) Conv-Block; dieser stellt den Grundbaustein der Convolution dar. (6) Transition-Block; residuale Dense-Schicht zum Einfangen globaler Informationen.}
     \label{img:yolov8_parts}
 \end{figure}
 
@@ -89,7 +89,7 @@ Aus diesen Grundblöcken werden weitere, größere Netzwerkblöcke zusammengeset
     \label{tab:yolov8_params}
 \end{table}
 
-Die variable Größe von YOLOv8 ist analog in YOLOv8* übernommen worden, sodass die Konfigurationen n, s, m, l und x möglich sind. Die verwendete Architektur dieser Thesis orientiert sich in ihrer Größenordnung an der in DeepDarts verwendeten Architektur YOLOv4-tiny, welche ca. $6$ Millionen Parameter beinhaltete. Die Größenordnungen der Parametrisierungen sind in \autoref{tab:yolov8_params} dargestellt. Aufgrund der im Vergleich zu DeepDarts komplexeren Daten wird sich für die Verwendung von YOLOv8*-s entschieden, welche mit etwa $10,\!5$ Millionen Parametern etwa $40\,\%$ mehr Parameter besitzt als YOLOv4-tiny.
+Die variable Größe von YOLOv8 ist analog in YOLOv8* übernommen worden, sodass die Konfigurationen n, s, m, l und x möglich sind. Die verwendete Architektur dieser Thesis orientiert sich in ihrer Größenordnung an der in DeepDarts verwendeten Architektur YOLOv4-tiny, welche ca. $6$ Millionen Parameter beinhaltete. Größenordnungen der Parametrisierungen sind in \autoref{tab:yolov8_params} dargestellt. Aufgrund der im Vergleich zu DeepDarts komplexeren Daten wird sich für die Verwendung von YOLOv8*-s entschieden, welche mit etwa $10,\!5$ Millionen Parametern etwa $40\,\%$ mehr Parameter besitzt als YOLOv4-tiny.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ Der Hintergrund der Aufteilung der Loss-Funktion in Existenz, Klasse und Positio
 
 \subsubsection{Abweichung vom DIoU-Loss}
 
-Bei dem Training von YOLO-Architekturen ist die die Verwendung vom IoU-Losses oder Adaptionen wie CIoU, DIoU oder GIoU \cite{diou_losses}, eine übliche Praxis \cite{yolov1,yolov8_paper,yolo_training_giou}. Diese Erweiterungen des IoU-Losses stützen sich grundlegend auf der Annahme der Existenz von Bounding Boxes. Da diese nicht in der YOLOv8*-Architektur vorhanden sind, ist die Verwendung von IoU-basierten Loss-Funktionen obsolet. Es wurde jedoch mit einer Adaption des GIoU-Losses experimentiert, in der Quadrate vordefinierter Größe auf die vorhergesagten Positionen projiziert werden, anhand derer ein IoU-Loss berechnet werden kann. Durch diese Herangehensweise können viele Annahmen getroffen werden, durch die Optimierungen bezüglich Äquivalenz von GIoU-Loss und DIoU-Loss und effiziente Berechnung der Intersection-Area durch Distanzen der Punkte voneinander möglich sind. Da dieser Ansatz jedoch trotz Optimierungen mit einer großen Rechenleistung und starker Kongruenz zum Positions-Loss einherging, wurde diese Idee für das Training des Netzwerks verworfen.
+Bei dem Training von YOLO-Architekturen ist die Verwendung vom IoU-Losses oder Adaptionen wie CIoU, DIoU oder GIoU \cite{diou_losses}, eine übliche Praxis \cite{yolov1,yolov8_paper,yolo_training_giou}. Diese Erweiterungen des IoU-Losses stützen sich grundlegend auf der Annahme der Existenz von Bounding Boxes. Da diese nicht in der YOLOv8*-Architektur vorhanden sind, ist die Verwendung von IoU-basierten Loss-Funktionen obsolet. Es wurde jedoch mit einer Adaption des GIoU-Losses experimentiert, in der Quadrate vordefinierter Größe auf die vorhergesagten Positionen projiziert werden, anhand derer ein IoU-Loss berechnet werden kann. Durch diese Herangehensweise können viele Annahmen getroffen werden, durch die Optimierungen bezüglich Äquivalenz von GIoU-Loss und DIoU-Loss und effiziente Berechnung der Intersection-Area durch Distanzen der Punkte voneinander möglich sind. Da dieser Ansatz jedoch trotz Optimierungen mit einer großen Rechenleistung und starker Kongruenz zum Positions-Loss einherging, wurde diese Idee für das Training des Netzwerks verworfen.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -203,11 +203,11 @@ Entgegen der Pixel-Manipulation nimmt die Augmentierung durch Transformation Ein
 \subsubsection{Dynamisches Training}
 \label{sec:dynamisches_training}
 
-Die Geschwindigkeit des Trainings wird durch die Learning Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning Rate sorgt für rapide und starke Änderungen während eine geringe Learning Rate eine geringe Änderung und langsame Konvergenz der Netzwerkparameter mit sich zieht. Für das Training in dieser Thesis wurde eine dynamische Learning Rate verwendet, die basierend auf dem Verlauf des Trainings gesetzt wurde und auf eine gezielte Konvergenz ausgelegt ist \cite{adaptive_lr_schedule}.
+Die Geschwindigkeit des Trainings wird durch die Learning-Rate gesteuert. Diese beschränkt den Grad des Einflusses der durch die Backpropagation ermittelten Änderungen auf die Netzwerkparameter. Eine hohe Learning-Rate sorgt für rapide und starke Änderungen während eine geringe Learning-Rate eine geringe Änderung und langsame Konvergenz der Netzwerkparameter mit sich zieht. Für das Training in dieser Thesis wurde eine dynamische Learning-Rate verwendet, die basierend auf dem Verlauf des Trainings gesetzt wurde und auf eine gezielte Konvergenz ausgelegt ist \cite{adaptive_lr_schedule}.
 
-Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor dem Hintergrund des optimalen Lernerfolgs für eine manuelle Anpassung der Learning Rate entschieden. Initial wurde die Learning Rate auf den Wert $\text{lr}_0 = 0,\!001$ gesetzt. Sofern der Trainingserfolg nach subjektiver Einschätzung zu stagnieren begann, wurde die Learning Rate um den Faktor $f_\text{lr} = 0,\!1^{0,25}$ angepasst. Durch diesen Wert erfolgt eine Minderung der Learning Rate um den Faktor 10 nach vierfacher Verringerung.
+Anstelle eines vorprogrammierten Schedules einer Learning-Rate wurde sich vor dem Hintergrund des optimalen Lernerfolgs für eine manuelle Anpassung der Learning-Rate entschieden. Initial wurde die Learning-Rate auf den Wert $\text{lr}_0 = 0,\!001$ gesetzt. Sofern der Trainingserfolg nach subjektiver Einschätzung zu stagnieren begann, wurde die Learning-Rate um den Faktor $f_\text{lr} = 0,\!1^{0,25}$ angepasst. Durch diesen Wert erfolgt eine Minderung der Learning-Rate um den Faktor 10 nach vierfacher Verringerung.
 
-% Es wurde ein Learning Rate Schedule gewählt, der die Learning Rate zu Beginn des Trainings ansteigen lässt und sie heruntersetzt, sobald über eine vorbestimmte Dauer keine Verbesserung des Validation-Losses geschehen ist:
+% Es wurde ein Learning-Rate Schedule gewählt, der die Learning-Rate zu Beginn des Trainings ansteigen lässt und sie heruntersetzt, sobald über eine vorbestimmte Dauer keine Verbesserung des Validation-Losses geschehen ist:
 
 % \begin{equation*}
 %     \text{lr}(e) =
@@ -219,19 +219,19 @@ Anstelle eines vorprogrammierten Schedules einer Learning Rate wurde sich vor de
 % \end{equation*}
 % \nomenclature{$e \in \mathbb{N}$}{Aktuelle Trainingsepoche}
 % \nomenclature{$e_\text{warmup} \in \mathbb{N}$}{Anzahl an Warmup-Epochen für das Training}
-\nomenclature{$\text{lr}_0$}{Initiale Learning Rate}
-% \nomenclature{$\text{lr}_\text{min}$}{Minimale Learning Rate}
-\nomenclature{$f_\text{lr}$}{Adaptionsfaktor der Learning Rate}
-% \nomenclature{$w_\text{lr}$}{Fenstergröße des Learning Rate-Schedules}
+\nomenclature{$\text{lr}_0$}{Initiale Learning-Rate}
+% \nomenclature{$\text{lr}_\text{min}$}{Minimale Learning-Rate}
+\nomenclature{$f_\text{lr}$}{Adaptionsfaktor der Learning-Rate}
+% \nomenclature{$w_\text{lr}$}{Fenstergröße des Learning-Rate-Schedules}
 
-% Es wurden Parameterbelegungen $\text{lr}_0 = 0,\!001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,\!1^{0,\!25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
+% Es wurden Parameterbelegungen $\text{lr}_0 = 0,\!001$, $\text{lr}_\text{min} = 10^{-6}$, $e_\text{warmup} = 8$, $f_\text{lr} = 0,\!1^{0,\!25}$ und $w_\text{lr} = 50$ gewählt. Der Wert von $f$ wurde derart gesetzt, dass die Learning-Rate nach 4-facher Verringerung um einen Faktor 10 gemindert wurde. Mit den gewählten Werten wird die Anzahl der Verringerungen der Learning-Rate im Verlaufe eines gesamten Trainings auf 12 festgelegt, sofern das Training nicht zuvor abgebrochen wird.
 
 \subsubsection{Trainingsablauf}
 \label{sec:trainingsverlauf}
 
 Für das Training wurden die erwähnten Techniken und Optimierungen eingesetzt. Als Optimizer wurde sich für AdamW entschieden, der sich durch adaptive Gradientenanpassung auszeichnet und empirisch für solide Generalisierungsfähigkeiten bekannt ist \cite{adamw, adamw_good, adamw_good2, adamw_good3, adamw_good4}. Zudem konnte bereits gezeigt werden, dass die YOLOv8-Architektur erfolgreich mit diesem Optimizer trainiert werden konnte \cite{adamw_yolo}. Das Training verlief über $500$ Epochen und der Verlauf ist in \autoref{img:trainingsverlauf} dargestellt. Die Abbildung ist unterteilt in die Teil-Losses der Existenz, Klassen und Positionen sowie den kombinierten Loss. Trainings- und Validierungs-Loss fallen tendenziell gemeinsam, jedoch ist eine größere Diskrepanz der jeweiligen Werte bei $\mathcal{L}_\text{xst}$ zu verzeichnen als bei $\mathcal{L}_\text{cls}$ und $\mathcal{L}_\text{pos}$. Die Verläufe der Validierungs-Losses deuten jedoch weder auf Over- noch auf starkes Underfitting hin.
 
-In den Graphen ist ein Sprung der Losses um Epoche $400$ zu vermerken, welcher durch die manuelle Adaption der Learning Rate bedingt ist. Um einem lokalen Minimum des Losses entgegenzuwirken, wurde die Learning Rate erhöht und nach einigen Epochen inkrementell verringert. Diese Technik ist als Warm Restart bekannt und kann zu einer Verbesserungen der Losses führen \cite{lr_warm_restart}. In diesem Fall konnte eine Verbesserung des Losses durch den Einsatz dieser Technik erzielt werden.
+In den Graphen ist ein Sprung der Losses um Epoche $400$ zu vermerken, welcher durch die manuelle Adaption der Learning-Rate bedingt ist. Um einem lokalen Minimum des Losses entgegenzuwirken, wurde die Learning-Rate erhöht und nach einigen Epochen inkrementell verringert. Diese Technik ist als Warm-Restart bekannt und kann zu Verbesserungen der Losses führen \cite{lr_warm_restart}. In diesem Fall konnte eine Verbesserung des Losses durch den Einsatz dieser Technik erzielt werden.
 
 \begin{figure}
     \centering
@@ -269,7 +269,7 @@ In den Graphen ist ein Sprung der Losses um Epoche $400$ zu vermerken, welcher d
         \caption{Kombinierter Loss $\mathcal{L}$}
     \end{subfigure}
 
-    \caption{Trainingsverlauf der YOLOv8*-Architektur. Die Loss-Werte sind als Punkte dargestellt, welche durch eine Linie der entsprechenden Farbe geglättet dargestellt sind. Trainings-Losses werden in blau dargestellt, Validierungs-Losses in orange.}
+    \caption{Trainingsverlauf der YOLOv8*-Architektur. Die Loss-Werte sind als Punkte dargestellt, welche durch eine Linie der entsprechenden Farbe geglättet dargestellt sind. Trainings-Losses werden blau dargestellt, Validierungs-Losses orange.}
     \label{img:trainingsverlauf}
 \end{figure}
 
