@@ -10,7 +10,7 @@ Ein Überblick über die Schritte des Algorithmus ist in \autoref{img:cv_pipelin
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/cv/cv_pipeline.pdf}
-    \caption{Schematische Darstellung der \ac{cv}-Pipeline.}
+    \caption{Schematische Darstellung der Arbeitsweise des Normalisierungsalgorithmus.}
     \label{img:cv_pipeline}
 \end{figure}
 
@@ -31,7 +31,7 @@ Ebenfalls war die Verwendung von \ac{cv} aufgrund der auffälligen Geometrie ein
 \subsection{Vorverarbeitung}
 \label{sec:vorverarbeitung}
 
-Die Algorithmen der \ac{cv} arbeiten auf Bildern beliebiger Größe. Da die Dauer der Verarbeitung mit der Größe der Eingabebilder skaliert, ist eine angemessene Skalierung der Eingaben ein relevanter Bestandteil der Laufzeitoptimierung. Damit einher geht jedoch der Verlust von Informationen im Bild, wodurch eine Abwägung zwischen Geschwindigkeit und Genauigkeit notwendig ist. In dieser Arbeit wird eine schrittweise Verkleinerung der Eingabebilder mit Abmessungen $(w, h)$, entsprechend Breite und Höhe, unternommen, bis $\max (w, h) < s_\text{max}$. Dabei werden Eingabebilder jeweils um den Faktor 2 verkleinert, um Artefakte durch Interpolation zu minimieren. Der Wert von $s_\text{max} = 1.600\,\text{px}$ ist heuristisch ermittelt als geeignetes Mittel zwischen Geschwindigkeit und Genauigkeit.
+Die Algorithmen der \ac{cv} arbeiten auf Bildern beliebiger Größe. Da die Dauer der Verarbeitung mit der Größe der Eingabebilder skaliert, ist eine angemessene Skalierung der Eingaben ein relevanter Bestandteil der Laufzeitoptimierung. Damit einher geht jedoch der Verlust von Informationen im Bild, wodurch eine Abwägung zwischen Geschwindigkeit und Genauigkeit notwendig ist. In dieser Arbeit wird eine schrittweise Verkleinerung der Eingabebilder mit Abmessungen $(w, h)$, entsprechend Breite und Höhe, unternommen, bis $\max (w, h) < s_\text{max}$. Dabei werden Eingabebilder jeweils um den Faktor zwei verkleinert, um Artefakte durch Interpolation zu minimieren. Der Wert von $s_\text{max} = 1.600\,\text{px}$ ist heuristisch ermittelt als geeignetes Mittel zwischen Geschwindigkeit und Genauigkeit.
 \nomenclature{$(w, h) \in \mathbb{N}^2$}{Breite und Höhe eines Bildes}
 \nomenclature{$s_\text{max} \in \mathbb{N}$}{Maximale Breite bzw. Höhe eines Eingabebildes}
 
@@ -67,7 +67,7 @@ Geometrie und Farbgebung der Felder einer Dartscheibe sorgen für starke Gradien
     \label{img:kernel}
 \end{figure}
 
-Um die gewünschten Charakteristiken hervorzuheben, wird das Eingabebild vor der Kantenerkennung in Graustufen umgewandelt und der Kontrast wird erhöht, um den Unterschied zwischen hellen und dunklen Bereichen zu betonen. Um Rauschen vor der Filterung zu entfernen, wird das Bild weichgezeichnet. Hochfrequente Informationen werden dadurch verworfen und etwaige Unterbrechungen oder Störungen der Kanten zwischen den Feldern verringert. Auf das resultierende Bild wird der beschriebene Sobel-Kernel in horizontaler und vertikaler Richtung angewendet, um Filterreaktionen von Intensitätsänderungen entlang beider Richtungen zu erlangen. Diese werden miteinander kombiniert und durch Thresholding binarisiert. Die Ausgabe ist eine binäre Maske, in denen Pixel des Wertes 1 Kanten im Eingabebild darstellen.
+Um die gewünschten Charakteristiken hervorzuheben, wird das Eingabebild vor der Kantenerkennung in Graustufen umgewandelt und der Kontrast wird erhöht, um den Unterschied zwischen hellen und dunklen Bereichen zu betonen. Um Rauschen vor der Filterung zu entfernen, wird das Bild weichgezeichnet. Hochfrequente Informationen werden dadurch verworfen und etwaige Unterbrechungen oder Störungen der Kanten zwischen den Feldern verringert. Auf das resultierende Bild wird der beschriebene Sobel-Kernel in horizontaler und vertikaler Richtung angewendet, um Filterreaktionen von Intensitätsänderungen entlang beider Richtungen zu erlangen. Diese werden miteinander kombiniert und durch Thresholding binarisiert. Die Ausgabe ist eine binäre Maske, in denen Pixel des Wertes ungleich null Kanten im Eingabebild darstellen.
 
 \subsubsection{Skelettierung}
 \label{sec:skelettierung}
@@ -86,7 +86,7 @@ Die Schritte der Linienverarbeitung sind in \autoref{img:linienverarbeitung} dar
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{imgs/cv/methodik/lines.pdf}
-    \caption{Veranschaulichung der Schritte der Linienverarbeitung. (1) Identifizierung von Linien im Kantenbild; jede Linie ist zur Visualisierung in einer zufälligen Farbe dargestellt. (2) Extraktion des Mittelpunktes anhand unterschiedlicher Linienwinkel; jede Klasse von Winkeln ist in einer zufälligen Farbe dargestellt. (3) Filterung der Linien anhand des Mittelpunktes; verbleibende Linien sind grün hervorgehoben, Feldlinienwinkel $\phi_i$ blau. (4) Akkumulation der Winkel von Pixeln in gefilterten Linien. (5) Entzerrte Feldlinien; alle Winkel $\phi_i=18\degree$ sind weiß hervorgehoben.}
+    \caption{Veranschaulichung der Schritte der Linienverarbeitung. (1) Identifizierung von Linien im Kantenbild; jede Linie ist zur Visualisierung in einer zufälligen Farbe dargestellt. (2) Extraktion des Mittelpunktes anhand unterschiedlicher Linienwinkel; jede Klasse von Winkeln ist in einer separaten Farbe dargestellt. (3) Filterung der Linien anhand des Mittelpunktes; verbleibende Linien sind grün hervorgehoben, Feldlinienwinkel $\phi_i$ blau. (4) Akkumulation der Winkel von Pixeln in gefilterten Linien. (5) Entzerrte Feldlinien; alle Winkel $\phi_i=18\degree$ sind weiß hervorgehoben.}
     \label{img:linienverarbeitung}
 \end{figure}
 
@@ -194,7 +194,7 @@ Das Vorgehen der Orientierung basiert auf der Grundidee des DeepDarts-Systems, i
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{imgs/cv/methodik/orientation.pdf}
-    \caption{Schritte zur Orientierung der Dartscheibe. (1) Log-polare Darstellung der Dartscheibe. (2) Identifizierte Eckpunkte. Hervorgehobene Streifen veranschaulichen die erwarteten Bereiche der Feldlinien. (3) Identifizierung und Klassifizierung von Surroundings. Positiv klassifizierte Surroundings sind grün umrandet, negative rot. Weiße Balken an der Seite der Surroundings geben den Score an, der zur Klassifizierung errechnet wird; der Threshold befindet sich auf halber Höhe der Balken. In der oberen linken Ecke befindet sich die mittlere Surrounding. (4) Projektion der identifizierten Orientierungspunkte. Pfeile deuten die Richtung der Verschiebungen an; der graue Ring ist die Trennlinie zwischen inneren und äußeren Punkten. (5) Entzerrte Dartscheibe. Die ideale Entzerrung ist über das Bild gelegt.}
+    \caption{Schritte zur Orientierung der Dartscheibe. (1) Log-polare Darstellung der Dartscheibe. (2) Identifizierte Eckpunkte; hervorgehobene Streifen veranschaulichen die erwarteten Bereiche der Feldlinien. (3) Identifizierung und Klassifizierung von Surroundings; positiv klassifizierte Surroundings sind grün umrandet, negative rot; weiße Balken an der Seite der Surroundings geben den Score an, der zur Klassifizierung errechnet wird; der Threshold befindet sich auf halber Höhe der Balken; in der oberen linken Ecke befindet sich die mittlere Surrounding. (4) Projektion der identifizierten Orientierungspunkte; Pfeile deuten die Richtung der Verschiebungen an; der graue Ring ist die Trennlinie zwischen inneren und äußeren Punkten. (5) Entzerrte Dartscheibe; die ideale Entzerrung ist über das Bild gelegt.}
     \label{img:orientierung}
 \end{figure}
 

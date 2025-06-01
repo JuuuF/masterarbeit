@@ -245,7 +245,7 @@ Die Skalierungsmatrix skaliert ein Bild, unterteilt in eine horizontale Skalieru
 \paragraph{Scherungsmatrix}
 \label{par:scherung}
 
-Bei der Scherung werden Punkte parallel zur $x$-Achse mit $a_x$ und parallel zur $y$-Achse mit $a_y$ geschert; d neutrale Wert einer Scherung beträgt 0. Scherungsmatrizen haben die Form:
+Bei der Scherung werden Punkte parallel zur $x$-Achse mit $a_x$ und parallel zur $y$-Achse mit $a_y$ geschert; d neutrale Wert einer Scherung beträgt null. Scherungsmatrizen haben die Form:
 
 {\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
@@ -305,7 +305,7 @@ Im Gegensatz zu affinen Transformationen können Matrixeinträge in Homographien
 \nomenclature{$H \in \mathbb{R}^{3 \times 3}$}{Homographie}
 \nomenclature{$h_{i, j \in [0, 2]} \in \mathbb{R}$}{Parameter einer Homographie}
 
-Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ 8 freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je zwei Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:entzerrung} (\nameref{sec:entzerrung}) genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten Bildern zu transformieren.
+Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in einer allgemeinen Homographie $H$ acht freie Parameter vorhanden. Diese können z.\,B. durch vier Punktverschiebungen mit je zwei Koordinaten gegeben sein. Dadurch ist eine beliebige Transformation eines Bildes ermöglicht, in dem vier Punkte eines Quellbildes auf vier Punkte eines Zielbildes transformiert werden. Diese Eigenschaft wird bei der Normalisierung der Dartscheibe in \autoref{sec:entzerrung} (\nameref{sec:entzerrung}) genutzt, um Orientierungspunkte der Eingabebilder auf bekannte Positionen in normalisierten Bildern zu transformieren.
 
 % -------------------------------------------------------------------------------------------------
 

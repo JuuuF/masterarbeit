@@ -79,7 +79,7 @@ Für jede Surrounding wird ermittelt, welche Farbgebung in welcher Ecke der Surr
 Mit dieser Unterscheidung können diejenigen Kandidaten der Orientierungspunkte herausgefiltert werden, deren Surroundings nicht im Einklang mit der zu erwartenden Farbgebung sind. Die gefilterte Liste der Orientierungspunkte wird zur Bestimmung einer mittleren Surrounding verwendet, indem die Surroundings der verbliebenen Orientierungspunkte hinsichtlich ihrer Ausrichtung normalisiert werden und ein Mittelwert aller Surroundings ermittelt wird.
 
 Anhand dieser mittleren Surrounding werden die potenziellen Orientierungspunkte klassifiziert. Die Klassifizierung verläuft auf Grundlage zweier Metriken: Lab-Abgleich und \ac{ssim}. Bei dem Lab-Abgleich wird eine Farbraumtransformation aller Surroundings in den Lab-Farbraum vorgenommen. In diesem werden die Kanaldifferenzen der roten und grünen Ecken betrachtet und es wird anhand der folgenden Ähnlichkeitsmetrik bestimmt, zu welchem Grad sich die Farben ähneln:
-\[\text{sim}\left(S_1, S_2\right) = \exp^{-\nicefrac{0.01}{2}(d_r + d_g)}\]
+\[\text{sim}\left(S_1, S_2\right) = e^{-\nicefrac{0.01}{2}(d_r + d_g)}\]
 \nomenclature{$\text{sim}$}{Similarity-Metrik zur Bestimmung des Ähnlichkeitsgrads zweier Surroundings.}
 \nomenclature{$S_i$}{Surrounding mit Index $i$.}
 \nomenclature{$d_r$, $d_g$}{Mittlere Differenz roter bzw. grüner Bereiche des Lab-Abgleichs zweier Surroundings.}
