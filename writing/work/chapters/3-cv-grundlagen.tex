@@ -169,11 +169,13 @@ Eingabedaten der Hough-Transformation sind durch Thresholding vorverarbeitete Bi
 
 % -------------------------------------------------------------------------------------------------
 
+\vfill
 \subsection{Transformationsmatrizen}
 \label{sec:transformations_matrizen}
 
 Transformationen von Bildern in der \ac{cv} basieren auf der Grundlage von Transformationsmatrizen \cite{transformationen_1,transformationen_2,cv_general}. Die unterschiedlichen Arten von Transformationsmatrizen und ihre Arbeitsweisen werden in den folgenden Unterabschnitten erläutert. Es wird dabei begonnen mit Grundlagen homogener Koordinaten, gefolgt von unterschiedlichen Arten von Transformationsmatrizen.
 
+\vfill
 \subsubsection{Homogene Koordinaten}
 \label{sec:homogene_koordinaten}
 
@@ -184,14 +186,16 @@ Punkte im 2D-Raum besitzen eine $x$- und eine $y$-Koordinate, sodass ein Punkt d
 \nomenclature{$\widetilde{P}' \in \mathbb{R}^3$}{Transformierte homogene Position in kartesischem Koordinatensystem}
 \nomenclature{$M_{i \in \mathbb{N}} \in \mathbb{R}^{3 \times 3}$}{Transformationsmatrix}
 Die unterschiedlichen Einträge der Transformationsmatrizen bestimmen die Art der Transformation. Durch Verkettung von Transformationsmatrizen können mehrere Transformationen in einer einzelnen Transformation zusammengefasst werden. Dabei ist die Rechtsassoziativität der Matrixmultiplikation zu beachten, durch die eine Anwendung der Matrizen von rechts nach links geschieht. Darüber hinaus ist die Kommutativität bei Matrixmultiplikationen nicht gegeben, sodass die Reihenfolge der Anwendungen relevant ist:
-{\setlength{\belowdisplayskip}{0.5ex}
+{%\setlength{\belowdisplayskip}{0.5ex}
 \begin{align*}
     \widetilde{P}' & = M_n \times \dots \times M_2 \times M_1 \times \widetilde{P}   \\
                    & = (M_n \times \dots \times M_2 \times M_1) \times \widetilde{P} \\
                    & = M_{n, \dots, 2, 1} \times \widetilde{P}
 \end{align*}}
+
 Die Anwendung der Matrix $M_{n, \dots, 2, 1}$ auf ein Bild hat denselben Effekt wie die aufeinanderfolgende Anwendung der Matrizen $M_1$ bis $M_n$.
 
+\vfill
 \newpage
 \subsubsection{Affine Transformationsmatrizen}
 \label{sec:affine_transformations_matrizen}
@@ -309,6 +313,7 @@ Durch Fixierung der Skalierung mit $\sqrt{\sum_{ij} h_{i, j}^2} = 1$ sind in ein
 
 % -------------------------------------------------------------------------------------------------
 
+\vfill
 \subsection{Log-polare Entzerrung}
 \label{sec:logpolare_entzerrung}
 
@@ -323,6 +328,7 @@ In dieser Thesis wird die log-polare Darstellung eines Bildes in \autoref{sec:or
 
 % -------------------------------------------------------------------------------------------------
 
+\vfill
 \subsection{Farbräume}
 \label{sec:farbräume}
 
@@ -332,6 +338,7 @@ Die Verwendung unterschiedlicher Farbräume steht mit verschiedenen Vor- und Nac
 
 % -------------------------------------------------------------------------------------------------
 
+\vfill
 \newpage
 \subsection{\acl{ssim}}
 \label{sec:ssim}
